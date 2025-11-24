@@ -50,20 +50,20 @@ var Script = function () {
     $('.icon-reorder').click(function () {
         if ($('#sidebar > ul').is(":visible") === true) {
             $('#main-content').css({
-                'margin-left': '0px'
+                'margin-right': '0px'
             });
             $('#sidebar').css({
-                'margin-left': '-180px'
+                'margin-right': '-220px'
             });
             $('#sidebar > ul').hide();
             $("#container").addClass("sidebar-closed");
         } else {
             $('#main-content').css({
-                'margin-left': '180px'
+                'margin-right': '220px'
             });
             $('#sidebar > ul').show();
             $('#sidebar').css({
-                'margin-left': '0'
+                'margin-right': '0'
             });
             $("#container").removeClass("sidebar-closed");
         }
@@ -135,6 +135,42 @@ var Script = function () {
             e.preventDefault();
             var isDark = document.body.classList.toggle('dark');
             localStorage.setItem(key, isDark ? 'dark' : 'light');
+        });
+    })();
+
+// global search in sidebar
+    (function(){
+        var $input = $('#globalSearch');
+        if(!$input.length) return;
+        var $items = $('#sidebar ul.sidebar-menu > li');
+        $input.on('keyup', function(){
+            var q = $(this).val().trim();
+            if(q === ''){
+                $items.show();
+                return;
+            }
+            var regex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            $items.each(function(){
+                var $li = $(this);
+                var text = $li.text();
+                if(regex.test(text)){
+                    $li.show();
+                    // expand sub-menu if matched
+                    if($li.hasClass('sub-menu')){
+                        $li.addClass('open');
+                        $li.find('.sub').slideDown(150);
+                    }
+                } else {
+                    $li.hide();
+                }
+            });
+        });
+        // shortcut: press / to focus
+        $(document).on('keydown', function(e){
+            if(e.key === '/' && !$(e.target).is('input, textarea')){
+                e.preventDefault();
+                $input.focus();
+            }
         });
     })();
 

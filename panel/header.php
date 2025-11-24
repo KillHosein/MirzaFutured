@@ -14,6 +14,9 @@
                 <!--search & user info start-->
                 <ul class="nav pull-right top-menu">
                     <li>
+                        <input id="globalSearch" type="text" class="search" placeholder="جستجو در پنل..." />
+                    </li>
+                    <li>
                         <a id="themeToggle" href="#" title="حالت تیره">
                             <i class="icon-moon"></i>
                         </a>
@@ -40,6 +43,16 @@
       <!--sidebar start-->
       <aside>
           <div id="sidebar"  class="nav-collapse ">
+              <?php
+              $count_users = 0; $count_orders = 0; $count_payments = 0;
+              try {
+                  if(isset($pdo)){
+                      $count_users = (int)$pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
+                      $count_orders = (int)$pdo->query("SELECT COUNT(*) FROM invoice")->fetchColumn();
+                      $count_payments = (int)$pdo->query("SELECT COUNT(*) FROM Payment_report")->fetchColumn();
+                  }
+              } catch(Exception $e) {}
+              ?>
               <!-- sidebar menu start-->
               <?php $current = basename($_SERVER['PHP_SELF']); ?>
               <ul class="sidebar-menu">
@@ -53,6 +66,7 @@
                       <a href="javascript:;" class="">
                           <i class="icon-user"></i>
                           <span>کاربران</span>
+                          <span class="menu-badge"><?php echo number_format($count_users); ?></span>
                           <span class="arrow"></span>
                       </a>
                       <ul class="sub">
@@ -64,11 +78,12 @@
                       <a href="javascript:;" class="">
                           <i class="icon-briefcase"></i>
                           <span>مدیریت سرویس‌ها</span>
+                          <span class="menu-badge"><?php echo number_format($count_orders); ?></span>
                           <span class="arrow"></span>
                       </a>
                       <ul class="sub">
                           <li><a class="" href="invoice.php">سفارشات</a></li>
-                          <li><a class="" href="payment.php">پرداخت‌ها</a></li>
+                          <li><a class="" href="payment.php">پرداخت‌ها <span class="menu-badge"><?php echo number_format($count_payments); ?></span></a></li>
                           <li><a class="" href="service.php">سرویس‌ها</a></li>
                           <li><a class="" href="product.php">محصولات</a></li>
                           <li><a class="" href="productedit.php">ویرایش محصول</a></li>

@@ -422,6 +422,16 @@ ul.top-menu > li > a {
     margin-left: 15px;
 }
 
+/* menu badge */
+.menu-badge{
+    background: #ff6c60;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 11px;
+    padding: 2px 8px;
+    margin-right: auto;
+}
+
 ul.top-menu > li > a:hover, ul.top-menu > li > a:focus {
     border:1px solid #f0f0f8 !important;
     background-color: #fff!important;
@@ -696,32 +706,40 @@ ul.top-menu > li > a:hover, ul.top-menu > li > a:focus {
 
 .search {
     margin-top: 6px ;
-    width: 20px;
+    width: 220px;
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
     -ms-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
-    border: 1px solid #fff;
+    border: 1px solid #e5e7eb;
     box-shadow: none;
-    background: url("../img/search-icon.jpg") no-repeat 10px 8px;
-    padding:0 5px 0 35px;
-    color: #fff;
+    background: #fff url("../img/search-icon.jpg") no-repeat 8px center;
+    padding:6px 12px 6px 32px;
+    color: #111827;
+    border-radius: 999px;
 }
 
 .search:focus {
     margin-top: 5px ;
-    width: 180px;
-    border: 1px solid #eaeaea;
+    width: 260px;
+    border: 1px solid #d1d5db;
     box-shadow: none;
     -webkit-transition: all .3s ease;
     -moz-transition: all .3s ease;
     -ms-transition: all .3s ease;
     -o-transition: all .3s ease;
     transition: all .3s ease;
-    color: #c8c8c8;
-    font-weight: 300;
+    color: #111827;
+    font-weight: 400;
 }
+
+body.dark .search{
+    border-color: #374151;
+    background: #111827 url("../img/search-icon.jpg") no-repeat 8px center;
+    color: #e5e7eb;
+}
+body.dark .search:focus{ border-color: #4b5563; }
 
 /*--sidebar toggle---*/
 
