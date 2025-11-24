@@ -25,6 +25,26 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $query = $pdo->prepare($sql);
     $query->execute($params);
     $listusers = $query->fetchAll();
+    if(isset($_GET['export']) && $_GET['export'] === 'csv'){
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=users-'.date('Y-m-d').'.csv');
+        $out = fopen('php://output','w');
+        fputcsv($out, ['ID','Username','Number','Balance','Affiliates','Status','Agent']);
+        foreach($listusers as $u){
+            $status = strtolower($u['User_Status']);
+            fputcsv($out, [
+                $u['id'],
+                $u['username'],
+                $u['number'],
+                $u['Balance'],
+                $u['affiliatescount'],
+                $status,
+                $u['agent']
+            ]);
+        }
+        fclose($out);
+        exit();
+    }
 if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
     return;
@@ -154,23 +174,3 @@ if( !isset($_SESSION["user"]) || !$result ){
 
 </body>
 </html>
-if(isset($_GET['export']) && $_GET['export'] === 'csv'){
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=users-'.date('Y-m-d').'.csv');
-    $out = fopen('php://output','w');
-    fputcsv($out, ['ID','Username','Number','Balance','Affiliates','Status','Agent']);
-    foreach($listusers as $u){
-        $status = strtolower($u['User_Status']);
-        fputcsv($out, [
-            $u['id'],
-            $u['username'],
-            $u['number'],
-            $u['Balance'],
-            $u['affiliatescount'],
-            $status,
-            $u['agent']
-        ]);
-    }
-    fclose($out);
-    exit();
-}

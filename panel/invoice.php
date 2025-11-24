@@ -43,6 +43,14 @@ if(!empty($_GET['q'])){
     $where[] = "(id_user LIKE :q OR id_invoice LIKE :q OR username LIKE :q)";
     $params[':q'] = $searchTerm;
 }
+if(!empty($_GET['from']) && strtotime($_GET['from'])){
+    $where[] = "time_sell >= :fromTs";
+    $params[':fromTs'] = strtotime($_GET['from']);
+}
+if(!empty($_GET['to']) && strtotime($_GET['to'])){
+    $where[] = "time_sell <= :toTs";
+    $params[':toTs'] = strtotime($_GET['to'].' 23:59:59');
+}
 
 $sql = "SELECT * FROM invoice";
 if(!empty($where)){
@@ -125,6 +133,14 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                 <form class="form-inline" role="form" method="get">
                                     <div class="form-group" style="margin-left:8px;">
                                         <input type="text" class="form-control" name="q" placeholder="آیدی کاربر/سفارش یا نام کاربری" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <label style="margin-left:6px;">از تاریخ</label>
+                                        <input type="date" class="form-control" name="from" value="<?php echo isset($_GET['from']) ? htmlspecialchars($_GET['from']) : ''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <label style="margin-left:6px;">تا تاریخ</label>
+                                        <input type="date" class="form-control" name="to" value="<?php echo isset($_GET['to']) ? htmlspecialchars($_GET['to']) : ''; ?>">
                                     </div>
                                     <div class="form-group" style="margin-left:8px;">
                                         <select name="status" class="form-control">

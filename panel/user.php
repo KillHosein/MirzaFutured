@@ -213,12 +213,12 @@ if($user['number'] == "none")$user['number'] ="بدون شماره ";
                                 مدیریت کاربر
                             </header>
                             <div class="panel-body">
-                                <a class="btn btn-default btn-sm" href="user.php?id=<?php echo $user['id'];?>&status=block">مسدود کردن کاربر</a>
-                                <a class="btn btn-success  btn-sm" href="user.php?id=<?php echo $user['id'];?>&status=active">رفع مسدودی کاربر</a>
+                                <a class="btn btn-default btn-sm" href="user.php?id=<?php echo $user['id'];?>&status=block" data-confirm="کاربر مسدود شود؟">مسدود کردن کاربر</a>
+                                <a class="btn btn-success  btn-sm" href="user.php?id=<?php echo $user['id'];?>&status=active" data-confirm="رفع مسدودی کاربر انجام شود؟">رفع مسدودی کاربر</a>
                                 <a href="#addbalance" data-toggle="modal" class="btn btn-info  btn-sm">افزایش موجودی</a>
                                 <a href="#lowbalance" data-toggle="modal" class="btn btn-warning  btn-sm">کم کردن موجودی</a>
                                 <a href="#changeagent" data-toggle="modal" class="btn btn-primary  btn-sm">تغییر نوع کاربر</a>
-                                <a class="btn btn-danger  btn-sm" href="user.php?id=<?php echo $user['id'];?>&agent=f">حذف نماینده</a>
+                                <a class="btn btn-danger  btn-sm" href="user.php?id=<?php echo $user['id'];?>&agent=f" data-confirm="نوع کاربری به عادی تغییر یابد؟">حذف نماینده</a>
                                 <a href="#sendmessage" data-toggle="modal" class="btn btn-info  btn-sm">ارسال پیام به کاربر</a>
                             </div>
                         </section>

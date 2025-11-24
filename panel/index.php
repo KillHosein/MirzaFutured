@@ -150,6 +150,7 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     <!-- Custom styles for this template -->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/style-responsive.css" rel="stylesheet" />
+    <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
 
   </head>
 
@@ -166,14 +167,12 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                       <section class="panel">
                           <header class="panel-heading">فیلتر داشبورد</header>
                           <div class="panel-body">
-                              <form class="form-inline" method="get">
+                              <form class="form-inline" method="get" id="dashboardFilterForm">
                                   <div class="form-group" style="margin-left:8px;">
-                                      <label style="margin-left:6px;">از تاریخ</label>
-                                      <input type="date" class="form-control" name="from" value="<?php echo htmlspecialchars(isset($_GET['from'])?$_GET['from']:'',ENT_QUOTES,'UTF-8'); ?>">
-                                  </div>
-                                  <div class="form-group" style="margin-left:8px;">
-                                      <label style="margin-left:6px;">تا تاریخ</label>
-                                      <input type="date" class="form-control" name="to" value="<?php echo htmlspecialchars(isset($_GET['to'])?$_GET['to']:'',ENT_QUOTES,'UTF-8'); ?>">
+                                      <label style="margin-left:6px;">بازه تاریخ</label>
+                                      <input type="text" id="rangePicker" class="form-control" placeholder="انتخاب بازه" style="min-width:220px;">
+                                      <input type="hidden" name="from" id="rangeFrom" value="<?php echo htmlspecialchars(isset($_GET['from'])?$_GET['from']:'',ENT_QUOTES,'UTF-8'); ?>">
+                                      <input type="hidden" name="to" id="rangeTo" value="<?php echo htmlspecialchars(isset($_GET['to'])?$_GET['to']:'',ENT_QUOTES,'UTF-8'); ?>">
                                   </div>
                                   <div class="form-group" style="margin-left:8px;">
                                       <label style="margin-left:6px;">وضعیت سفارش</label>
@@ -429,9 +428,33 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     <script src="js/owl.carousel.js" ></script>
     <script src="js/jquery.customSelect.min.js" ></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/bootstrap-daterangepicker/date.js"></script>
+    <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
     
 
     <!--common script for all pages-->
     <script src="js/common-scripts.js"></script>
+    <script>
+      (function(){
+        var from = document.getElementById('rangeFrom').value;
+        var to = document.getElementById('rangeTo').value;
+        var $input = $('#rangePicker');
+        if(!$input.length) return;
+        var start = from ? new Date(from) : new Date();
+        var end = to ? new Date(to) : new Date();
+        var fmt = function(d){ var yyyy=d.getFullYear(); var mm=('0'+(d.getMonth()+1)).slice(-2); var dd=('0'+d.getDate()).slice(-2); return yyyy+'-'+mm+'-'+dd; };
+        $input.daterangepicker({
+          startDate: start,
+          endDate: end,
+          locale: { direction: 'rtl' }
+        }, function(start, end){
+          $('#rangeFrom').val(fmt(start.toDate()));
+          $('#rangeTo').val(fmt(end.toDate()));
+        });
+        if(from && to){
+          $input.val(from + ' - ' + to);
+        }
+      })();
+    </script>
   </body>
 </html>
