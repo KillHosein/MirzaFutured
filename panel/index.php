@@ -369,50 +369,70 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
               </script>
               <?php  } ?>
               <div class="charts-grid">
-                  <div class="chart-card">
+                  <div class="chart-card" data-chart="status">
                       <canvas id="statusChart" height="140"></canvas>
                   </div>
-                  <div class="chart-card">
+                  <div class="chart-card" data-chart="users">
                       <canvas id="usersChart" height="140"></canvas>
                   </div>
               </div>
+              <section class="panel" style="margin-top:12px;">
+                <header class="panel-heading">سفارشی‌سازی داشبورد</header>
+                <div class="panel-body">
+                  <div id="dashPrefs">
+                    <div class="row">
+                      <div class="col-sm-4"><label><input type="checkbox" v-model="show.status"> نمایش نمودار وضعیت سفارشات</label></div>
+                      <div class="col-sm-4"><label><input type="checkbox" v-model="show.users"> نمایش نمودار کاربران جدید</label></div>
+                      <div class="col-sm-4"><label><input type="checkbox" v-model="show.sales"> نمایش نمودار فروش</label></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
               <div class="action-grid">
-                  <a class="action-card" href="invoice.php">
+                  <a class="action-card" href="invoice.php" data-action-id="orders" draggable="true" aria-label="مدیریت سفارشات">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-shopping-cart"></i>
                       <div class="action-title">سفارشات</div>
                       <div class="action-desc">مدیریت و بررسی فاکتورها</div>
                   </a>
-                  <a class="action-card" href="inbound.php">
+                  <a class="action-card" href="inbound.php" data-action-id="inbounds" draggable="true" aria-label="مدیریت ورودی‌ها">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-exchange"></i>
                       <div class="action-title">ورودی‌ها</div>
                       <div class="action-desc">کنترل ورودی‌ها و جریان‌ها</div>
                   </a>
-                  <a class="action-card" href="cancelService.php">
+                  <a class="action-card" href="cancelService.php" data-action-id="cancel" draggable="true" aria-label="حذف سرویس">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-trash"></i>
                       <div class="action-title">حذف سرویس</div>
                       <div class="action-desc">لغو و پاک‌سازی سرویس‌ها</div>
                   </a>
-                  <a class="action-card" href="keyboard.php">
+                  <a class="action-card" href="keyboard.php" data-action-id="keyboard" draggable="true" aria-label="چیدمان کیبورد">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-th"></i>
                       <div class="action-title">چیدمان کیبورد</div>
                       <div class="action-desc">بهینه‌سازی چینش دکمه‌ها</div>
                   </a>
-                  <a class="action-card" href="payment.php">
+                  <a class="action-card" href="payment.php" data-action-id="payments" draggable="true" aria-label="پرداخت‌ها">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-credit-card"></i>
                       <div class="action-title">پرداخت‌ها</div>
                       <div class="action-desc">پیگیری تراکنش‌ها</div>
                   </a>
-                  <a class="action-card" href="product.php">
+                  <a class="action-card" href="product.php" data-action-id="products" draggable="true" aria-label="مدیریت محصولات">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-archive"></i>
                       <div class="action-title">مدیریت محصولات</div>
                       <div class="action-desc">ساخت و تغییر محصولات</div>
                   </a>
-                  <a class="action-card" href="productedit.php">
+                  <a class="action-card" href="productedit.php" data-action-id="productedit" draggable="true" aria-label="ویرایش محصول">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-edit"></i>
                       <div class="action-title">ویرایش محصول</div>
                       <div class="action-desc">به‌روزرسانی جزئیات</div>
                   </a>
-                  <a class="action-card" href="user.php">
+                  <a class="action-card" href="user.php" data-action-id="user" draggable="true" aria-label="مدیریت کاربر">
+                      <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-user"></i>
                       <div class="action-title">مدیریت کاربر</div>
                       <div class="action-desc">تنظیمات و وضعیت</div>
@@ -433,6 +453,7 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     <script src="js/owl.carousel.js" ></script>
     <script src="js/jquery.customSelect.min.js" ></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="assets/bootstrap-daterangepicker/date.js"></script>
     <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
     
@@ -463,6 +484,28 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
         $('#preset7d').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(); start.setDate(end.getDate()-6); $('#rangeFrom').val(fmt(start)); $('#rangeTo').val(fmt(end)); $('#dashboardFilterForm')[0].submit(); });
         $('#presetMonth').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), end.getMonth(), 1); $('#rangeFrom').val(fmt(start)); $('#rangeTo').val(fmt(end)); $('#dashboardFilterForm')[0].submit(); });
         $('#presetYear').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $('#rangeFrom').val(fmt(start)); $('#rangeTo').val(fmt(end)); $('#dashboardFilterForm')[0].submit(); });
+      })();
+    </script>
+    <script>
+      (function(){
+        if(!window.Vue) return;
+        var app = Vue.createApp({
+          data(){ return { show: JSON.parse(localStorage.getItem('dash_show')||'{"status":true,"users":true,"sales":true}') } },
+          watch:{ show:{ deep:true, handler:function(v){ localStorage.setItem('dash_show', JSON.stringify(v)); toggleCharts(v); } } },
+          mounted(){ toggleCharts(this.show); lazyInitCharts(); }
+        });
+        app.mount('#dashPrefs');
+        function toggleCharts(s){
+          var statusEl = document.querySelector('[data-chart="status"]'); if(statusEl) statusEl.style.display = s.status ? '' : 'none';
+          var usersEl = document.querySelector('[data-chart="users"]'); if(usersEl) usersEl.style.display = s.users ? '' : 'none';
+          var salesCanvas = document.getElementById('salesChart'); if(salesCanvas){ var card = salesCanvas.parentElement; card.style.display = s.sales ? '' : 'none'; }
+        }
+        function lazyInitCharts(){
+          if(!('IntersectionObserver' in window)) return;
+          var io = new IntersectionObserver(function(entries){ entries.forEach(function(en){ if(en.isIntersecting){ /* charts already instantiate by original script */ } }); }, { threshold: 0.1 });
+          document.querySelectorAll('.chart-card').forEach(function(el){ io.observe(el); });
+          var salesCanvas = document.getElementById('salesChart'); if(salesCanvas) io.observe(salesCanvas);
+        }
       })();
     </script>
   </body>

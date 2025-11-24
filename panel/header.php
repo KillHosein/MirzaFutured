@@ -16,6 +16,21 @@
                     <li>
                         <input id="globalSearch" type="text" class="search" placeholder="جستجو در پنل..." />
                     </li>
+                    <li class="dropdown" id="notifDropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="اعلان‌ها">
+                            <i class="icon-bell"></i>
+                            <span id="notifBadge" class="badge badge-warning" style="display:none;">0</span>
+                        </a>
+                        <ul class="dropdown-menu extended notification" style="width:320px;">
+                            <div class="notify-arrow"></div>
+                            <li>
+                                <p id="notifTitle">اعلان‌های جدید</p>
+                            </li>
+                            <li>
+                                <div id="notifList" style="max-height:280px; overflow:auto;"></div>
+                            </li>
+                        </ul>
+                    </li>
                     <li>
                         <a id="themeToggle" href="#" title="حالت تیره">
                             <i class="icon-moon"></i>
@@ -118,6 +133,15 @@
           </div>
       </aside>
       <!--sidebar end-->
+      <div id="cmdPalette">
+        <section class="panel">
+          <header class="panel-heading">جستجوی سریع اقدامات</header>
+          <div class="panel-body">
+            <input id="cmdInput" type="text" placeholder="نام دکمه یا اقدام را وارد کنید..."/>
+            <div id="cmdList"></div>
+          </div>
+        </section>
+      </div>
       <div class="breadcrumb-bar" id="breadcrumbBar" style="padding:10px 16px;">
         <span id="crumbPath" style="font-weight:700;"></span>
         <span id="crumbInfo" class="text-muted" style="margin-right:8px;"></span>

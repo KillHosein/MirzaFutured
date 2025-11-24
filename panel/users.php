@@ -125,9 +125,9 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                     <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
                                     <input type="text" id="usersQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
-                                    <a href="#" class="btn btn-default" id="usersSelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
-                                    <a href="#" class="btn btn-default" id="usersInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
-                                    <a href="#" class="btn btn-default" id="usersClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <a href="#" class="btn btn-default tooltips" id="usersSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="usersInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="usersClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <a href="#" class="btn btn-danger" id="usersBlockSel"><i class="icon-ban-circle"></i> مسدود گروهی</a>
                                     <a href="#" class="btn btn-success" id="usersUnblockSel"><i class="icon-ok-circle"></i> رفع مسدودی گروهی</a>
                                     <div class="btn-group" style="margin-right:8px;">
@@ -150,7 +150,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="#" class="btn btn-success" id="usersExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-success" id="usersExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
                                     <span id="usersSelCount" class="sel-count">انتخاب‌ها: 0</span>
-                                    <a href="#" class="btn btn-info" id="usersColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
+                                    <a href="#" class="btn btn-info tooltips" id="usersColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                             </div>
                             <?php

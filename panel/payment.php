@@ -177,14 +177,14 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-danger" id="presetUnpaid">پرداخت‌نشده</a>
                                         <a href="#" class="btn btn-info" id="presetWaiting">در انتظار</a>
                                     </div>
-                                    <a href="#" class="btn btn-default" id="paySelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
-                                    <a href="#" class="btn btn-default" id="payInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
-                                    <a href="#" class="btn btn-default" id="payClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <a href="#" class="btn btn-default tooltips" id="paySelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="payInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="payClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <span id="paySelCount" class="sel-count">انتخاب‌ها: 0</span>
                                     <a href="#" class="btn btn-default" id="payPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="payExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-success" id="payExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
-                                    <a href="#" class="btn btn-info" id="payColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
+                                    <a href="#" class="btn btn-info tooltips" id="payColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                             </div>
                         </section>

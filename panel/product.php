@@ -137,12 +137,12 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                     <a href="#" class="btn btn-success" id="prodExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-danger" id="prodRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
                                     <a href="#" class="btn btn-primary" id="prodCopyCodes"><i class="icon-copy"></i> کپی کد سرویس‌ها</a>
-                                    <a href="#" class="btn btn-default" id="prodSelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
-                                    <a href="#" class="btn btn-default" id="prodInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
-                                    <a href="#" class="btn btn-default" id="prodClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <a href="#" class="btn btn-default tooltips" id="prodSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="prodInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="prodClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <a href="#" class="btn btn-success" id="prodExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
                                     <span id="prodSelCount" class="sel-count">انتخاب‌ها: 0</span>
-                                    <a href="#" class="btn btn-info" id="prodColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
+                                    <a href="#" class="btn btn-info tooltips" id="prodColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                         </section>
                             <table class="table table-striped border-top" id="sample_1">

@@ -193,6 +193,20 @@ var Script = function () {
         $(document).on('keydown', function(e){ if(e.shiftKey && e.key.toLowerCase()==='a'){ $menu.toggle(); } });
     })();
 
+    // notifications polling
+    (function(){
+        var $badge = $('#notifBadge'); var $list = $('#notifList'); var last = {users:0, orders:0, payments:0}; var unseen=0;
+        function render(items){ $list.empty(); items.forEach(function(it){ var $d = $('<div class="notif-item"></div>').css({padding:'8px 12px', borderBottom:'1px solid #eee'});
+            var txt = it.type==='order' ? ('سفارش '+it.id+' ('+it.username+') - '+it.status) : ('پرداخت '+it.id+' از کاربر '+it.user+' - '+it.status);
+            $d.text(txt); $list.append($d); }); }
+        function tick(){ $.getJSON('metrics.php').done(function(r){ if(!r || !r.ok) return; var c=r.counts||{}; var items=[]; if(last.orders && c.orders>last.orders){ unseen += (c.orders-last.orders); (r.latest.orders||[]).forEach(function(o){ items.push({type:'order', id:o.id_invoice, username:o.username, status:o.Status}); }); }
+            if(last.payments && c.payments>last.payments){ unseen += (c.payments-last.payments); (r.latest.payments||[]).forEach(function(p){ items.push({type:'payment', id:p.id_order, user:p.id_user, status:p.payment_Status}); }); }
+            last = c; render(items); if(unseen>0){ $badge.text(unseen).show(); showToast('اعلان جدید'); } }); }
+        $.getJSON('metrics.php').done(function(r){ if(r && r.ok){ last = r.counts||last; render([].concat((r.latest.orders||[]).map(function(o){ return {type:'order', id:o.id_invoice, username:o.username, status:o.Status}; }), (r.latest.payments||[]).map(function(p){ return {type:'payment', id:p.id_order, user:p.id_user, status:p.payment_Status}; }))); } });
+        setInterval(tick, 10000);
+        $('#notifDropdown > a').on('click', function(){ unseen=0; $badge.hide(); });
+    })();
+
     // toast helper
     window.showToast = function(text){
         var $c = $('#toast-container'); if(!$c.length){ $c = $('<div id="toast-container"></div>').appendTo('body'); }
@@ -267,5 +281,29 @@ var Script = function () {
         $(document).on('change','.group-checkable', function(){ var set=$(this).attr('data-set'); var checked=$(this).prop('checked'); $(set).each(function(){ $(this).prop('checked', checked).trigger('change'); }); });
         $(document).on('keydown', function(e){ if(e.shiftKey){ var key=e.key.toLowerCase(); if(key==='s'){ var $t=$('table').first(); $t.find('tbody tr:visible .checkboxes').prop('checked', true).trigger('change'); } else if(key==='d'){ var $t=$('table').first(); $t.find('tbody .checkboxes').prop('checked', false).trigger('change'); } else if(key==='c'){ var btn=$('#invCopy,#usersCopy,#prodCopy,#payCopy').first(); if(btn.length) btn.trigger('click'); } else if(key==='e'){ var btn=$('#invExportVisible,#usersExportVisible,#prodExportVisible,#payExportVisible').first(); if(btn.length) btn.trigger('click'); } else if(key==='p'){ var btn=$('#invPrint,#usersPrint,#prodPrint,#payPrint').first(); if(btn.length) btn.trigger('click'); } } });
     });
+
+    // action grid favorites, drag-and-drop, and command palette
+    (function(){
+        var $grid = $('.action-grid'); if(!$grid.length) return;
+        var favKey='fav_actions', orderKey='order_actions';
+        function loadFav(){ try{ return JSON.parse(localStorage.getItem(favKey)||'[]'); }catch(e){ return []; } }
+        function saveFav(ids){ localStorage.setItem(favKey, JSON.stringify(ids)); }
+        function loadOrder(){ try{ return JSON.parse(localStorage.getItem(orderKey)||'[]'); }catch(e){ return []; } }
+        function saveOrder(ids){ localStorage.setItem(orderKey, JSON.stringify(ids)); }
+        var favs = loadFav();
+        var cards = $grid.find('.action-card');
+        cards.each(function(){ var id=$(this).attr('data-action-id'); if(favs.indexOf(id)>=0){ $(this).addClass('fav'); } });
+        $grid.on('click','.fav-toggle', function(e){ e.preventDefault(); e.stopPropagation(); var $card=$(this).closest('.action-card'); var id=$card.attr('data-action-id'); var i=favs.indexOf(id); if(i>=0){ favs.splice(i,1); $card.removeClass('fav'); } else { favs.push(id); $card.addClass('fav'); } saveFav(favs); });
+        var dragId=null; cards.on('dragstart', function(e){ dragId=$(this).attr('data-action-id'); e.originalEvent.dataTransfer.effectAllowed='move'; });
+        cards.on('dragover', function(e){ e.preventDefault(); e.originalEvent.dataTransfer.dropEffect='move'; });
+        cards.on('drop', function(e){ e.preventDefault(); var targetId=$(this).attr('data-action-id'); if(!dragId || dragId===targetId) return; var $drag=$grid.find('.action-card[data-action-id="'+dragId+'"]').get(0); var $target=$(this).get(0); $grid.get(0).insertBefore($drag, $target); var ids=[]; $grid.find('.action-card').each(function(){ ids.push($(this).attr('data-action-id')); }); saveOrder(ids); });
+        var order=loadOrder(); if(order.length){ order.forEach(function(id){ var el=$grid.find('.action-card[data-action-id="'+id+'"]').get(0); if(el){ $grid.get(0).appendChild(el); } }); }
+        var $pal=$('#cmdPalette'), $inp=$('#cmdInput'), $list=$('#cmdList');
+        function openPal(){ if(!$pal.length) return; $list.empty(); $pal.show(); $inp.val('').focus(); renderList(cards); }
+        function closePal(){ if(!$pal.length) return; $pal.hide(); }
+        function renderList($items){ if(!$pal.length) return; $list.empty(); $items.each(function(){ var text=$(this).find('.action-title').text(); var href=$(this).attr('href'); var $item=$('<div class="cmd-item"></div>').text(text).attr('data-href', href); $list.append($item); }); }
+        $(document).on('keydown', function(e){ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openPal(); } });
+        if($pal.length){ $inp.on('keyup', function(){ var q=$(this).val().trim().toLowerCase(); if(!q){ renderList(cards); return; } var matched=cards.filter(function(){ return $(this).text().toLowerCase().indexOf(q)!==-1; }); renderList(matched); }); $list.on('click','.cmd-item', function(){ var href=$(this).attr('data-href'); closePal(); location.href=href; }); $pal.on('click', function(e){ if($(e.target).is('#cmdPalette')) closePal(); }); }
+    })();
 
 }();
