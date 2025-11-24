@@ -125,6 +125,24 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <input type="text" id="usersQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                     <a href="#" class="btn btn-danger" id="usersBlockSel"><i class="icon-ban-circle"></i> مسدود گروهی</a>
                                     <a href="#" class="btn btn-success" id="usersUnblockSel"><i class="icon-ok-circle"></i> رفع مسدودی گروهی</a>
+                                    <div class="btn-group" style="margin-right:8px;">
+                                      <a href="#" class="btn btn-success" id="usersPresetActive">نمایش فعال</a>
+                                      <a href="#" class="btn btn-danger" id="usersPresetBlock">نمایش مسدود</a>
+                                    </div>
+                                    <input type="text" id="usersMessage" class="form-control" placeholder="پیام گروهی" style="max-width:240px;">
+                                    <a href="#" class="btn btn-info" id="usersSendMsg"><i class="icon-envelope"></i> ارسال پیام</a>
+                                    <input type="number" id="usersAmount" class="form-control" placeholder="مبلغ (تومان)" style="max-width:160px;">
+                                    <a href="#" class="btn btn-success" id="usersAddBalance"><i class="icon-plus"></i> افزایش موجودی</a>
+                                    <a href="#" class="btn btn-warning" id="usersLowBalance"><i class="icon-minus"></i> کسر موجودی</a>
+                                    <select id="usersAgentSelect" class="form-control" style="max-width:180px;">
+                                      <option value="">تغییر نوع کاربر…</option>
+                                      <option value="f">عادی</option>
+                                      <option value="n">نماینده</option>
+                                      <option value="n2">نماینده پیشرفته</option>
+                                    </select>
+                                    <a href="#" class="btn btn-primary" id="usersApplyAgent"><i class="icon-user"></i> اعمال نوع کاربر</a>
+                                    <a href="#" class="btn btn-default" id="usersPrint"><i class="icon-print"></i> چاپ</a>
+                                    <a href="#" class="btn btn-success" id="usersExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                 </div>
                             </div>
                             <?php
@@ -211,6 +229,15 @@ if( !isset($_SESSION["user"]) || !$result ){
         }
         $('#usersBlockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('block'); });
         $('#usersUnblockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('active'); });
+        $('#usersPresetActive').on('click', function(e){ e.preventDefault(); var $f=$('form[method="get"]'); $f.find('select[name="status"]').val('active'); $f.submit(); });
+        $('#usersPresetBlock').on('click', function(e){ e.preventDefault(); var $f=$('form[method="get"]'); $f.find('select[name="status"]').val('block'); $f.submit(); });
+        $('#usersSendMsg').on('click', function(e){ e.preventDefault(); var txt=$('#usersMessage').val(); if(!txt){ showToast('متن پیام را وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,textmessage:txt}).always(function(){ done++; if(done===ids.length){ showToast('پیام‌ها ارسال شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
+        function bulkBalance(param){ var amt=parseInt($('#usersAmount').val(),10); if(!(amt>0)){ showToast('مبلغ معتبر وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; var key = param==='add' ? 'priceadd' : 'pricelow'; ids.forEach(function(id){ var args={id:id}; args[key]=amt; $.get('user.php',args).always(function(){ done++; if(done===ids.length){ showToast('عملیات موجودی انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); }
+        $('#usersAddBalance').on('click', function(e){ e.preventDefault(); bulkBalance('add'); });
+        $('#usersLowBalance').on('click', function(e){ e.preventDefault(); bulkBalance('low'); });
+        $('#usersApplyAgent').on('click', function(e){ e.preventDefault(); var ag=$('#usersAgentSelect').val(); if(!ag){ showToast('نوع کاربر را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,agent:ag}).always(function(){ done++; if(done===ids.length){ showToast('نوع کاربر اعمال شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
+        $('#usersPrint').on('click', function(e){ e.preventDefault(); window.print(); });
+        $('#usersExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
       })();
     </script>
 

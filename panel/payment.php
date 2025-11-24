@@ -10,6 +10,17 @@ if( !isset($_SESSION["user"]) || !$adminRow ){
     return;
 }
 
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['bulk_payment_status'])){
+    $ids = isset($_POST['ids']) && is_array($_POST['ids']) ? $_POST['ids'] : [];
+    $st = $_POST['bulk_payment_status'];
+    if(!empty($ids) && in_array($st,['paid','Unpaid','waiting','reject','expire'])){
+        $stmt = $pdo->prepare('UPDATE Payment_report SET payment_Status = :st WHERE id_order = :id');
+        foreach($ids as $id){ $stmt->execute([':st'=>$st, ':id'=>$id]); }
+    }
+    header('Location: payment.php');
+    exit;
+}
+
 $statuses = [
     'paid' => ['label' => "پرداخت شده", 'color' => '#10b981'],
     'Unpaid' => ['label' => "پرداخت نشده", 'color' => '#ef4444'],
@@ -148,7 +159,24 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                 <div class="action-toolbar">
                                     <a href="payment.php" class="btn btn-default" id="payRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
                                     <a href="#" class="btn btn-info" id="payCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <a href="#" class="btn btn-primary" id="payCopy"><i class="icon-copy"></i> کپی شماره تراکنش‌ها</a>
                                     <input type="text" id="payQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                    <select id="payBulkStatus" class="form-control" style="max-width:200px;">
+                                        <option value="">تغییر وضعیت گروهی…</option>
+                                        <option value="paid">پرداخت شده</option>
+                                        <option value="Unpaid">پرداخت نشده</option>
+                                        <option value="waiting">در انتظار تایید</option>
+                                        <option value="reject">رد شده</option>
+                                        <option value="expire">منقضی</option>
+                                    </select>
+                                    <a href="#" class="btn btn-warning" id="payApplyBulk"><i class="icon-ok"></i> اعمال وضعیت</a>
+                                    <div class="btn-group" style="margin-right:8px;">
+                                        <a href="#" class="btn btn-success" id="presetPaid">پرداخت‌شده</a>
+                                        <a href="#" class="btn btn-danger" id="presetUnpaid">پرداخت‌نشده</a>
+                                        <a href="#" class="btn btn-info" id="presetWaiting">در انتظار</a>
+                                    </div>
+                                    <a href="#" class="btn btn-default" id="payPrint"><i class="icon-print"></i> چاپ</a>
+                                    <a href="#" class="btn btn-success" id="payExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                 </div>
                             </div>
                         </section>
@@ -204,6 +232,14 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
       (function(){
         $('#payCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
         attachTableQuickSearch('#sample_1','#payQuickSearch');
+        $('#payCopy').on('click', function(e){ e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شماره‌ها کپی شد'); } else { showToast('هیچ ردیفی انتخاب نشده است'); } });
+        $('#payApplyBulk').on('click', function(e){ e.preventDefault(); var st=$('#payBulkStatus').val(); if(!st){ showToast('وضعیت را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(!ids.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var $f=$('<form method="post"></form>').append($('<input name="bulk_payment_status">').val(st)); ids.forEach(function(id){ $f.append($('<input name="ids[]">').val(id)); }); $('body').append($f); $f.submit(); });
+        function setStatusAndSubmit(val){ var $form = $('form[method="get"]').first(); $form.find('select[name="status"]').val(val); $form.submit(); }
+        $('#presetPaid').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('paid'); });
+        $('#presetUnpaid').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('Unpaid'); });
+        $('#presetWaiting').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('waiting'); });
+        $('#payPrint').on('click', function(e){ e.preventDefault(); window.print(); });
+        $('#payExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID User,Order ID,Price,Time,Method,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'payments-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
       })();
     </script>
 

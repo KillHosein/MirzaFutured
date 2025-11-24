@@ -133,6 +133,10 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                     <a href="#" class="btn btn-primary" id="prodCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
                                     <a href="?export=csv" class="btn btn-success"><i class="icon-download"></i> خروجی CSV</a>
                                     <input type="text" id="prodQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                    <a href="#" class="btn btn-default" id="prodPrint"><i class="icon-print"></i> چاپ</a>
+                                    <a href="#" class="btn btn-success" id="prodExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-danger" id="prodRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
+                                    <a href="#" class="btn btn-primary" id="prodCopyCodes"><i class="icon-copy"></i> کپی کد سرویس‌ها</a>
                                 </div>
                         </section>
                             <table class="table table-striped border-top" id="sample_1">
@@ -335,6 +339,10 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
           e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); });
           if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شناسه‌ها کپی شد'); } else { showToast('هیچ محصولی انتخاب نشده است'); }
         });
+        $('#prodCopyCodes').on('click', function(e){ e.preventDefault(); var codes=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) codes.push($r.find('td').eq(2).text().trim()); }); if(codes.length){ navigator.clipboard.writeText(codes.join(', ')); showToast('کدها کپی شد'); } else { showToast('هیچ محصولی انتخاب نشده است'); } });
+        $('#prodRemoveBulk').on('click', function(e){ e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ محصولی انتخاب نشده است'); return; } if(!confirm('حذف گروهی محصولات انتخاب‌شده انجام شود؟')) return; var done=0; ids.forEach(function(id){ $.get('product.php',{removeid:id}).always(function(){ done++; if(done===ids.length){ showToast('حذف انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
+        $('#prodPrint').on('click', function(e){ e.preventDefault(); window.print(); });
+        $('#prodExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim(), $td.eq(7).text().trim(), $td.eq(8).text().trim(), $td.eq(9).text().trim(), $td.eq(10).text().trim()]); }); var csv='ID,Code,Name,Price,Volume,Time,Location,Agent,Reset,Category\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'products-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
       })();
     </script>
 
