@@ -1,16 +1,80 @@
 <?php
 session_start();
 require_once '../config.php';
-$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-    $query->execute();
-    $result = $query->fetch(PDO::FETCH_ASSOC);
-    $query = $pdo->prepare("SELECT * FROM Payment_report ORDER BY time ASC");
-    $query->execute();
-    $listpayment = $query->fetchAll();
-if( !isset($_SESSION["user"]) || !$result ){
+$q = $pdo->prepare("SELECT * FROM admin WHERE username=:u");
+$q->bindParam(':u', $_SESSION['user'], PDO::PARAM_STR);
+$q->execute();
+$adminRow = $q->fetch(PDO::FETCH_ASSOC);
+if( !isset($_SESSION["user"]) || !$adminRow ){
     header('Location: login.php');
     return;
+}
+
+$statuses = [
+    'paid' => ['label' => "پرداخت شده", 'color' => '#10b981'],
+    'Unpaid' => ['label' => "پرداخت نشده", 'color' => '#ef4444'],
+    'expire' => ['label' => "منقضی شده", 'color' => '#6b7280'],
+    'reject' => ['label' => "رد شده", 'color' => '#f59e0b'],
+    'waiting' => ['label' => "در انتظار تایید", 'color' => '#3b82f6']
+];
+$methods = [
+    'cart to cart' => "کارت به کارت",
+    'low balance by admin' => "کسر موجودی توسط ادمین",
+    'add balance by admin' => "افزایش موجودی توسط ادمین",
+    'Currency Rial 1' => "درگاه ارزی ریالی اول",
+    'Currency Rial tow' => "درگاه ارزی ریالی دوم",
+    'Currency Rial 3' => "درگاه ارزی ریالی سوم",
+    'aqayepardakht' => "درگاه اقای پرداخت",
+    'zarinpal' => "زرین پال",
+    'plisio' => "درکاه ارزی plisio",
+    'arze digital offline' => "درگاه ارزی آفلاین",
+    'Star Telegram' => "استار تلگرام",
+    'nowpayment' => 'NowPayment'
+];
+
+$where = [];
+$params = [];
+if(!empty($_GET['status'])){
+    $where[] = "payment_Status = :status";
+    $params[':status'] = $_GET['status'];
+}
+if(!empty($_GET['method'])){
+    $where[] = "Payment_Method = :method";
+    $params[':method'] = $_GET['method'];
+}
+if(!empty($_GET['q'])){
+    $searchTerm = '%' . $_GET['q'] . '%';
+    $where[] = "(id_user LIKE :q OR id_order LIKE :q)";
+    $params[':q'] = $searchTerm;
+}
+
+$sql = "SELECT * FROM Payment_report";
+if(!empty($where)){
+    $sql .= " WHERE " . implode(' AND ', $where);
+}
+$sql .= " ORDER BY time DESC";
+
+$query = $pdo->prepare($sql);
+$query->execute($params);
+$listpayment = $query->fetchAll();
+
+if(isset($_GET['export']) && $_GET['export'] === 'csv'){
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=payments-' . date('Y-m-d') . '.csv');
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['ID User', 'Order ID', 'Price', 'Time', 'Method', 'Status']);
+    foreach($listpayment as $row){
+        fputcsv($output, [
+            $row['id_user'],
+            $row['id_order'],
+            $row['price'],
+            $row['time'],
+            isset($methods[$row['Payment_Method']]) ? $methods[$row['Payment_Method']] : $row['Payment_Method'],
+            isset($statuses[$row['payment_Status']]) ? $statuses[$row['payment_Status']]['label'] : $row['payment_Status']
+        ]);
+    }
+    fclose($output);
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -30,8 +94,7 @@ if( !isset($_SESSION["user"]) || !$result ){
     <link href="css/bootstrap-reset.css" rel="stylesheet">
     <!--external css-->
     <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
-    <link href="assets/jquery-easy-pie-chart/jquery.easy-pie-chart.css" rel="stylesheet" type="text/css" media="screen"/>
-    <link rel="stylesheet" href="css/owl.carousel.css" type="text/css">
+    
     <!-- Custom styles for this template -->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/style-responsive.css" rel="stylesheet" />
@@ -56,6 +119,35 @@ if( !isset($_SESSION["user"]) || !$result ){
                 <div class="row">
                     <div class="col-lg-12">
                         <section class="panel">
+                            <header class="panel-heading">جستجوی پیشرفته</header>
+                            <div class="panel-body">
+                                <form class="form-inline" role="form" method="get">
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" class="form-control" name="q" placeholder="آیدی کاربر یا سفارش" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <select name="status" class="form-control">
+                                            <option value="">همه وضعیت‌ها</option>
+                                            <?php foreach($statuses as $key => $val): ?>
+                                                <option value="<?php echo $key; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] === $key) ? 'selected' : ''; ?>><?php echo $val['label']; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <select name="method" class="form-control">
+                                            <option value="">همه روش‌ها</option>
+                                            <?php foreach($methods as $key => $val): ?>
+                                                <option value="<?php echo $key; ?>" <?php echo (isset($_GET['method']) && $_GET['method'] === $key) ? 'selected' : ''; ?>><?php echo $val; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">فیلتر</button>
+                                    <a href="payment.php" class="btn btn-default">پاک کردن</a>
+                                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                </form>
+                            </div>
+                        </section>
+                        <section class="panel">
                             <header class="panel-heading">لیست تراکنش ها</header>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
@@ -72,49 +164,14 @@ if( !isset($_SESSION["user"]) || !$result ){
                                 </thead>
                                 <tbody> <?php
                                 foreach($listpayment as $list){
-                                    $list['price'] = number_format($list['price']);
-                                    $list['Payment_Method'] = [
-                                        'cart to cart' => "کارت به کارت",
-                                        'low balance by admin' => "کسر موجودی توسط ادمین",
-                                        "add balance by admin" => "افزایش موجودی توسط ادمین",
-                                        "Currency Rial 1" => "درگاه ارزی ریالی اول",
-                                        "Currency Rial tow" => "درگاه ارزی ریالی دوم",
-                                        "Currency Rial 3"	 => "درگاه ارزی ریالی سوم",
-                                        "aqayepardakht" => "درگاه اقای پرداخت",
-                                        "zarinpal" => "زرین پال",
-                                        "plisio" => "درکاه ارزی plisio",
-                                        'arze digital offline' => "درگاه ارزی آفلاین",
-                                        'Star Telegram' => "استار تلگرام",
-                                        'nowpayment' => 'NowPayment'
-                                    ][$list['Payment_Method']];
-                                    $color = [
-                                        'paid' => "statuscoloregreen",
-                                        'Unpaid' => "statuscolorered",
-                                        'expire' => "statuscoloregry",
-                                        "reject" => "statuscolorereject",
-                                        "waiting" => "statuscolorewait"
-                                    ][$list['payment_Status']];
-                                    $list['payment_Status'] = [
-                                        'paid' => "پرداخت شده",
-                                        'Unpaid' => "پرداخت نشده",
-                                        'expire' => "منقضی شده",
-                                        "reject" => "رد شده توسط ادمین",
-                                        "waiting" => "در انتظار تایید توسط ادمین"
-                                    ][$list['payment_Status']];
-                                   echo "<tr class=\"odd gradeX\">
-                                        <td>
-                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>
-                                        <td>{$list['id_user']}</td>
-                                        <td class=\"hidden-phone\">{$list['id_order']}</td>
-                                        <td class=\"hidden-phone\">{$list['price']}</td>
-                                        <td class=\"hidden-phone\">{$list['time']}</td>
-                                        <td class=\"hidden-phone\">{$list['Payment_Method']}</td>
-                                        <td class=\"hidden-phon\"><span class=\"$color\">{$list['payment_Status']}<span></td>
-                                    </tr>";
+                                    $status_label = isset($statuses[$list['payment_Status']]) ? $statuses[$list['payment_Status']]['label'] : $list['payment_Status'];
+                                    $status_color = isset($statuses[$list['payment_Status']]) ? $statuses[$list['payment_Status']]['color'] : '#999';
+                                    $method_label = isset($methods[$list['Payment_Method']]) ? $methods[$list['Payment_Method']] : $list['Payment_Method'];
+                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_order']}</td>\n                                        <td class=\"hidden-phone\">" . number_format($list['price']) . "</td>\n                                        <td class=\"hidden-phone\">{$list['time']}</td>\n                                        <td class=\"hidden-phone\">{$method_label}</td>\n                                        <td class=\"hidden-phone\"><span class=\"badge\" style=\"background-color:{$status_color}\">{$status_label}</span></td>\n                                    </tr>";
                                 }
                                     ?>
-                                </tbody>
-                            </table>
+                            </tbody>
+                        </table>
                         </section>
                     </div>
                 </div>
