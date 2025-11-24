@@ -63,29 +63,26 @@ a, a:hover, a:focus {
 /*login page*/
 
 .login-body {
-    background: url("../img/background.png") no-repeat center center /cover;
-    height: 100vh;
+    background: linear-gradient(180deg,#f7f9fc 0%, #eef2f7 100%);
+    min-height: 100vh;
 }
 
 .form-signin {
-    max-width: 400px;
+    max-width: 420px;
     margin: 100px auto 0;
-    background: transparent;
-    backdrop-filter: blur(40px);
+    background: #fff;
+    border-radius: 12px;
+    border-top: 6px solid var(--primary-color);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
 }
 
 .form-signin h2.form-signin-heading {
-    margin: 0;
-    padding:20px 15px;
+    margin: 0 0 10px;
+    padding: 20px 15px 10px;
     text-align: center;
-    background: #41cac0;
-    border-radius: 5px 5px 0 0;
-    -webkit-border-radius: 5px 5px 0 0;
-    color: #fff;
-    font-size: 18px;
-    text-transform: uppercase;
-    font-weight: 300;
-    font-family: yekan,'Open Sans', sans-serif;
+    color: #111827;
+    font-size: 20px;
+    font-weight: 700;
 }
 
 .form-signin .checkbox {
@@ -99,9 +96,11 @@ a, a:hover, a:focus {
 }
 .form-signin .form-control {
     position: relative;
-    font-size: 16px;
+    font-size: 14px;
     height: auto;
-    padding: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -110,30 +109,24 @@ a, a:hover, a:focus {
     z-index: 2;
 }
 .form-signin input[type="text"], .form-signin input[type="password"] {
-    margin-bottom: 15px;
-    border-radius: 5px;
-    -webkit-border-radius: 5px;
-    border: 1px solid #eaeaea;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
     box-shadow: none;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .form-signin .btn-login {
-    background: #f67a6e;
+    background: var(--primary-color);
     color: #fff;
-    text-transform: uppercase;
-    font-weight: 300;
-    font-family: yekan,'Open Sans', sans-serif;
-    box-shadow: 0 4px #e56b60;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 8px;
+    transition: all .2s ease;
     margin-bottom: 20px;
 }
 
-.form-signin p {
-    text-align: center;
-    color: #b6b6b6;
-    font-size: 16px;
-    font-weight: 300;
-}
+.form-signin p { text-align: center; color: #9ca3af; font-size: 14px; font-weight: 400; }
 
 .form-signin a {
     color: #b6b6b6;
@@ -146,6 +139,13 @@ a, a:hover, a:focus {
 .login-wrap {
     padding: 20px;
 }
+
+/* table refresh */
+.table { border-collapse: separate; border-spacing: 0; }
+.table thead th { background: #f9fafb; color: #111827; font-weight: 600; }
+.table tbody tr { transition: background .15s ease; }
+.table tbody tr:hover { background: #f7f9fc; }
+.table td, .table th { border-color: #eef2f7 !important; }
 
 .login-social-link  {
     display: inline-block;
@@ -1122,6 +1122,9 @@ body.dark {
     color: #e5e7eb;
     background: linear-gradient(180deg,#0f172a 0%, #111827 100%);
 }
+body.dark .table thead th { background: #0f172a; color: #e5e7eb; }
+body.dark .table td, body.dark .table th { border-color: #1f2937 !important; }
+body.dark .table tbody tr:hover { background: #0b1220; }
 body.dark #sidebar {
     background: #0b1220;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset;

@@ -5,11 +5,18 @@ session_regenerate_id(true);
 require_once '../config.php';
 require_once '../function.php';
 require_once '../botapi.php';
-$allowed_ips = select("setting","*",null,null,"select");
+try {
+    $allowed_ips = select("setting","*",null,null,"select");
+} catch (Throwable $e) {
+    $allowed_ips = ['iplogin' => ''];
+}
 
 $user_ip = $_SERVER['REMOTE_ADDR'];
-$admin_ids = select("admin", "id_admin",null,null,"FETCH_COLUMN");
-$check_ip = $allowed_ips['iplogin'] == $user_ip ? true:false;
+$admin_ids = [];
+try {
+    $admin_ids = select("admin", "id_admin",null,null,"FETCH_COLUMN");
+} catch (Throwable $e) {}
+$check_ip = isset($allowed_ips['iplogin']) ? ($allowed_ips['iplogin'] == $user_ip) : true;
 $texterrr = "";
 $_SESSION["user"] = null;
 if (isset($_POST['login'])) {
@@ -80,6 +87,7 @@ if (isset($_POST['login'])) {
             <p>جهت استفاده از پنل تحت وب باید از داخل ربات زیر پیام اطلاعات ورود دکمه تنظیم آیپی ورود را زده و آیپی زیر را در آنجا ارسال کنید تا بتوانید استفاده نمایید.</p>
             
             <div class="ip-address" id="user-ip"><?php echo $user_ip; ?></div>
+            <button class="btn" id="copy-ip">کپی آی‌پی</button>
         </div>
         <?php } ?>
         <?php if($check_ip){?>
@@ -98,4 +106,19 @@ if (isset($_POST['login'])) {
 
 
   </body>
+  <script>
+    (function(){
+      var btn = document.getElementById('copy-ip');
+      if(!btn) return;
+      var el = document.getElementById('user-ip');
+      btn.addEventListener('click', function(){
+        var txt = el ? el.textContent : '';
+        if(!txt) return;
+        navigator.clipboard.writeText(txt).then(function(){
+          btn.textContent = 'کپی شد';
+          setTimeout(function(){ btn.textContent = 'کپی آی‌پی'; }, 1500);
+        });
+      });
+    })();
+  </script>
 </html>
