@@ -152,7 +152,7 @@ $labelMapShop = [
                     <div class="col-lg-6">
                       <label>آی‌پی فعلی شما</label>
                       <div class="ip-address" id="currentIp" style="display:inline-block; margin-left:10px;"><?php echo htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? '',ENT_QUOTES,'UTF-8'); ?></div>
-                      <button type="button" id="useMyIp" class="btn btn-info btn-space tooltips" data-original-title="قرار دادن آی‌پی فعلی" aria-label="استفاده از آی‌پی من"><i class="icon-location-arrow"></i> استفاده از آی‌پی من</button>
+                      <button type="button" id="useMyIp" class="btn btn-outline-info btn-space tooltips" data-original-title="قرار دادن آی‌پی فعلی" aria-label="استفاده از آی‌پی من"><i class="icon-location-arrow"></i> استفاده از آی‌پی من</button>
                     </div>
                   </div>
                   <div style="margin-top:12px">

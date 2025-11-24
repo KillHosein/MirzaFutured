@@ -4526,6 +4526,24 @@ span.customSelect.changed {
 .btn:hover{ filter: brightness(1.05); }
 .btn:active{ filter: brightness(.98); }
 
+/* outline variants */
+.btn-outline-primary{ background: transparent; color: var(--btn-primary); border-color: var(--btn-primary); }
+.btn-outline-success{ background: transparent; color: var(--btn-success); border-color: var(--btn-success); }
+.btn-outline-danger{ background: transparent; color: var(--btn-danger); border-color: var(--btn-danger); }
+.btn-outline-warning{ background: transparent; color: var(--btn-warning); border-color: var(--btn-warning); }
+.btn-outline-info{ background: transparent; color: var(--btn-info); border-color: var(--btn-info); }
+.btn-outline-default{ background: transparent; color: var(--btn-default); border-color: var(--btn-default); }
+.btn-outline-primary:hover{ background: var(--btn-primary); color:#fff; }
+.btn-outline-success:hover{ background: var(--btn-success); color:#fff; }
+.btn-outline-danger:hover{ background: var(--btn-danger); color:#fff; }
+.btn-outline-warning:hover{ background: var(--btn-warning); color:#fff; }
+.btn-outline-info:hover{ background: var(--btn-info); color:#fff; }
+.btn-outline-default:hover{ background: var(--btn-default); color:#fff; }
+
+/* sizes */
+.btn-sm{ padding: 6px 10px; font-size: 12px; border-radius:6px; }
+.btn-lg{ padding: 12px 18px; font-size: 16px; border-radius:10px; }
+
 /* floating actions */
 .fab-container{ position: fixed; bottom: 24px; left: 24px; z-index: 1003; }
 .fab{ width:56px; height:56px; border-radius:50%; background: var(--btn-primary); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 30px rgba(0,0,0,.3); cursor:pointer; }
