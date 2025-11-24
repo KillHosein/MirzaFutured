@@ -96,6 +96,54 @@
                           <span>چیدمان کیبورد</span>
                       </a>
                   </li>
+                  <li>
+                      <a href="../admin.php">
+                          <i class="icon-cog"></i>
+                          <span>ادمین</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../Marzban.php">
+                          <i class="icon-cloud"></i>
+                          <span>مدیریت Marzban</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../hiddify.php">
+                          <i class="icon-shield"></i>
+                          <span>مدیریت Hiddify</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../mikrotik.php">
+                          <i class="icon-sitemap"></i>
+                          <span>مدیریت Mikrotik</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../WGDashboard.php">
+                          <i class="icon-signal"></i>
+                          <span>مدیریت WireGuard</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../ibsng.php">
+                          <i class="icon-group"></i>
+                          <span>مدیریت IBSng</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../marzneshin.php">
+                          <i class="icon-globe"></i>
+                          <span>مرزنشین</span>
+                      </a>
+                  </li>
+                  <li>
+                      <a href="../info.php">
+                          <i class="icon-info-sign"></i>
+                          <span>اطلاعات سیستم</span>
+                      </a>
+                  </li>
                   <!--<li class="sub-menu">-->
                   <!--    <a href="javascript:;" class="">-->
                   <!--        <i class="icon-user"></i>-->

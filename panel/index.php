@@ -210,6 +210,58 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
               })();
               </script>
               <?php  } ?>
+              <div class="action-grid">
+                  <a class="action-card" href="invoice.php">
+                      <i class="icon-shopping-cart"></i>
+                      <div class="action-title">سفارشات</div>
+                      <div class="action-desc">مدیریت و بررسی فاکتورها</div>
+                  </a>
+                  <a class="action-card" href="inbound.php">
+                      <i class="icon-exchange"></i>
+                      <div class="action-title">ورودی‌ها</div>
+                      <div class="action-desc">کنترل ورودی‌ها و جریان‌ها</div>
+                  </a>
+                  <a class="action-card" href="cancelService.php">
+                      <i class="icon-trash"></i>
+                      <div class="action-title">حذف سرویس</div>
+                      <div class="action-desc">لغو و پاک‌سازی سرویس‌ها</div>
+                  </a>
+                  <a class="action-card" href="keyboard.php">
+                      <i class="icon-th"></i>
+                      <div class="action-title">چیدمان کیبورد</div>
+                      <div class="action-desc">بهینه‌سازی چینش دکمه‌ها</div>
+                  </a>
+                  <a class="action-card" href="../Marzban.php">
+                      <i class="icon-cloud"></i>
+                      <div class="action-title">Marzban</div>
+                      <div class="action-desc">مدیریت کاربران و سرورها</div>
+                  </a>
+                  <a class="action-card" href="../hiddify.php">
+                      <i class="icon-shield"></i>
+                      <div class="action-title">Hiddify</div>
+                      <div class="action-desc">پیکربندی و مانیتورینگ</div>
+                  </a>
+                  <a class="action-card" href="../mikrotik.php">
+                      <i class="icon-sitemap"></i>
+                      <div class="action-title">Mikrotik</div>
+                      <div class="action-desc">مدیریت شبکه و روتینگ</div>
+                  </a>
+                  <a class="action-card" href="../WGDashboard.php">
+                      <i class="icon-signal"></i>
+                      <div class="action-title">WireGuard</div>
+                      <div class="action-desc">داشبورد و اتصال‌ها</div>
+                  </a>
+                  <a class="action-card" href="../ibsng.php">
+                      <i class="icon-group"></i>
+                      <div class="action-title">IBSng</div>
+                      <div class="action-desc">اکانتینگ و گزارش‌ها</div>
+                  </a>
+                  <a class="action-card" href="../info.php">
+                      <i class="icon-info-sign"></i>
+                      <div class="action-title">اطلاعات سیستم</div>
+                      <div class="action-desc">نمای کلی وضعیت سیستم</div>
+                  </a>
+              </div>
           </section>
       </section>
       <!--main content end-->

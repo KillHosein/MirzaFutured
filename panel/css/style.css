@@ -942,6 +942,46 @@ ul.top-menu > li > a:hover, ul.top-menu > li > a:focus {
     box-shadow: 0 12px 40px rgba(0,0,0,0.12);
 }
 
+.action-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+.action-card{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.action-card i{
+    font-size: 22px;
+    color: #ff6c60;
+}
+.action-card .action-title{
+    font-weight: 700;
+    color: #111827;
+}
+.action-card .action-desc{
+    font-size: 12px;
+    color: #6b7280;
+}
+.action-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+}
+body.dark .action-card{
+    background: #1f2937;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+body.dark .action-card .action-title{ color: #e5e7eb; }
+body.dark .action-card .action-desc{ color: #9ca3af; }
+
 
 /*spark line*/
 .chart {
