@@ -1000,6 +1000,20 @@ body.dark .action-card{
 body.dark .action-card .action-title{ color: #e5e7eb; }
 body.dark .action-card .action-desc{ color: #9ca3af; }
 
+.charts-grid{
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+.chart-card{
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    padding: 16px;
+}
+body.dark .chart-card{ background: #1f2937; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
 
 /*spark line*/
 .chart {

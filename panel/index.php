@@ -44,6 +44,61 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     }
     $max_amount = max(array_map(function($info) { return $info['total_amount']; }, $grouped_data)) ?: 1;
     }
+    $statusLabels = [];
+    $statusData = [];
+    $statusColors = [];
+    $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE name_product != 'سرویس تست' GROUP BY status");
+    $stmt->execute();
+    $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $statusMapFa = [
+        'unpaid' => 'در انتظار پرداخت',
+        'active' => 'فعال',
+        'disabledn' => 'ناموجود',
+        'end_of_time' => 'پایان زمان',
+        'end_of_volume' => 'پایان حجم',
+        'sendedwarn' => 'هشدار',
+        'send_on_hold' => 'در انتظار اتصال',
+        'removebyuser' => 'حذف توسط کاربر'
+    ];
+    $colorMap = [
+        'unpaid' => '#f59e0b',
+        'active' => '#10b981',
+        'disabledn' => '#6b7280',
+        'end_of_time' => '#ef4444',
+        'end_of_volume' => '#3b82f6',
+        'sendedwarn' => '#8b5cf6',
+        'send_on_hold' => '#f97316',
+        'removebyuser' => '#9ca3af'
+    ];
+    foreach($statusRows as $r){
+        $k = $r['status'];
+        $statusLabels[] = isset($statusMapFa[$k]) ? $statusMapFa[$k] : $k;
+        $statusData[] = (int)$r['cnt'];
+        $statusColors[] = isset($colorMap[$k]) ? $colorMap[$k] : '#999999';
+    }
+    $daysBack = 14;
+    $startPeriod = strtotime(date('Y/m/d')) - ($daysBack-1)*86400;
+    $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :start");
+    $stmt->bindParam(':start',$startPeriod,PDO::PARAM_INT);
+    $stmt->execute();
+    $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $userLabels = [];
+    $userCounts = [];
+    $indexByDate = [];
+    for($i=$daysBack-1;$i>=0;$i--){
+        $d = strtotime(date('Y/m/d', time() - $i*86400));
+        $key = date('Y/m/d',$d);
+        $indexByDate[$key] = count($userLabels);
+        $userLabels[] = jdate('Y/m/d',$d);
+        $userCounts[] = 0;
+    }
+    foreach($regRows as $row){
+        if(!is_numeric($row['register'])) continue;
+        $key = date('Y/m/d', (int)$row['register']);
+        if(isset($indexByDate[$key])){
+            $userCounts[$indexByDate[$key]]++;
+        }
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -207,9 +262,58 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                     }
                   }
                 });
+                var statusCtx = document.getElementById('statusChart').getContext('2d');
+                new Chart(statusCtx, {
+                  type: 'doughnut',
+                  data: {
+                    labels: <?php echo json_encode($statusLabels, JSON_UNESCAPED_UNICODE); ?>,
+                    datasets: [{
+                      data: <?php echo json_encode($statusData); ?>,
+                      backgroundColor: <?php echo json_encode($statusColors); ?>,
+                      borderColor: '#fff',
+                      borderWidth: 2
+                    }]
+                  },
+                  options: {
+                    plugins: { legend: { position: 'bottom' } },
+                    cutout: '60%'
+                  }
+                });
+                var usersCtx = document.getElementById('usersChart').getContext('2d');
+                new Chart(usersCtx, {
+                  type: 'line',
+                  data: {
+                    labels: <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>,
+                    datasets: [{
+                      label: 'کاربران جدید',
+                      data: <?php echo json_encode($userCounts); ?>,
+                      borderColor: '#10b981',
+                      backgroundColor: 'rgba(16,185,129,0.2)',
+                      tension: 0.3,
+                      fill: true,
+                      pointRadius: 3,
+                      pointHoverRadius: 4
+                    }]
+                  },
+                  options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                      x: { grid: { display: false } },
+                      y: { grid: { color: 'rgba(0,0,0,0.06)' }, beginAtZero: true }
+                    }
+                  }
+                });
               })();
               </script>
               <?php  } ?>
+              <div class="charts-grid">
+                  <div class="chart-card">
+                      <canvas id="statusChart" height="140"></canvas>
+                  </div>
+                  <div class="chart-card">
+                      <canvas id="usersChart" height="140"></canvas>
+                  </div>
+              </div>
               <div class="action-grid">
                   <a class="action-card" href="invoice.php">
                       <i class="icon-shopping-cart"></i>
