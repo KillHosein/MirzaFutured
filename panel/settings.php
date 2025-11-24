@@ -123,9 +123,9 @@ $labelMapShop = [
               <div class="panel-body">
                 <form method="post">
                   <input type="hidden" name="action" value="save_general" />
-                  <div class="row">
+                  <div class="form-grid">
                     <?php foreach($general as $k=>$v){ if($k==='keyboardmain') continue; $label = isset($labelMapGeneral[$k])?$labelMapGeneral[$k]:$k; ?>
-                    <div class="col-lg-6">
+                    <div class="form-field">
                       <label><?php echo htmlspecialchars($label); ?></label>
                       <input name="general[<?php echo htmlspecialchars($k); ?>]" class="form-control" value="<?php echo htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8'); ?>" />
                     </div>
@@ -164,9 +164,9 @@ $labelMapShop = [
               <div class="panel-body">
                 <form method="post">
                   <input type="hidden" name="action" value="save_shop" />
-                  <div class="row">
+                  <div class="form-grid">
                     <?php foreach($shop as $k=>$v){ $label = isset($labelMapShop[$k])?$labelMapShop[$k]:$k; ?>
-                    <div class="col-lg-6">
+                    <div class="form-field">
                       <label><?php echo htmlspecialchars($label); ?></label>
                       <input name="shop[<?php echo htmlspecialchars($k); ?>]" class="form-control" value="<?php echo htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8'); ?>" />
                     </div>

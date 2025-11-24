@@ -1153,9 +1153,17 @@ body.dark .chart-card{ background: #1f2937; box-shadow: 0 10px 30px rgba(0,0,0,0
 }
 .setting-card{
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    box-shadow: var(--shadow-sm);
+    background: var(--card-bg);
 }
 body.dark .setting-card{ box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+.form-grid{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+.form-field{ display:flex; flex-direction:column; gap:6px; }
+.form-field label{ color: var(--text-strong); font-weight:600; }
+.form-control{ background:#fff; color:#111827; border-color:#e5e7eb; }
+body.dark .form-control{ background:#0f172a; color:#e5e7eb; border-color:#374151; }
+body.dark .form-field label{ color:#e5e7eb; }
 
 
 /*spark line*/
