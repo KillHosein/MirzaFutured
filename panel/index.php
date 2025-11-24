@@ -231,35 +231,25 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                       <div class="action-title">چیدمان کیبورد</div>
                       <div class="action-desc">بهینه‌سازی چینش دکمه‌ها</div>
                   </a>
-                  <a class="action-card" href="../Marzban.php">
-                      <i class="icon-cloud"></i>
-                      <div class="action-title">Marzban</div>
-                      <div class="action-desc">مدیریت کاربران و سرورها</div>
+                  <a class="action-card" href="payment.php">
+                      <i class="icon-credit-card"></i>
+                      <div class="action-title">پرداخت‌ها</div>
+                      <div class="action-desc">پیگیری تراکنش‌ها</div>
                   </a>
-                  <a class="action-card" href="../hiddify.php">
-                      <i class="icon-shield"></i>
-                      <div class="action-title">Hiddify</div>
-                      <div class="action-desc">پیکربندی و مانیتورینگ</div>
+                  <a class="action-card" href="product.php">
+                      <i class="icon-archive"></i>
+                      <div class="action-title">مدیریت محصولات</div>
+                      <div class="action-desc">ساخت و تغییر محصولات</div>
                   </a>
-                  <a class="action-card" href="../mikrotik.php">
-                      <i class="icon-sitemap"></i>
-                      <div class="action-title">Mikrotik</div>
-                      <div class="action-desc">مدیریت شبکه و روتینگ</div>
+                  <a class="action-card" href="productedit.php">
+                      <i class="icon-edit"></i>
+                      <div class="action-title">ویرایش محصول</div>
+                      <div class="action-desc">به‌روزرسانی جزئیات</div>
                   </a>
-                  <a class="action-card" href="../WGDashboard.php">
-                      <i class="icon-signal"></i>
-                      <div class="action-title">WireGuard</div>
-                      <div class="action-desc">داشبورد و اتصال‌ها</div>
-                  </a>
-                  <a class="action-card" href="../ibsng.php">
-                      <i class="icon-group"></i>
-                      <div class="action-title">IBSng</div>
-                      <div class="action-desc">اکانتینگ و گزارش‌ها</div>
-                  </a>
-                  <a class="action-card" href="../info.php">
-                      <i class="icon-info-sign"></i>
-                      <div class="action-title">اطلاعات سیستم</div>
-                      <div class="action-desc">نمای کلی وضعیت سیستم</div>
+                  <a class="action-card" href="user.php">
+                      <i class="icon-user"></i>
+                      <div class="action-title">مدیریت کاربر</div>
+                      <div class="action-desc">تنظیمات و وضعیت</div>
                   </a>
               </div>
           </section>

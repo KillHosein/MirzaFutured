@@ -41,108 +41,51 @@
       <aside>
           <div id="sidebar"  class="nav-collapse ">
               <!-- sidebar menu start-->
+              <?php $current = basename($_SERVER['PHP_SELF']); ?>
               <ul class="sidebar-menu">
-                  <li>
+                  <li class="<?php echo $current==='index.php'?'active':''; ?>">
                       <a href="index.php">
                           <i class="icon-dashboard"></i>
                           <span>صفحه اصلی</span>
                       </a>
                   </li>
-                  <li>
-                      <a href="users.php">
+                  <li class="sub-menu <?php echo in_array($current,['users.php','user.php'])?'active':''; ?>">
+                      <a href="javascript:;" class="">
                           <i class="icon-user"></i>
                           <span>کاربران</span>
+                          <span class="arrow"></span>
                       </a>
-                  </li>    
-                  <li>
-                      <a href="invoice.php">
-                          <i class="icon-shopping-cart"></i>
-                          <span>سفارشات</span>
-                      </a>
-                  </li>   
-                  <li>
-                      <a href="service.php">
-                          <i class="icon-shopping-cart"></i>
-                          <span>سرویس ها</span>
-                      </a>
-                  </li>   
-                  <li>
-                      <a href="product.php">
-                          <i class="icon-shopping-cart"></i>
-                          <span>محصولات</span>
-                      </a>
+                      <ul class="sub">
+                          <li><a class="" href="users.php">لیست کاربران</a></li>
+                          <li><a class="" href="user.php">مدیریت کاربر</a></li>
+                      </ul>
                   </li>
-                  <li>
-                      <a href="payment.php">
-                          <i class="icon-credit-card"></i>
-                          <span>تراکنش ها</span>
+                  <li class="sub-menu <?php echo in_array($current,['invoice.php','payment.php','service.php','product.php','productedit.php'])?'active':''; ?>">
+                      <a href="javascript:;" class="">
+                          <i class="icon-briefcase"></i>
+                          <span>مدیریت سرویس‌ها</span>
+                          <span class="arrow"></span>
                       </a>
-                  </li>   
-                  <li>
-                      <a href="cancelService.php">
-                          <i class="icon-trash"></i>
-                          <span>حذف سرویس</span>
-                      </a>
-                  </li> 
-                  <li>
-                      <a href="seeting_x_ui.php">
-                          <i class="icon-sun"></i>
-                          <span>تنظیمات پروتکل x-ui</span>
-                      </a>
+                      <ul class="sub">
+                          <li><a class="" href="invoice.php">سفارشات</a></li>
+                          <li><a class="" href="payment.php">پرداخت‌ها</a></li>
+                          <li><a class="" href="service.php">سرویس‌ها</a></li>
+                          <li><a class="" href="product.php">محصولات</a></li>
+                          <li><a class="" href="productedit.php">ویرایش محصول</a></li>
+                      </ul>
                   </li>
-                  <li>
-                      <a href="keyboard.php">
-                          <i class="icon-sort-by-alphabet-alt"></i>
-                          <span>چیدمان کیبورد</span>
+                  <li class="sub-menu <?php echo in_array($current,['keyboard.php','seeting_x_ui.php','inbound.php','cancelService.php'])?'active':''; ?>">
+                      <a href="javascript:;" class="">
+                          <i class="icon-cogs"></i>
+                          <span>پیکربندی</span>
+                          <span class="arrow"></span>
                       </a>
-                  </li>
-                  <li>
-                      <a href="../admin.php">
-                          <i class="icon-cog"></i>
-                          <span>ادمین</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../Marzban.php">
-                          <i class="icon-cloud"></i>
-                          <span>مدیریت Marzban</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../hiddify.php">
-                          <i class="icon-shield"></i>
-                          <span>مدیریت Hiddify</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../mikrotik.php">
-                          <i class="icon-sitemap"></i>
-                          <span>مدیریت Mikrotik</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../WGDashboard.php">
-                          <i class="icon-signal"></i>
-                          <span>مدیریت WireGuard</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../ibsng.php">
-                          <i class="icon-group"></i>
-                          <span>مدیریت IBSng</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../marzneshin.php">
-                          <i class="icon-globe"></i>
-                          <span>مرزنشین</span>
-                      </a>
-                  </li>
-                  <li>
-                      <a href="../info.php">
-                          <i class="icon-info-sign"></i>
-                          <span>اطلاعات سیستم</span>
-                      </a>
+                      <ul class="sub">
+                          <li><a class="" href="keyboard.php">چیدمان کیبورد</a></li>
+                          <li><a class="" href="seeting_x_ui.php">تنظیمات x-ui</a></li>
+                          <li><a class="" href="inbound.php">ورودی‌ها</a></li>
+                          <li><a class="" href="cancelService.php">حذف سرویس</a></li>
+                      </ul>
                   </li>
                   <!--<li class="sub-menu">-->
                   <!--    <a href="javascript:;" class="">-->
