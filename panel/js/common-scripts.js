@@ -210,7 +210,46 @@ var Script = function () {
                 var txt = $(this).text().toLowerCase();
                 $(this).toggle(txt.indexOf(q) !== -1);
             });
+            if(window.updateBreadcrumb) window.updateBreadcrumb();
         });
     };
+
+    window.showSkeleton = function(){
+        var $o = $('#skeletonOverlay');
+        if(!$o.length){
+            $o = $('<div id="skeletonOverlay" class="skeleton-overlay"><div class="skeleton-content"><div class="skeleton-bar"></div><div class="skeleton-bar"></div><div class="skeleton-bar"></div></div></div>').appendTo('body');
+        }
+        $o.show();
+    };
+    window.hideSkeleton = function(){ $('#skeletonOverlay').hide(); };
+
+    window.updateBreadcrumb = function(){
+        var file = location.pathname.split('/').pop();
+        var parent = $('#sidebar .sub-menu.active > a span').first().text().trim();
+        var child = $('#sidebar .sub-menu.active .sub a').filter(function(){ return $(this).attr('href')===file; }).first().text().trim();
+        if(!child) child = $('.panel-heading').first().text().trim();
+        var path = (parent ? parent+' › ' : '') + (child || file);
+        $('#crumbPath').text(path);
+        var $t = $('table').first();
+        var total = $t.find('tbody tr').length;
+        var visible = $t.find('tbody tr:visible').length;
+        var info = 'تعداد: ' + visible + '/' + total;
+        $('#crumbInfo').text(info);
+    };
+
+    $(function(){
+        if(window.hideSkeleton) window.hideSkeleton();
+        if(window.updateBreadcrumb) window.updateBreadcrumb();
+        $(document).on('submit','form',function(){ if(!$(this).attr('target')) window.showSkeleton(); });
+        $(document).on('click','a',function(){
+            var href = $(this).attr('href');
+            if(!href) return;
+            if(href.charAt(0)==='#') return;
+            if(this.target) return;
+            if(href.indexOf('javascript:')===0) return;
+            window.showSkeleton();
+        });
+        window.addEventListener('beforeunload', function(){ window.showSkeleton(); });
+    });
 
 }();

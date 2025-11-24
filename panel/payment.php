@@ -145,6 +145,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     <a href="payment.php" class="btn btn-default">پاک کردن</a>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
                                 </form>
+                                <div class="action-toolbar">
+                                    <a href="payment.php" class="btn btn-default" id="payRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
+                                    <a href="#" class="btn btn-info" id="payCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <input type="text" id="payQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                </div>
                             </div>
                         </section>
                         <section class="panel">
@@ -195,6 +200,12 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
 
     <!--script for this page only-->
     <script src="js/dynamic-table.js"></script>
+    <script>
+      (function(){
+        $('#payCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
+        attachTableQuickSearch('#sample_1','#payQuickSearch');
+      })();
+    </script>
 
 
 </body>

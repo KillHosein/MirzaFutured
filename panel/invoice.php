@@ -2,6 +2,9 @@
 session_start();
 require_once '../config.php';
 require_once '../jdf.php';
+require_once '../function.php';
+require_once '../botapi.php';
+require_once '../panels.php';
 
 
 $q = $pdo->prepare("SELECT * FROM admin WHERE username=:u");
@@ -11,6 +14,70 @@ $adminRow = $q->fetch(PDO::FETCH_ASSOC);
 if( !isset($_SESSION["user"]) || !$adminRow ){
     header('Location: login.php');
     return;
+}
+
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['bulk_status'])){
+    $ids = isset($_POST['ids']) && is_array($_POST['ids']) ? $_POST['ids'] : [];
+    $newStatus = $_POST['bulk_status'];
+    if(!empty($ids) && in_array($newStatus,['active','disablebyadmin','unpaid'])){
+        $stmtBulk = $pdo->prepare("UPDATE invoice SET Status = :st WHERE id_invoice = :id");
+        foreach($ids as $id){ $stmtBulk->execute([':st'=>$newStatus, ':id'=>$id]); }
+    }
+    header('Location: invoice.php');
+    exit;
+}
+
+$ManagePanel = new ManagePanel();
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['bulk_remove_type'])){
+    $ids = isset($_POST['ids']) && is_array($_POST['ids']) ? $_POST['ids'] : [];
+    $type = $_POST['bulk_remove_type'];
+    $amount = isset($_POST['amount']) ? (int)$_POST['amount'] : 0;
+    if(!empty($ids) && in_array($type,['one','tow','three'])){
+        $stmtInv = $pdo->prepare('SELECT * FROM invoice WHERE id_invoice = :id');
+        foreach($ids as $id){
+            $stmtInv->execute([':id'=>$id]);
+            $inv = $stmtInv->fetch(PDO::FETCH_ASSOC);
+            if(!$inv) continue;
+            if($type==='one'){
+                $pdo->prepare('UPDATE invoice SET Status = "removebyadmin" WHERE id_invoice = :id')->execute([':id'=>$id]);
+                $ManagePanel->RemoveUser($inv['Service_location'], $inv['username']);
+            } elseif($type==='tow'){
+                if($amount>0){ $pdo->prepare('UPDATE user SET Balance = Balance + :b WHERE id = :uid')->execute([':b'=>$amount, ':uid'=>$inv['id_user']]); }
+                $pdo->prepare('UPDATE invoice SET Status = "removebyadmin" WHERE id_invoice = :id')->execute([':id'=>$id]);
+                $ManagePanel->RemoveUser($inv['Service_location'], $inv['username']);
+            } else {
+                $pdo->prepare('DELETE FROM invoice WHERE id_invoice = :id')->execute([':id'=>$id]);
+            }
+        }
+    }
+    header('Location: invoice.php');
+    exit;
+}
+if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['bulk_extend'])){
+    $ids = isset($_POST['ids']) && is_array($_POST['ids']) ? $_POST['ids'] : [];
+    $vol = isset($_POST['volume_service']) ? (int)$_POST['volume_service'] : 0;
+    $days = isset($_POST['time_service']) ? (int)$_POST['time_service'] : 0;
+    if(!empty($ids) && $vol>0 && $days>=0){
+        $stmtInv = $pdo->prepare('SELECT * FROM invoice WHERE id_invoice = :id');
+        $stmtPanel = $pdo->prepare('SELECT * FROM marzban_panel WHERE name_panel = :np');
+        $stmtInsert = $pdo->prepare('INSERT IGNORE INTO service_other (id_user, username, value, type, time, price, output) VALUES (:id_user, :username, :value, :type, :time, :price, :output)');
+        foreach($ids as $id){
+            $stmtInv->execute([':id'=>$id]);
+            $inv = $stmtInv->fetch(PDO::FETCH_ASSOC);
+            if(!$inv) continue;
+            $stmtPanel->execute([':np'=>$inv['Service_location']]);
+            $panel = $stmtPanel->fetch(PDO::FETCH_ASSOC);
+            if(!$panel) continue;
+            $ext = $ManagePanel->extend($panel['Methodextend'], $vol, $days, $inv['username'], 'custom_volume', $panel['code_panel']);
+            if(isset($ext['status']) && $ext['status']!==false){
+                $val = $vol.'_'+$days;
+                $stmtInsert->execute([':id_user'=>$inv['id_user'], ':username'=>$inv['username'], ':value'=>$val, ':type'=>'extend_user_by_admin', ':time'=>date('Y/m/d H:i:s'), ':price'=>0, ':output'=>json_encode($ext)]);
+                $pdo->prepare('UPDATE invoice SET Status = "active" WHERE id_invoice = :id')->execute([':id'=>$id]);
+            }
+        }
+    }
+    header('Location: invoice.php');
+    exit;
 }
 
 $statuses = [
@@ -61,16 +128,6 @@ $sql .= " ORDER BY time_sell DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $listinvoice = $stmt->fetchAll();
-
-// quick stats for UI
-$totOrders = count($listinvoice);
-$sumRevenue = 0; $activeCnt = 0; $unpaidCnt = 0; $blockedCnt = 0;
-foreach($listinvoice as $row){
-    $sumRevenue += (int)$row['price_product'];
-    $st = strtolower($row['Status']);
-    if($st==='active') $activeCnt++;
-    if($st==='unpaid') $unpaidCnt++;
-}
 
 if(isset($_GET['export']) && $_GET['export'] === 'csv'){
     header('Content-Type: text/csv; charset=utf-8');
@@ -179,14 +236,26 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-info" id="invCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                         <a href="#" class="btn btn-primary" id="invCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
                                         <input type="text" id="invQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                        <select id="invBulkStatus" class="form-control" style="max-width:200px;">
+                                            <option value="">تغییر وضعیت گروهی…</option>
+                                            <option value="active">فعال</option>
+                                            <option value="disablebyadmin">غیرفعال توسط ادمین</option>
+                                            <option value="unpaid">در انتظار پرداخت</option>
+                                        </select>
+                                        <a href="#" class="btn btn-warning" id="invApplyBulk"><i class="icon-ok"></i> اعمال وضعیت</a>
+                                        <input type="number" id="extVolGB" class="form-control" placeholder="حجم (GB)" style="max-width:140px;">
+                                        <input type="number" id="extTimeDays" class="form-control" placeholder="زمان (روز)" style="max-width:140px;">
+                                        <a href="#" class="btn btn-success" id="invExtendBulk"><i class="icon-plus"></i> تمدید گروهی</a>
+                                        <select id="invRemoveType" class="form-control" style="max-width:180px;">
+                                            <option value="">حذف سرویس گروهی…</option>
+                                            <option value="one">حذف بدون برگشت وجه</option>
+                                            <option value="tow">حذف با برگشت وجه</option>
+                                            <option value="three">حذف فاکتور</option>
+                                        </select>
+                                        <input type="number" id="invRemoveAmount" class="form-control" placeholder="مبلغ برگشتی" style="max-width:160px; display:none;">
+                                        <a href="#" class="btn btn-danger" id="invRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
                                     </div>
                                 </form>
-                                <div class="stat-grid">
-                                    <div class="stat-card"><div class="stat-title">تعداد سفارشات</div><div class="stat-value"><?php echo number_format($totOrders); ?></div></div>
-                                    <div class="stat-card"><div class="stat-title">جمع مبلغ</div><div class="stat-value"><?php echo number_format($sumRevenue); ?></div></div>
-                                    <div class="stat-card"><div class="stat-title">فعال</div><div class="stat-value"><?php echo number_format($activeCnt); ?></div></div>
-                                    <div class="stat-card"><div class="stat-title">در انتظار پرداخت</div><div class="stat-value"><?php echo number_format($unpaidCnt); ?></div></div>
-                                </div>
                             </div>
                         </section>
                         <section class="panel">
@@ -212,7 +281,8 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     $priceFmt = ($list['price_product'] == 0) ? "رایگان" : number_format($list['price_product']);
                                     $status_label = isset($statuses[$list['Status']]) ? $statuses[$list['Status']]['label'] : $list['Status'];
                                     $status_color = isset($statuses[$list['Status']]) ? $statuses[$list['Status']]['color'] : '#999';
-                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_invoice']}</td>\n                                        <td class=\"hidden-phone\">{$list['username']}</td>\n                                        <td class=\"hidden-phone\">{$list['Service_location']}</td>\n                                        <td class=\"hidden-phone\">{$list['name_product']}</td>\n                                        <td class=\"hidden-phone time_Sell\">{$timeFmt}</td>\n                                        <td class=\"hidden-phone\">{$priceFmt}</td>\n                                        <td class=\"hidden-phone\"><span class=\"badge\" style=\"background-color:{$status_color}\">{$status_label}</span></td>\n                                    </tr>";
+                                    $statusClass = 'status-'.strtolower($list['Status']);
+                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"{$list['id_invoice']}\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_invoice']}</td>\n                                        <td class=\"hidden-phone\">{$list['username']}</td>\n                                        <td class=\"hidden-phone\">{$list['Service_location']}</td>\n                                        <td class=\"hidden-phone\">{$list['name_product']}</td>\n                                        <td class=\"hidden-phone time_Sell\">{$timeFmt}</td>\n                                        <td class=\"hidden-phone\">{$priceFmt}</td>\n                                        <td class=\"hidden-phone\"><span class=\"status-badge {$statusClass}\">{$status_label}</span></td>\n                                    </tr>";
                                 }
                                     ?>
                                 </tbody>
@@ -249,7 +319,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#presetYearInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
         $('#invCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
         $('#invCopy').on('click', function(e){ e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شناسه‌ها کپی شد'); } else { showToast('هیچ سفارشی انتخاب نشده است'); } });
+        $('#invApplyBulk').on('click', function(e){ e.preventDefault(); var status=$('#invBulkStatus').val(); if(!status){ showToast('وضعیت را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(!ids.length){ showToast('هیچ سفارشی انتخاب نشده است'); return; } var $f=$('<form method="post"></form>').append($('<input name="bulk_status">').val(status)); ids.forEach(function(id){ $f.append($('<input name="ids[]">').val(id)); }); $('body').append($f); $f.submit(); });
         attachTableQuickSearch('#sample_1','#invQuickSearch');
+        $('#invRemoveType').on('change', function(){ var v=$(this).val(); $('#invRemoveAmount').toggle(v==='tow'); });
+        $('#invRemoveBulk').on('click', function(e){ e.preventDefault(); var type=$('#invRemoveType').val(); if(!type){ showToast('نوع حذف را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(!ids.length){ showToast('هیچ سفارشی انتخاب نشده است'); return; } var $f=$('<form method="post"></form>').append($('<input name="bulk_remove_type">').val(type)); if(type==='tow'){ var amt=$('#invRemoveAmount').val(); if(!amt || amt<=0){ showToast('مبلغ برگشتی نامعتبر است'); return; } $f.append($('<input name="amount">').val(amt)); } ids.forEach(function(id){ $f.append($('<input name="ids[]">').val(id)); }); $('body').append($f); $f.submit(); });
+        $('#invExtendBulk').on('click', function(e){ e.preventDefault(); var vol=parseInt($('#extVolGB').val(),10); var days=parseInt($('#extTimeDays').val(),10); if(!(vol>0)){ showToast('حجم معتبر وارد کنید'); return; } if(days<0){ showToast('زمان معتبر وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(!ids.length){ showToast('هیچ سفارشی انتخاب نشده است'); return; } var $f=$('<form method="post"></form>').append($('<input name="bulk_extend">').val(1)).append($('<input name="volume_service">').val(vol)).append($('<input name="time_service">').val(days)); ids.forEach(function(id){ $f.append($('<input name="ids[]">').val(id)); }); $('body').append($f); $f.submit(); });
       })();
     </script>
 

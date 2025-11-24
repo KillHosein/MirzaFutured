@@ -118,6 +118,10 @@
           </div>
       </aside>
       <!--sidebar end-->
+      <div class="breadcrumb-bar" id="breadcrumbBar" style="padding:10px 16px;">
+        <span id="crumbPath" style="font-weight:700;"></span>
+        <span id="crumbInfo" class="text-muted" style="margin-right:8px;"></span>
+      </div>
       <div class="fab-container">
         <div class="fab" id="fabToggle" title="اقدامات سریع"><i class="icon-plus"></i></div>
         <div class="fab-menu" id="fabMenu">

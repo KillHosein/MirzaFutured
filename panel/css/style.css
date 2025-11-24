@@ -4434,3 +4434,9 @@ body.dark .stat-card .stat-value{ color:#e5e7eb; }
 #toast-container{ position: fixed; bottom: 24px; right: 24px; z-index: 1004; display:flex; flex-direction:column; gap:8px; }
 .toast{ background:#111827; color:#fff; padding:10px 12px; border-radius:8px; box-shadow: 0 10px 30px rgba(0,0,0,.3); opacity:.95; }
 body.dark .toast{ background:#0b1220; }
+
+.skeleton-overlay{ position: fixed; inset: 0; background: rgba(17,24,39,.6); backdrop-filter: blur(1px); z-index: 2000; display: none; align-items: center; justify-content: center; }
+.skeleton-content{ width: 80%; max-width: 680px; background: #111827; border-radius: 16px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.skeleton-bar{ height: 14px; border-radius: 8px; background: linear-gradient(90deg, rgba(255,255,255,.08), rgba(255,255,255,.18), rgba(255,255,255,.08)); background-size: 200% 100%; animation: skeletonShimmer 1.2s linear infinite; margin: 10px 0; }
+@keyframes skeletonShimmer{ 0%{ background-position: 200% 0; } 100%{ background-position: -200% 0; } }
+body.dark .skeleton-content{ background: #0f172a; }
