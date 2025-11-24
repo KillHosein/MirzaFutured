@@ -2369,13 +2369,14 @@ ul.inbox-pagination li {
 }
 
 .btn-send, .btn-send:hover {
-    background: #00A8B3;
+    background: linear-gradient(135deg,#34d399 0%, #10b981 100%);
     color: #fff;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(16,185,129,0.25);
 }
 
-.btn-send:hover {
-    background: #009da7;
-}
+.btn-send:hover { filter: brightness(1.05); }
 
 .modal-header h4.modal-title {
     font-weight: 300;
@@ -2903,26 +2904,25 @@ ul.amounts li {
 
 .dataTables_paginate.paging_bootstrap.pagination li {
     float: right;
-    margin: 0 1px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    -webkit-border-radius: 3px;
+    margin: 0 2px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
 }
 
 .dataTables_paginate.paging_bootstrap.pagination li.disabled a{
     color: #c7c7c7;
 }
 .dataTables_paginate.paging_bootstrap.pagination li a{
-    color: #797979;
-    padding: 5px 10px;
+    color: #374151;
+    padding: 8px 12px;
     display: inline-block;
 }
 
-.dataTables_paginate.paging_bootstrap.pagination li:hover a, .dataTables_paginate.paging_bootstrap.pagination li.active a{
-    color: #797979;
-    background: #eee;
-    border-radius: 3px;
-    -webkit-border-radius: 3px;
+.dataTables_paginate.paging_bootstrap.pagination li:hover a,
+.dataTables_paginate.paging_bootstrap.pagination li.active a{
+    color: #111827;
+    background: #e5f0ff;
+    border-radius: 8px;
 }
 
 .dataTables_paginate.paging_bootstrap.pagination {
