@@ -175,8 +175,12 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-danger" id="presetUnpaid">پرداخت‌نشده</a>
                                         <a href="#" class="btn btn-info" id="presetWaiting">در انتظار</a>
                                     </div>
+                                    <a href="#" class="btn btn-default" id="paySelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default" id="payInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default" id="payClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <a href="#" class="btn btn-default" id="payPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="payExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-success" id="payExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
                                 </div>
                             </div>
                         </section>
@@ -200,7 +204,8 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     $status_label = isset($statuses[$list['payment_Status']]) ? $statuses[$list['payment_Status']]['label'] : $list['payment_Status'];
                                     $status_color = isset($statuses[$list['payment_Status']]) ? $statuses[$list['payment_Status']]['color'] : '#999';
                                     $method_label = isset($methods[$list['Payment_Method']]) ? $methods[$list['Payment_Method']] : $list['Payment_Method'];
-                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_order']}</td>\n                                        <td class=\"hidden-phone\">" . number_format($list['price']) . "</td>\n                                        <td class=\"hidden-phone\">{$list['time']}</td>\n                                        <td class=\"hidden-phone\">{$method_label}</td>\n                                        <td class=\"hidden-phone\"><span class=\"badge\" style=\"background-color:{$status_color}\">{$status_label}</span></td>\n                                    </tr>";
+                                    $statusClass = 'status-'.strtolower($list['payment_Status']);
+                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_order']}</td>\n                                        <td class=\"hidden-phone\">" . number_format($list['price']) . "</td>\n                                        <td class=\"hidden-phone\">{$list['time']}</td>\n                                        <td class=\"hidden-phone\">{$method_label}</td>\n                                        <td class=\"hidden-phone\"><span class=\"status-badge {$statusClass}\">{$status_label}</span></td>\n                                    </tr>";
                                 }
                                     ?>
                             </tbody>
@@ -238,8 +243,12 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#presetPaid').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('paid'); });
         $('#presetUnpaid').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('Unpaid'); });
         $('#presetWaiting').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('waiting'); });
+        $('#paySelectVisible').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr:visible').each(function(){ $(this).find('.checkboxes').prop('checked', true); }); });
+        $('#payInvertSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr').each(function(){ var $cb=$(this).find('.checkboxes'); $cb.prop('checked', !$cb.prop('checked')); }); });
+        $('#payClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false); });
         $('#payPrint').on('click', function(e){ e.preventDefault(); window.print(); });
         $('#payExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID User,Order ID,Price,Time,Method,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'payments-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
+        $('#payExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID User,Order ID,Price,Time,Method,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'payments-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
       })();
     </script>
 

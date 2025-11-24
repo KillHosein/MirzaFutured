@@ -44,6 +44,10 @@ Website: http://thevectorlab.net/
             --status-sendedwarn: #8b5cf6;
             --status-send_on_hold: #f97316;
             --status-removebyuser: #9ca3af;
+            --status-paid: #10b981;
+            --status-waiting: #3b82f6;
+            --status-reject: #f59e0b;
+            --status-expire: #6b7280;
         }
 body {
     color: #2b2b2b;
@@ -1306,6 +1310,10 @@ body.dark .titlechart .title{
 .status-active{ background: var(--status-active); }
 .status-block{ background: var(--status-block); }
 .status-unpaid{ background: var(--status-unpaid); }
+.status-paid{ background: var(--status-paid); }
+.status-waiting{ background: var(--status-waiting); }
+.status-reject{ background: var(--status-reject); }
+.status-expire{ background: var(--status-expire); }
 .status-disabledn{ background: var(--status-disabledn); }
 .status-end_of_time{ background: var(--status-end_of_time); }
 .status-end_of_volume{ background: var(--status-end_of_volume); }

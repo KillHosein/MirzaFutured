@@ -123,6 +123,9 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                     <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
                                     <input type="text" id="usersQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                    <a href="#" class="btn btn-default" id="usersSelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default" id="usersInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default" id="usersClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <a href="#" class="btn btn-danger" id="usersBlockSel"><i class="icon-ban-circle"></i> مسدود گروهی</a>
                                     <a href="#" class="btn btn-success" id="usersUnblockSel"><i class="icon-ok-circle"></i> رفع مسدودی گروهی</a>
                                     <div class="btn-group" style="margin-right:8px;">
@@ -143,6 +146,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="#" class="btn btn-primary" id="usersApplyAgent"><i class="icon-user"></i> اعمال نوع کاربر</a>
                                     <a href="#" class="btn btn-default" id="usersPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="usersExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-success" id="usersExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
                                 </div>
                             </div>
                             <?php
@@ -236,8 +240,12 @@ if( !isset($_SESSION["user"]) || !$result ){
         $('#usersAddBalance').on('click', function(e){ e.preventDefault(); bulkBalance('add'); });
         $('#usersLowBalance').on('click', function(e){ e.preventDefault(); bulkBalance('low'); });
         $('#usersApplyAgent').on('click', function(e){ e.preventDefault(); var ag=$('#usersAgentSelect').val(); if(!ag){ showToast('نوع کاربر را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,agent:ag}).always(function(){ done++; if(done===ids.length){ showToast('نوع کاربر اعمال شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
+        $('#usersSelectVisible').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr:visible').each(function(){ $(this).find('.checkboxes').prop('checked', true); }); });
+        $('#usersInvertSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr').each(function(){ var $cb=$(this).find('.checkboxes'); $cb.prop('checked', !$cb.prop('checked')); }); });
+        $('#usersClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false); });
         $('#usersPrint').on('click', function(e){ e.preventDefault(); window.print(); });
         $('#usersExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
+        $('#usersExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
       })();
     </script>
 
