@@ -39,7 +39,7 @@
                     <!-- user login dropdown start-->
                     <li class="dropdown">
                         <a data-toggle="dropdown" class="dropdown-toggle" href="#">
-                            <img alt="" src="img/avatar1_small.jpg">
+                            <img alt="" src="img/avatar1_small.jpg" loading="lazy" decoding="async">
                             <span class="username">سلام <?php echo $_SESSION["user"]; ?></span>
                             <b class="caret"></b>
                         </a>

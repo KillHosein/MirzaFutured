@@ -138,6 +138,8 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     <meta name="author" content="Mosaddek">
     <meta name="keyword" content="FlatLab, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
     <link rel="shortcut icon" href="img/favicon.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <title>پنل مدیریت ربات میرزا</title>
 
@@ -445,15 +447,14 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
 
     <!-- js placed at the end of the document so the pages load faster -->
     <script src="js/jquery.js"></script>
-    <script src="js/jquery-1.8.3.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery.scrollTo.min.js"></script>
     <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
     <script src="js/jquery.sparkline.js" type="text/javascript"></script>
     <script src="js/owl.carousel.js" ></script>
     <script src="js/jquery.customSelect.min.js" ></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js" defer></script>
     <script src="assets/bootstrap-daterangepicker/date.js"></script>
     <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
     

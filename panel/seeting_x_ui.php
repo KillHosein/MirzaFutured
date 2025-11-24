@@ -47,6 +47,8 @@ $namepanel = htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8');
     <meta name="author" content="Mosaddek">
     <meta name="keyword" content="FlatLab, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
     <link rel="shortcut icon" href="img/favicon.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <title>پنل مدیریت ربات میرزا</title>
 
@@ -211,8 +213,8 @@ $namepanel = htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8');
     }
   }
 }`;
-    } else if (selectedOption == "") {
-        selectedOption =  '{
+    } else if (selectedOption === "") {
+        selectedOption = `{
   "network": "ws",
   "security": "none",
   "externalProxy": [],
@@ -222,9 +224,8 @@ $namepanel = htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8');
     "host": "",
     "headers": {}
   }
-}';
-}   
- else if (selectedOption == "ws_tls") {
+}`;
+    } else if (selectedOption === "ws_tls") {
         selectedOption = `{
   "network": "ws",
   "security": "tls",

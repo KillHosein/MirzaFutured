@@ -18,6 +18,7 @@ Website: http://thevectorlab.net/
          url('../fonts/Vazir.svg#CartoGothicStdBook') format('svg');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
 }
 :root {
             --primary-color: #3498db;
@@ -428,6 +429,7 @@ ul.sidebar-menu li.active a i {
 /* Action grid and cards */
 .action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .action-card { display: block; background: var(--card-bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 14px; color: var(--text-color); position: relative; transition: transform .15s ease, box-shadow .2s ease; }
+.action-card, .chart-card{ will-change: transform; }
 .action-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:4px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: transparent; }
 .action-card::after{ content: attr(data-cat); position:absolute; top:10px; right:10px; font-size:11px; font-weight:700; color:#fff; padding:4px 8px; border-radius:999px; background:#374151; opacity:.9; }
 .action-card:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(0,0,0,0.12); }
@@ -1202,7 +1204,9 @@ body.dark .form-field label{ color:#e5e7eb; }
     background: var(--card-bg);
     box-shadow: var(--shadow);
     border: none;
+    transition: box-shadow .2s ease, transform .15s ease;
 }
+.panel:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .panel.green-chart .chart-tittle .value {
     float: left;
     color: #c0f080;
@@ -4510,6 +4514,9 @@ span.customSelect.changed {
 
 /* buttons unified to match dark mode */
 .btn{ border-radius:8px; box-shadow:none; transition: filter .15s ease, opacity .15s ease; }
+.btn{ position: relative; overflow: hidden; }
+.btn::after{ content:""; position:absolute; top:50%; left:50%; width:0; height:0; border-radius:50%; background: rgba(255,255,255,.25); transform: translate(-50%,-50%); opacity:0; }
+.btn:active::after{ width:220px; height:220px; opacity:.6; transition: width .3s ease, height .3s ease, opacity .6s ease; }
 .btn-primary{ background: var(--btn-primary); border-color: var(--btn-primary); color:#fff; }
 .btn-success{ background: var(--btn-success); border-color: var(--btn-success); color:#fff; }
 .btn-danger{ background: var(--btn-danger); border-color: var(--btn-danger); color:#fff; }

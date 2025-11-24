@@ -88,6 +88,8 @@ if($_GET['action'] == "save"){
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <meta name="description" content="">
     <meta name="author" content="Mosaddek">
     <meta name="keyword" content="FlatLab, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
@@ -241,8 +243,8 @@ if($_GET['action'] == "save"){
     }
   }
 }`;
-    } else if (selectedOption == "") {
-        selectedOption =  '{
+    } else if (selectedOption === "") {
+        selectedOption = `{
   "network": "ws",
   "security": "none",
   "externalProxy": [],
@@ -252,9 +254,8 @@ if($_GET['action'] == "save"){
     "host": "",
     "headers": {}
   }
-}';
-}   
- else if (selectedOption == "ws_tls") {
+}`;
+    } else if (selectedOption === "ws_tls") {
         selectedOption = `{
   "network": "ws",
   "security": "tls",
