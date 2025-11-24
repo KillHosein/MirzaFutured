@@ -117,6 +117,8 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <button type="submit" class="btn btn-primary">فیلتر</button>
                                     <a href="users.php" class="btn btn-default">پاک کردن</a>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                    <a href="#" class="btn btn-default" id="usersSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
+                                    <a href="#" class="btn btn-default" id="usersLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
                                 </form>
                                 <div class="action-toolbar sticky">
                                     <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
@@ -147,6 +149,8 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="#" class="btn btn-default" id="usersPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="usersExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-success" id="usersExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
+                                    <span id="usersSelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-info" id="usersColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                             </div>
                             <?php
@@ -246,6 +250,9 @@ if( !isset($_SESSION["user"]) || !$result ){
         $('#usersPrint').on('click', function(e){ e.preventDefault(); window.print(); });
         $('#usersExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
         $('#usersExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
+        attachSelectionCounter('#sample_1','#usersSelCount');
+        setupSavedFilter('form[method="get"]','#usersSaveFilter','#usersLoadFilter','users');
+        attachColumnToggles('#sample_1','#usersColumnsBtn');
       })();
     </script>
 

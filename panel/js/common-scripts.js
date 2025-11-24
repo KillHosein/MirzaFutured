@@ -237,6 +237,19 @@ var Script = function () {
         $('#crumbInfo').text(info);
     };
 
+    window.attachSelectionCounter = function(tableSelector, labelSelector){
+        function recalc(){ var n=$(tableSelector).find('tbody .checkboxes:checked').length; $(labelSelector).text('انتخاب‌ها: '+n); }
+        $(document).on('change', tableSelector+' .checkboxes', recalc);
+        $(document).on('keyup', function(){ recalc(); });
+        recalc();
+    };
+
+    window.setupSavedFilter = function(formSelector, saveBtnSelector, loadBtnSelector, key){
+        var k='filter_'+key; $(saveBtnSelector).on('click', function(e){ e.preventDefault(); var data={}; $(formSelector).find('input, select').each(function(){ var n=$(this).attr('name'); if(!n) return; data[n]=$(this).val(); }); localStorage.setItem(k, JSON.stringify(data)); if(window.showToast) showToast('فیلتر ذخیره شد'); }); $(loadBtnSelector).on('click', function(e){ e.preventDefault(); var raw=localStorage.getItem(k); if(!raw){ if(window.showToast) showToast('فیلتری ذخیره نشده'); return; } try{ var data=JSON.parse(raw); var $f=$(formSelector); Object.keys(data).forEach(function(n){ var v=data[n]; $f.find('[name="'+n+'"]').val(v); }); $f.submit(); }catch(ex){ if(window.showToast) showToast('خطا در بارگذاری فیلتر'); } }); };
+
+    window.attachColumnToggles = function(tableSelector, triggerSelector){
+        var $btn=$(triggerSelector); if(!$btn.length) return; var $t=$(tableSelector); var $ths=$t.find('thead th'); var $menu=$('<div class="col-menu"></div>').insertAfter($btn).hide(); $ths.each(function(i){ if(i===0) return; var txt=$(this).text().trim()||('ستون '+i); var $lbl=$('<label></label>'); var $cb=$('<input type="checkbox" checked>'); $cb.on('change', function(){ var show=$(this).prop('checked'); $t.find('thead th').eq(i).toggle(show); $t.find('tbody tr').each(function(){ $(this).find('td').eq(i).toggle(show); }); }); $lbl.append($cb).append($('<span></span>').text(txt)); $menu.append($lbl); }); var open=false; $btn.on('click', function(e){ e.preventDefault(); if(!open){ var pos=$btn.offset(); $menu.css({top: pos.top+$btn.outerHeight()+6, left: pos.left}).show(); open=true; } else { $menu.hide(); open=false; } }); $(document).on('click', function(e){ if(open && !$(e.target).closest('.col-menu, '+triggerSelector).length){ $menu.hide(); open=false; } }); };
+
     $(function(){
         if(window.hideSkeleton) window.hideSkeleton();
         if(window.updateBreadcrumb) window.updateBreadcrumb();
@@ -252,6 +265,7 @@ var Script = function () {
         window.addEventListener('beforeunload', function(){ window.showSkeleton(); });
         $(document).on('change','.checkboxes', function(){ $(this).closest('tr').toggleClass('selected', $(this).prop('checked')); });
         $(document).on('change','.group-checkable', function(){ var set=$(this).attr('data-set'); var checked=$(this).prop('checked'); $(set).each(function(){ $(this).prop('checked', checked).trigger('change'); }); });
+        $(document).on('keydown', function(e){ if(e.shiftKey){ var key=e.key.toLowerCase(); if(key==='s'){ var $t=$('table').first(); $t.find('tbody tr:visible .checkboxes').prop('checked', true).trigger('change'); } else if(key==='d'){ var $t=$('table').first(); $t.find('tbody .checkboxes').prop('checked', false).trigger('change'); } else if(key==='c'){ var btn=$('#invCopy,#usersCopy,#prodCopy,#payCopy').first(); if(btn.length) btn.trigger('click'); } else if(key==='e'){ var btn=$('#invExportVisible,#usersExportVisible,#prodExportVisible,#payExportVisible').first(); if(btn.length) btn.trigger('click'); } else if(key==='p'){ var btn=$('#invPrint,#usersPrint,#prodPrint,#payPrint').first(); if(btn.length) btn.trigger('click'); } } });
     });
 
 }();

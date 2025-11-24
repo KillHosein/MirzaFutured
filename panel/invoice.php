@@ -240,6 +240,7 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-default" id="invSelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
                                         <a href="#" class="btn btn-default" id="invInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
                                         <a href="#" class="btn btn-default" id="invClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
+                                        <span id="invSelCount" class="sel-count">انتخاب‌ها: 0</span>
                                         <select id="invBulkStatus" class="form-control" style="max-width:200px;">
                                             <option value="">تغییر وضعیت گروهی…</option>
                                             <option value="active">فعال</option>
@@ -264,6 +265,9 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                           <a href="#" class="btn btn-success" id="presetActiveInv">فعال</a>
                                           <a href="#" class="btn btn-warning" id="presetUnpaidInv">در انتظار پرداخت</a>
                                         </div>
+                                        <a href="#" class="btn btn-info" id="invColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
+                                        <a href="#" class="btn btn-default" id="invSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
+                                        <a href="#" class="btn btn-default" id="invLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
                                         <a href="#" class="btn btn-default" id="invPrint"><i class="icon-print"></i> چاپ</a>
                                     </div>
                                 </form>
@@ -345,6 +349,9 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#presetActiveInv').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('active'); });
         $('#presetUnpaidInv').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('unpaid'); });
         $('#invPrint').on('click', function(e){ e.preventDefault(); window.print(); });
+        attachSelectionCounter('#sample_1','#invSelCount');
+        setupSavedFilter('form[method="get"]','#invSaveFilter','#invLoadFilter','invoice');
+        attachColumnToggles('#sample_1','#invColumnsBtn');
       })();
     </script>
 

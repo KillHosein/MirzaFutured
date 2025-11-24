@@ -155,6 +155,8 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     <button type="submit" class="btn btn-primary">فیلتر</button>
                                     <a href="payment.php" class="btn btn-default">پاک کردن</a>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                    <a href="#" class="btn btn-default" id="paySaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
+                                    <a href="#" class="btn btn-default" id="payLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
                                 </form>
                                 <div class="action-toolbar sticky">
                                     <a href="payment.php" class="btn btn-default" id="payRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
@@ -178,9 +180,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     <a href="#" class="btn btn-default" id="paySelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-default" id="payInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
                                     <a href="#" class="btn btn-default" id="payClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <span id="paySelCount" class="sel-count">انتخاب‌ها: 0</span>
                                     <a href="#" class="btn btn-default" id="payPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="payExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-success" id="payExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
+                                    <a href="#" class="btn btn-info" id="payColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                             </div>
                         </section>
@@ -249,6 +253,9 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#payPrint').on('click', function(e){ e.preventDefault(); window.print(); });
         $('#payExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID User,Order ID,Price,Time,Method,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'payments-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
         $('#payExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID User,Order ID,Price,Time,Method,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'payments-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
+        attachSelectionCounter('#sample_1','#paySelCount');
+        setupSavedFilter('form[method="get"]','#paySaveFilter','#payLoadFilter','payment');
+        attachColumnToggles('#sample_1','#payColumnsBtn');
       })();
     </script>
 

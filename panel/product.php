@@ -141,6 +141,8 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                     <a href="#" class="btn btn-default" id="prodInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
                                     <a href="#" class="btn btn-default" id="prodClearSelection"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <a href="#" class="btn btn-success" id="prodExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
+                                    <span id="prodSelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-info" id="prodColumnsBtn"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                         </section>
                             <table class="table table-striped border-top" id="sample_1">
@@ -351,6 +353,8 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
         $('#prodInvertSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr').each(function(){ var $cb=$(this).find('.checkboxes'); $cb.prop('checked', !$cb.prop('checked')); }); });
         $('#prodClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false); });
         $('#prodExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim(), $td.eq(7).text().trim(), $td.eq(8).text().trim(), $td.eq(9).text().trim(), $td.eq(10).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID,Code,Name,Price,Volume,Time,Location,Agent,Reset,Category\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'products-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
+        attachSelectionCounter('#sample_1','#prodSelCount');
+        attachColumnToggles('#sample_1','#prodColumnsBtn');
       })();
     </script>
 
