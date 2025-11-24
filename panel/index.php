@@ -184,6 +184,11 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                                   </div>
                                   <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
                                   <a href="index.php" class="btn btn-default">پاک کردن</a>
+                                  <div class="btn-group" style="margin-right:8px;">
+                                    <a href="#" class="btn btn-info" id="preset7d">۷ روز اخیر</a>
+                                    <a href="#" class="btn btn-info" id="presetMonth">ماه جاری</a>
+                                    <a href="#" class="btn btn-info" id="presetYear">سال جاری</a>
+                                  </div>
                               </form>
                           </div>
                       </section>
@@ -454,6 +459,10 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
         if(from && to){
           $input.val(from + ' - ' + to);
         }
+        function fmt(d){ var yyyy=d.getFullYear(); var mm=('0'+(d.getMonth()+1)).slice(-2); var dd=('0'+d.getDate()).slice(-2); return yyyy+'-'+mm+'-'+dd; }
+        $('#preset7d').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(); start.setDate(end.getDate()-6); $('#rangeFrom').val(fmt(start)); $('#rangeTo').val(fmt(end)); $('#dashboardFilterForm')[0].submit(); });
+        $('#presetMonth').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), end.getMonth(), 1); $('#rangeFrom').val(fmt(start)); $('#rangeTo').val(fmt(end)); $('#dashboardFilterForm')[0].submit(); });
+        $('#presetYear').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $('#rangeFrom').val(fmt(start)); $('#rangeTo').val(fmt(end)); $('#dashboardFilterForm')[0].submit(); });
       })();
     </script>
   </body>

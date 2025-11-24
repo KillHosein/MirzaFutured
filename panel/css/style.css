@@ -4364,3 +4364,15 @@ span.customSelect.changed {
 .btn-default{ background: var(--btn-default); border-color: var(--btn-default); color:#fff; }
 .btn:hover{ filter: brightness(1.05); }
 .btn:active{ filter: brightness(.98); }
+
+/* floating actions */
+.fab-container{ position: fixed; bottom: 24px; left: 24px; z-index: 1003; }
+.fab{ width:56px; height:56px; border-radius:50%; background: var(--btn-primary); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow: 0 10px 30px rgba(0,0,0,.3); cursor:pointer; }
+.fab i{ font-size:20px; }
+.fab-menu{ margin-top:12px; background: #fff; border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding:10px; display:none; }
+.fab-menu .action{ display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; color:#111827; }
+.fab-menu .action:hover{ background:#f3f4f6; }
+body.dark .fab{ background:#2563eb; }
+body.dark .fab-menu{ background:#1f2937; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+body.dark .fab-menu .action{ color:#e5e7eb; }
+body.dark .fab-menu .action:hover{ background:#0f172a; }

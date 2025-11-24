@@ -118,3 +118,16 @@
           </div>
       </aside>
       <!--sidebar end-->
+      <div class="fab-container">
+        <div class="fab" id="fabToggle" title="اقدامات سریع"><i class="icon-plus"></i></div>
+        <div class="fab-menu" id="fabMenu">
+          <a class="action" href="index.php"><i class="icon-dashboard"></i><span>داشبورد</span></a>
+          <a class="action" href="users.php"><i class="icon-user"></i><span>لیست کاربران</span></a>
+          <a class="action" href="product.php#addproduct"><i class="icon-tag"></i><span>افزودن محصول</span></a>
+          <a class="action" href="product.php"><i class="icon-tags"></i><span>لیست محصولات</span></a>
+          <a class="action" href="invoice.php"><i class="icon-table"></i><span>سفارشات</span></a>
+          <a class="action" href="settings.php"><i class="icon-cog"></i><span>تنظیمات ادمین</span></a>
+          <a class="action" href="keyboard.php"><i class="icon-th"></i><span>کیبورد ربات</span></a>
+          <a class="action" href="inbound.php"><i class="icon-download-alt"></i><span>ورودی‌ها</span></a>
+        </div>
+      </div>

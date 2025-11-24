@@ -185,4 +185,12 @@ var Script = function () {
         });
     })();
 
+    // floating actions toggle
+    (function(){
+        var $fab = $('#fabToggle'); var $menu = $('#fabMenu');
+        if(!$fab.length || !$menu.length) return;
+        $fab.on('click', function(){ $menu.toggle(); });
+        $(document).on('keydown', function(e){ if(e.shiftKey && e.key.toLowerCase()==='a'){ $menu.toggle(); } });
+    })();
+
 }();

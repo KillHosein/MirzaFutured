@@ -302,6 +302,13 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
 
     <!--common script for all pages-->
     <script src="js/common-scripts.js"></script>
+    <script>
+      (function(){
+        if(location.hash === '#addproduct'){
+          try{ $('#addproduct').modal('show'); }catch(e){}
+        }
+      })();
+    </script>
 
     <!--script for this page only-->
     <script src="js/dynamic-table.js"></script>

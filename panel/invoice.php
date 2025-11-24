@@ -159,6 +159,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     <button type="submit" class="btn btn-primary">فیلتر</button>
                                     <a href="invoice.php" class="btn btn-default">پاک کردن</a>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                    <div class="btn-group" style="margin-right:8px;">
+                                        <a href="#" class="btn btn-info" id="preset7dInv">۷ روز اخیر</a>
+                                        <a href="#" class="btn btn-info" id="presetMonthInv">ماه جاری</a>
+                                        <a href="#" class="btn btn-info" id="presetYearInv">سال جاری</a>
+                                    </div>
                                 </form>
                             </div>
                         </section>
@@ -213,6 +218,15 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
 
     <!--script for this page only-->
     <script src="js/dynamic-table.js"></script>
+    <script>
+      (function(){
+        function fmt(d){ var yyyy=d.getFullYear(); var mm=('0'+(d.getMonth()+1)).slice(-2); var dd=('0'+d.getDate()).slice(-2); return yyyy+'-'+mm+'-'+dd; }
+        var $form = $('form[method="get"]');
+        $('#preset7dInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(); start.setDate(end.getDate()-6); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
+        $('#presetMonthInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), end.getMonth(), 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
+        $('#presetYearInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
+      })();
+    </script>
 
 
 </body>
