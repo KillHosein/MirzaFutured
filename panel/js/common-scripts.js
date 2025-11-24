@@ -200,4 +200,17 @@ var Script = function () {
         setTimeout(function(){ $t.fadeOut(200, function(){ $(this).remove(); }); }, 2500);
     };
 
+    // quick table search attach helper
+    window.attachTableQuickSearch = function(tableSelector, inputSelector){
+        var $table = $(tableSelector); var $inp = $(inputSelector);
+        if(!$table.length || !$inp.length) return;
+        $inp.on('keyup', function(){
+            var q = $(this).val().toLowerCase();
+            $table.find('tbody tr').each(function(){
+                var txt = $(this).text().toLowerCase();
+                $(this).toggle(txt.indexOf(q) !== -1);
+            });
+        });
+    };
+
 }();

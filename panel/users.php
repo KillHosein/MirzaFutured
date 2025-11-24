@@ -122,6 +122,9 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
                                     <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                     <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
+                                    <input type="text" id="usersQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                    <a href="#" class="btn btn-danger" id="usersBlockSel"><i class="icon-ban-circle"></i> مسدود گروهی</a>
+                                    <a href="#" class="btn btn-success" id="usersUnblockSel"><i class="icon-ok-circle"></i> رفع مسدودی گروهی</a>
                                 </div>
                             </div>
                             <?php
@@ -187,6 +190,7 @@ if( !isset($_SESSION["user"]) || !$result ){
     <script>
       (function(){
         $('#usersCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
+        attachTableQuickSearch('#sample_1','#usersQuickSearch');
         $('#usersCopy').on('click', function(e){
           e.preventDefault();
           var ids = [];
@@ -198,6 +202,14 @@ if( !isset($_SESSION["user"]) || !$result ){
           if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('آیدی‌ها کپی شد'); }
           else{ showToast('هیچ ردیفی انتخاب نشده است'); }
         });
+        function bulkUserStatus(status){
+          var ids = [];
+          $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); });
+          if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; }
+          var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,status:status}).always(function(){ done++; if(done===ids.length){ showToast('عملیات انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); });
+        }
+        $('#usersBlockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('block'); });
+        $('#usersUnblockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('active'); });
       })();
     </script>
 

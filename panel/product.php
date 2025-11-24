@@ -132,6 +132,7 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                     <a href="#" class="btn btn-info" id="prodCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                     <a href="#" class="btn btn-primary" id="prodCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
                                     <a href="?export=csv" class="btn btn-success"><i class="icon-download"></i> خروجی CSV</a>
+                                    <input type="text" id="prodQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                 </div>
                         </section>
                             <table class="table table-striped border-top" id="sample_1">
@@ -178,6 +179,14 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                             </table>
                         </section>
                     </div>
+                </div>
+                <?php
+                $prodCount = count($listinvoice);
+                $sumPrices = 0; foreach($listinvoice as $r){ $sumPrices += (int)$r['price_product']; }
+                ?>
+                <div class="stat-grid">
+                    <div class="stat-card"><div class="stat-title">تعداد محصولات</div><div class="stat-value"><?php echo number_format($prodCount); ?></div></div>
+                    <div class="stat-card"><div class="stat-title">جمع قیمت‌ها</div><div class="stat-value"><?php echo number_format($sumPrices); ?></div></div>
                 </div>
                 <!-- page end-->
             </section>
@@ -321,6 +330,7 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
     <script>
       (function(){
         $('#prodCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
+        attachTableQuickSearch('#sample_1','#prodQuickSearch');
         $('#prodCopy').on('click', function(e){
           e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); });
           if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شناسه‌ها کپی شد'); } else { showToast('هیچ محصولی انتخاب نشده است'); }

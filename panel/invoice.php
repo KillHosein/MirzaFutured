@@ -62,6 +62,16 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $listinvoice = $stmt->fetchAll();
 
+// quick stats for UI
+$totOrders = count($listinvoice);
+$sumRevenue = 0; $activeCnt = 0; $unpaidCnt = 0; $blockedCnt = 0;
+foreach($listinvoice as $row){
+    $sumRevenue += (int)$row['price_product'];
+    $st = strtolower($row['Status']);
+    if($st==='active') $activeCnt++;
+    if($st==='unpaid') $unpaidCnt++;
+}
+
 if(isset($_GET['export']) && $_GET['export'] === 'csv'){
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=invoices-' . date('Y-m-d') . '.csv');
@@ -168,8 +178,15 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="invoice.php" class="btn btn-default" id="invRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
                                         <a href="#" class="btn btn-info" id="invCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                         <a href="#" class="btn btn-primary" id="invCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
+                                        <input type="text" id="invQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                     </div>
                                 </form>
+                                <div class="stat-grid">
+                                    <div class="stat-card"><div class="stat-title">تعداد سفارشات</div><div class="stat-value"><?php echo number_format($totOrders); ?></div></div>
+                                    <div class="stat-card"><div class="stat-title">جمع مبلغ</div><div class="stat-value"><?php echo number_format($sumRevenue); ?></div></div>
+                                    <div class="stat-card"><div class="stat-title">فعال</div><div class="stat-value"><?php echo number_format($activeCnt); ?></div></div>
+                                    <div class="stat-card"><div class="stat-title">در انتظار پرداخت</div><div class="stat-value"><?php echo number_format($unpaidCnt); ?></div></div>
+                                </div>
                             </div>
                         </section>
                         <section class="panel">
@@ -232,6 +249,7 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#presetYearInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
         $('#invCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
         $('#invCopy').on('click', function(e){ e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شناسه‌ها کپی شد'); } else { showToast('هیچ سفارشی انتخاب نشده است'); } });
+        attachTableQuickSearch('#sample_1','#invQuickSearch');
       })();
     </script>
 
