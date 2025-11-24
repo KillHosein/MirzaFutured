@@ -389,49 +389,49 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                 </div>
               </section>
               <div class="action-grid">
-                  <a class="action-card" href="invoice.php" data-action-id="orders" draggable="true" aria-label="مدیریت سفارشات">
+                  <a class="action-card group-finance" href="invoice.php" data-action-id="orders" data-cat="مالی" draggable="true" aria-label="مدیریت سفارشات">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-shopping-cart"></i>
                       <div class="action-title">سفارشات</div>
                       <div class="action-desc">مدیریت و بررسی فاکتورها</div>
                   </a>
-                  <a class="action-card" href="inbound.php" data-action-id="inbounds" draggable="true" aria-label="مدیریت ورودی‌ها">
+                  <a class="action-card group-ops" href="inbound.php" data-action-id="inbounds" data-cat="عملیات" draggable="true" aria-label="مدیریت ورودی‌ها">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-exchange"></i>
                       <div class="action-title">ورودی‌ها</div>
                       <div class="action-desc">کنترل ورودی‌ها و جریان‌ها</div>
                   </a>
-                  <a class="action-card" href="cancelService.php" data-action-id="cancel" draggable="true" aria-label="حذف سرویس">
+                  <a class="action-card group-urgent" href="cancelService.php" data-action-id="cancel" data-cat="اضطراری" draggable="true" aria-label="حذف سرویس">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-trash"></i>
                       <div class="action-title">حذف سرویس</div>
                       <div class="action-desc">لغو و پاک‌سازی سرویس‌ها</div>
                   </a>
-                  <a class="action-card" href="keyboard.php" data-action-id="keyboard" draggable="true" aria-label="چیدمان کیبورد">
+                  <a class="action-card group-settings" href="keyboard.php" data-action-id="keyboard" data-cat="تنظیمات" draggable="true" aria-label="چیدمان کیبورد">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-th"></i>
                       <div class="action-title">چیدمان کیبورد</div>
                       <div class="action-desc">بهینه‌سازی چینش دکمه‌ها</div>
                   </a>
-                  <a class="action-card" href="payment.php" data-action-id="payments" draggable="true" aria-label="پرداخت‌ها">
+                  <a class="action-card group-finance" href="payment.php" data-action-id="payments" data-cat="مالی" draggable="true" aria-label="پرداخت‌ها">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-credit-card"></i>
                       <div class="action-title">پرداخت‌ها</div>
                       <div class="action-desc">پیگیری تراکنش‌ها</div>
                   </a>
-                  <a class="action-card" href="product.php" data-action-id="products" draggable="true" aria-label="مدیریت محصولات">
+                  <a class="action-card group-catalog" href="product.php" data-action-id="products" data-cat="محصولات" draggable="true" aria-label="مدیریت محصولات">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-archive"></i>
                       <div class="action-title">مدیریت محصولات</div>
                       <div class="action-desc">ساخت و تغییر محصولات</div>
                   </a>
-                  <a class="action-card" href="productedit.php" data-action-id="productedit" draggable="true" aria-label="ویرایش محصول">
+                  <a class="action-card group-catalog" href="productedit.php" data-action-id="productedit" data-cat="محصولات" draggable="true" aria-label="ویرایش محصول">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-edit"></i>
                       <div class="action-title">ویرایش محصول</div>
                       <div class="action-desc">به‌روزرسانی جزئیات</div>
                   </a>
-                  <a class="action-card" href="user.php" data-action-id="user" draggable="true" aria-label="مدیریت کاربر">
+                  <a class="action-card group-users" href="user.php" data-action-id="user" data-cat="کاربران" draggable="true" aria-label="مدیریت کاربر">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>
                       <i class="icon-user"></i>
                       <div class="action-title">مدیریت کاربر</div>
