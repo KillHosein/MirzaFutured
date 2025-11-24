@@ -181,6 +181,24 @@ $labelMapShop = [
               </div>
             </section>
             <section class="panel setting-card">
+              <header class="panel-heading">ظاهر و برندینگ</header>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="form-field"><label>Primary</label><input type="color" id="brandPrimary" value="#3b82f6" /></div>
+                  <div class="form-field"><label>Success</label><input type="color" id="brandSuccess" value="#10b981" /></div>
+                  <div class="form-field"><label>Danger</label><input type="color" id="brandDanger" value="#ef4444" /></div>
+                  <div class="form-field"><label>Warning</label><input type="color" id="brandWarning" value="#f59e0b" /></div>
+                  <div class="form-field"><label>Info</label><input type="color" id="brandInfo" value="#0ea5e9" /></div>
+                  <div class="form-field"><label>Default</label><input type="color" id="brandDefault" value="#6b7280" /></div>
+                  <div class="form-field"><label>Accent</label><input type="color" id="brandAccent" value="#60a5fa" /></div>
+                </div>
+                <div style="margin-top:12px">
+                  <button id="brandSave" class="btn btn-primary btn-sm btn-space tooltips" data-original-title="ذخیره رنگ‌های برند" aria-label="ذخیره رنگ‌ها"><i class="icon-save"></i> ذخیره رنگ‌ها</button>
+                  <button id="brandReset" class="btn btn-outline-warning btn-sm btn-space tooltips" data-original-title="بازنشانی رنگ‌ها" aria-label="بازنشانی رنگ‌ها"><i class="icon-refresh"></i> بازنشانی</button>
+                </div>
+              </div>
+            </section>
+            <section class="panel setting-card">
               <header class="panel-heading">چیدمان کیبورد ربات</header>
               <div class="panel-body">
                 <form method="post">

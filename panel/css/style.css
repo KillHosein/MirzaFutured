@@ -3757,33 +3757,34 @@ table.sliders tr td {
 }
 .tagsinput-add-container {
     vertical-align: middle;
-    display: inline-block;
-    zoom: 1;
-    *display: inline;
+    display: inline-flex;
+    align-items: center;
 }
 .tagsinput-add {
-    background-color: #d6dbdf;
-    border-radius: 3px;
+    background-color: var(--btn-info);
+    border-radius: var(--radius-sm);
     color: #ffffff;
     cursor: pointer;
     margin-bottom: 5px;
-    padding: 6px 9px;
-    display: inline-block;
-    zoom: 1;
-    *display: inline;
-    -webkit-transition: 0.25s;
-    -moz-transition: 0.25s;
-    -o-transition: 0.25s;
-    transition: 0.25s;
-    -webkit-backface-visibility: hidden;
+    padding: 6px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow-sm);
+    transition: transform .15s ease, box-shadow .2s ease, filter .15s ease;
 }
 .tagsinput-add:hover {
-    background-color: #3bb8af;
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 .tagsinput-add:before {
     content: "\f067";
     font-family: "FontAwesome";
+    font-size: 12px;
 }
+body.dark .tagsinput-add { background-color: var(--btn-info); }
+.tagsinput-add:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,.3); }
 .tags_clear {
     clear: both;
     width: 100%;
@@ -4567,6 +4568,9 @@ body.dark .col-menu{ background:#1f2937; box-shadow: 0 10px 30px rgba(0,0,0,.5);
 body.dark .col-menu label{ color:#e5e7eb; }
 .action-toolbar.sticky{ position: sticky; top: 76px; z-index: 2; background: var(--card-bg); padding:10px 12px; border-radius:12px; box-shadow: var(--shadow); }
 body.dark .action-toolbar.sticky{ background:#1f2937; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+
+.layout-edit .action-card{ outline: 2px dashed #93c5fd; outline-offset: -2px; }
+.layout-edit .action-card .fav-toggle{ box-shadow: 0 0 0 2px rgba(59,130,246,.3); }
 
 /* compact table mode */
 .table.compact tbody tr td{ padding:6px 10px; font-size:13px; }

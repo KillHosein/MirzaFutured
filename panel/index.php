@@ -390,6 +390,22 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                   </div>
                 </div>
               </section>
+              <div class="action-toolbar sticky">
+                  <div class="btn-group" role="group" aria-label="فیلتر اقدامات">
+                      <button class="btn btn-default btn-sm" data-filter="all">همه</button>
+                      <button class="btn btn-default btn-sm" data-filter="fav">پرکاربرد</button>
+                      <button class="btn btn-default btn-sm" data-filter="group-finance">مالی</button>
+                      <button class="btn btn-default btn-sm" data-filter="group-ops">عملیات</button>
+                      <button class="btn btn-default btn-sm" data-filter="group-catalog">محصولات</button>
+                      <button class="btn btn-default btn-sm" data-filter="group-settings">تنظیمات</button>
+                      <button class="btn btn-default btn-sm" data-filter="group-users">کاربران</button>
+                      <button class="btn btn-default btn-sm" data-filter="group-urgent">اضطراری</button>
+                  </div>
+                  <div style="flex:1"></div>
+                  <button class="btn btn-outline-default btn-sm" id="toggleLayoutEdit"><i class="icon-edit"></i> ویرایش چیدمان</button>
+                  <button class="btn btn-outline-warning btn-sm" id="resetLayout"><i class="icon-refresh"></i> بازنشانی</button>
+                  <button class="btn btn-info btn-sm" id="openCmdPal"><i class="icon-search"></i> جستجو</button>
+              </div>
               <div class="action-grid">
                   <a class="action-card group-finance" href="invoice.php" data-action-id="orders" data-cat="مالی" draggable="true" aria-label="مدیریت سفارشات">
                       <div class="fav-toggle tooltips" data-original-title="نشانه‌گذاری به‌عنوان پرکاربرد"><i class="icon-star"></i></div>

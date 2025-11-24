@@ -299,11 +299,43 @@ var Script = function () {
         cards.on('drop', function(e){ e.preventDefault(); var targetId=$(this).attr('data-action-id'); if(!dragId || dragId===targetId) return; var $drag=$grid.find('.action-card[data-action-id="'+dragId+'"]').get(0); var $target=$(this).get(0); $grid.get(0).insertBefore($drag, $target); var ids=[]; $grid.find('.action-card').each(function(){ ids.push($(this).attr('data-action-id')); }); saveOrder(ids); });
         var order=loadOrder(); if(order.length){ order.forEach(function(id){ var el=$grid.find('.action-card[data-action-id="'+id+'"]').get(0); if(el){ $grid.get(0).appendChild(el); } }); }
         var $pal=$('#cmdPalette'), $inp=$('#cmdInput'), $list=$('#cmdList');
+        var $toolbar = $('.action-toolbar');
         function openPal(){ if(!$pal.length) return; $list.empty(); $pal.show(); $inp.val('').focus(); renderList(cards); }
         function closePal(){ if(!$pal.length) return; $pal.hide(); }
         function renderList($items){ if(!$pal.length) return; $list.empty(); $items.each(function(){ var text=$(this).find('.action-title').text(); var href=$(this).attr('href'); var $item=$('<div class="cmd-item"></div>').text(text).attr('data-href', href); $list.append($item); }); }
         $(document).on('keydown', function(e){ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openPal(); } });
+        $('#openCmdPal').on('click', function(e){ e.preventDefault(); openPal(); });
+        if($toolbar.length){
+            $toolbar.on('click','.btn[data-filter]', function(e){ e.preventDefault(); var f=$(this).attr('data-filter');
+                if(f==='all'){ cards.show(); }
+                else if(f==='fav'){ cards.hide(); $grid.find('.action-card.fav').show(); }
+                else { cards.hide(); $grid.find('.action-card.'+f).show(); }
+            });
+            $('#toggleLayoutEdit').on('click', function(e){ e.preventDefault(); $('body').toggleClass('layout-edit'); if(window.showToast) showToast($('body').hasClass('layout-edit')?'ویرایش فعال شد':'ویرایش غیرفعال شد'); });
+            $('#resetLayout').on('click', function(e){ e.preventDefault(); localStorage.removeItem(orderKey); localStorage.removeItem(favKey); if(window.showToast) showToast('چیدمان بازنشانی شد'); location.reload(); });
+        }
         if($pal.length){ $inp.on('keyup', function(){ var q=$(this).val().trim().toLowerCase(); if(!q){ renderList(cards); return; } var matched=cards.filter(function(){ return $(this).text().toLowerCase().indexOf(q)!==-1; }); renderList(matched); }); $list.on('click','.cmd-item', function(){ var href=$(this).attr('data-href'); closePal(); location.href=href; }); $pal.on('click', function(e){ if($(e.target).is('#cmdPalette')) closePal(); }); }
+    })();
+
+    // brand theme customization (CSS variables via localStorage)
+    (function(){
+        var key='brand_theme';
+        function applyTheme(t){ if(!t) return; var root=document.documentElement; Object.keys(t).forEach(function(k){ root.style.setProperty('--'+k, t[k]); }); }
+        try{ var saved = localStorage.getItem(key); if(saved){ applyTheme(JSON.parse(saved)); } }catch(ex){}
+        window.saveBrandTheme = function(t){ try{ localStorage.setItem(key, JSON.stringify(t)); applyTheme(t); if(window.showToast) showToast('رنگ‌ها ذخیره شد'); }catch(ex){} };
+        window.resetBrandTheme = function(){ localStorage.removeItem(key); location.reload(); };
+        var $p = $('#brandPrimary'); if($p.length){
+            $('#brandSave').on('click', function(e){ e.preventDefault(); var t={
+                'btn-primary': $('#brandPrimary').val(),
+                'btn-success': $('#brandSuccess').val(),
+                'btn-danger': $('#brandDanger').val(),
+                'btn-warning': $('#brandWarning').val(),
+                'btn-info': $('#brandInfo').val(),
+                'btn-default': $('#brandDefault').val(),
+                'accent-color': $('#brandAccent').val()
+            }; window.saveBrandTheme(t); });
+            $('#brandReset').on('click', function(e){ e.preventDefault(); window.resetBrandTheme(); });
+        }
     })();
 
 }();
