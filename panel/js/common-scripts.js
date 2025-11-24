@@ -193,4 +193,11 @@ var Script = function () {
         $(document).on('keydown', function(e){ if(e.shiftKey && e.key.toLowerCase()==='a'){ $menu.toggle(); } });
     })();
 
+    // toast helper
+    window.showToast = function(text){
+        var $c = $('#toast-container'); if(!$c.length){ $c = $('<div id="toast-container"></div>').appendTo('body'); }
+        var $t = $('<div class="toast"></div>').text(text).appendTo($c);
+        setTimeout(function(){ $t.fadeOut(200, function(){ $(this).remove(); }); }, 2500);
+    };
+
 }();

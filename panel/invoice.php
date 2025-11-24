@@ -164,6 +164,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-info" id="presetMonthInv">ماه جاری</a>
                                         <a href="#" class="btn btn-info" id="presetYearInv">سال جاری</a>
                                     </div>
+                                    <div class="action-toolbar">
+                                        <a href="invoice.php" class="btn btn-default" id="invRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
+                                        <a href="#" class="btn btn-info" id="invCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                        <a href="#" class="btn btn-primary" id="invCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
+                                    </div>
                                 </form>
                             </div>
                         </section>
@@ -225,6 +230,8 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#preset7dInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(); start.setDate(end.getDate()-6); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
         $('#presetMonthInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), end.getMonth(), 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
         $('#presetYearInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
+        $('#invCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
+        $('#invCopy').on('click', function(e){ e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شناسه‌ها کپی شد'); } else { showToast('هیچ سفارشی انتخاب نشده است'); } });
       })();
     </script>
 

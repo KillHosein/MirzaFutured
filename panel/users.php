@@ -118,6 +118,20 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="users.php" class="btn btn-default">پاک کردن</a>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
                                 </form>
+                                <div class="action-toolbar">
+                                    <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
+                                    <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
+                                </div>
+                            </div>
+                            <?php
+                            $total = count($listusers); $activeCount = 0; $blockCount = 0;
+                            foreach($listusers as $u){ $s = strtolower($u['User_Status']); if($s==='active') $activeCount++; else if($s==='block') $blockCount++; }
+                            ?>
+                            <div class="stat-grid">
+                                <div class="stat-card"><div class="stat-title">تعداد نتایج</div><div class="stat-value"><?php echo number_format($total); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">فعال</div><div class="stat-value"><?php echo number_format($activeCount); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">مسدود</div><div class="stat-value"><?php echo number_format($blockCount); ?></div></div>
                             </div>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
@@ -170,6 +184,22 @@ if( !isset($_SESSION["user"]) || !$result ){
 
     <!--script for this page only-->
     <script src="js/dynamic-table.js"></script>
+    <script>
+      (function(){
+        $('#usersCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
+        $('#usersCopy').on('click', function(e){
+          e.preventDefault();
+          var ids = [];
+          $('#sample_1 tbody tr').each(function(){
+            var $row = $(this);
+            var checked = $row.find('.checkboxes').prop('checked');
+            if(checked){ ids.push($row.find('td').eq(1).text().trim()); }
+          });
+          if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('آیدی‌ها کپی شد'); }
+          else{ showToast('هیچ ردیفی انتخاب نشده است'); }
+        });
+      })();
+    </script>
 
 
 </body>
