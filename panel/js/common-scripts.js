@@ -124,4 +124,18 @@ var Script = function () {
 
 
 
+// theme toggle (light/dark)
+    (function(){
+        var key = 'theme';
+        var saved = localStorage.getItem(key);
+        if(saved === 'dark') {
+            document.body.classList.add('dark');
+        }
+        $('#themeToggle').on('click', function(e){
+            e.preventDefault();
+            var isDark = document.body.classList.toggle('dark');
+            localStorage.setItem(key, isDark ? 'dark' : 'light');
+        });
+    })();
+
 }();

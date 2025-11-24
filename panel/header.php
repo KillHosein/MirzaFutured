@@ -13,6 +13,11 @@
             <div class="top-nav ">
                 <!--search & user info start-->
                 <ul class="nav pull-right top-menu">
+                    <li>
+                        <a id="themeToggle" href="#" title="حالت تیره">
+                            <i class="icon-moon"></i>
+                        </a>
+                    </li>
                     <!-- user login dropdown start-->
                     <li class="dropdown">
                         <a data-toggle="dropdown" class="dropdown-toggle" href="#">

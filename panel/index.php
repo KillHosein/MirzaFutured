@@ -129,31 +129,87 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
               <div class="titlechart">
                   <h3 class = "title">چارت فروش</h3>
               </div>
-              <div class="custom-bar-chart">
-            <?php
-            $i = 0;
-            foreach ($grouped_data as $date => $info) {
-                $amount = $info['total_amount'];
-                $order_count = $info['order_count'];
-                $jdate = jdate('Y/m/d', strtotime($date)); 
-                $height_percentage = ($amount / $max_amount) * 100;
-                $class = ($i % 2 == 1) ? 'bar doted' : 'bar';
-                ?>
-                <div class="<?php echo $class; ?>">
-                    <div class="title"><?php echo htmlspecialchars($jdate); ?></div>
-                    <div class="value tooltips" 
-                         data-original-title="<?php echo number_format($amount); ?> تومان" 
-                         data-toggle="tooltip" 
-                         style="height: <?php echo $height_percentage; ?>%;">
-                        <?php echo number_format($amount); ?>
-                    </div>
-                </div>
-                <?php
-                $i++;
-            }
-            ?>
-</div>
-<?php  } ?>
+              <?php
+              $labels = [];
+              $amounts = [];
+              $counts = [];
+              foreach ($grouped_data as $date => $info) {
+                  $labels[] = jdate('Y/m/d', strtotime($date));
+                  $amounts[] = (int)$info['total_amount'];
+                  $counts[] = (int)$info['order_count'];
+              }
+              ?>
+              <div style="background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.08);padding:16px">
+                  <canvas id="salesChart" height="120"></canvas>
+              </div>
+              <script>
+              (function(){
+                var labels = <?php echo json_encode($labels, JSON_UNESCAPED_UNICODE); ?>;
+                var data = <?php echo json_encode($amounts); ?>;
+                var counts = <?php echo json_encode($counts); ?>;
+                var ctx = document.getElementById('salesChart').getContext('2d');
+                new Chart(ctx, {
+                  type: 'bar',
+                  data: {
+                    labels: labels,
+                    datasets: [
+                      {
+                        label: 'مبلغ فروش',
+                        data: data,
+                        backgroundColor: 'rgba(255,108,96,0.35)',
+                        borderColor: '#ff6c60',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        maxBarThickness: 32
+                      },
+                      {
+                        type: 'line',
+                        label: 'تعداد سفارش',
+                        data: counts,
+                        borderColor: '#57c8f2',
+                        backgroundColor: 'rgba(87,200,242,0.2)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false,
+                        yAxisID: 'y'
+                      }
+                    ]
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context){
+                            var v = context.parsed.y || 0;
+                            return v.toLocaleString('fa-IR') + ' تومان';
+                          }
+                        }
+                      }
+                    },
+                    scales: {
+                      x: {
+                        grid: { display: false },
+                        ticks: { color: '#6b7280', font: { family: 'Vazirmatn' } }
+                      },
+                      y: {
+                        grid: { color: 'rgba(0,0,0,0.06)' },
+                        ticks: {
+                          color: '#6b7280',
+                          font: { family: 'Vazirmatn' },
+                          callback: function(value){
+                            return value.toLocaleString('fa-IR');
+                          }
+                        }
+                      }
+                    }
+                  }
+                });
+              })();
+              </script>
+              <?php  } ?>
           </section>
       </section>
       <!--main content end-->
