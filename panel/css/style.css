@@ -33,6 +33,17 @@ Website: http://thevectorlab.net/
             --btn-info: #0ea5e9;
             --btn-default: #6b7280;
             --badge-bg: #374151;
+            --muted-color: #6b7280;
+            --accent-color: #0ea5e9;
+            --status-active: #10b981;
+            --status-block: #ef4444;
+            --status-unpaid: #f59e0b;
+            --status-disabledn: #6b7280;
+            --status-end_of_time: #ef4444;
+            --status-end_of_volume: #3b82f6;
+            --status-sendedwarn: #8b5cf6;
+            --status-send_on_hold: #f97316;
+            --status-removebyuser: #9ca3af;
         }
 body {
     color: #2b2b2b;
@@ -43,6 +54,15 @@ body {
     margin: 0 !important;
     font-size:14px;
 }
+h1,h2,h3,h4{ color:#111827; }
+.panel-heading{ color:#111827; font-weight:700; letter-spacing:.2px; }
+.panel-body{ color:#374151; }
+.text-muted{ color: var(--muted-color); }
+a{ color: var(--accent-color); }
+a:hover{ filter: brightness(1.1); }
+
+.form-control::placeholder{ color: var(--muted-color); }
+.form-control:focus{ border-color: var(--btn-primary); box-shadow: 0 0 0 2px rgba(59,130,246,.15); }
 
 ul li {
     list-style: none;
@@ -1156,6 +1176,10 @@ body.dark .panel{
     background: #1f2937;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
+body.dark h1, body.dark h2, body.dark h3, body.dark .panel-heading{ color:#e5e7eb; }
+body.dark .panel-body{ color:#cbd5e1; }
+body.dark a{ color:#60a5fa; }
+body.dark .form-control::placeholder{ color:#9ca3af; }
 body.dark .badge{ color:#fff; opacity:.95; }
 body.dark .btn-default{ background:#4b5563; border-color:#4b5563; }
 body.dark .btn-primary{ background:#2563eb; border-color:#2563eb; }
@@ -1276,6 +1300,18 @@ body.dark .titlechart .title{
 .badge.bg-inverse {
     background: #2A3542;
 }
+
+/* status badges */
+.status-badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-weight:600; color:#fff; }
+.status-active{ background: var(--status-active); }
+.status-block{ background: var(--status-block); }
+.status-unpaid{ background: var(--status-unpaid); }
+.status-disabledn{ background: var(--status-disabledn); }
+.status-end_of_time{ background: var(--status-end_of_time); }
+.status-end_of_volume{ background: var(--status-end_of_volume); }
+.status-sendedwarn{ background: var(--status-sendedwarn); }
+.status-send_on_hold{ background: var(--status-send_on_hold); }
+.status-removebyuser{ background: var(--status-removebyuser); }
 
 
 /*timeline*/
