@@ -1014,6 +1014,18 @@ body.dark .action-card .action-desc{ color: #9ca3af; }
 }
 body.dark .chart-card{ background: #1f2937; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
+.settings-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(320px,1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+.setting-card{
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+body.dark .setting-card{ box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
 
 /*spark line*/
 .chart {

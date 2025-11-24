@@ -100,6 +100,7 @@
                           <li><a class="" href="seeting_x_ui.php">تنظیمات x-ui</a></li>
                           <li><a class="" href="inbound.php">ورودی‌ها</a></li>
                           <li><a class="" href="cancelService.php">حذف سرویس</a></li>
+                          <li><a class="" href="settings.php">تنظیمات ادمین</a></li>
                       </ul>
                   </li>
                   <!--<li class="sub-menu">-->
