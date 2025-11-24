@@ -125,6 +125,8 @@ a, a:hover, a:focus {
     transition: all .2s ease;
     margin-bottom: 20px;
 }
+.form-signin .btn-login.loading{ position: relative; pointer-events: none; opacity: .95; }
+.form-signin .btn-login.loading::after{ content:""; width:16px; height:16px; border:2px solid #fff; border-top-color: transparent; border-radius:50%; display:inline-block; margin-right:8px; animation: spin .6s linear infinite; vertical-align: middle; }
 
 .form-signin p { text-align: center; color: #9ca3af; font-size: 14px; font-weight: 400; }
 
@@ -4105,9 +4107,9 @@ span.customSelect.changed {
 }
 
 .form-signin .btn-login:hover {
-    border-radius: 10px;
-    background-color: #dd6054;
+    filter: brightness(1.05);
 }
+@keyframes spin { to { transform: rotate(360deg); } }
 .time_Sell{
     direction: rtl;
 }

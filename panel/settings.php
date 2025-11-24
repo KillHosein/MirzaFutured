@@ -90,6 +90,28 @@ $keyboardmain = $general['keyboardmain'] ?? '';
               </div>
             </section>
             <section class="panel setting-card">
+              <header class="panel-heading">دسترسی با آی‌پی</header>
+              <div class="panel-body">
+                <form method="post">
+                  <input type="hidden" name="action" value="save_general" />
+                  <div class="row">
+                    <div class="col-lg-6">
+                      <label>آی‌پی مجاز ورود (iplogin)</label>
+                      <input id="iploginField" name="general[iplogin]" class="form-control" value="<?php echo htmlspecialchars((string)($general['iplogin'] ?? ''),ENT_QUOTES,'UTF-8'); ?>" />
+                    </div>
+                    <div class="col-lg-6">
+                      <label>آی‌پی فعلی شما</label>
+                      <div class="ip-address" id="currentIp" style="display:inline-block; margin-left:10px;"><?php echo htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? '',ENT_QUOTES,'UTF-8'); ?></div>
+                      <button type="button" id="useMyIp" class="btn btn-primary" style="margin-right:10px;">استفاده از آی‌پی من</button>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px">
+                    <button type="submit" class="btn btn-success">ذخیره</button>
+                  </div>
+                </form>
+              </div>
+            </section>
+            <section class="panel setting-card">
               <header class="panel-heading">تنظیمات فروشگاه</header>
               <div class="panel-body">
                 <form method="post">
@@ -131,6 +153,18 @@ $keyboardmain = $general['keyboardmain'] ?? '';
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/common-scripts.js"></script>
+    <script>
+      (function(){
+        var btn = document.getElementById('useMyIp');
+        var field = document.getElementById('iploginField');
+        var ipEl = document.getElementById('currentIp');
+        if(!btn || !field || !ipEl) return;
+        btn.addEventListener('click', function(e){
+          e.preventDefault();
+          field.value = ipEl.textContent.trim();
+        });
+      })();
+    </script>
   </body>
 </html>
 

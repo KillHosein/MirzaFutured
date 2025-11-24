@@ -91,13 +91,13 @@ if (isset($_POST['login'])) {
         </div>
         <?php } ?>
         <?php if($check_ip){?>
-      <form method="post" class="form-signin" action="/panel/login.php">
+      <form method="post" class="form-signin" action="/panel/login.php" id="loginForm">
         <h2 class="form-signin-heading">پنل مدیریت ربات میرزا</h2>
         <div class="login-wrap">
             <p><?php echo $texterrr; ?></p>
             <input type="text" name ="username" class="form-control" placeholder="نام کاربری" autofocus>
             <input type="password" name = "password" class="form-control" placeholder="کلمه عبور">
-            <button class="btn btn-lg btn-login btn-block"  name="login" type="submit">ورود</button>
+            <button class="btn btn-lg btn-login btn-block"  name="login" type="submit" id="loginBtn">ورود</button>
         </div>
 
       </form>
@@ -118,6 +118,23 @@ if (isset($_POST['login'])) {
           btn.textContent = 'کپی شد';
           setTimeout(function(){ btn.textContent = 'کپی آی‌پی'; }, 1500);
         });
+      });
+    })();
+    (function(){
+      var form = document.getElementById('loginForm');
+      var btn = document.getElementById('loginBtn');
+      if(!form || !btn) return;
+      form.addEventListener('submit', function(){
+        btn.classList.add('loading');
+      });
+      // toast for feedback
+      var toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = 'در حال ارسال اطلاعات ورود...';
+      document.body.appendChild(toast);
+      form.addEventListener('submit', function(){
+        toast.classList.add('show');
+        setTimeout(function(){ toast.classList.remove('show'); }, 2500);
       });
     })();
   </script>
