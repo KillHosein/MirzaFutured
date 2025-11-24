@@ -26,6 +26,13 @@ Website: http://thevectorlab.net/
             --card-bg: #ffffff;
             --text-color: #333333;
             --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --btn-primary: #3b82f6;
+            --btn-success: #10b981;
+            --btn-danger: #ef4444;
+            --btn-warning: #f59e0b;
+            --btn-info: #0ea5e9;
+            --btn-default: #6b7280;
+            --badge-bg: #374151;
         }
 body {
     color: #2b2b2b;
@@ -1149,6 +1156,13 @@ body.dark .panel{
     background: #1f2937;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
+body.dark .badge{ color:#fff; opacity:.95; }
+body.dark .btn-default{ background:#4b5563; border-color:#4b5563; }
+body.dark .btn-primary{ background:#2563eb; border-color:#2563eb; }
+body.dark .btn-success{ background:#059669; border-color:#059669; }
+body.dark .btn-danger{ background:#dc2626; border-color:#dc2626; }
+body.dark .btn-warning{ background:#d97706; border-color:#d97706; }
+body.dark .btn-info{ background:#0284c7; border-color:#0284c7; }
 body.dark .top-nav .username {
     color: #e5e7eb;
     background: #374151;
@@ -4331,3 +4345,22 @@ span.customSelect.changed {
                 font-size: 14px;
             }
         }
+/* badges unified */
+.badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-weight:600; color:#fff; letter-spacing:.2px; }
+.badge.bg-primary{ background: var(--btn-info); }
+.badge.bg-success{ background: var(--btn-success); }
+.badge.bg-warning{ background: var(--btn-warning); }
+.badge.bg-important{ background: var(--btn-danger); }
+.badge.bg-info{ background: var(--btn-primary); }
+.badge.bg-inverse{ background: var(--badge-bg); }
+
+/* buttons unified to match dark mode */
+.btn{ border-radius:8px; box-shadow:none; transition: filter .15s ease, opacity .15s ease; }
+.btn-primary{ background: var(--btn-primary); border-color: var(--btn-primary); color:#fff; }
+.btn-success{ background: var(--btn-success); border-color: var(--btn-success); color:#fff; }
+.btn-danger{ background: var(--btn-danger); border-color: var(--btn-danger); color:#fff; }
+.btn-warning{ background: var(--btn-warning); border-color: var(--btn-warning); color:#fff; }
+.btn-info{ background: var(--btn-info); border-color: var(--btn-info); color:#fff; }
+.btn-default{ background: var(--btn-default); border-color: var(--btn-default); color:#fff; }
+.btn:hover{ filter: brightness(1.05); }
+.btn:active{ filter: brightness(.98); }
