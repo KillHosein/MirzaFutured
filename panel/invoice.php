@@ -231,10 +231,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-info" id="presetMonthInv">ماه جاری</a>
                                         <a href="#" class="btn btn-info" id="presetYearInv">سال جاری</a>
                                     </div>
-                                    <div class="action-toolbar">
+                                    <div class="action-toolbar sticky">
                                         <a href="invoice.php" class="btn btn-default" id="invRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
                                         <a href="#" class="btn btn-info" id="invCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                         <a href="#" class="btn btn-primary" id="invCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
+                                        <a href="#" class="btn btn-primary" id="invCopyUsernames"><i class="icon-copy"></i> کپی نام‌های کاربری</a>
                                         <input type="text" id="invQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                         <a href="#" class="btn btn-default" id="invSelectVisible"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
                                         <a href="#" class="btn btn-default" id="invInvertSelection"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
@@ -259,6 +260,11 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                         <a href="#" class="btn btn-danger" id="invRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
                                         <a href="#" class="btn btn-success" id="invExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                         <a href="#" class="btn btn-success" id="invExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
+                                        <div class="btn-group" style="margin-right:8px;">
+                                          <a href="#" class="btn btn-success" id="presetActiveInv">فعال</a>
+                                          <a href="#" class="btn btn-warning" id="presetUnpaidInv">در انتظار پرداخت</a>
+                                        </div>
+                                        <a href="#" class="btn btn-default" id="invPrint"><i class="icon-print"></i> چاپ</a>
                                     </div>
                                 </form>
                             </div>
@@ -324,6 +330,7 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#presetYearInv').on('click',function(e){ e.preventDefault(); var end=new Date(); var start=new Date(end.getFullYear(), 0, 1); $form.find('input[name="from"]').val(fmt(start)); $form.find('input[name="to"]').val(fmt(end)); $form.submit(); });
         $('#invCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
         $('#invCopy').on('click', function(e){ e.preventDefault(); var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('شناسه‌ها کپی شد'); } else { showToast('هیچ سفارشی انتخاب نشده است'); } });
+        $('#invCopyUsernames').on('click', function(e){ e.preventDefault(); var names=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) names.push($r.find('td').eq(3).text().trim()); }); if(names.length){ navigator.clipboard.writeText(names.join(', ')); showToast('نام‌های کاربری کپی شد'); } else { showToast('هیچ سفارشی انتخاب نشده است'); } });
         $('#invApplyBulk').on('click', function(e){ e.preventDefault(); var status=$('#invBulkStatus').val(); if(!status){ showToast('وضعیت را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(2).text().trim()); }); if(!ids.length){ showToast('هیچ سفارشی انتخاب نشده است'); return; } var $f=$('<form method="post"></form>').append($('<input name="bulk_status">').val(status)); ids.forEach(function(id){ $f.append($('<input name="ids[]">').val(id)); }); $('body').append($f); $f.submit(); });
         attachTableQuickSearch('#sample_1','#invQuickSearch');
         $('#invRemoveType').on('change', function(){ var v=$(this).val(); $('#invRemoveAmount').toggle(v==='tow'); });
@@ -334,6 +341,10 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
         $('#invClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false); });
         $('#invExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim(), $td.eq(7).text().trim(), $td.eq(8).text().trim()]); }); if(!rows.length){ showToast('ردیفی برای خروجی وجود ندارد'); return; } var csv='ID User,Invoice ID,Username,Location,Product,Time,Price,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'invoices-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
         $('#invExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim(), $td.eq(7).text().trim(), $td.eq(8).text().trim()]); } }); if(!rows.length){ showToast('هیچ سفارشی انتخاب نشده است'); return; } var csv='ID User,Invoice ID,Username,Location,Product,Time,Price,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'invoices-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
+        function setStatusAndSubmit(val){ var $form = $('form[method="get"]').first(); $form.find('select[name="status"]').val(val); $form.submit(); }
+        $('#presetActiveInv').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('active'); });
+        $('#presetUnpaidInv').on('click', function(e){ e.preventDefault(); setStatusAndSubmit('unpaid'); });
+        $('#invPrint').on('click', function(e){ e.preventDefault(); window.print(); });
       })();
     </script>
 

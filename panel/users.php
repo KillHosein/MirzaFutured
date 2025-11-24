@@ -118,7 +118,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     <a href="users.php" class="btn btn-default">پاک کردن</a>
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
                                 </form>
-                                <div class="action-toolbar">
+                                <div class="action-toolbar sticky">
                                     <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
                                     <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                     <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>

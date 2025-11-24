@@ -250,6 +250,8 @@ var Script = function () {
             window.showSkeleton();
         });
         window.addEventListener('beforeunload', function(){ window.showSkeleton(); });
+        $(document).on('change','.checkboxes', function(){ $(this).closest('tr').toggleClass('selected', $(this).prop('checked')); });
+        $(document).on('change','.group-checkable', function(){ var set=$(this).attr('data-set'); var checked=$(this).prop('checked'); $(set).each(function(){ $(this).prop('checked', checked).trigger('change'); }); });
     });
 
 }();

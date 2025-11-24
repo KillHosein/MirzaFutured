@@ -127,7 +127,7 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                 <section class="panel">
                                 <a href="#addproduct" data-toggle="modal"  class="btn btn-info  btn-sm">اضافه کردن محصول</a>
                                 <a href="#moveradif" data-toggle="modal"  class="btn btn-success  btn-sm">جابه جایی ردیف محصول</a>
-                                <div class="action-toolbar" style="margin-top:8px;">
+                                <div class="action-toolbar sticky" style="margin-top:8px;">
                                     <a href="product.php" class="btn btn-default" id="prodRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
                                     <a href="#" class="btn btn-info" id="prodCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
                                     <a href="#" class="btn btn-primary" id="prodCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
