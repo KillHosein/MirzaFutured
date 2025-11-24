@@ -161,7 +161,7 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
 ?>
       <!--main content start-->
       <section id="main-content">
-          <section class="wrapper">
+          <section class="wrapper content-template">
               <div class="row">
                   <div class="col-lg-12">
                       <section class="panel">
@@ -256,7 +256,7 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
                   $counts[] = (int)$info['order_count'];
               }
               ?>
-              <div style="background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.08);padding:16px">
+              <div class="chart-card" data-chart="sales">
                   <canvas id="salesChart" height="120"></canvas>
               </div>
               <script>
