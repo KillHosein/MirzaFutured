@@ -3,6 +3,10 @@ session_start();
 require_once '../config.php';
 require_once '../jdf.php';
 $datefirstday = time() - 86400;
+$fromDate = isset($_GET['from']) ? $_GET['from'] : null;
+$toDate = isset($_GET['to']) ? $_GET['to'] : null;
+$selectedStatuses = isset($_GET['status']) ? $_GET['status'] : [];
+if(!is_array($selectedStatuses) && !empty($selectedStatuses)) $selectedStatuses = [$selectedStatuses];
 $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
     $query->execute();
@@ -11,8 +15,30 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     header('Location: login.php');
     return;
 }
-    $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice  WHERE (status = 'active' OR status = 'end_of_time' OR status = 'end_of_volume' OR status = 'sendedwarn' OR status = 'send_on_hold') AND name_product != 'سرویس تست'");
-    $query->execute();
+    $invoiceWhere = ["name_product != 'سرویس تست'"];
+    $invoiceParams = [];
+    if($fromDate && strtotime($fromDate)){
+        $invoiceWhere[] = "time_sell >= :fromTs";
+        $invoiceParams[':fromTs'] = strtotime($fromDate);
+    }
+    if($toDate && strtotime($toDate)){
+        $invoiceWhere[] = "time_sell <= :toTs";
+        $invoiceParams[':toTs'] = strtotime($toDate.' 23:59:59');
+    }
+    if(!empty($selectedStatuses)){
+        $ph = [];
+        foreach($selectedStatuses as $i => $st){
+            $k = ":st$i";
+            $ph[] = $k;
+            $invoiceParams[$k] = $st;
+        }
+        $invoiceWhere[] = "status IN (".implode(',', $ph).")";
+    }else{
+        $invoiceWhere[] = "(status = 'active' OR status = 'end_of_time' OR status = 'end_of_volume' OR status = 'sendedwarn' OR status = 'send_on_hold')";
+    }
+    $invoiceWhereSql = implode(' AND ', $invoiceWhere);
+    $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql");
+    $query->execute($invoiceParams);
     $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
     $query = $pdo->prepare("SELECT * FROM user");
     $query->execute();
@@ -22,13 +48,13 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $stmt->bindParam(':time_register', $datefirstday);
     $stmt->execute();
     $resultcountday = $stmt->rowCount();
-    $query = $pdo->prepare("SELECT  * FROM invoice WHERE (status = 'active' OR status = 'end_of_time' OR status = 'end_of_volume' OR status = 'sendedwarn' OR status = 'send_on_hold') AND name_product != 'سرویس تست'");
-    $query->execute();
+    $query = $pdo->prepare("SELECT  * FROM invoice WHERE $invoiceWhereSql");
+    $query->execute($invoiceParams);
     $resultcontsell = $query->rowCount();
     $subinvoice['SUM(price_product)'] = number_format($subinvoice['SUM(price_product)']);
     if($resultcontsell != 0){
-    $query = $pdo->prepare("SELECT time_sell,price_product FROM invoice ORDER BY time_sell DESC;");
-    $query->execute();
+    $query = $pdo->prepare("SELECT time_sell,price_product FROM invoice WHERE $invoiceWhereSql ORDER BY time_sell DESC;");
+    $query->execute($invoiceParams);
     $salesData = $query->fetchAll();
     $grouped_data = [];
     foreach ($salesData as $sell){
@@ -47,8 +73,8 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $statusLabels = [];
     $statusData = [];
     $statusColors = [];
-    $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE name_product != 'سرویس تست' GROUP BY status");
-    $stmt->execute();
+    $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
+    $stmt->execute($invoiceParams);
     $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $statusMapFa = [
         'unpaid' => 'در انتظار پرداخت',
@@ -77,16 +103,19 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
         $statusColors[] = isset($colorMap[$k]) ? $colorMap[$k] : '#999999';
     }
     $daysBack = 14;
-    $startPeriod = strtotime(date('Y/m/d')) - ($daysBack-1)*86400;
-    $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :start");
-    $stmt->bindParam(':start',$startPeriod,PDO::PARAM_INT);
+    $userStart = ($fromDate && strtotime($fromDate)) ? strtotime($fromDate) : (strtotime(date('Y/m/d')) - ($daysBack-1)*86400);
+    $userEnd = ($toDate && strtotime($toDate)) ? strtotime($toDate.' 23:59:59') : strtotime(date('Y/m/d'));
+    $daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
+    $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register BETWEEN :ustart AND :uend");
+    $stmt->bindParam(':ustart',$userStart,PDO::PARAM_INT);
+    $stmt->bindParam(':uend',$userEnd,PDO::PARAM_INT);
     $stmt->execute();
     $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $userLabels = [];
     $userCounts = [];
     $indexByDate = [];
-    for($i=$daysBack-1;$i>=0;$i--){
-        $d = strtotime(date('Y/m/d', time() - $i*86400));
+    for($i=0;$i<$daysBack;$i++){
+        $d = strtotime(date('Y/m/d', $userStart + $i*86400));
         $key = date('Y/m/d',$d);
         $indexByDate[$key] = count($userLabels);
         $userLabels[] = jdate('Y/m/d',$d);
@@ -132,6 +161,35 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
       <!--main content start-->
       <section id="main-content">
           <section class="wrapper">
+              <div class="row">
+                  <div class="col-lg-12">
+                      <section class="panel">
+                          <header class="panel-heading">فیلتر داشبورد</header>
+                          <div class="panel-body">
+                              <form class="form-inline" method="get">
+                                  <div class="form-group" style="margin-left:8px;">
+                                      <label style="margin-left:6px;">از تاریخ</label>
+                                      <input type="date" class="form-control" name="from" value="<?php echo htmlspecialchars(isset($_GET['from'])?$_GET['from']:'',ENT_QUOTES,'UTF-8'); ?>">
+                                  </div>
+                                  <div class="form-group" style="margin-left:8px;">
+                                      <label style="margin-left:6px;">تا تاریخ</label>
+                                      <input type="date" class="form-control" name="to" value="<?php echo htmlspecialchars(isset($_GET['to'])?$_GET['to']:'',ENT_QUOTES,'UTF-8'); ?>">
+                                  </div>
+                                  <div class="form-group" style="margin-left:8px;">
+                                      <label style="margin-left:6px;">وضعیت سفارش</label>
+                                      <select name="status[]" multiple class="form-control" style="min-width:220px;">
+                                          <?php foreach(['unpaid'=>'در انتظار پرداخت','active'=>'فعال','disabledn'=>'ناموجود','end_of_time'=>'پایان زمان','end_of_volume'=>'پایان حجم','sendedwarn'=>'هشدار','send_on_hold'=>'در انتظار اتصال','removebyuser'=>'حذف توسط کاربر'] as $sk=>$sl): ?>
+                                              <option value="<?php echo $sk; ?>" <?php echo in_array($sk,$selectedStatuses)?'selected':''; ?>><?php echo $sl; ?></option>
+                                          <?php endforeach; ?>
+                                      </select>
+                                  </div>
+                                  <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                                  <a href="index.php" class="btn btn-default">پاک کردن</a>
+                              </form>
+                          </div>
+                      </section>
+                  </div>
+              </div>
               <!--state overview start-->
               <div class="row state-overview">
                   <div class="col-lg-3 col-sm-6">
