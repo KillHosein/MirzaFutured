@@ -162,8 +162,6 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                 </form>
                                 <div class="action-toolbar sticky">
                                     <a href="payment.php" class="btn btn-default" id="payRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
-                                    <a href="#" class="btn btn-info" id="payCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
-                                    <a href="#" class="btn btn-primary" id="payCopy"><i class="icon-copy"></i> کپی شماره تراکنش‌ها</a>
                                     <input type="text" id="payQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                     <select id="payBulkStatus" class="form-control" style="max-width:200px;">
                                         <option value="">تغییر وضعیت گروهی…</option>
@@ -183,6 +181,8 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     <a href="#" class="btn btn-default tooltips" id="payInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
                                     <a href="#" class="btn btn-default tooltips" id="payClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
                                     <span id="paySelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-info" id="payCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <a href="#" class="btn btn-primary" id="payCopy"><i class="icon-copy"></i> کپی شماره تراکنش‌ها</a>
                                     <a href="#" class="btn btn-default" id="payPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="payExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-success" id="payExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>

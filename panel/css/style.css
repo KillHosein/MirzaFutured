@@ -1262,10 +1262,10 @@ body.dark .form-field label{ color:#e5e7eb; }
 
 /* dark theme overrides */
 body.dark {
-    color: #e5e7eb;
+    color: #f3f4f6;
     background: linear-gradient(180deg,#0f172a 0%, #111827 100%);
     --card-bg: #1f2937;
-    --text-color: #e5e7eb;
+    --text-color: #f3f4f6;
     --accent-color: #60a5fa;
     --shadow: 0 10px 30px rgba(0,0,0,.5);
 }
@@ -1295,7 +1295,7 @@ body.dark .panel{
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 body.dark h1, body.dark h2, body.dark h3, body.dark .panel-heading{ color:#e5e7eb; }
-body.dark .panel-body{ color:#cbd5e1; }
+body.dark .panel-body{ color:#e5e7eb; }
 body.dark a{ color:#60a5fa; }
 body.dark .form-control::placeholder{ color:#9ca3af; }
 body.dark .badge{ color:#fff; opacity:.95; }
@@ -4558,8 +4558,9 @@ body.dark .fab-menu .action{ color:#e5e7eb; }
 body.dark .fab-menu .action:hover{ background:#0f172a; }
 
 /* action toolbar */
-.action-toolbar{ display:flex; align-items:center; gap:8px; padding:8px 0; flex-wrap:wrap; }
-.action-toolbar .btn{ margin-bottom:6px; }
+.action-toolbar{ display:flex; align-items:center; gap:10px; padding:8px 0; flex-wrap:wrap; }
+.action-toolbar .btn{ margin-bottom:6px; padding:8px 14px; font-size:13px; border-radius:8px; }
+.action-toolbar .form-control{ height:36px; padding:6px 10px; font-size:13px; }
 .sel-count{ display:inline-flex; align-items:center; padding:6px 10px; border-radius:999px; background:#eef2ff; color:#111827; font-weight:700; font-size:12px; }
 body.dark .sel-count{ background:#0f172a; color:#e5e7eb; }
 .col-menu{ position:absolute; background:#fff; border-radius:10px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding:8px; display:none; z-index:1002; }
@@ -4620,6 +4621,12 @@ body.dark *::-webkit-scrollbar-thumb{ background: #334155; border-color: var(--s
 body.dark .action-card:focus-visible,
 body.dark .btn:focus-visible,
 body.dark .form-control:focus-visible{ box-shadow: 0 0 0 3px rgba(37,99,235,.35); }
+
+@media (prefers-contrast: more){
+  body.dark { --accent-color: #93c5fd; }
+  body.dark .form-control{ border-color:#4b5563; }
+  body.dark .action-toolbar.sticky{ box-shadow: 0 12px 36px rgba(0,0,0,.6); }
+}
 
 @media (prefers-reduced-motion: reduce){
     *{ transition: none !important; animation: none !important; }

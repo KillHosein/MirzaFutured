@@ -131,20 +131,20 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                 <a href="#moveradif" data-toggle="modal"  class="btn btn-success  btn-sm">جابه جایی ردیف محصول</a>
                                 <div class="action-toolbar sticky" style="margin-top:8px;">
                                     <a href="product.php" class="btn btn-default" id="prodRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
-                                    <a href="#" class="btn btn-info" id="prodCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
-                                    <a href="#" class="btn btn-primary" id="prodCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
-                                    <a href="?export=csv" class="btn btn-success"><i class="icon-download"></i> خروجی CSV</a>
                                     <input type="text" id="prodQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
-                                    <a href="#" class="btn btn-default" id="prodPrint"><i class="icon-print"></i> چاپ</a>
-                                    <a href="#" class="btn btn-success" id="prodExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
-                                    <a href="#" class="btn btn-danger" id="prodRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
-                                    <a href="#" class="btn btn-primary" id="prodCopyCodes"><i class="icon-copy"></i> کپی کد سرویس‌ها</a>
                                     <a href="#" class="btn btn-default tooltips" id="prodSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-default tooltips" id="prodInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
                                     <a href="#" class="btn btn-default tooltips" id="prodClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
-                                    <a href="#" class="btn btn-success" id="prodExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
                                     <span id="prodSelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-danger" id="prodRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
+                                    <a href="#" class="btn btn-primary" id="prodCopy"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
+                                    <a href="#" class="btn btn-primary" id="prodCopyCodes"><i class="icon-copy"></i> کپی کد سرویس‌ها</a>
+                                    <a href="?export=csv" class="btn btn-success"><i class="icon-download"></i> خروجی CSV</a>
+                                    <a href="#" class="btn btn-success" id="prodExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-success" id="prodExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
                                     <a href="#" class="btn btn-info tooltips" id="prodColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
+                                    <a href="#" class="btn btn-info" id="prodCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <a href="#" class="btn btn-default" id="prodPrint"><i class="icon-print"></i> چاپ</a>
                                 </div>
                         </section>
                             <table class="table table-striped border-top" id="sample_1">

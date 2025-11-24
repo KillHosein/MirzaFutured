@@ -124,18 +124,19 @@ if( !isset($_SESSION["user"]) || !$result ){
                                 </form>
                                 <div class="action-toolbar sticky">
                                     <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
-                                    <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
-                                    <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
                                     <input type="text" id="usersQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                     <a href="#" class="btn btn-default tooltips" id="usersSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-default tooltips" id="usersInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
                                     <a href="#" class="btn btn-default tooltips" id="usersClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <span id="usersSelCount" class="sel-count">انتخاب‌ها: 0</span>
                                     <a href="#" class="btn btn-danger" id="usersBlockSel"><i class="icon-ban-circle"></i> مسدود گروهی</a>
                                     <a href="#" class="btn btn-success" id="usersUnblockSel"><i class="icon-ok-circle"></i> رفع مسدودی گروهی</a>
                                     <div class="btn-group" style="margin-right:8px;">
                                       <a href="#" class="btn btn-success" id="usersPresetActive">نمایش فعال</a>
                                       <a href="#" class="btn btn-danger" id="usersPresetBlock">نمایش مسدود</a>
                                     </div>
+                                    <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
                                     <input type="text" id="usersMessage" class="form-control" placeholder="پیام گروهی" style="max-width:240px;">
                                     <a href="#" class="btn btn-info" id="usersSendMsg"><i class="icon-envelope"></i> ارسال پیام</a>
                                     <input type="number" id="usersAmount" class="form-control" placeholder="مبلغ (تومان)" style="max-width:160px;">
@@ -148,10 +149,9 @@ if( !isset($_SESSION["user"]) || !$result ){
                                       <option value="n2">نماینده پیشرفته</option>
                                     </select>
                                     <a href="#" class="btn btn-primary" id="usersApplyAgent"><i class="icon-user"></i> اعمال نوع کاربر</a>
-                                    <a href="#" class="btn btn-default" id="usersPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-success" id="usersExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
                                     <a href="#" class="btn btn-success" id="usersExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
-                                    <span id="usersSelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-default" id="usersPrint"><i class="icon-print"></i> چاپ</a>
                                     <a href="#" class="btn btn-info tooltips" id="usersColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
                                 </div>
                             </div>

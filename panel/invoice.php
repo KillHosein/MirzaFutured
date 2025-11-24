@@ -235,9 +235,6 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     </div>
                                     <div class="action-toolbar sticky">
                                         <a href="invoice.php" class="btn btn-default" id="invRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
-                                        <a href="#" class="btn btn-info" id="invCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
-                                        <a href="#" class="btn btn-primary tooltips" id="invCopy" data-original-title="کپی شناسه‌های انتخاب‌شده" aria-label="کپی شناسه‌ها"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
-                                        <a href="#" class="btn btn-primary tooltips" id="invCopyUsernames" data-original-title="کپی نام‌های کاربری انتخاب‌شده" aria-label="کپی نام‌های کاربری"><i class="icon-copy"></i> کپی نام‌های کاربری</a>
                                         <input type="text" id="invQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
                                         <a href="#" class="btn btn-default tooltips" id="invSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
                                         <a href="#" class="btn btn-default tooltips" id="invInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
@@ -268,6 +265,9 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                           <a href="#" class="btn btn-warning" id="presetUnpaidInv">در انتظار پرداخت</a>
                                         </div>
                                         <a href="#" class="btn btn-info tooltips" id="invColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
+                                        <a href="#" class="btn btn-info" id="invCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                        <a href="#" class="btn btn-primary tooltips" id="invCopy" data-original-title="کپی شناسه‌های انتخاب‌شده" aria-label="کپی شناسه‌ها"><i class="icon-copy"></i> کپی شناسه‌های انتخاب‌شده</a>
+                                        <a href="#" class="btn btn-primary tooltips" id="invCopyUsernames" data-original-title="کپی نام‌های کاربری انتخاب‌شده" aria-label="کپی نام‌های کاربری"><i class="icon-copy"></i> کپی نام‌های کاربری</a>
                                         <a href="#" class="btn btn-default" id="invSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
                                         <a href="#" class="btn btn-default" id="invLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
                                         <a href="#" class="btn btn-default" id="invPrint"><i class="icon-print"></i> چاپ</a>
