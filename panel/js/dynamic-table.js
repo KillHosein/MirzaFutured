@@ -5,10 +5,13 @@ var Script = function () {
             "sDom": "<'row'<'col-sm-6'l><'col-sm-6'f>r>t<'row'<'col-sm-6'i><'col-sm-6'p>>",
             "sPaginationType": "bootstrap",
             "oLanguage": {
-                "sLengthMenu": "_MENU_ records per page",
+                "sLengthMenu": "نمایش _MENU_ در هر صفحه",
+                "sSearch": "جستجو:",
+                "sInfo": "نمایش _START_ تا _END_ از _TOTAL_ رکورد",
+                "sZeroRecords": "موردی یافت نشد",
                 "oPaginate": {
-                    "sPrevious": "Prev",
-                    "sNext": "Next"
+                    "sPrevious": "قبلی",
+                    "sNext": "بعدی"
                 }
             },
             "aoColumnDefs": [{
@@ -38,10 +41,13 @@ var Script = function () {
             "sDom": "<'row'<'col-sm-6'l><'col-sm-6'f>r>t<'row'<'col-sm-6'i><'col-sm-6'p>>",
             "sPaginationType": "bootstrap",
             "oLanguage": {
-                "sLengthMenu": "_MENU_ per page",
+                "sLengthMenu": "نمایش _MENU_ در هر صفحه",
+                "sSearch": "جستجو:",
+                "sInfo": "نمایش _START_ تا _END_ از _TOTAL_ رکورد",
+                "sZeroRecords": "موردی یافت نشد",
                 "oPaginate": {
-                    "sPrevious": "Prev",
-                    "sNext": "Next"
+                    "sPrevious": "قبلی",
+                    "sNext": "بعدی"
                 }
             },
             "aoColumnDefs": [{
@@ -71,10 +77,13 @@ var Script = function () {
             "sDom": "<'row'<'col-sm-6'l><'col-sm-6'f>r>t<'row'<'col-sm-6'i><'col-sm-6'p>>",
             "sPaginationType": "bootstrap",
             "oLanguage": {
-                "sLengthMenu": "_MENU_ per page",
+                "sLengthMenu": "نمایش _MENU_ در هر صفحه",
+                "sSearch": "جستجو:",
+                "sInfo": "نمایش _START_ تا _END_ از _TOTAL_ رکورد",
+                "sZeroRecords": "موردی یافت نشد",
                 "oPaginate": {
-                    "sPrevious": "Prev",
-                    "sNext": "Next"
+                    "sPrevious": "قبلی",
+                    "sNext": "بعدی"
                 }
             },
             "aoColumnDefs": [{

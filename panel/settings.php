@@ -14,6 +14,20 @@ if(!$adminRow){
     return;
 }
 $saved = false;
+if(isset($_GET['export']) && $_GET['export']==='settings'){
+    $generalAll = $pdo->query("SELECT * FROM setting LIMIT 1")->fetch(PDO::FETCH_ASSOC) ?: [];
+    $shopRowsAll = $pdo->query("SELECT * FROM shopSetting")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    $shopAll = [];
+    foreach($shopRowsAll as $r){ $shopAll[$r['Namevalue']] = $r['value']; }
+    $payload = [
+        'general' => $generalAll,
+        'shop' => $shopAll,
+    ];
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=panel-settings-'.date('Y-m-d').'.json');
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
 if($_SERVER['REQUEST_METHOD']==='POST'){
     if(isset($_POST['action']) && $_POST['action']==='save_general' && isset($_POST['general']) && is_array($_POST['general'])){
         foreach($_POST['general'] as $k=>$v){
@@ -42,12 +56,46 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         }
         $saved = true;
     }
+    if(isset($_POST['action']) && $_POST['action']==='import_settings'){
+        $raw = $_POST['import_json'] ?? '';
+        $data = json_decode($raw, true);
+        if(is_array($data)){
+            if(isset($data['general']) && is_array($data['general'])){
+                foreach($data['general'] as $k=>$v){
+                    $stmt = $pdo->prepare("UPDATE setting SET `$k` = :v");
+                    $stmt->bindParam(':v',$v);
+                    $stmt->execute();
+                }
+            }
+            if(isset($data['shop']) && is_array($data['shop'])){
+                foreach($data['shop'] as $k=>$v){
+                    $stmt = $pdo->prepare("UPDATE shopSetting SET value = :v WHERE Namevalue = :n");
+                    $stmt->bindParam(':v',$v);
+                    $stmt->bindParam(':n',$k);
+                    $stmt->execute();
+                }
+            }
+            $saved = true;
+        }
+    }
 }
 $general = $pdo->query("SELECT * FROM setting LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 $shopRows = $pdo->query("SELECT * FROM shopSetting")->fetchAll(PDO::FETCH_ASSOC);
 $shop = [];
 foreach($shopRows as $r){ $shop[$r['Namevalue']] = $r['value']; }
 $keyboardmain = $general['keyboardmain'] ?? '';
+// Persian label mapping
+$labelMapGeneral = [
+  'iplogin' => 'آی‌پی مجاز ورود',
+  'Channel_Support' => 'آی‌دی یا لینک کانال پشتیبانی',
+  'Channel_Report' => 'کانال گزارشات سیستم',
+  'domainhosts' => 'دامنه وب‌سایت',
+];
+$labelMapShop = [
+  'products_per_page' => 'تعداد نمایش محصول در هر صفحه',
+  'currency' => 'واحد پول',
+  'gateway' => 'درگاه پرداخت پیش‌فرض',
+];
 ?>
 <!DOCTYPE html>
 <html lang="fa">
@@ -76,9 +124,9 @@ $keyboardmain = $general['keyboardmain'] ?? '';
                 <form method="post">
                   <input type="hidden" name="action" value="save_general" />
                   <div class="row">
-                    <?php foreach($general as $k=>$v){ if($k==='keyboardmain') continue; ?>
+                    <?php foreach($general as $k=>$v){ if($k==='keyboardmain') continue; $label = isset($labelMapGeneral[$k])?$labelMapGeneral[$k]:$k; ?>
                     <div class="col-lg-6">
-                      <label><?php echo htmlspecialchars($k); ?></label>
+                      <label><?php echo htmlspecialchars($label); ?></label>
                       <input name="general[<?php echo htmlspecialchars($k); ?>]" class="form-control" value="<?php echo htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8'); ?>" />
                     </div>
                     <?php } ?>
@@ -117,9 +165,9 @@ $keyboardmain = $general['keyboardmain'] ?? '';
                 <form method="post">
                   <input type="hidden" name="action" value="save_shop" />
                   <div class="row">
-                    <?php foreach($shop as $k=>$v){ ?>
+                    <?php foreach($shop as $k=>$v){ $label = isset($labelMapShop[$k])?$labelMapShop[$k]:$k; ?>
                     <div class="col-lg-6">
-                      <label><?php echo htmlspecialchars($k); ?></label>
+                      <label><?php echo htmlspecialchars($label); ?></label>
                       <input name="shop[<?php echo htmlspecialchars($k); ?>]" class="form-control" value="<?php echo htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8'); ?>" />
                     </div>
                     <?php } ?>
@@ -137,7 +185,7 @@ $keyboardmain = $general['keyboardmain'] ?? '';
                   <input type="hidden" name="action" value="save_keyboard" />
                   <div class="form-group">
                     <label>JSON کیبورد</label>
-                    <textarea name="keyboard_json" class="form-control" rows="10" style="direction:ltr;"><?php echo htmlspecialchars($keyboardmain,ENT_QUOTES,'UTF-8'); ?></textarea>
+                    <textarea name="keyboard_json" class="form-control" rows="10" style="direction:ltr;" placeholder='{"keyboard":[[{"text":"text_sell"},...]]}'><?php echo htmlspecialchars($keyboardmain,ENT_QUOTES,'UTF-8'); ?></textarea>
                   </div>
                   <div class="form-group">
                     <label><input type="checkbox" name="keyboard_reset" value="1" /> بازنشانی به پیش‌فرض</label>
@@ -147,6 +195,22 @@ $keyboardmain = $general['keyboardmain'] ?? '';
               </div>
             </section>
           </div>
+            <section class="panel setting-card">
+              <header class="panel-heading">پشتیبان‌گیری و بازگردانی</header>
+              <div class="panel-body">
+                <div style="margin-bottom:10px;">
+                  <a class="btn btn-primary" href="settings.php?export=settings"><i class="icon-download"></i> دریافت فایل تنظیمات</a>
+                </div>
+                <form method="post">
+                  <input type="hidden" name="action" value="import_settings" />
+                  <div class="form-group">
+                    <label>قرار دادن JSON تنظیمات برای بازگردانی</label>
+                    <textarea name="import_json" class="form-control" rows="8" style="direction:ltr;" placeholder='{"general":{...},"shop":{...}}'></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-warning"><i class="icon-upload"></i> بازگردانی تنظیمات</button>
+                </form>
+              </div>
+            </section>
         </section>
       </section>
     </section>
@@ -163,6 +227,17 @@ $keyboardmain = $general['keyboardmain'] ?? '';
           e.preventDefault();
           field.value = ipEl.textContent.trim();
         });
+      })();
+      (function(){
+        var kbTextarea = document.querySelector('textarea[name="keyboard_json"]');
+        if(kbTextarea){
+          kbTextarea.addEventListener('blur', function(){
+            var v = kbTextarea.value.trim();
+            if(v.length === 0) return;
+            try{ JSON.parse(v); kbTextarea.style.borderColor = '#10b981'; }
+            catch(e){ kbTextarea.style.borderColor = '#ef4444'; }
+          });
+        }
       })();
     </script>
   </body>
