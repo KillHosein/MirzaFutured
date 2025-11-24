@@ -16,7 +16,7 @@ if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
     return;
 }
-if($_POST['nameproduct']){
+if(isset($_POST['nameproduct']) && $_POST['nameproduct'] !== ''){
     $randomString = bin2hex(random_bytes(2));
     $userdata['data_limit_reset'] = "no_reset";
     $product = select("product","*","name_product",$_POST['nameproduct'],"count");
@@ -25,7 +25,8 @@ if($_POST['nameproduct']){
         return;
     }
     $hidepanel = "{}";
-    $stmt = $pdo->prepare("INSERT IGNORE INTO product (name_product,code_product,price_product,Volume_constraint,Service_time,Location,agent,data_limit_reset,note,category,hide_panel,one_buy_status) VALUES (:name_product,:code_product,:price_product,:Volume_constraint,:Service_time,:Location,:agent,:data_limit_reset,:note,:category,:hide_panel,'0')");
+    $oneBuy = isset($_POST['one_buy_status']) && $_POST['one_buy_status'] === '1' ? '1' : '0';
+    $stmt = $pdo->prepare("INSERT IGNORE INTO product (name_product,code_product,price_product,Volume_constraint,Service_time,Location,agent,data_limit_reset,note,category,hide_panel,one_buy_status) VALUES (:name_product,:code_product,:price_product,:Volume_constraint,:Service_time,:Location,:agent,:data_limit_reset,:note,:category,:hide_panel,:one_buy_status)");
     $stmt->bindParam(':name_product', $_POST['nameproduct'], PDO::PARAM_STR);
     $stmt->bindParam(':code_product', $randomString);
     $stmt->bindParam(':price_product', $_POST['price_product'], PDO::PARAM_STR);
@@ -37,6 +38,7 @@ if($_POST['nameproduct']){
     $stmt->bindParam(':category', $_POST['cetegory_product']  , PDO::PARAM_STR);
     $stmt->bindParam(':note', $_POST['note_product']  , PDO::PARAM_STR);
     $stmt->bindParam(':hide_panel', $hidepanel);
+    $stmt->bindParam(':one_buy_status', $oneBuy, PDO::PARAM_STR);
     $stmt->execute();
     header("Location: product.php");
 }
@@ -47,9 +49,10 @@ if($_GET['oneproduct'] && $_GET['toweproduct']){
     header("Location: product.php");
 }
 
-if($_GET['removeid'] && $_GET['removeid']){
-    $stmt = $connect->prepare("DELETE FROM product WHERE id = ?");
-    $stmt->bind_param("s", $_GET['removeid']);
+if(isset($_GET['removeid']) && $_GET['removeid']){
+    $rid = (int) $_GET['removeid'];
+    $stmt = $pdo->prepare("DELETE FROM product WHERE id = :id");
+    $stmt->bindParam(':id',$rid,PDO::PARAM_INT);
     $stmt->execute();
     header("Location: product.php");
 }
@@ -131,14 +134,14 @@ if($_GET['removeid'] && $_GET['removeid']){
                                         <td>{$list['id']}</td>
                                         <td>{$list['code_product']}</td>
                                         <td class=\"hidden-phone\">{$list['name_product']}</td>
-                                        <td class=\"hidden-phone\">{$list['price_product']}</td>
+                                        <td class=\"hidden-phone\">".number_format($list['price_product'])."</td>
                                         <td class=\"hidden-phone\">{$list['Volume_constraint']}</td>
                                         <td class=\"hidden-phone\">{$list['Service_time']}</td>
                                         <td class=\"hidden-phone\">{$list['Location']}</td>
                                         <td class=\"hidden-phone\">{$list['agent']}</td>
                                         <td class=\"hidden-phone\">{$list['data_limit_reset']}</td>
                                         <td class=\"hidden-phone\">{$list['category']}</td>
-                                        <td  class=\"hidden-phone\"><a class = \"btn btn-danger\" href= \"product.php?removeid={$list['id']}\">حذف محصول</a><a class = \"btn btn-info\" href= \"productedit.php?id={$list['id']}\">ویرایش محصول</a></td>
+                                        <td  class=\"hidden-phone\"><a class=\"btn btn-primary\" href=\"productedit.php?id={$list['id']}\">مشاهده</a> <a class = \"btn btn-info\" href= \"productedit.php?id={$list['id']}\">ویرایش</a> <a class = \"btn btn-danger\" href= \"product.php?removeid={$list['id']}\">حذف</a></td>
                                     </tr>";
                                 }
                                     ?>
@@ -219,7 +222,7 @@ if($_GET['removeid'] && $_GET['removeid']){
                                                     </div>
                                                     <div class="form-group">
                                                         <label for="time_product" class="col-lg-2 control-label">زمان محصول</label>
-                                                        <div class="col-lg-10"><input required type="number" name = "time_product" class="form-control" id="volume_product"></div>
+                                                        <div class="col-lg-10"><input required type="number" name = "time_product" class="form-control" id="time_product"></div>
                                                     </div>
                                                     <div class="form-group">
                                                         <label for="agent_product" class="col-lg-2 control-label">نوع کاربری محصول</label>
@@ -238,6 +241,14 @@ if($_GET['removeid'] && $_GET['removeid']){
                                                     <div class="form-group">
                                                         <label for="cetegory_product" class="col-lg-2 control-label">دسته بندی محصول</label>
                                                         <div class="col-lg-10"><input required type="text" name = "cetegory_product" class="form-control" id="cetegory_product"></div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="one_buy_status" class="col-lg-2 control-label">فقط برای خرید اول</label>
+                                                        <div class="col-lg-10">
+                                                            <label style="display:inline-block; margin-top:6px;">
+                                                                <input type="checkbox" name="one_buy_status" value="1"> فعال شود
+                                                            </label>
+                                                        </div>
                                                     </div>
 
                                                     <div class="form-group">

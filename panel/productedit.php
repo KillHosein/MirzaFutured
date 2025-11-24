@@ -37,7 +37,7 @@ if($_GET['action'] == "save"){
         $statusmessage = true;
         $infomesssage ="مبلغ محصول باید عدد باشد";
     }else{
-        if($product['price_product'] != $name_product){
+        if($product['price_product'] != $price_product){
             update("product","price_product",$price_product,"id",$id_product);
         }
     }
@@ -158,7 +158,11 @@ if($_GET['action'] == "save"){
                                     <div class="form-group">
                                         <label class="col-lg-2 control-label">گروه کاربری</label>
                                         <div class="col-lg-7">
-                                            <input value = "<?php echo $product['agent'];?>" type="text" name = "agent" class="form-control input-sm m-bot15">
+                                            <select name="agent" class="form-control input-sm m-bot15">
+                                                <option value="f" <?php echo $product['agent']==='f'?'selected':''; ?>>کاربر عادی</option>
+                                                <option value="n" <?php echo $product['agent']==='n'?'selected':''; ?>>نماینده معمولی</option>
+                                                <option value="n2" <?php echo $product['agent']==='n2'?'selected':''; ?>>نماینده پیشرفته</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -201,7 +205,6 @@ if($_GET['action'] == "save"){
 
     <!--common script for all pages-->
     <script src="js/common-scripts.js"></script>
-</select>
 
 <script>
   function updateTextarea() {
