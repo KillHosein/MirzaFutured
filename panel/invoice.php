@@ -4,16 +4,78 @@ require_once '../config.php';
 require_once '../jdf.php';
 
 
-$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-    $query->execute();
-    $result = $query->fetch(PDO::FETCH_ASSOC);
-    $query = $pdo->prepare("SELECT * FROM invoice");
-    $query->execute();
-    $listinvoice = $query->fetchAll();
-if( !isset($_SESSION["user"]) || !$result ){
+$q = $pdo->prepare("SELECT * FROM admin WHERE username=:u");
+$q->bindParam(':u', $_SESSION['user'], PDO::PARAM_STR);
+$q->execute();
+$adminRow = $q->fetch(PDO::FETCH_ASSOC);
+if( !isset($_SESSION["user"]) || !$adminRow ){
     header('Location: login.php');
     return;
+}
+
+$statuses = [
+    'unpaid' => ['label' => 'در انتظار پرداخت', 'color' => '#f59e0b'],
+    'active' => ['label' => 'فعال', 'color' => '#10b981'],
+    'disabledn' => ['label' => 'ناموجود در پنل', 'color' => '#6b7280'],
+    'end_of_time' => ['label' => 'پایان زمان', 'color' => '#ef4444'],
+    'end_of_volume' => ['label' => 'پایان حجم', 'color' => '#3b82f6'],
+    'sendedwarn' => ['label' => 'هشدار حجم و زمان', 'color' => '#8b5cf6'],
+    'send_on_hold' => ['label' => 'در انتظار اتصال', 'color' => '#f97316'],
+    'removebyuser' => ['label' => 'حذف شده توسط کاربر', 'color' => '#9ca3af']
+];
+
+$where = [];
+$params = [];
+if(!empty($_GET['status'])){
+    $where[] = "Status = :status";
+    $params[':status'] = $_GET['status'];
+}
+if(!empty($_GET['product'])){
+    $where[] = "name_product = :product";
+    $params[':product'] = $_GET['product'];
+}
+if(!empty($_GET['location'])){
+    $where[] = "Service_location = :loc";
+    $params[':loc'] = $_GET['location'];
+}
+if(!empty($_GET['q'])){
+    $searchTerm = '%' . $_GET['q'] . '%';
+    $where[] = "(id_user LIKE :q OR id_invoice LIKE :q OR username LIKE :q)";
+    $params[':q'] = $searchTerm;
+}
+
+$sql = "SELECT * FROM invoice";
+if(!empty($where)){
+    $sql .= " WHERE " . implode(' AND ', $where);
+}
+$sql .= " ORDER BY time_sell DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$listinvoice = $stmt->fetchAll();
+
+if(isset($_GET['export']) && $_GET['export'] === 'csv'){
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=invoices-' . date('Y-m-d') . '.csv');
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['ID User','Invoice ID','Username','Location','Product','Time','Price','Status']);
+    foreach($listinvoice as $row){
+        $time = is_numeric($row['time_sell']) ? jdate('Y/m/d H:i:s', $row['time_sell']) : $row['time_sell'];
+        $price = $row['price_product'] == 0 ? 'رایگان' : number_format($row['price_product']);
+        $status = isset($statuses[$row['Status']]) ? $statuses[$row['Status']]['label'] : $row['Status'];
+        fputcsv($output, [
+            $row['id_user'],
+            $row['id_invoice'],
+            $row['username'],
+            $row['Service_location'],
+            $row['name_product'],
+            $time,
+            $price,
+            $status
+        ]);
+    }
+    fclose($output);
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -33,8 +95,7 @@ if( !isset($_SESSION["user"]) || !$result ){
     <link href="css/bootstrap-reset.css" rel="stylesheet">
     <!--external css-->
     <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
-    <link href="assets/jquery-easy-pie-chart/jquery.easy-pie-chart.css" rel="stylesheet" type="text/css" media="screen"/>
-    <link rel="stylesheet" href="css/owl.carousel.css" type="text/css">
+    
     <!-- Custom styles for this template -->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/style-responsive.css" rel="stylesheet" />
@@ -59,6 +120,33 @@ if( !isset($_SESSION["user"]) || !$result ){
                 <div class="row">
                     <div class="col-lg-12">
                         <section class="panel">
+                            <header class="panel-heading">جستجوی پیشرفته</header>
+                            <div class="panel-body">
+                                <form class="form-inline" role="form" method="get">
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" class="form-control" name="q" placeholder="آیدی کاربر/سفارش یا نام کاربری" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <select name="status" class="form-control">
+                                            <option value="">همه وضعیت‌ها</option>
+                                            <?php foreach($statuses as $key => $val): ?>
+                                                <option value="<?php echo $key; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] === $key) ? 'selected' : ''; ?>><?php echo $val['label']; ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" class="form-control" name="product" placeholder="نام محصول" value="<?php echo isset($_GET['product']) ? htmlspecialchars($_GET['product']) : ''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" class="form-control" name="location" placeholder="لوکیشن سرویس" value="<?php echo isset($_GET['location']) ? htmlspecialchars($_GET['location']) : ''; ?>">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">فیلتر</button>
+                                    <a href="invoice.php" class="btn btn-default">پاک کردن</a>
+                                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                </form>
+                            </div>
+                        </section>
+                        <section class="panel">
                             <header class="panel-heading">لیست سفارشات</header>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
@@ -77,32 +165,11 @@ if( !isset($_SESSION["user"]) || !$result ){
                                 </thead>
                                 <tbody> <?php
                                 foreach($listinvoice as $list){
-                                    if(intval($list['time_sell'])){
-                                        $list['time_sell'] = jdate('Y/m/d |  H:i:s',$list['time_sell']);
-                                    }
-                                    $list['Status'] = [
-                                        'unpaid' => "در انتظار پرداخت",
-                                        "active" => "فعال",
-                                        "disabledn" => "ناموجود در پنل",
-                                        "end_of_time" => "هشدار زمان باقی ماند",
-                                        "end_of_volume" => "هشدار حجم باقی مانده",
-                                        "sendedwarn" => "هشدار حجم و زمان باقی مانده",
-                                        "send_on_hold" => "هشدار متصل نشدن به کانفیگ",
-                                        'removebyuser' => 'حذف شده توسط کاربر'
-                                        ][$list['Status']];
-                                        if($list['price_product'] == 0)$list['price_product'] = "رایگان";
-                                   echo "<tr class=\"odd gradeX\">
-                                        <td>
-                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>
-                                        <td>{$list['id_user']}</td>
-                                        <td class=\"hidden-phone\">{$list['id_invoice']}</td>
-                                        <td class=\"hidden-phone\">{$list['username']}</td>
-                                        <td class=\"hidden-phone\">{$list['Service_location']}</td>
-                                        <td class=\"hidden-phone\">{$list['name_product']}</td>
-                                        <td class=\"hidden-phone time_Sell\">{$list['time_sell']}</td>
-                                        <td class=\"hidden-phone\">{$list['price_product']}</td>
-                                        <td class=\"hidden-phone\">{$list['Status']}</td>
-                                    </tr>";
+                                    $timeFmt = intval($list['time_sell']) ? jdate('Y/m/d |  H:i:s',$list['time_sell']) : $list['time_sell'];
+                                    $priceFmt = ($list['price_product'] == 0) ? "رایگان" : number_format($list['price_product']);
+                                    $status_label = isset($statuses[$list['Status']]) ? $statuses[$list['Status']]['label'] : $list['Status'];
+                                    $status_color = isset($statuses[$list['Status']]) ? $statuses[$list['Status']]['color'] : '#999';
+                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_invoice']}</td>\n                                        <td class=\"hidden-phone\">{$list['username']}</td>\n                                        <td class=\"hidden-phone\">{$list['Service_location']}</td>\n                                        <td class=\"hidden-phone\">{$list['name_product']}</td>\n                                        <td class=\"hidden-phone time_Sell\">{$timeFmt}</td>\n                                        <td class=\"hidden-phone\">{$priceFmt}</td>\n                                        <td class=\"hidden-phone\"><span class=\"badge\" style=\"background-color:{$status_color}\">{$status_label}</span></td>\n                                    </tr>";
                                 }
                                     ?>
                                 </tbody>
