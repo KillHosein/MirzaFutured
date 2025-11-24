@@ -2,18 +2,57 @@
 $configFile = __DIR__ . '/config.php';
 $installerPath = __DIR__ . '/installer/index.php';
 $needsInstallation = false;
+$needsConfiguration = false;
 
 if (!file_exists($configFile)) {
     $needsInstallation = true;
 } else {
     $configContent = file_get_contents($configFile);
-    if (strpos($configContent, '{database_name}') !== false || strpos($configContent, '{username_db}') !== false) {
+    if (
+        strpos($configContent, '{database_name}') !== false ||
+        strpos($configContent, '{username_db}') !== false
+    ) {
         $needsInstallation = true;
+    }
+    if (
+        strpos($configContent, '{API_KEY}') !== false ||
+        strpos($configContent, '{username_bot}') !== false ||
+        strpos($configContent, '{domain_name}') !== false
+    ) {
+        $needsConfiguration = true;
     }
 }
 
 if ($needsInstallation && file_exists($installerPath)) {
     header("Location: installer/");
+    exit;
+}
+if ($needsConfiguration) {
+    header('Content-Type: text/html; charset=utf-8');
+    echo '
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>پیکربندی ناقص</title>
+        <style>
+            @import url("https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css");
+            body { font-family: "Vazirmatn", -apple-system, BlinkMacSystemFont, sans-serif; background-color: #fef2f2; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; color: #7f1d1d; }
+            .card { background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 420px; width: 100%; }
+            .icon { font-size: 50px; margin-bottom: 15px; }
+            h1 { color: #b91c1c; margin: 0 0 15px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+            p { line-height: 1.8; font-size: 14px; margin-bottom: 25px; color: #374151; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="icon">❌</div>
+            <h1>پیکربندی ربات ناقص است</h1>
+            <p>لطفاً مقادیر <code>API_KEY</code>، <code>username_bot</code> و <code>domain_name</code> را در فایل <code>config.php</code> تنظیم کنید.</p>
+        </div>
+    </body>
+    </html>';
     exit;
 }
 $version = file_get_contents('version');

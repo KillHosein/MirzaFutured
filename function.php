@@ -1594,14 +1594,22 @@ function addBackgroundImage($urlimage, $qrCodeResult, $backgroundPath)
 }
 function checktelegramip()
 {
-    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
-    if (!is_string($clientIp) || $clientIp === '') {
-        return false;
+    $candidates = [];
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        $candidates[] = trim((string) $_SERVER['HTTP_CF_CONNECTING_IP']);
     }
-
-    $clientIp = trim($clientIp);
-    if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
-        return false;
+    if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+        $candidates[] = trim((string) $_SERVER['HTTP_X_REAL_IP']);
+    }
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $forwarded = explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $first = trim((string) ($forwarded[0] ?? ''));
+        if ($first !== '') {
+            $candidates[] = $first;
+        }
+    }
+    if (!empty($_SERVER['REMOTE_ADDR'])) {
+        $candidates[] = trim((string) $_SERVER['REMOTE_ADDR']);
     }
 
     $telegramIpRanges = [
@@ -1610,9 +1618,14 @@ function checktelegramip()
         ['lower' => '2001:67c:4e8::', 'upper' => '2001:67c:4e8:ffff:ffff:ffff:ffff:ffff']
     ];
 
-    foreach ($telegramIpRanges as $range) {
-        if (isClientIpInRange($clientIp, $range['lower'], $range['upper'])) {
-            return true;
+    foreach ($candidates as $clientIp) {
+        if (!filter_var($clientIp, FILTER_VALIDATE_IP)) {
+            continue;
+        }
+        foreach ($telegramIpRanges as $range) {
+            if (isClientIpInRange($clientIp, $range['lower'], $range['upper'])) {
+                return true;
+            }
         }
     }
 
