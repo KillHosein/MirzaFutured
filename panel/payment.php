@@ -125,7 +125,7 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
 ?>
         <!--main content start-->
         <section id="main-content">
-            <section class="wrapper">
+        <section class="wrapper content-template">
                 <!-- page start-->
                 <div class="row">
                     <div class="col-lg-12">

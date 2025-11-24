@@ -160,7 +160,7 @@ if($user['number'] == "none")$user['number'] ="بدون شماره ";
 ?>
         <!--main content start-->
         <section id="main-content">
-            <section class="wrapper">
+        <section class="wrapper content-template">
                 <!-- page start-->
                 <div class="row">
                     <aside class="profile-nav col-lg-3">

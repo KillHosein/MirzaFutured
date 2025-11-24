@@ -120,7 +120,7 @@ if($_GET['action'] == "save"){
 ?>
         <!--main content start-->
         <section id="main-content">
-            <section class="wrapper">
+        <section class="wrapper content-template">
                 <!-- page start-->
                 <?php if($statusmessage){
                     echo "<h2>$infomesssage</h2>";

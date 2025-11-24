@@ -142,7 +142,7 @@ $textbot = file_get_contents($Pathfile.'text.json');
     <?php include("header.php"); ?>
     <!--main content start-->
     <section id="main-content">
-        <section class="wrapper">
+        <section class="wrapper content-template">
             <!-- page start-->
             <div class="row">
                 <aside class="col-lg-12">

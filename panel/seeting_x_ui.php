@@ -75,7 +75,7 @@ $namepanel = htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8');
 ?>
         <!--main content start-->
         <section id="main-content">
-            <section class="wrapper">
+            <section class="wrapper content-template">
                 <!-- page start-->
                 <div class="row">
                     <aside class="col-lg-12">
