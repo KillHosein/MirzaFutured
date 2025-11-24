@@ -134,7 +134,7 @@ $labelMapShop = [
                     <?php } ?>
                   </div>
                   <div style="margin-top:12px">
-                    <button type="submit" class="btn btn-success">ذخیره</button>
+                    <button type="submit" class="btn btn-success btn-space tooltips" data-original-title="ذخیره تنظیمات عمومی" aria-label="ذخیره تنظیمات عمومی"><i class="icon-save"></i> ذخیره</button>
                   </div>
                 </form>
               </div>
@@ -152,11 +152,11 @@ $labelMapShop = [
                     <div class="col-lg-6">
                       <label>آی‌پی فعلی شما</label>
                       <div class="ip-address" id="currentIp" style="display:inline-block; margin-left:10px;"><?php echo htmlspecialchars($_SERVER['REMOTE_ADDR'] ?? '',ENT_QUOTES,'UTF-8'); ?></div>
-                      <button type="button" id="useMyIp" class="btn btn-primary" style="margin-right:10px;">استفاده از آی‌پی من</button>
+                      <button type="button" id="useMyIp" class="btn btn-info btn-space tooltips" data-original-title="قرار دادن آی‌پی فعلی" aria-label="استفاده از آی‌پی من"><i class="icon-location-arrow"></i> استفاده از آی‌پی من</button>
                     </div>
                   </div>
                   <div style="margin-top:12px">
-                    <button type="submit" class="btn btn-success">ذخیره</button>
+                    <button type="submit" class="btn btn-success btn-space tooltips" data-original-title="ذخیره آی‌پی مجاز" aria-label="ذخیره آی‌پی"><i class="icon-save"></i> ذخیره</button>
                   </div>
                 </form>
               </div>
@@ -175,7 +175,7 @@ $labelMapShop = [
                     <?php } ?>
                   </div>
                   <div style="margin-top:12px">
-                    <button type="submit" class="btn btn-success">ذخیره</button>
+                    <button type="submit" class="btn btn-success btn-space tooltips" data-original-title="ذخیره تنظیمات فروشگاه" aria-label="ذخیره فروشگاه"><i class="icon-save"></i> ذخیره</button>
                   </div>
                 </form>
               </div>
@@ -192,7 +192,7 @@ $labelMapShop = [
                   <div class="form-group">
                     <label><input type="checkbox" name="keyboard_reset" value="1" /> بازنشانی به پیش‌فرض</label>
                   </div>
-                  <button type="submit" class="btn btn-success">ذخیره</button>
+                  <button type="submit" class="btn btn-success btn-space tooltips" data-original-title="ذخیره چیدمان کیبورد" aria-label="ذخیره کیبورد"><i class="icon-save"></i> ذخیره</button>
                 </form>
               </div>
             </section>
@@ -201,7 +201,7 @@ $labelMapShop = [
               <header class="panel-heading">پشتیبان‌گیری و بازگردانی</header>
               <div class="panel-body">
                 <div style="margin-bottom:10px;">
-                  <a class="btn btn-primary" href="settings.php?export=settings"><i class="icon-download"></i> دریافت فایل تنظیمات</a>
+                  <a class="btn btn-primary btn-space tooltips" href="settings.php?export=settings" data-original-title="دانلود نسخه پشتیبان" aria-label="دانلود تنظیمات"><i class="icon-download"></i> دریافت فایل تنظیمات</a>
                 </div>
                 <form method="post">
                   <input type="hidden" name="action" value="import_settings" />
@@ -209,7 +209,7 @@ $labelMapShop = [
                     <label>قرار دادن JSON تنظیمات برای بازگردانی</label>
                     <textarea name="import_json" class="form-control" rows="8" style="direction:ltr;" placeholder='{"general":{...},"shop":{...}}'></textarea>
                   </div>
-                  <button type="submit" class="btn btn-warning"><i class="icon-upload"></i> بازگردانی تنظیمات</button>
+                  <button type="submit" class="btn btn-warning btn-space tooltips" data-original-title="بازگردانی از JSON" aria-label="بازگردانی تنظیمات"><i class="icon-upload"></i> بازگردانی تنظیمات</button>
                 </form>
               </div>
             </section>
