@@ -56,6 +56,29 @@ if(isset($_GET['removeid']) && $_GET['removeid']){
     $stmt->execute();
     header("Location: product.php");
 }
+
+if(isset($_GET['export']) && $_GET['export']==='csv'){
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=products-'.date('Y-m-d').'.csv');
+    $out = fopen('php://output','w');
+    fputcsv($out, ['ID','Code','Name','Price','Volume','Time','Location','Agent','Reset','Category']);
+    foreach($listinvoice as $row){
+        fputcsv($out, [
+            $row['id'],
+            $row['code_product'],
+            $row['name_product'],
+            $row['price_product'],
+            $row['Volume_constraint'],
+            $row['Service_time'],
+            $row['Location'],
+            $row['agent'],
+            $row['data_limit_reset'],
+            $row['category'] ?? ''
+        ]);
+    }
+    fclose($out);
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -141,7 +164,7 @@ if(isset($_GET['removeid']) && $_GET['removeid']){
                                         <td class=\"hidden-phone\">{$list['agent']}</td>
                                         <td class=\"hidden-phone\">{$list['data_limit_reset']}</td>
                                         <td class=\"hidden-phone\">{$list['category']}</td>
-                                        <td  class=\"hidden-phone\"><a class=\"btn btn-primary\" href=\"productedit.php?id={$list['id']}\">مشاهده</a> <a class = \"btn btn-info\" href= \"productedit.php?id={$list['id']}\">ویرایش</a> <a class = \"btn btn-danger\" href= \"product.php?removeid={$list['id']}\">حذف</a></td>
+                                        <td  class=\"hidden-phone\"><a class=\"btn btn-primary\" href=\"productedit.php?id={$list['id']}\">مشاهده</a> <a class = \"btn btn-info\" href= \"productedit.php?id={$list['id']}\">ویرایش</a> <a class = \"btn btn-danger\" href= \"product.php?removeid={$list['id']}\" data-confirm=\"آیا از حذف محصول مطمئن هستید؟\">حذف</a></td>
                                     </tr>";
                                 }
                                     ?>
@@ -254,6 +277,7 @@ if(isset($_GET['removeid']) && $_GET['removeid']){
                                                     <div class="form-group">
                                                         <div class="col-lg-offset-2 col-lg-10">
                                                             <button type="submit" class="btn btn-danger">اضافه کردن محصول</button>
+                                                            <a href="?export=csv" class="btn btn-success">خروجی CSV</a>
                                                         </div>
                                                     </div>
                                                 </form>

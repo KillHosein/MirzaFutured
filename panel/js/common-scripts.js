@@ -138,7 +138,7 @@ var Script = function () {
         });
     })();
 
-// global search in sidebar
+    // global search in sidebar
     (function(){
         var $input = $('#globalSearch');
         if(!$input.length) return;
@@ -170,6 +170,17 @@ var Script = function () {
             if(e.key === '/' && !$(e.target).is('input, textarea')){
                 e.preventDefault();
                 $input.focus();
+            }
+        });
+    })();
+
+    // confirm delete dialogs (Persian)
+    (function(){
+        $(document).on('click','a[data-confirm]',function(e){
+            var msg = $(this).attr('data-confirm') || 'آیا مطمئن هستید؟';
+            if(!confirm(msg)){
+                e.preventDefault();
+                return false;
             }
         });
     })();

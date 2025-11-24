@@ -5,8 +5,25 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
     $query->execute();
     $result = $query->fetch(PDO::FETCH_ASSOC);
-    $query = $pdo->prepare("SELECT * FROM user");
-    $query->execute();
+    $where = [];$params = [];
+    if(!empty($_GET['status'])){
+        $where[] = "LOWER(User_Status) = :st";
+        $params[':st'] = strtolower($_GET['status']);
+    }
+    if(!empty($_GET['agent'])){
+        $where[] = "agent = :ag";
+        $params[':ag'] = $_GET['agent'];
+    }
+    if(!empty($_GET['q'])){
+        $search = '%' . $_GET['q'] . '%';
+        $where[] = "(CAST(id AS CHAR) LIKE :q OR username LIKE :q OR number LIKE :q)";
+        $params[':q'] = $search;
+    }
+    $sql = "SELECT * FROM user";
+    if(!empty($where)) $sql .= " WHERE " . implode(' AND ', $where);
+    $sql .= " ORDER BY id DESC";
+    $query = $pdo->prepare($sql);
+    $query->execute($params);
     $listusers = $query->fetchAll();
 if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
@@ -57,6 +74,31 @@ if( !isset($_SESSION["user"]) || !$result ){
                     <div class="col-lg-12">
                         <section class="panel">
                             <header class="panel-heading">لیست کاربران</header>
+                            <div class="panel-body">
+                                <form class="form-inline" method="get">
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" name="q" class="form-control" placeholder="جستجو نام کاربری/آیدی/شماره" value="<?php echo isset($_GET['q'])?htmlspecialchars($_GET['q']):''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <select name="status" class="form-control">
+                                            <option value="">همه وضعیت‌ها</option>
+                                            <option value="active" <?php echo (isset($_GET['status']) && $_GET['status']==='active')?'selected':''; ?>>فعال</option>
+                                            <option value="block" <?php echo (isset($_GET['status']) && $_GET['status']==='block')?'selected':''; ?>>مسدود</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <select name="agent" class="form-control">
+                                            <option value="">همه گروه‌ها</option>
+                                            <option value="f" <?php echo (isset($_GET['agent']) && $_GET['agent']==='f')?'selected':''; ?>>کاربر عادی</option>
+                                            <option value="n" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n')?'selected':''; ?>>نماینده معمولی</option>
+                                            <option value="n2" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n2')?'selected':''; ?>>نماینده پیشرفته</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">فیلتر</button>
+                                    <a href="users.php" class="btn btn-default">پاک کردن</a>
+                                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                </form>
+                            </div>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
@@ -73,24 +115,14 @@ if( !isset($_SESSION["user"]) || !$result ){
                                 </thead>
                                 <tbody> <?php
                                 foreach($listusers as $list){
+                                    $statusKey = strtolower($list['User_Status']);
                                     $status_user = [
-                                        'Active' => "فعال",
                                         'active' => "فعال",
-                                        "block" => "بلاک",
-                                        ][$list['User_Status']];
+                                        'block' => "مسدود",
+                                    ][$statusKey] ?? $list['User_Status'];
+                                    $status_color = $statusKey==='active' ? '#10b981' : ($statusKey==='block' ? '#ef4444' : '#6b7280');
                                     if($list['number'] == "none")$list['number'] ="بدون شماره ";
-                                   echo "<tr class=\"odd gradeX\">
-                                        <td>
-                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>
-                                        <td>{$list['id']}</td>
-                                        <td class=\"hidden-phone\">{$list['username']}</td>
-                                        <td class=\"hidden-phone\">{$list['number']}</td>
-                                        <td class=\"hidden-phone\">{$list['Balance']}</td>
-                                        <td class=\"hidden-phone\">{$list['affiliatescount']}</td>
-                                        <td class=\"hidden-phone\">$status_user</td>
-                                        <td class=\"hidden-phone\">
-                                        <a class = \"btn btn-success\" href= \"user.php?id={$list['id']}\">مدیریت کاربر </a></td>
-                                    </tr>";
+                                   echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id']}</td>\n                                        <td class=\"hidden-phone\">{$list['username']}</td>\n                                        <td class=\"hidden-phone\">{$list['number']}</td>\n                                        <td class=\"hidden-phone\">".number_format($list['Balance'])."</td>\n                                        <td class=\"hidden-phone\">{$list['affiliatescount']}</td>\n                                        <td class=\"hidden-phone\"><span class=\"badge\" style=\"background-color:{$status_color}\">{$status_user}</span></td>\n                                        <td class=\"hidden-phone\">\n                                        <a class = \"btn btn-success\" href= \"user.php?id={$list['id']}\">مدیریت کاربر </a></td>\n                                    </tr>";
                                 }
                                     ?>
                                 </tbody>
@@ -122,3 +154,23 @@ if( !isset($_SESSION["user"]) || !$result ){
 
 </body>
 </html>
+if(isset($_GET['export']) && $_GET['export'] === 'csv'){
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=users-'.date('Y-m-d').'.csv');
+    $out = fopen('php://output','w');
+    fputcsv($out, ['ID','Username','Number','Balance','Affiliates','Status','Agent']);
+    foreach($listusers as $u){
+        $status = strtolower($u['User_Status']);
+        fputcsv($out, [
+            $u['id'],
+            $u['username'],
+            $u['number'],
+            $u['Balance'],
+            $u['affiliatescount'],
+            $status,
+            $u['agent']
+        ]);
+    }
+    fclose($out);
+    exit();
+}
