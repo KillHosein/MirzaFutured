@@ -678,6 +678,14 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
 } elseif ($text == "🗂 دریافت بکاپ") {
     $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select", ['cache' => false]);
     $botSet = json_decode($botRow['setting'] ?? '{}', true);
+    if (!is_array($botSet)) { $botSet = []; }
+    if (!isset($botSet['auto_backup_minutes'])) {
+        $fallback = select("setting", "*", null, null, "select", ['cache' => false]);
+        if (is_array($fallback)) {
+            $botSet['auto_backup_minutes'] = intval($fallback['auto_backup_minutes'] ?? 0);
+            $botSet['auto_backup_enabled'] = !empty($fallback['auto_backup_enabled']) ? 1 : 0;
+        }
+    }
     $minutesInfo = isset($botSet['auto_backup_minutes']) ? intval($botSet['auto_backup_minutes']) : 0;
     $statusInfo = !empty($botSet['auto_backup_enabled']) && $minutesInfo > 0 ? "فعال" : "غیرفعال";
     sendmessage($from_id, "⏱ مقدار دقیقه ارسال خودکار بکاپ را ارسال کنید\n(۰ برای غیرفعال)\nوضعیت فعلی: $statusInfo | هر $minutesInfo دقیقه", $backadmin, 'HTML');
@@ -690,6 +698,7 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     $min = intval($text);
     $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select", ['cache' => false]);
     $botSet = json_decode($botRow['setting'] ?? '{}', true);
+    if (!is_array($botSet)) { $botSet = []; }
     $botSet['auto_backup_minutes'] = $min;
     $botSet['auto_backup_enabled'] = $min > 0 ? 1 : 0;
     $botSet['auto_backup_last_ts'] = time();
