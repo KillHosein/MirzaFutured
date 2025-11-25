@@ -733,8 +733,9 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
         }
     } elseif ($ext === 'zip') {
         $zip = new ZipArchive();
+        $pass = isset($setting['zip_password']) ? trim($setting['zip_password']) : '';
         if ($zip->open($tmpName) === TRUE) {
-            $zip->setPassword("MirzaBackup2025#@$");
+            if ($pass !== '') $zip->setPassword($pass);
             $extractDir = 'restore_extract_' . time();
             mkdir($extractDir);
             $zip->extractTo($extractDir);

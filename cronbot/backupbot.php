@@ -69,6 +69,9 @@ if($botlist){
 
 $backup_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d") . '.sql');
 $zip_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d") . '.zip');
+// Optional encryption configuration
+$zipEnc = isset($setting['zip_encryption']) ? strtolower(trim($setting['zip_encryption'])) : 'none';
+$zipPass = isset($setting['zip_password']) ? trim($setting['zip_password']) : '';
 
 $command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces $dbname > $backup_file_name";
 $output = [];
@@ -94,12 +97,19 @@ if ($return_var !== 0) {
                 $local = substr($path, strlen($tmpDir)+1);
                 $zip->addFile($path, $local);
             }
-            $zip->setEncryptionName(reset($tables).'.json', ZipArchive::EM_AES_256, "MirzaBackup2025#@$");
+            if ($zipEnc === 'aes' && $zipPass !== '') {
+                // Encrypt first JSON entry as indicator
+                $first = reset($tables);
+                if ($first) $zip->setEncryptionName($first.'.json', ZipArchive::EM_AES_256, $zipPass);
+            } elseif ($zipEnc === 'pkware' && $zipPass !== '') {
+                $first = reset($tables);
+                if ($first) $zip->setEncryptionName($first.'.json', ZipArchive::EM_TRAD_PKWARE, $zipPass);
+            }
             $zip->close();
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
                 'document' => new CURLFile(realpath($zip_file_name)),
-                'caption' => "📌 بکاپ JSON دیتابیس",
+                'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
             telegram('sendDocument', $payload);
@@ -120,15 +130,19 @@ if ($return_var !== 0) {
     }
 } else {
     $zip = new ZipArchive();
-    if ($zip->open($zip_file_name, ZipArchive::CREATE) === TRUE) {
+    if ($zip->open($zip_file_name, ZipArchive::CREATE|ZipArchive::OVERWRITE) === TRUE) {
         $zip->addFile($backup_file_name, basename($backup_file_name));
-        $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_AES_256, "MirzaBackup2025#@$");
+        if ($zipEnc === 'aes' && $zipPass !== '') {
+            $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_AES_256, $zipPass);
+        } elseif ($zipEnc === 'pkware' && $zipPass !== '') {
+            $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_TRAD_PKWARE, $zipPass);
+        }
         $zip->close();
         if($autoTriggered || defined('FORCE_BACKUP')){
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
                 'document' => new CURLFile(realpath($zip_file_name)),
-                'caption' => "📌 خروجی دیتابیس ربات اصلی \nبرای دریافت پسورد به اکانت پشتیبانی پیام دهید.",
+                'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 خروجی دیتابیس (رمز: $zipPass)" : "📌 خروجی دیتابیس"),
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
             telegram('sendDocument', $payload);
