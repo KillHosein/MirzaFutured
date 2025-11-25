@@ -39,13 +39,37 @@ if($botlist){
                 foreach ($rii as $file){
                     $filePath = $file->getPathname();
                     $localName = substr($filePath, strlen($baseDir)+1);
-                    $zip->addFile($filePath, $localName);
+                    $content = @file_get_contents($filePath);
+                    if ($content !== false) {
+                        if (!empty($domainhosts)) {
+                            $content = str_replace($domainhosts, '<redacted-domain>', $content);
+                        }
+                        $zip->addFromString($localName, $content);
+                    } else {
+                        $zip->addFile($filePath, $localName);
+                    }
                 }
             }
             $p1 = $baseDir.'/product.json';
-            if (is_file($p1)) $zip->addFile($p1, 'product.json');
+            if (is_file($p1)) {
+                $j = json_decode(@file_get_contents($p1), true);
+                if (is_array($j)){
+                    foreach (['domain','panel_url','url_panel','subscription_url'] as $k){ if (isset($j[$k])) $j[$k] = '<redacted-domain>'; }
+                    $zip->addFromString('product.json', json_encode($j, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+                } else {
+                    $zip->addFile($p1, 'product.json');
+                }
+            }
             $p2 = $baseDir.'/product_name.json';
-            if (is_file($p2)) $zip->addFile($p2, 'product_name.json');
+            if (is_file($p2)) {
+                $j = json_decode(@file_get_contents($p2), true);
+                if (is_array($j)){
+                    foreach (['domain','panel_url','url_panel'] as $k){ if (isset($j[$k])) $j[$k] = '<redacted-domain>'; }
+                    $zip->addFromString('product_name.json', json_encode($j, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+                } else {
+                    $zip->addFile($p2, 'product_name.json');
+                }
+            }
             $zip->close();
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
@@ -87,6 +111,19 @@ if ($return_var !== 0) {
         foreach($tables as $t){
             $dataStmt = $pdo->query('SELECT * FROM `'.$t.'`');
             $rows = $dataStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (is_array($rows)){
+                foreach ($rows as &$row){
+                    foreach ($row as $col => &$val){
+                        if (preg_match('/^(domain|url_panel|panel_url|subscription_url)$/i', $col)){
+                            $val = '<redacted-domain>';
+                        } elseif (is_string($val) && !empty($domainhosts) && strpos($val, $domainhosts) !== false){
+                            $val = str_replace($domainhosts, '<redacted-domain>', $val);
+                        }
+                    }
+                    unset($val);
+                }
+                unset($row);
+            }
             file_put_contents($tmpDir.'/'.$t.'.json', json_encode($rows, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
         }
         $zip = new ZipArchive();
@@ -131,7 +168,13 @@ if ($return_var !== 0) {
 } else {
     $zip = new ZipArchive();
     if ($zip->open($zip_file_name, ZipArchive::CREATE|ZipArchive::OVERWRITE) === TRUE) {
-        $zip->addFile($backup_file_name, basename($backup_file_name));
+        $sqlContent = @file_get_contents($backup_file_name);
+        if ($sqlContent !== false && !empty($domainhosts)){
+            $sqlContent = str_replace($domainhosts, '<redacted-domain>', $sqlContent);
+            $zip->addFromString(basename($backup_file_name), $sqlContent);
+        } else {
+            $zip->addFile($backup_file_name, basename($backup_file_name));
+        }
         if ($zipEnc === 'aes' && $zipPass !== '') {
             $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_AES_256, $zipPass);
         } elseif ($zipEnc === 'pkware' && $zipPass !== '') {
