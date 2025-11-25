@@ -12,6 +12,15 @@ $rbRow = select("topicid","idreport","report","general","select");
 $reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
 $destination = __DIR__;
 $setting = select("setting", "*");
+try {
+    $chatInfo = telegram('getChat', ['chat_id' => $setting['Channel_Report']]);
+    if (is_array($chatInfo) && !empty($chatInfo['ok']) && !empty($chatInfo['result']['is_forum'])) {
+        if (empty($reportbackup) || intval($reportbackup) <= 0) {
+            $reportbackup = 1;
+        }
+    }
+} catch (Throwable $e) {
+}
 $sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
 function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
@@ -27,6 +36,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
         $isDue = $enabled && $minutes > 0 && ($now - $lastTs) >= ($minutes * 60);
         $force = defined('FORCE_BACKUP');
         if(!$force && !$isDue){
+            echo date('Y-m-d H:i:s') . " skip bot data backup for @{$bot['username']} due scheduling -> enabled=" . ($enabled?1:0) . ", minutes=" . $minutes . ", lastTs=" . $lastTs . "\n";
             continue;
         }
         $autoTriggered = $autoTriggered || $isDue || $force;
@@ -255,6 +265,8 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                 ];
                 if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
                 telegram('sendDocument', $payload);
+            } else {
+                echo date('Y-m-d H:i:s') . " skip sql backup send due scheduling -> autoTriggered=0, minutes aggregate per-bot" . "\n";
             }
             unlink($zip_file_name);
             unlink($backup_file_name);
