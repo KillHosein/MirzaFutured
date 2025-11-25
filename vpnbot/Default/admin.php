@@ -695,9 +695,11 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     if (true) {
         $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
         $script = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'backupbot.php';
-        $cmd = $isWin ? ('start /B "" php "' . $script . '" --force') : ('php ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
-        @pclose(@popen($cmd, 'r'));
-        sendmessage($from_id, "📦 بکاپ در پس‌زمینه زمان‌بندی و اجرا شد.", $keyboardadmin, 'HTML');
+        $cmdDaemon = $isWin ? ('start /B "" php "' . $script . '" --daemon') : ('php ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
+        @pclose(@popen($cmdDaemon, 'r'));
+        $cmdForce = $isWin ? ('start /B "" php "' . $script . '" --force') : ('php ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
+        @pclose(@popen($cmdForce, 'r'));
+        sendmessage($from_id, "📦 سرویس زمان‌بندی بکاپ آغاز شد و اولین بکاپ ارسال می‌شود.", $keyboardadmin, 'HTML');
     }
 } elseif ($text == "♻️ بازیابی بکاپ") {
     sendmessage($from_id, "📄 فایل بکاپ را به صورت ZIP یا SQL ارسال کنید.\nدر صورت ZIP رمزگذاری‌شده، رمز داخلی اعمال می‌شود.", $backadmin, 'HTML');
