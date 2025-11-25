@@ -9,7 +9,7 @@ require_once __DIR__ . '/../function.php';
 require_once __DIR__ . '/../botapi.php';
 
 $rbRow = select("topicid","idreport","report","backupfile","select");
-$reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
+$reportbackup = is_array($rbRow) && isset($rbRow['topicid']) ? $rbRow['topicid'] : null;
 $destination = __DIR__;
 $setting = select("setting", "*");
 $sourcefir = dirname(__DIR__);
@@ -83,11 +83,9 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
             telegram('sendDocument',$payload);
             unlink($zipName);
         }
-        // update last run timestamp when auto
-        if($isDue){
-            $botSetting['auto_backup_last_ts'] = $now;
-            update('botsaz','setting', json_encode($botSetting, JSON_UNESCAPED_UNICODE), 'id_user', $bot['id_user']);
-        }
+        // update last run timestamp after a send (due or force)
+        $botSetting['auto_backup_last_ts'] = $now;
+        update('botsaz','setting', json_encode($botSetting, JSON_UNESCAPED_UNICODE), 'id_user', $bot['id_user']);
     }
     // Global data folder backup (vpnbot/update/data)
     $globalDataDir = $sourcefir.'/vpnbot/update/data';
