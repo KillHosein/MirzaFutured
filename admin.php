@@ -3425,10 +3425,11 @@ $caption";
         $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
         $script = __DIR__ . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'backupbot.php';
         // start daemon for repeated backups
-        $cmdDaemon = $isWin ? ('start /B "" php "' . $script . '" --daemon') : ('php ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
+        $phpBin = defined('PHP_BINARY') ? PHP_BINARY : 'php';
+        $cmdDaemon = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --daemon') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
         @pclose(@popen($cmdDaemon, 'r'));
         // trigger first backup immediately
-        $cmdForce = $isWin ? ('start /B "" php "' . $script . '" --force') : ('php ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
+        $cmdForce = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --force') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
         @pclose(@popen($cmdForce, 'r'));
         sendmessage($from_id, "📦 سرویس زمان‌بندی بکاپ آغاز شد و اولین بکاپ ارسال می‌شود.", $setting_panel, 'HTML');
     }
