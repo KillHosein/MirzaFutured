@@ -3493,17 +3493,31 @@ $caption";
             }
             foreach (glob($extractDir.'/*.json') as $jsonFile){
                 $table = basename($jsonFile, '.json');
-                if (!in_array($table, ['user','invoice'])) continue;
                 $rows = json_decode(file_get_contents($jsonFile), true);
-                if (is_array($rows)){
-                    foreach ($rows as $row){
-                        $cols = array_keys($row);
-                        $place = implode(',', array_map(function($c){ return ':' . $c; }, $cols));
-                        $sets = implode(',', array_map(function($c){ return "`$c`=VALUES(`$c`)"; }, $cols));
-                        $sql = 'INSERT INTO `'.$table.'` (`'.implode('`,`',$cols).'`) VALUES ('.$place.') ON DUPLICATE KEY UPDATE '.$sets;
-                        $stmt = $pdo->prepare($sql);
-                        foreach ($row as $k=>$v){ $stmt->bindValue(':'.$k, $v); }
-                        try{ $stmt->execute(); }catch(Throwable $e){ }
+                if (!is_array($rows)) continue;
+                try { $pdo->exec('TRUNCATE TABLE `'.$table.'`'); } catch(Throwable $e){ }
+                foreach ($rows as $row){
+                    $cols = array_keys($row);
+                    $place = implode(',', array_map(function($c){ return ':' . $c; }, $cols));
+                    $sql = 'INSERT INTO `'.$table.'` (`'.implode('`,`',$cols).'`) VALUES ('.$place.')';
+                    $stmt = $pdo->prepare($sql);
+                    foreach ($row as $k=>$v){ $stmt->bindValue(':'.$k, $v); }
+                    try{ $stmt->execute(); }catch(Throwable $e){ }
+                }
+            }
+            $userJson = $extractDir.'/user.json';
+            if (is_file($userJson)){
+                $usersRows = json_decode(file_get_contents($userJson), true);
+                if (is_array($usersRows)){
+                    foreach ($usersRows as $ur){
+                        $uid = $ur['id'] ?? null;
+                        if (!$uid) continue;
+                        $destJson = __DIR__ . '/vpnbot/update/data/'.$uid.'/'.$uid.'.json';
+                        $dataObj = is_file($destJson) ? json_decode(file_get_contents($destJson), true) : [];
+                        if (!is_array($dataObj)) $dataObj = [];
+                        if (isset($ur['Balance'])) $dataObj['Balance'] = $ur['Balance'];
+                        if (!is_dir(dirname($destJson))) mkdir(dirname($destJson), 0777, true);
+                        file_put_contents($destJson, json_encode($dataObj, JSON_UNESCAPED_UNICODE));
                     }
                 }
             }

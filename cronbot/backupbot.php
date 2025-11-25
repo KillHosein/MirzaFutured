@@ -27,7 +27,7 @@ if($botlist){
             continue;
         }
         $autoTriggered = $autoTriggered || $isDue || $force;
-        // Prepare zip of bot data
+        // Prepare zip of bot data (per bot folder)
         $folderName = $bot['id_user'].$bot['username'];
         $zipName = $destination . DIRECTORY_SEPARATOR . 'file.zip';
         $zip = new ZipArchive();
@@ -88,6 +88,45 @@ if($botlist){
     }
 }
 
+// Global data folder backup (vpnbot/update/data)
+$globalDataDir = $sourcefir.'/vpnbot/update/data';
+if (is_dir($globalDataDir)){
+    $zipName = $destination . DIRECTORY_SEPARATOR . 'data_update.zip';
+    $zip = new ZipArchive();
+    if ($zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($globalDataDir, FilesystemIterator::SKIP_DOTS));
+        foreach ($rii as $file){
+            $path = $file->getPathname();
+            $local = substr($path, strlen($globalDataDir)+1);
+            $content = @file_get_contents($path);
+            if ($content !== false && !empty($domainhosts)){
+                $content = str_replace($domainhosts, '<redacted-domain>', $content);
+                $zip->addFromString($local, $content);
+            } else {
+                $zip->addFile($path, $local);
+            }
+        }
+        // include Default/update product configs if present
+        foreach (['vpnbot/Default/product.json','vpnbot/Default/product_name.json','vpnbot/update/text.json'] as $cfg){
+            $cfgPath = $sourcefir.'/'.$cfg;
+            if (is_file($cfgPath)){
+                $content = @file_get_contents($cfgPath);
+                if ($content !== false && !empty($domainhosts)) $content = str_replace($domainhosts, '<redacted-domain>', $content);
+                $zip->addFromString(basename($cfg), $content !== false ? $content : '');
+            }
+        }
+        $zip->close();
+        $payload = [
+            'chat_id' => $setting['Channel_Report'],
+            'document' => new CURLFile(realpath($zipName)),
+            'caption' => "📦 داده‌های عمومی ربات (update/data)",
+        ];
+        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        telegram('sendDocument',$payload);
+        unlink($zipName);
+    }
+}
+
 
 
 
@@ -97,7 +136,7 @@ $zip_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d")
 $zipEnc = isset($setting['zip_encryption']) ? strtolower(trim($setting['zip_encryption'])) : 'none';
 $zipPass = isset($setting['zip_password']) ? trim($setting['zip_password']) : '';
 
-$command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces $dbname > $backup_file_name";
+$command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces --single-transaction --quick --routines --events --triggers --default-character-set=utf8mb4 $dbname > $backup_file_name";
 $output = [];
 $return_var = 0;
 exec($command, $output, $return_var);
@@ -126,6 +165,38 @@ if ($return_var !== 0) {
             }
             file_put_contents($tmpDir.'/'.$t.'.json', json_encode($rows, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
         }
+        // Schema and views/routines fallback
+        $schemaSql = '';
+        foreach($tables as $t){
+            try{ $createRow = $pdo->query('SHOW CREATE TABLE `'.$t.'`')->fetch(PDO::FETCH_ASSOC); }catch(Throwable $e){ $createRow = null; }
+            if ($createRow){ $schemaSql .= $createRow['Create Table'] . ";\n\n"; }
+        }
+        // Views
+        try{
+            $views = $pdo->query("SHOW FULL TABLES WHERE Table_type = 'VIEW'")->fetchAll(PDO::FETCH_NUM);
+            foreach($views as $v){
+                $vn = $v[0];
+                $cr = $pdo->query('SHOW CREATE VIEW `'.$vn.'`')->fetch(PDO::FETCH_ASSOC);
+                if ($cr && isset($cr['Create View'])) $schemaSql .= $cr['Create View'] . ";\n\n";
+            }
+        }catch(Throwable $e){ }
+        // Routines
+        try{
+            $procs = $pdo->query("SHOW PROCEDURE STATUS WHERE Db = '$dbname'")->fetchAll(PDO::FETCH_ASSOC);
+            foreach($procs as $pr){
+                $nm = $pr['Name'];
+                $cr = $pdo->query('SHOW CREATE PROCEDURE `'.$nm.'`')->fetch(PDO::FETCH_ASSOC);
+                if ($cr && isset($cr['Create Procedure'])) $schemaSql .= $cr['Create Procedure'] . ";\n\n";
+            }
+            $funcs = $pdo->query("SHOW FUNCTION STATUS WHERE Db = '$dbname'")->fetchAll(PDO::FETCH_ASSOC);
+            foreach($funcs as $fn){
+                $nm = $fn['Name'];
+                $cr = $pdo->query('SHOW CREATE FUNCTION `'.$nm.'`')->fetch(PDO::FETCH_ASSOC);
+                if ($cr && isset($cr['Create Function'])) $schemaSql .= $cr['Create Function'] . ";\n\n";
+            }
+        }catch(Throwable $e){ }
+        if (!empty($domainhosts)) $schemaSql = str_replace($domainhosts, '<redacted-domain>', $schemaSql);
+        file_put_contents($tmpDir.'/schema.sql', $schemaSql);
         $zip = new ZipArchive();
         if ($zip->open($zip_file_name, ZipArchive::CREATE|ZipArchive::OVERWRITE) === TRUE){
             $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS));
