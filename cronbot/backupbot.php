@@ -9,7 +9,7 @@ require_once __DIR__ . '/../function.php';
 require_once __DIR__ . '/../botapi.php';
 
 $rbRow = select("topicid","idreport","report","backupfile","select");
-$reportbackup = is_array($rbRow) && isset($rbRow['topicid']) ? $rbRow['topicid'] : null;
+$reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
 $destination = __DIR__;
 $setting = select("setting", "*");
 $sourcefir = dirname(__DIR__);
