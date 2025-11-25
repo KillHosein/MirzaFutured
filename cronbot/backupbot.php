@@ -16,7 +16,7 @@ $sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
 function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
     global $domainhosts, $dbname, $usernamedb, $passworddb, $pdo;
-    $botlist = select("botsaz","*",null,null,"fetchAll");
+    $botlist = select("botsaz","*",null,null,"fetchAll", ['cache' => false]);
     $autoTriggered = false;
     foreach ($botlist ?: [] as $bot){
         $botSetting = json_decode($bot['setting'] ?? '{}', true);
@@ -80,7 +80,8 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                 'caption' => "@{$bot['username']} | {$bot['id_user']}",
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-            telegram('sendDocument',$payload);
+            $resp = telegram('sendDocument',$payload);
+            echo date('Y-m-d H:i:s') . " send bot data zip for @{$bot['username']} -> " . json_encode($resp) . "\n";
             unlink($zipName);
         }
         // update last run timestamp after a send (due or force)
@@ -120,7 +121,8 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                 'caption' => "📦 داده‌های عمومی ربات (update/data)",
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-            telegram('sendDocument',$payload);
+            $resp = telegram('sendDocument',$payload);
+            echo date('Y-m-d H:i:s') . " send update data zip -> " . json_encode($resp) . "\n";
             unlink($zipName);
         }
     }
@@ -403,7 +405,8 @@ if ($return_var !== 0) {
                 'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-            telegram('sendDocument', $payload);
+            $resp = telegram('sendDocument', $payload);
+            echo date('Y-m-d H:i:s') . " send db json backup -> " . json_encode($resp) . "\n";
             unlink($zip_file_name);
         }
     } catch (Throwable $e){
@@ -442,8 +445,9 @@ if ($return_var !== 0) {
                 'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 خروجی دیتابیس (رمز: $zipPass)" : "📌 خروجی دیتابیس"),
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-            telegram('sendDocument', $payload);
-        }
+                $resp = telegram('sendDocument', $payload);
+                echo date('Y-m-d H:i:s') . " send db sql backup -> " . json_encode($resp) . "\n";
+            }
         unlink($zip_file_name);
         unlink($backup_file_name);
     }
