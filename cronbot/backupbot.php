@@ -2,15 +2,15 @@
 if (PHP_SAPI === 'cli' && isset($argv) && in_array('--force', $argv, true)) {
     if (!defined('FORCE_BACKUP')) define('FORCE_BACKUP', true);
 }
-require_once '../config.php';
-require_once '../function.php';
-require_once '../botapi.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+require_once __DIR__ . '/../botapi.php';
 
 $rbRow = select("topicid","idreport","report","backupfile","select");
 $reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
-$destination = getcwd();
+$destination = __DIR__;
 $setting = select("setting", "*");
-$sourcefir = dirname($destination);
+$sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
 $botlist = select("botsaz","*",null,null,"fetchAll");
 $autoTriggered = false;
@@ -29,7 +29,7 @@ if($botlist){
         $autoTriggered = $autoTriggered || $isDue || $force;
         // Prepare zip of bot data
         $folderName = $bot['id_user'].$bot['username'];
-        $zipName = 'file.zip';
+        $zipName = $destination . DIRECTORY_SEPARATOR . 'file.zip';
         $zip = new ZipArchive();
         if ($zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
             $baseDir = $sourcefir.'/vpnbot/'.$folderName;
@@ -49,7 +49,7 @@ if($botlist){
             $zip->close();
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
-                'document' => new CURLFile($zipName),
+                'document' => new CURLFile(realpath($zipName)),
                 'caption' => "@{$bot['username']} | {$bot['id_user']}",
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
@@ -67,8 +67,8 @@ if($botlist){
 
 
 
-$backup_file_name = 'backup_' . date("Y-m-d") . '.sql';
-$zip_file_name = 'backup_' . date("Y-m-d") . '.zip';
+$backup_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d") . '.sql');
+$zip_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d") . '.zip');
 
 $command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces $dbname > $backup_file_name";
 $output = [];
@@ -98,7 +98,7 @@ if ($return_var !== 0) {
             $zip->close();
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
-                'document' => new CURLFile($zip_file_name),
+                'document' => new CURLFile(realpath($zip_file_name)),
                 'caption' => "📌 بکاپ JSON دیتابیس",
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
@@ -127,7 +127,7 @@ if ($return_var !== 0) {
         if($autoTriggered || defined('FORCE_BACKUP')){
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
-                'document' => new CURLFile($zip_file_name),
+                'document' => new CURLFile(realpath($zip_file_name)),
                 'caption' => "📌 خروجی دیتابیس ربات اصلی \nبرای دریافت پسورد به اکانت پشتیبانی پیام دهید.",
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;

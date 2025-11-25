@@ -694,7 +694,8 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     step('home', $from_id);
     if (true) {
         $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
-        $cmd = $isWin ? 'start /B "" php cronbot\\backupbot.php --force' : 'php cronbot/backupbot.php --force > /dev/null 2>&1 &';
+        $script = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'backupbot.php';
+        $cmd = $isWin ? ('start /B "" php "' . $script . '" --force') : ('php ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
         @pclose(@popen($cmd, 'r'));
         sendmessage($from_id, "📦 بکاپ در پس‌زمینه زمان‌بندی و اجرا شد.", $keyboardadmin, 'HTML');
     }
