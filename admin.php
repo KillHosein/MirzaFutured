@@ -3422,9 +3422,10 @@ $caption";
     sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…", null, 'HTML');
     step('home', $from_id);
     if (true) {
-        define('FORCE_BACKUP', true);
-        require_once __DIR__ . '/cronbot/backupbot.php';
-        sendmessage($from_id, "📦 بکاپ ارسال شد به کانال گزارش.", $setting_panel, 'HTML');
+        $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
+        $cmd = $isWin ? 'start /B "" php cronbot\\backupbot.php --force' : 'php cronbot/backupbot.php --force > /dev/null 2>&1 &';
+        @pclose(@popen($cmd, 'r'));
+        sendmessage($from_id, "📦 بکاپ در پس‌زمینه زمان‌بندی و اجرا شد.", $setting_panel, 'HTML');
     }
 } elseif ($text == "♻️ بازیابی بکاپ" && $adminrulecheck['rule'] == "administrator") {
     sendmessage($from_id, "📄 فایل بکاپ را به صورت ZIP یا SQL ارسال کنید.\nدر صورت ZIP رمزگذاری‌شده، رمز داخلی اعمال می‌شود.", $backadmin, 'HTML');

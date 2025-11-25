@@ -693,9 +693,10 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…", null, 'HTML');
     step('home', $from_id);
     if (true) {
-        define('FORCE_BACKUP', true);
-        require_once dirname(__DIR__, 2) . '/cronbot/backupbot.php';
-        sendmessage($from_id, "📦 بکاپ ارسال شد به کانال گزارش.", $keyboardadmin, 'HTML');
+        $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
+        $cmd = $isWin ? 'start /B "" php cronbot\\backupbot.php --force' : 'php cronbot/backupbot.php --force > /dev/null 2>&1 &';
+        @pclose(@popen($cmd, 'r'));
+        sendmessage($from_id, "📦 بکاپ در پس‌زمینه زمان‌بندی و اجرا شد.", $keyboardadmin, 'HTML');
     }
 } elseif ($text == "♻️ بازیابی بکاپ") {
     sendmessage($from_id, "📄 فایل بکاپ را به صورت ZIP یا SQL ارسال کنید.\nدر صورت ZIP رمزگذاری‌شده، رمز داخلی اعمال می‌شود.", $backadmin, 'HTML');

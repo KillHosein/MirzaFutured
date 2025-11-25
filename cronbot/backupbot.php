@@ -1,4 +1,7 @@
 <?php
+if (PHP_SAPI === 'cli' && isset($argv) && in_array('--force', $argv, true)) {
+    if (!defined('FORCE_BACKUP')) define('FORCE_BACKUP', true);
+}
 require_once '../config.php';
 require_once '../function.php';
 require_once '../botapi.php';
