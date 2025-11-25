@@ -21,6 +21,35 @@ try {
     }
 } catch (Throwable $e) {
 }
+$minFreeBytes = 30 * 1024 * 1024;
+if (!is_writable($destination)) {
+    echo date('Y-m-d H:i:s') . " destination not writable: $destination, switching to temp dir\n";
+    $destination = sys_get_temp_dir();
+}
+if (function_exists('disk_free_space')) {
+    $free = @disk_free_space($destination);
+    if ($free !== false && $free < $minFreeBytes) {
+        $payload = [
+            'chat_id' => $setting['Channel_Report'],
+            'text' => "❌ فضای ناکافی برای ایجاد فایل‌های بکاپ",
+        ];
+        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        telegram('sendmessage', $payload);
+        echo date('Y-m-d H:i:s') . " insufficient disk space: " . intval($free) . " bytes\n";
+        exit;
+    }
+}
+try{
+    $pdo->query('SELECT 1');
+}catch(Throwable $e){
+    $payload = [
+        'chat_id' => $setting['Channel_Report'],
+        'text' => "❌ عدم دسترسی به دیتابیس برای بکاپ",
+    ];
+    if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+    telegram('sendmessage', $payload);
+    echo date('Y-m-d H:i:s') . " database connectivity check failed\n";
+}
 $sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
 function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
@@ -93,6 +122,14 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
             $resp = telegram('sendDocument',$payload);
             echo date('Y-m-d H:i:s') . " send bot data zip for @{$bot['username']} -> " . json_encode($resp) . "\n";
             unlink($zipName);
+            if (!is_array($resp) || empty($resp['ok'])) {
+                $payloadErr = [
+                    'chat_id' => $setting['Channel_Report'],
+                    'text' => "❌ ارسال بکاپ داده‌های بات ناموفق بود",
+                ];
+                if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                telegram('sendmessage', $payloadErr);
+            }
         }
         // update last run timestamp after a send (due or force)
         $botSetting['auto_backup_last_ts'] = $now;
@@ -134,6 +171,14 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
             $resp = telegram('sendDocument',$payload);
             echo date('Y-m-d H:i:s') . " send update data zip -> " . json_encode($resp) . "\n";
             unlink($zipName);
+            if (!is_array($resp) || empty($resp['ok'])) {
+                $payloadErr = [
+                    'chat_id' => $setting['Channel_Report'],
+                    'text' => "❌ ارسال بکاپ داده‌های عمومی ناموفق بود",
+                ];
+                if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                telegram('sendmessage', $payloadErr);
+            }
         }
     }
 
@@ -225,7 +270,15 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                     'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
                 ];
                 if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-                telegram('sendDocument', $payload);
+                $resp = telegram('sendDocument', $payload);
+                if (!is_array($resp) || empty($resp['ok'])) {
+                    $payloadErr = [
+                        'chat_id' => $setting['Channel_Report'],
+                        'text' => "❌ ارسال بکاپ JSON دیتابیس ناموفق بود",
+                    ];
+                    if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                    telegram('sendmessage', $payloadErr);
+                }
                 unlink($zip_file_name);
             }
         } catch (Throwable $e){
@@ -234,7 +287,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                 'text' => "❌ خطا در بکاپ دیتابیس",
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-            telegram('sendmessage', $payload);
+                telegram('sendmessage', $payload);
         }
         if (is_dir($tmpDir)){
             $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
@@ -264,7 +317,15 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                     'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 خروجی دیتابیس (رمز: $zipPass)" : "📌 خروجی دیتابیس"),
                 ];
                 if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-                telegram('sendDocument', $payload);
+                $resp = telegram('sendDocument', $payload);
+                if (!is_array($resp) || empty($resp['ok'])) {
+                    $payloadErr = [
+                        'chat_id' => $setting['Channel_Report'],
+                        'text' => "❌ ارسال بکاپ SQL دیتابیس ناموفق بود",
+                    ];
+                    if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                    telegram('sendmessage', $payloadErr);
+                }
             } else {
                 echo date('Y-m-d H:i:s') . " skip sql backup send due scheduling -> autoTriggered=0, minutes aggregate per-bot" . "\n";
             }
