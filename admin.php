@@ -3425,7 +3425,14 @@ $caption";
         $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
         $script = __DIR__ . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'backupbot.php';
         // start daemon for repeated backups
-        $phpBin = defined('PHP_BINARY') ? PHP_BINARY : 'php';
+        $candidates = [
+            '/usr/bin/php',
+            '/usr/local/bin/php',
+            defined('PHP_BINARY') ? PHP_BINARY : null,
+        ];
+        $phpBin = null;
+        foreach($candidates as $cand){ if ($cand && @is_file($cand)) { $phpBin = $cand; break; } }
+        if (!$phpBin) $phpBin = 'php';
         $cmdDaemon = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --daemon') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
         @pclose(@popen($cmdDaemon, 'r'));
         // trigger first backup immediately
