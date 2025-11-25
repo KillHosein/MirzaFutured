@@ -707,15 +707,19 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
         sendmessage($from_id, "❌ فایل دریافت نشد. لطفاً مجدداً ارسال کنید یا به منوی ادمین برگردید.", $backadmin, 'HTML');
         return;
     }
-    $fileInfo = getFileddire($fileid);
+    $token = isset($ApiToken) && strlen($ApiToken) ? $ApiToken : ($APIKEY ?? '');
+    $fileInfo = telegram('getFile', ['file_id' => $fileid], $token);
     $filePath = $fileInfo['result']['file_path'] ?? '';
     if (empty($filePath)) {
         sendmessage($from_id, "❌ دریافت مسیر فایل از تلگرام ناموفق بود.", $backadmin, 'HTML');
         return;
     }
-    $downloadUrl = 'https://api.telegram.org/file/bot' . $ApiToken . '/' . $filePath;
+    $downloadUrl = 'https://api.telegram.org/file/bot' . $token . '/' . $filePath;
     $tmpName = 'restore_' . time() . '_' . basename($filePath);
-    $data = @file_get_contents($downloadUrl);
+    $ch = curl_init($downloadUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $data = curl_exec($ch);
+    curl_close($ch);
     if ($data === false) {
         sendmessage($from_id, "❌ دانلود فایل ناموفق بود.", $backadmin, 'HTML');
         return;
