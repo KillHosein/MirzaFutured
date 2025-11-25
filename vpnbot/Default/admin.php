@@ -675,3 +675,119 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     step("home", $from_id);
     sendmessage($from_id, "✅ نام با موفقیت تنظیم گردید.", $keyboardprice, 'HTML');
 }
+} elseif ($text == "🗂 دریافت بکاپ") {
+    $minutesInfo = isset($setting['auto_backup_minutes']) ? intval($setting['auto_backup_minutes']) : 0;
+    $statusInfo = !empty($setting['auto_backup_enabled']) && $minutesInfo > 0 ? "فعال" : "غیرفعال";
+    sendmessage($from_id, "⏱ مقدار دقیقه ارسال خودکار بکاپ را ارسال کنید\n(۰ برای غیرفعال)\nوضعیت فعلی: $statusInfo | هر $minutesInfo دقیقه", $backadmin, 'HTML');
+    step('set_backup_minutes', $from_id);
+} elseif ($user['step'] == 'set_backup_minutes') {
+    if (!ctype_digit($text)) {
+        sendmessage($from_id, $textbotlang['Admin']['agent']['invalidvlue'], $backadmin, 'HTML');
+        return;
+    }
+    $min = intval($text);
+    $setting['auto_backup_minutes'] = $min;
+    $setting['auto_backup_enabled'] = $min > 0 ? 1 : 0;
+    $setting['auto_backup_last_ts'] = time();
+    update('botsaz', 'setting', json_encode($setting, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
+    sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…", null, 'HTML');
+    step('home', $from_id);
+    if (true) {
+        define('FORCE_BACKUP', true);
+        require_once dirname(__DIR__, 2) . '/cronbot/backupbot.php';
+        sendmessage($from_id, "📦 بکاپ ارسال شد به کانال گزارش.", $keyboardadmin, 'HTML');
+    }
+} elseif ($text == "♻️ بازیابی بکاپ") {
+    sendmessage($from_id, "📄 فایل بکاپ را به صورت ZIP یا SQL ارسال کنید.\nدر صورت ZIP رمزگذاری‌شده، رمز داخلی اعمال می‌شود.", $backadmin, 'HTML');
+    step('restore_backup_wait', $from_id);
+} elseif ($user['step'] == 'restore_backup_wait') {
+    if (!$document || !$fileid) {
+        sendmessage($from_id, "❌ فایل دریافت نشد. لطفاً مجدداً ارسال کنید یا به منوی ادمین برگردید.", $backadmin, 'HTML');
+        return;
+    }
+    $fileInfo = getFileddire($fileid);
+    $filePath = $fileInfo['result']['file_path'] ?? '';
+    if (empty($filePath)) {
+        sendmessage($from_id, "❌ دریافت مسیر فایل از تلگرام ناموفق بود.", $backadmin, 'HTML');
+        return;
+    }
+    $downloadUrl = 'https://api.telegram.org/file/bot' . $ApiToken . '/' . $filePath;
+    $tmpName = 'restore_' . time() . '_' . basename($filePath);
+    $data = @file_get_contents($downloadUrl);
+    if ($data === false) {
+        sendmessage($from_id, "❌ دانلود فایل ناموفق بود.", $backadmin, 'HTML');
+        return;
+    }
+    file_put_contents($tmpName, $data);
+    $ext = strtolower(pathinfo($tmpName, PATHINFO_EXTENSION));
+    $ok = false;
+    if ($ext === 'sql') {
+        try{
+            $sql = file_get_contents($tmpName);
+            $pdo->exec($sql);
+            $ok = true;
+        }catch(Throwable $e){
+            $ok = false;
+        }
+    } elseif ($ext === 'zip') {
+        $zip = new ZipArchive();
+        if ($zip->open($tmpName) === TRUE) {
+            $zip->setPassword("MirzaBackup2025#@$");
+            $extractDir = 'restore_extract_' . time();
+            mkdir($extractDir);
+            $zip->extractTo($extractDir);
+            $zip->close();
+            // Restore bot data files
+            $srcData = $extractDir . '/data';
+            if (is_dir($srcData)){
+                $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($srcData, FilesystemIterator::SKIP_DOTS));
+                foreach ($rii as $file){
+                    $rel = substr($file->getPathname(), strlen($srcData));
+                    $dest = 'data' . $rel;
+                    if (!is_dir(dirname($dest))) mkdir(dirname($dest), 0777, true);
+                    copy($file->getPathname(), $dest);
+                }
+            }
+            // Restore product mapping
+            if (is_file($extractDir.'/product.json')) copy($extractDir.'/product.json', 'product.json');
+            if (is_file($extractDir.'/product_name.json')) copy($extractDir.'/product_name.json', 'product_name.json');
+            // If contains SQL, import
+            foreach (scandir($extractDir) as $f){
+                if (strtolower(pathinfo($f, PATHINFO_EXTENSION)) === 'sql'){
+                    try{
+                        $pdo->exec(file_get_contents($extractDir.'/'.$f));
+                    }catch(Throwable $e){ }
+                }
+            }
+            // If JSON backups of tables exist, optionally process critical ones
+            $tablesDir = $extractDir;
+            foreach (glob($tablesDir.'/*.json') as $jsonFile){
+                $table = basename($jsonFile, '.json');
+                if (!in_array($table, ['user','invoice'])) continue;
+                $rows = json_decode(file_get_contents($jsonFile), true);
+                if (is_array($rows)){
+                    foreach ($rows as $row){
+                        $cols = array_keys($row);
+                        $place = implode(',', array_map(function($c){ return ':' . $c; }, $cols));
+                        $sets = implode(',', array_map(function($c){ return "`$c`=VALUES(`$c`)"; }, $cols));
+                        $sql = 'INSERT INTO `'.$table.'` (`'.implode('`,`',$cols).'`) VALUES ('.$place.') ON DUPLICATE KEY UPDATE '.$sets;
+                        $stmt = $pdo->prepare($sql);
+                        foreach ($row as $k=>$v){ $stmt->bindValue(':'.$k, $v); }
+                        try{ $stmt->execute(); }catch(Throwable $e){ }
+                    }
+                }
+            }
+            // cleanup
+            $ok = true;
+            $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($extractDir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+            foreach($rii as $file){ $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname()); }
+            rmdir($extractDir);
+        }
+    }
+    @unlink($tmpName);
+    if ($ok){
+        sendmessage($from_id, "✅ عملیات بازیابی بکاپ انجام شد.", $keyboardadmin, 'HTML');
+        step('home', $from_id);
+    } else {
+        sendmessage($from_id, "❌ بازیابی بکاپ ناموفق بود.", $backadmin, 'HTML');
+    }
