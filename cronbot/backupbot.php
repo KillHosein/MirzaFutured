@@ -12,15 +12,6 @@ $rbRow = select("topicid","idreport","report","general","select");
 $reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
 $destination = __DIR__;
 $setting = select("setting", "*");
-try {
-    $chatInfo = telegram('getChat', ['chat_id' => $setting['Channel_Report']]);
-    if (is_array($chatInfo) && !empty($chatInfo['ok']) && !empty($chatInfo['result']['is_forum'])) {
-        if (empty($reportbackup) || intval($reportbackup) <= 0) {
-            $reportbackup = 1;
-        }
-    }
-} catch (Throwable $e) {
-}
 $minFreeBytes = 30 * 1024 * 1024;
 if (!is_writable($destination)) {
     echo date('Y-m-d H:i:s') . " destination not writable: $destination, switching to temp dir\n";
