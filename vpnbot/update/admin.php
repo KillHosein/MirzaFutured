@@ -691,11 +691,15 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     sendmessage($from_id, "⏱ مقدار دقیقه ارسال خودکار بکاپ را ارسال کنید\n(۰ برای غیرفعال)\nوضعیت فعلی: $statusInfo | هر $minutesInfo دقیقه", $backadmin, 'HTML');
     step('set_backup_minutes', $from_id);
 } elseif ($user['step'] == 'set_backup_minutes') {
-    if (!ctype_digit($text)) {
+    $norm = $text;
+    $norm = str_replace(['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'], ['0','1','2','3','4','5','6','7','8','9'], $norm);
+    $norm = str_replace(['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'], ['0','1','2','3','4','5','6','7','8','9'], $norm);
+    $digits = preg_replace('/\D+/', '', $norm);
+    if ($digits === '') {
         sendmessage($from_id, $textbotlang['Admin']['agent']['invalidvlue'], $backadmin, 'HTML');
         return;
     }
-    $min = intval($text);
+    $min = intval($digits);
     $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select", ['cache' => false]);
     $botSet = json_decode($botRow['setting'] ?? '{}', true);
     if (!is_array($botSet)) { $botSet = []; }
