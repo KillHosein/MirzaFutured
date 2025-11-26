@@ -53,6 +53,12 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
     $autoTriggered = false;
     $anyEnabled = false;
     $minEnabledMinutes = null;
+    $globalMinutes = isset($setting['auto_backup_minutes']) ? (int)$setting['auto_backup_minutes'] : 0;
+    $globalEnabled = !empty($setting['auto_backup_enabled']);
+    if ($globalEnabled && $globalMinutes > 0) {
+        $anyEnabled = true;
+        $minEnabledMinutes = $globalMinutes;
+    }
     foreach ($botlist ?: [] as $bot){
         $botSetting = json_decode($bot['setting'] ?? '{}', true);
         $enabled = !empty($botSetting['auto_backup_enabled']);
