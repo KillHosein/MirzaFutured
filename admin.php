@@ -3401,7 +3401,8 @@ $caption";
 } elseif ($text == "⚙️ تنظیمات عمومی" && $adminrulecheck['rule'] == "administrator") {
     sendmessage($from_id, $textbotlang['users']['selectoption'], $setting_panel, 'HTML');
 } elseif ($text == "🗂 دریافت بکاپ" && $adminrulecheck['rule'] == "administrator") {
-    $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select");
+    $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select", ['cache' => false]);
+    if (!is_array($botRow) || empty($botRow)) { $botRow = select("botsaz", "*", "id_user", $from_id, "select", ['cache' => false]); }
     $botSet = json_decode($botRow['setting'] ?? '{}', true);
     $minutesInfo = isset($botSet['auto_backup_minutes']) ? intval($botSet['auto_backup_minutes']) : 0;
     $statusInfo = !empty($botSet['auto_backup_enabled']) && $minutesInfo > 0 ? "فعال" : "غیرفعال";
@@ -3417,12 +3418,15 @@ $caption";
         return;
     }
     $min = intval($digits);
-    $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select");
+    $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select", ['cache' => false]);
+    if (!is_array($botRow) || empty($botRow)) { $botRow = select("botsaz", "*", "id_user", $from_id, "select", ['cache' => false]); }
     $botSet = json_decode($botRow['setting'] ?? '{}', true);
     $botSet['auto_backup_minutes'] = $min;
     $botSet['auto_backup_enabled'] = $min > 0 ? 1 : 0;
     $botSet['auto_backup_last_ts'] = time();
-    update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
+    $updateKey = isset($botRow['bot_token']) && $botRow['bot_token'] ? 'bot_token' : 'id_user';
+    $updateVal = $updateKey === 'bot_token' ? $botRow['bot_token'] : $from_id;
+    update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), $updateKey, $updateVal);
     sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…\n\n🧩 منابع مورد نظر برای بکاپ را ارسال کنید (مثلاً: db, files, configs)", null, 'HTML');
     step('home', $from_id);
     step('set_backup_resources', $from_id);
@@ -3471,12 +3475,15 @@ $caption";
     if (!$hasDb && !$hasFiles && !$hasCfg) {
         sendmessage($from_id, $textbotlang['Admin']['agent']['invalidvlue'], $backadmin, 'HTML');
     } else {
-        $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select");
+        $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select", ['cache' => false]);
+        if (!is_array($botRow) || empty($botRow)) { $botRow = select("botsaz", "*", "id_user", $from_id, "select", ['cache' => false]); }
         $botSet = json_decode($botRow['setting'] ?? '{}', true);
         $botSet['backup_select_db'] = $hasDb ? 1 : 0;
         $botSet['backup_select_files'] = $hasFiles ? 1 : 0;
         $botSet['backup_select_configs'] = $hasCfg ? 1 : 0;
-        update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
+        $updateKey = isset($botRow['bot_token']) && $botRow['bot_token'] ? 'bot_token' : 'id_user';
+        $updateVal = $updateKey === 'bot_token' ? $botRow['bot_token'] : $from_id;
+        update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), $updateKey, $updateVal);
         sendmessage($from_id, "✅ منابع بکاپ تنظیم شد.", $backadmin, 'HTML');
         step('home', $from_id);
     }

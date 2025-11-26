@@ -706,7 +706,9 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
     $botSet['auto_backup_minutes'] = $min;
     $botSet['auto_backup_enabled'] = $min > 0 ? 1 : 0;
     $botSet['auto_backup_last_ts'] = time();
-    update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
+    $updateKey = isset($botRow['bot_token']) && $botRow['bot_token'] ? 'bot_token' : 'id_user';
+    $updateVal = $updateKey === 'bot_token' ? $botRow['bot_token'] : $from_id;
+    update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), $updateKey, $updateVal);
     sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…\n\n🧩 منابع مورد نظر برای بکاپ را ارسال کنید (مثلاً: db, files, configs)", null, 'HTML');
     step('home', $from_id);
     step('set_backup_resources', $from_id);
@@ -760,7 +762,9 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
         $botSet['backup_select_db'] = $hasDb ? 1 : 0;
         $botSet['backup_select_files'] = $hasFiles ? 1 : 0;
         $botSet['backup_select_configs'] = $hasCfg ? 1 : 0;
-        update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
+        $updateKey = isset($botRow['bot_token']) && $botRow['bot_token'] ? 'bot_token' : 'id_user';
+        $updateVal = $updateKey === 'bot_token' ? $botRow['bot_token'] : $from_id;
+        update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), $updateKey, $updateVal);
         sendmessage($from_id, "✅ منابع بکاپ تنظیم شد.", $backadmin, 'HTML');
         step('home', $from_id);
     }
