@@ -12,13 +12,20 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../function.php';
 require_once __DIR__ . '/../botapi.php';
 
+$logFile = __DIR__ . DIRECTORY_SEPARATOR . 'backupbot.log';
+function log_msg($msg){
+    global $logFile;
+    $line = date('Y-m-d H:i:s') . ' ' . $msg . "\n";
+    echo $line;
+    @file_put_contents($logFile, $line, FILE_APPEND);
+}
 $rbRow = select("topicid","idreport","report","general","select");
 $reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
 $destination = __DIR__;
 $setting = select("setting", "*");
 $minFreeBytes = 30 * 1024 * 1024;
 if (!is_writable($destination)) {
-    echo date('Y-m-d H:i:s') . " destination not writable: $destination, switching to temp dir\n";
+    log_msg("destination not writable: $destination, switching to temp dir");
     $destination = sys_get_temp_dir();
 }
 if (function_exists('disk_free_space')) {
@@ -30,7 +37,7 @@ if (function_exists('disk_free_space')) {
         ];
         if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
         telegram('sendmessage', $payload);
-        echo date('Y-m-d H:i:s') . " insufficient disk space: " . intval($free) . " bytes\n";
+        log_msg("insufficient disk space: " . intval($free) . " bytes");
         exit;
     }
 }
@@ -43,7 +50,7 @@ try{
     ];
     if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
     telegram('sendmessage', $payload);
-    echo date('Y-m-d H:i:s') . " database connectivity check failed\n";
+    log_msg("database connectivity check failed");
 }
 $sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
@@ -53,6 +60,9 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
     $autoTriggered = false;
     $anyEnabled = false;
     $minEnabledMinutes = null;
+    $anySelectDb = false;
+    $anySelectFiles = false;
+    $anySelectConfigs = false;
     $globalMinutes = isset($setting['auto_backup_minutes']) ? (int)$setting['auto_backup_minutes'] : 0;
     $globalEnabled = !empty($setting['auto_backup_enabled']);
     if ($globalEnabled && $globalMinutes > 0) {
@@ -64,6 +74,9 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
         $enabled = !empty($botSetting['auto_backup_enabled']);
         $minutes = isset($botSetting['auto_backup_minutes']) ? (int)$botSetting['auto_backup_minutes'] : 0;
         $lastTs = isset($botSetting['auto_backup_last_ts']) ? (int)$botSetting['auto_backup_last_ts'] : 0;
+        $selDb = array_key_exists('backup_select_db', $botSetting) ? (bool)$botSetting['backup_select_db'] : true;
+        $selFiles = array_key_exists('backup_select_files', $botSetting) ? (bool)$botSetting['backup_select_files'] : true;
+        $selConfigs = array_key_exists('backup_select_configs', $botSetting) ? (bool)$botSetting['backup_select_configs'] : true;
         $now = time();
         if ($enabled && $minutes > 0) {
             $anyEnabled = true;
@@ -71,10 +84,13 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
                 $minEnabledMinutes = $minutes;
             }
         }
+        $anySelectDb = $anySelectDb || $selDb;
+        $anySelectFiles = $anySelectFiles || $selFiles;
+        $anySelectConfigs = $anySelectConfigs || $selConfigs;
         $isDue = $enabled && $minutes > 0 && ($now - $lastTs) >= ($minutes * 60);
         $force = $forceArg || defined('FORCE_BACKUP');
         if(!$force && !$isDue){
-            echo date('Y-m-d H:i:s') . " skip bot data backup for @{$bot['username']} due scheduling -> enabled=" . ($enabled?1:0) . ", minutes=" . $minutes . ", lastTs=" . $lastTs . "\n";
+            log_msg("skip bot data backup for @{$bot['username']} due scheduling -> enabled=" . ($enabled?1:0) . ", minutes=" . $minutes . ", lastTs=" . $lastTs);
             continue;
         }
         $autoTriggered = $autoTriggered || $isDue || $force;
@@ -82,7 +98,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
         $folderName = $bot['id_user'].$bot['username'];
         $zipName = $destination . DIRECTORY_SEPARATOR . 'file.zip';
         $zip = new ZipArchive();
-        if ($zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        if ($anySelectFiles && $zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
             $baseDir = $sourcefir.'/vpnbot/'.$folderName;
             $dir = $baseDir.'/data';
             if (is_dir($dir)){
@@ -129,7 +145,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
             $resp = telegram('sendDocument',$payload);
-            echo date('Y-m-d H:i:s') . " send bot data zip for @{$bot['username']} -> " . json_encode($resp) . "\n";
+            log_msg("send bot data zip for @{$bot['username']} -> " . json_encode($resp));
             unlink($zipName);
             if (!is_array($resp) || empty($resp['ok'])) {
                 $payloadErr = [
@@ -146,7 +162,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
     }
     // Global data folder backup (vpnbot/update/data)
     $globalDataDir = $sourcefir.'/vpnbot/update/data';
-    if (is_dir($globalDataDir)){
+    if ($anySelectConfigs && is_dir($globalDataDir)){
         $zipName = $destination . DIRECTORY_SEPARATOR . 'data_update.zip';
         $zip = new ZipArchive();
         if ($zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
@@ -178,7 +194,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
             ];
             if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
             $resp = telegram('sendDocument',$payload);
-            echo date('Y-m-d H:i:s') . " send update data zip -> " . json_encode($resp) . "\n";
+            log_msg("send update data zip -> " . json_encode($resp));
             unlink($zipName);
             if (!is_array($resp) || empty($resp['ok'])) {
                 $payloadErr = [
@@ -197,11 +213,14 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
     $zipEnc = isset($setting['zip_encryption']) ? strtolower(trim($setting['zip_encryption'])) : 'none';
     $zipPass = isset($setting['zip_password']) ? trim($setting['zip_password']) : '';
 
+    $doDb = $anySelectDb || ($globalEnabled && $globalMinutes > 0);
     $command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces --single-transaction --quick --routines --events --triggers --default-character-set=utf8mb4 $dbname > $backup_file_name";
     $output = [];
     $return_var = 0;
-    exec($command, $output, $return_var);
+    $return_var = 1;
+    if ($doDb) { exec($command, $output, $return_var); }
     if ($return_var !== 0) {
+        if (!$doDb) { goto skip_db_section; }
         $tmpDir = 'db-json-backup-'.date('Y-m-d');
         if (!is_dir($tmpDir)) mkdir($tmpDir);
         try{
@@ -272,24 +291,24 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
                     $first = reset($tables);
                     if ($first) $zip->setEncryptionName($first.'.json', ZipArchive::EM_TRAD_PKWARE, $zipPass);
                 }
-                $zip->close();
-                $payload = [
+            $zip->close();
+            $payload = [
+                'chat_id' => $setting['Channel_Report'],
+                'document' => new CURLFile(realpath($zip_file_name)),
+                'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
+            ];
+            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            $resp = telegram('sendDocument', $payload);
+            if (!is_array($resp) || empty($resp['ok'])) {
+                $payloadErr = [
                     'chat_id' => $setting['Channel_Report'],
-                    'document' => new CURLFile(realpath($zip_file_name)),
-                    'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
+                    'text' => "❌ ارسال بکاپ JSON دیتابیس ناموفق بود",
                 ];
-                if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
-                $resp = telegram('sendDocument', $payload);
-                if (!is_array($resp) || empty($resp['ok'])) {
-                    $payloadErr = [
-                        'chat_id' => $setting['Channel_Report'],
-                        'text' => "❌ ارسال بکاپ JSON دیتابیس ناموفق بود",
-                    ];
-                    if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
-                    telegram('sendmessage', $payloadErr);
-                }
-                unlink($zip_file_name);
+                if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                telegram('sendmessage', $payloadErr);
             }
+            unlink($zip_file_name);
+        }
         } catch (Throwable $e){
             $payload = [
                 'chat_id' => $setting['Channel_Report'],
@@ -340,12 +359,13 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
                 }
                 update('setting','backup_sql_last_ts', $nowBase);
             } else {
-                echo date('Y-m-d H:i:s') . " skip sql backup send due scheduling -> autoTriggered=0, anyEnabled=" . ($anyEnabled?1:0) . ", minEnabledMinutes=" . (is_null($minEnabledMinutes)?-1:$minEnabledMinutes) . ", lastSqlTs=" . $globalLastSqlTs . "\n";
+                log_msg("skip sql backup send due scheduling -> autoTriggered=0, anyEnabled=" . ($anyEnabled?1:0) . ", minEnabledMinutes=" . (is_null($minEnabledMinutes)?-1:$minEnabledMinutes) . ", lastSqlTs=" . $globalLastSqlTs);
             }
             unlink($zip_file_name);
             unlink($backup_file_name);
         }
     }
+    skip_db_section:
 }
 
 if (PHP_SAPI === 'cli' && isset($argv) && in_array('--daemon', $argv, true)) {
@@ -357,7 +377,7 @@ if (PHP_SAPI === 'cli' && isset($argv) && in_array('--daemon', $argv, true)) {
     exit;
 }
 
-echo date('Y-m-d H:i:s') . " run backup cycle force=" . (defined('FORCE_BACKUP')?1:0) . "\n";
+log_msg("run backup cycle force=" . (defined('FORCE_BACKUP')?1:0));
 run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, defined('FORCE_BACKUP'));
 
 // Global data folder backup (vpnbot/update/data)

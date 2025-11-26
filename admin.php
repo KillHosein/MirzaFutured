@@ -3405,7 +3405,7 @@ $caption";
     $botSet = json_decode($botRow['setting'] ?? '{}', true);
     $minutesInfo = isset($botSet['auto_backup_minutes']) ? intval($botSet['auto_backup_minutes']) : 0;
     $statusInfo = !empty($botSet['auto_backup_enabled']) && $minutesInfo > 0 ? "فعال" : "غیرفعال";
-    sendmessage($from_id, "⏱ مقدار دقیقه ارسال خودکار بکاپ را ارسال کنید\n(۰ برای غیرفعال)\nوضعیت فعلی: $statusInfo | هر $minutesInfo دقیقه", $backadmin, 'HTML');
+    sendmessage($from_id, "⏱ مقدار دقیقه ارسال خودکار بکاپ را ارسال کنید\n(۰ برای غیرفعال)\nوضعیت فعلی: $statusInfo | هر $minutesInfo دقیقه\n\n🧩 پس از ثبت دقیقه، منابع بکاپ را نیز ارسال کنید: یکی یا ترکیبی از 'db, files, configs' یا معادل فارسی آنها.", $backadmin, 'HTML');
     step('set_backup_minutes', $from_id);
 } elseif ($user['step'] == 'set_backup_minutes' && $adminrulecheck['rule'] == "administrator") {
     $norm = $text;
@@ -3423,8 +3423,9 @@ $caption";
     $botSet['auto_backup_enabled'] = $min > 0 ? 1 : 0;
     $botSet['auto_backup_last_ts'] = time();
     update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
-    sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…", null, 'HTML');
+    sendmessage($from_id, "✅ زمان‌بندی بکاپ تنظیم شد. وضعیت: " . ($min>0?"فعال":"غیرفعال") . "\nدر حال ارسال بکاپ اکنون…\n\n🧩 منابع مورد نظر برای بکاپ را ارسال کنید (مثلاً: db, files, configs)", null, 'HTML');
     step('home', $from_id);
+    step('set_backup_resources', $from_id);
     if (true) {
         $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
         $script = __DIR__ . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'backupbot.php';
@@ -3446,6 +3447,38 @@ $caption";
         $h1 = @popen($cmdDaemon, 'r'); if ($h1) @pclose($h1); else @shell_exec($cmdDaemon);
         $h2 = @popen($cmdForce, 'r');  if ($h2) @pclose($h2); else @shell_exec($cmdForce);
         sendmessage($from_id, "📦 سرویس زمان‌بندی بکاپ آغاز شد و اولین بکاپ ارسال می‌شود.", $setting_panel, 'HTML');
+        if (!$isWin) {
+            $cronLine = '* * * * * ' . '"' . $phpBin . '" ' . '"' . $script . '"' . ' >> /var/log/backupbot-cron.log 2>&1';
+            $existing = @shell_exec('crontab -l 2>/dev/null');
+            if (strpos($existing ?: '', $cronLine) === false) {
+                $newCron = trim($existing ?: '') . "\n" . $cronLine . "\n";
+                $tmpCron = tempnam(sys_get_temp_dir(), 'cron');
+                @file_put_contents($tmpCron, $newCron);
+                @shell_exec('crontab ' . escapeshellarg($tmpCron));
+                @unlink($tmpCron);
+            }
+        }
+    }
+} elseif ($user['step'] == 'set_backup_resources' && $adminrulecheck['rule'] == "administrator") {
+    $txt = strtolower(trim($text));
+    $norm = $txt;
+    $norm = str_replace(['دیتابیس','بانک اطلاعاتی','db'], 'db', $norm);
+    $norm = str_replace(['فایل','فایل‌ها','files'], 'files', $norm);
+    $norm = str_replace(['تنظیمات','تنظیمات سیستم','configs','config'], 'configs', $norm);
+    $hasDb = strpos($norm, 'db') !== false;
+    $hasFiles = strpos($norm, 'files') !== false;
+    $hasCfg = strpos($norm, 'configs') !== false;
+    if (!$hasDb && !$hasFiles && !$hasCfg) {
+        sendmessage($from_id, $textbotlang['Admin']['agent']['invalidvlue'], $backadmin, 'HTML');
+    } else {
+        $botRow = select("botsaz", "*", "bot_token", $ApiToken, "select");
+        $botSet = json_decode($botRow['setting'] ?? '{}', true);
+        $botSet['backup_select_db'] = $hasDb ? 1 : 0;
+        $botSet['backup_select_files'] = $hasFiles ? 1 : 0;
+        $botSet['backup_select_configs'] = $hasCfg ? 1 : 0;
+        update('botsaz', 'setting', json_encode($botSet, JSON_UNESCAPED_UNICODE), 'bot_token', $ApiToken);
+        sendmessage($from_id, "✅ منابع بکاپ تنظیم شد.", $backadmin, 'HTML');
+        step('home', $from_id);
     }
 } elseif ($text == "♻️ بازیابی بکاپ" && $adminrulecheck['rule'] == "administrator") {
     sendmessage($from_id, "📄 فایل بکاپ را به صورت ZIP یا SQL ارسال کنید.\nدر صورت ZIP رمزگذاری‌شده، رمز داخلی اعمال می‌شود.", $backadmin, 'HTML');
