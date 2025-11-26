@@ -51,12 +51,20 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
     global $domainhosts, $dbname, $usernamedb, $passworddb, $pdo;
     $botlist = select("botsaz","*",null,null,"fetchAll", ['cache' => false]);
     $autoTriggered = false;
+    $anyEnabled = false;
+    $minEnabledMinutes = null;
     foreach ($botlist ?: [] as $bot){
         $botSetting = json_decode($bot['setting'] ?? '{}', true);
         $enabled = !empty($botSetting['auto_backup_enabled']);
         $minutes = isset($botSetting['auto_backup_minutes']) ? (int)$botSetting['auto_backup_minutes'] : 0;
         $lastTs = isset($botSetting['auto_backup_last_ts']) ? (int)$botSetting['auto_backup_last_ts'] : 0;
         $now = time();
+        if ($enabled && $minutes > 0) {
+            $anyEnabled = true;
+            if ($minEnabledMinutes === null || $minutes < $minEnabledMinutes) {
+                $minEnabledMinutes = $minutes;
+            }
+        }
         $isDue = $enabled && $minutes > 0 && ($now - $lastTs) >= ($minutes * 60);
         $force = $forceArg || defined('FORCE_BACKUP');
         if(!$force && !$isDue){
@@ -305,7 +313,10 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
                 $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_TRAD_PKWARE, $zipPass);
             }
             $zip->close();
-            if($autoTriggered || $forceArg || defined('FORCE_BACKUP')){
+            $globalLastSqlTs = isset($setting['backup_sql_last_ts']) ? (int)$setting['backup_sql_last_ts'] : 0;
+            $nowBase = time();
+            $globalDueAggregate = ($anyEnabled && $minEnabledMinutes !== null) ? (($nowBase - $globalLastSqlTs) >= ($minEnabledMinutes * 60)) : false;
+            if($autoTriggered || $forceArg || defined('FORCE_BACKUP') || $globalDueAggregate){
                 $payload = [
                     'chat_id' => $setting['Channel_Report'],
                     'document' => new CURLFile(realpath($zip_file_name)),
@@ -321,8 +332,9 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
                     if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
                     telegram('sendmessage', $payloadErr);
                 }
+                update('setting','backup_sql_last_ts', $nowBase);
             } else {
-                echo date('Y-m-d H:i:s') . " skip sql backup send due scheduling -> autoTriggered=0, minutes aggregate per-bot" . "\n";
+                echo date('Y-m-d H:i:s') . " skip sql backup send due scheduling -> autoTriggered=0, anyEnabled=" . ($anyEnabled?1:0) . ", minEnabledMinutes=" . (is_null($minEnabledMinutes)?-1:$minEnabledMinutes) . ", lastSqlTs=" . $globalLastSqlTs . "\n";
             }
             unlink($zip_file_name);
             unlink($backup_file_name);
