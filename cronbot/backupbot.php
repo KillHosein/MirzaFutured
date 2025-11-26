@@ -1,6 +1,10 @@
 <?php
 if (PHP_SAPI === 'cli' && isset($argv)) {
-    if (in_array('--force', $argv, true) && !defined('FORCE_BACKUP')) {
+    $GLOBAL_FORCE_BACKUP = false;
+    foreach ($argv as $arg) {
+        if ($arg === '--force' || $arg === '-f' || $arg === '--now') { $GLOBAL_FORCE_BACKUP = true; break; }
+    }
+    if ($GLOBAL_FORCE_BACKUP && !defined('FORCE_BACKUP')) {
         define('FORCE_BACKUP', true);
     }
 }
@@ -43,7 +47,7 @@ try{
 }
 $sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
-function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
+function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $forceArg = false){
     global $domainhosts, $dbname, $usernamedb, $passworddb, $pdo;
     $botlist = select("botsaz","*",null,null,"fetchAll", ['cache' => false]);
     $autoTriggered = false;
@@ -54,7 +58,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
         $lastTs = isset($botSetting['auto_backup_last_ts']) ? (int)$botSetting['auto_backup_last_ts'] : 0;
         $now = time();
         $isDue = $enabled && $minutes > 0 && ($now - $lastTs) >= ($minutes * 60);
-        $force = defined('FORCE_BACKUP');
+        $force = $forceArg || defined('FORCE_BACKUP');
         if(!$force && !$isDue){
             echo date('Y-m-d H:i:s') . " skip bot data backup for @{$bot['username']} due scheduling -> enabled=" . ($enabled?1:0) . ", minutes=" . $minutes . ", lastTs=" . $lastTs . "\n";
             continue;
@@ -301,7 +305,7 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
                 $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_TRAD_PKWARE, $zipPass);
             }
             $zip->close();
-            if($autoTriggered || defined('FORCE_BACKUP')){
+            if($autoTriggered || $forceArg || defined('FORCE_BACKUP')){
                 $payload = [
                     'chat_id' => $setting['Channel_Report'],
                     'document' => new CURLFile(realpath($zip_file_name)),
@@ -329,13 +333,14 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup){
 if (PHP_SAPI === 'cli' && isset($argv) && in_array('--daemon', $argv, true)) {
     set_time_limit(0);
     while(true){
-        run_backup_cycle($destination, $sourcefir, $setting, $reportbackup);
+        run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, defined('FORCE_BACKUP'));
         sleep(60);
     }
     exit;
 }
 
-run_backup_cycle($destination, $sourcefir, $setting, $reportbackup);
+echo date('Y-m-d H:i:s') . " run backup cycle force=" . (defined('FORCE_BACKUP')?1:0) . "\n";
+run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, defined('FORCE_BACKUP'));
 
 // Global data folder backup (vpnbot/update/data)
 $globalDataDir = $sourcefir.'/vpnbot/update/data';
