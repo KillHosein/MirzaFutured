@@ -185,6 +185,7 @@ UPDATE admin SET id_admin = '$ADMIN_TELEGRAM_ID';
 MYSQL_SCRIPT
     (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/cronbot/") | crontab -
     CRON_JOBS="* * * * * php /var/www/mirza_pro/cronbot/NoticationsService.php >/dev/null 2>&1
+* * * * * /usr/bin/php /var/www/mirza_pro/cronbot/backupbot.php --force >> /var/log/backupbot-cron.log 2>&1
 */5 * * * * php /var/www/mirza_pro/cronbot/uptime_panel.php >/dev/null 2>&1
 */5 * * * * php /var/www/mirza_pro/cronbot/uptime_node.php >/dev/null 2>&1
 */10 * * * * php /var/www/mirza_pro/cronbot/expireagent.php >/dev/null 2>&1
