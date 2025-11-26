@@ -3424,7 +3424,6 @@ $caption";
     if (true) {
         $isWin = stripos(PHP_OS_FAMILY, 'Windows') !== false;
         $script = __DIR__ . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'backupbot.php';
-        // start daemon for repeated backups
         $candidates = [
             '/usr/bin/php',
             '/usr/local/bin/php',
@@ -3433,11 +3432,15 @@ $caption";
         $phpBin = null;
         foreach($candidates as $cand){ if ($cand && @is_file($cand)) { $phpBin = $cand; break; } }
         if (!$phpBin) $phpBin = 'php';
-        $cmdDaemon = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --daemon') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
-        @pclose(@popen($cmdDaemon, 'r'));
-        // trigger first backup immediately
-        $cmdForce = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --force') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
-        @pclose(@popen($cmdForce, 'r'));
+        // build commands per OS; on Windows, use cmd /c start which is available in cmd.exe
+        $cmdDaemon = $isWin
+            ? ('cmd /c start "" "' . $phpBin . '" "' . $script . '" --daemon')
+            : ('nohup ' . '"' . $phpBin . '" ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
+        $cmdForce = $isWin
+            ? ('cmd /c start "" "' . $phpBin . '" "' . $script . '" --force')
+            : ('nohup ' . '"' . $phpBin . '" ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
+        $h1 = @popen($cmdDaemon, 'r'); if ($h1) @pclose($h1); else @shell_exec($cmdDaemon);
+        $h2 = @popen($cmdForce, 'r');  if ($h2) @pclose($h2); else @shell_exec($cmdForce);
         sendmessage($from_id, "📦 سرویس زمان‌بندی بکاپ آغاز شد و اولین بکاپ ارسال می‌شود.", $setting_panel, 'HTML');
     }
 } elseif ($text == "♻️ بازیابی بکاپ" && $adminrulecheck['rule'] == "administrator") {

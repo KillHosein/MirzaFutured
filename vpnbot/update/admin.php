@@ -716,10 +716,14 @@ if ($text == "📞 تنظیم نام کاربری پشتیبانی") {
         $phpBin = null;
         foreach($candidates as $cand){ if ($cand && @is_file($cand)) { $phpBin = $cand; break; } }
         if (!$phpBin) $phpBin = 'php';
-        $cmdDaemon = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --daemon') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
-        @pclose(@popen($cmdDaemon, 'r'));
-        $cmdForce = $isWin ? ('start /B "" "' . $phpBin . '" "' . $script . '" --force') : ('"' . $phpBin . '" ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
-        @pclose(@popen($cmdForce, 'r'));
+        $cmdDaemon = $isWin
+            ? ('cmd /c start "" "' . $phpBin . '" "' . $script . '" --daemon')
+            : ('nohup ' . '"' . $phpBin . '" ' . escapeshellarg($script) . ' --daemon > /dev/null 2>&1 &');
+        $cmdForce = $isWin
+            ? ('cmd /c start "" "' . $phpBin . '" "' . $script . '" --force')
+            : ('nohup ' . '"' . $phpBin . '" ' . escapeshellarg($script) . ' --force > /dev/null 2>&1 &');
+        $h1 = @popen($cmdDaemon, 'r'); if ($h1) @pclose($h1); else @shell_exec($cmdDaemon);
+        $h2 = @popen($cmdForce, 'r');  if ($h2) @pclose($h2); else @shell_exec($cmdForce);
         sendmessage($from_id, "📦 سرویس زمان‌بندی بکاپ آغاز شد و اولین بکاپ ارسال می‌شود.", $keyboardadmin, 'HTML');
     }
 } elseif ($text == "♻️ بازیابی بکاپ") {
