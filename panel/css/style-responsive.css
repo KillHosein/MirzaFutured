@@ -313,7 +313,137 @@
 
 }
 
+/* =========================================================
+   MODERN RESPONSIVE OVERRIDES (Append-only)
+   - Keeps legacy breakpoints intact
+   - Adds nicer spacing, cards, grids, sidebar behavior
+   - Uses variables from main modern stylesheet
+========================================================= */
 
+/* ---------- Global responsive polish ---------- */
+@media (max-width: 979px){
+  .main, #main-content{
+    padding: 14px !important;
+  }
 
+  .container{
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
 
+/* ---------- Tablet ---------- */
+@media (min-width: 768px) and (max-width: 979px){
+  .action-grid{
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .charts-grid{
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+}
 
+/* ---------- Mobile / Sidebar UX ---------- */
+@media (max-width: 768px){
+  /* Header stays visible and clean */
+  .header, .top-nav{
+    position: sticky !important;
+    top: 0;
+    z-index: 2000;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Sidebar becomes drawer-style */
+  #sidebar, .sidebar{
+    position: fixed !important;
+    inset: var(--header-h, 64px) 0 auto 0;
+    width: 100% !important;
+    max-height: calc(100vh - var(--header-h, 64px));
+    overflow: auto !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-color, rgba(255,255,255,.08));
+    background: var(--surface, #0f172a);
+    transform: translateY(-8px);
+    animation: slideDown .18s ease-out;
+  }
+
+  @keyframes slideDown{
+    from{ opacity:0; transform: translateY(-16px); }
+    to  { opacity:1; transform: translateY(0); }
+  }
+
+  /* Menu items bigger touch targets */
+  #sidebar > ul > li > a,
+  .sidebar a{
+    height: 44px !important;
+    line-height: 44px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Avoid content jumping under fixed header */
+  .main, #main-content{
+    margin-top: 8px !important;
+    max-width: 100% !important;
+  }
+
+  /* Cards & grids stack nicely */
+  .action-grid,
+  .charts-grid{
+    grid-template-columns: 1fr !important;
+  }
+
+  .card, .panel, .action-card, .chart-card, .stat-card{
+    border-radius: var(--radius-lg, 18px);
+    padding: 14px;
+  }
+
+  /* Tables scroll horizontally */
+  table{
+    display:block;
+    overflow-x:auto;
+    white-space: nowrap;
+  }
+
+  /* Forms layout */
+  .form-row{
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ---------- Small phones ---------- */
+@media (max-width: 480px){
+  body{
+    font-size: 14px;
+  }
+
+  .section-title{
+    font-size: 16px;
+  }
+
+  .btn, button, .action-btn{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .status-badge{
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* ---------- Tiny devices ---------- */
+@media (max-width: 320px){
+  .header, .top-nav{
+    padding: 0 10px;
+  }
+
+  .section-title{
+    font-size: 15px;
+  }
+
+  .card, .panel{
+    padding: 12px;
+  }
+}
