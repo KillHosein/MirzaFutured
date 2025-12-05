@@ -365,6 +365,7 @@ ul.sidebar-menu li a{
     outline: none;
     transition: all 0.2s ease;
 }
+ul.sidebar-menu ul.sub ul.sub a{ padding-right: 26px; }
 
 ul.sidebar-menu li.active a, ul.sidebar-menu li a:hover, ul.sidebar-menu li a:focus {
     background: #111827;
@@ -1333,6 +1334,10 @@ body.dark ul.sidebar-menu li a:focus{
     color: #fff;
     border-right: 2px solid var(--accent-color);
 }
+
+body.sidebar-compact ul.sidebar-menu li a{ padding: 10px 12px; font-size: 13px; gap:6px; }
+body.sidebar-compact ul.sidebar-menu li a i{ font-size:16px; }
+body.sidebar-compact ul.sidebar-menu li ul.sub li a{ line-height: 30px; height: 30px; }
 body.dark .white-bg {
     background: linear-gradient(90deg,#1f2937 0%, #111827 100%);
     border-bottom: 1px solid #1f2937;

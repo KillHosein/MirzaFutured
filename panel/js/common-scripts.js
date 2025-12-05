@@ -330,3 +330,36 @@ var Script = function () {
     })();
 
 }();
+    // menu density toggle and persistence
+    (function(){
+        var key='menuDensity';
+        var saved = localStorage.getItem(key);
+        if(saved==='compact'){ document.body.classList.add('sidebar-compact'); }
+        $('#toggleDensity').on('click', function(e){ e.preventDefault(); var c=document.body.classList.toggle('sidebar-compact'); localStorage.setItem(key, c?'compact':'normal'); if(window.showToast) showToast(c?'حالت فشرده فعال شد':'حالت فشرده غیرفعال شد'); });
+    })();
+
+    // role-based visibility
+    (function(){
+        var rank = { user:1, manager:2, admin:3 };
+        var userRole = (window.USER_ROLE||'admin').toLowerCase();
+        var userRank = rank[userRole]||3;
+        $('#sidebar ul.sidebar-menu > li').each(function(){ var need = $(this).attr('data-role'); if(!need) return; var n = rank[need]||1; if(userRank < n) $(this).hide(); });
+    })();
+
+    // drag & drop reorder for sidebar
+    (function(){
+        var key='sidebarOrder';
+        var $list = $('#sidebar ul.sidebar-menu'); if(!$list.length) return;
+        function idOf(li){ return $(li).attr('data-id') || $(li).find('> a span').first().text().trim(); }
+        function applyOrder(ids){ var map={}; ids.forEach(function(id){ map[id]=true; }); $list.children('li').sort(function(a,b){ var ia=ids.indexOf(idOf(a)); var ib=ids.indexOf(idOf(b)); return (ia===-1?9999:ia)-(ib===-1?9999:ib); }).appendTo($list); }
+        var saved = []; try{ saved = JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+        if(saved && saved.length){ applyOrder(saved); }
+        function enableDrag(enable){ $list.children('li').attr('draggable', enable? 'true':'false'); }
+        enableDrag(false);
+        $('#toggleLayoutEdit').on('click', function(){ var on = $('body').toggleClass('layout-edit').hasClass('layout-edit'); enableDrag(on); });
+        var dragSrc;
+        $list.on('dragstart','> li', function(e){ dragSrc=this; e.originalEvent.dataTransfer.setData('text/plain', idOf(this)); });
+        $list.on('dragover','> li', function(e){ e.preventDefault(); });
+        $list.on('drop','> li', function(e){ e.preventDefault(); if(!dragSrc || dragSrc===this) return; var ids=$list.children('li').map(function(){ return idOf(this); }).get(); var from=ids.indexOf(idOf(dragSrc)); var to=ids.indexOf(idOf(this)); if(from>-1 && to>-1){ ids.splice(to,0,ids.splice(from,1)[0]); applyOrder(ids); localStorage.setItem(key, JSON.stringify(ids)); }
+        });
+    })();

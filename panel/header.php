@@ -67,13 +67,13 @@
               <!-- sidebar menu start-->
               <?php $current = basename($_SERVER['PHP_SELF']); ?>
               <ul class="sidebar-menu">
-                  <li class="<?php echo $current==='index.php'?'active':''; ?>">
+                  <li class="<?php echo $current==='index.php'?'active':''; ?>" data-id="dashboard" data-role="user">
                       <a href="index.php">
                           <i class="icon-dashboard"></i>
                           <span>صفحه اصلی</span>
                       </a>
                   </li>
-                  <li class="sub-menu <?php echo in_array($current,['users.php','user.php'])?'active':''; ?>">
+                  <li class="sub-menu <?php echo in_array($current,['users.php','user.php'])?'active':''; ?>" data-id="users" data-role="manager">
                       <a href="javascript:;" class="" aria-expanded="false">
                           <i class="icon-user"></i>
                           <span>کاربران</span>
@@ -85,7 +85,7 @@
                           <li><a class="" href="user.php">مدیریت کاربر</a></li>
                       </ul>
                   </li>
-                  <li class="sub-menu <?php echo in_array($current,['invoice.php','payment.php','service.php','product.php','productedit.php'])?'active':''; ?>">
+                  <li class="sub-menu <?php echo in_array($current,['invoice.php','payment.php','service.php','product.php','productedit.php'])?'active':''; ?>" data-id="services" data-role="manager">
                       <a href="javascript:;" class="" aria-expanded="false">
                           <i class="icon-briefcase"></i>
                           <span>مدیریت سرویس‌ها</span>
@@ -100,7 +100,7 @@
                           <li><a class="" href="productedit.php">ویرایش محصول</a></li>
                       </ul>
                   </li>
-                  <li class="sub-menu <?php echo in_array($current,['keyboard.php','seeting_x_ui.php','inbound.php','cancelService.php'])?'active':''; ?>">
+                  <li class="sub-menu <?php echo in_array($current,['keyboard.php','seeting_x_ui.php','inbound.php','cancelService.php'])?'active':''; ?>" data-id="config" data-role="admin">
                       <a href="javascript:;" class="" aria-expanded="false">
                           <i class="icon-cogs"></i>
                           <span>پیکربندی</span>
@@ -135,9 +135,11 @@
           <a href="#" class="btn" data-filter="all" aria-label="نمایش همه">همه</a>
           <a href="#" class="btn" data-filter="fav" aria-label="نمایش منتخب">منتخب</a>
           <a href="#" class="btn" id="toggleLayoutEdit" aria-label="ویرایش چیدمان">ویرایش چیدمان</a>
+          <a href="#" class="btn btn-default" id="toggleDensity" aria-label="حالت فشرده">فشرده</a>
           <a href="#" class="btn btn-default" id="resetLayout" aria-label="بازنشانی چیدمان">بازنشانی</a>
         </div>
       </div>
+      <script>window.USER_ROLE = '<?php echo isset($_SESSION["role"]) ? $_SESSION["role"] : "admin"; ?>';</script>
       <div class="breadcrumb-bar" id="breadcrumbBar" style="padding:10px 16px;">
         <span id="crumbPath" style="font-weight:700;"></span>
         <span id="crumbInfo" class="text-muted" style="margin-right:8px;"></span>
