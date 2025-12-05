@@ -137,6 +137,21 @@
           <a href="#" class="btn" id="toggleLayoutEdit" aria-label="ویرایش چیدمان">ویرایش چیدمان</a>
           <a href="#" class="btn btn-default" id="toggleDensity" aria-label="حالت فشرده">فشرده</a>
           <a href="#" class="btn btn-default" id="resetLayout" aria-label="بازنشانی چیدمان">بازنشانی</a>
+          <div class="btn-group ops">
+            <a href="#" class="btn tooltips" data-action="save" title="ذخیره"><i class="icon-save"></i><span>ذخیره</span></a>
+            <a href="#" class="btn tooltips" data-action="edit" title="ویرایش"><i class="icon-pencil"></i><span>ویرایش</span></a>
+            <a href="#" class="btn tooltips" data-action="delete" title="حذف"><i class="icon-trash"></i><span>حذف</span></a>
+            <a href="#" class="btn tooltips" data-action="search" title="جستجو"><i class="icon-search"></i><span>جستجو</span></a>
+          </div>
+          <div class="btn-group nav">
+            <a href="#" class="btn tooltips" data-action="back" title="بازگشت"><i class="icon-arrow-left"></i><span>بازگشت</span></a>
+            <a href="#" class="btn tooltips" data-action="next" title="صفحه بعد"><i class="icon-arrow-right"></i><span>بعدی</span></a>
+          </div>
+          <div class="btn-group special">
+            <a href="#" class="btn tooltips" data-action="pdf" title="خروجی PDF"><i class="icon-file"></i><span>PDF</span></a>
+            <a href="#" class="btn tooltips" data-action="report" title="گزارش‌گیری"><i class="icon-bar-chart"></i><span>گزارش</span></a>
+            <a href="settings.php" class="btn tooltips" data-action="adv-settings" title="تنظیمات پیشرفته"><i class="icon-cog"></i><span>تنظیمات</span></a>
+          </div>
         </div>
       </div>
       <script>window.USER_ROLE = '<?php echo isset($_SESSION["role"]) ? $_SESSION["role"] : "admin"; ?>';</script>

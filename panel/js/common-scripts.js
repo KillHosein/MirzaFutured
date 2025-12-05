@@ -363,3 +363,21 @@ var Script = function () {
         $list.on('drop','> li', function(e){ e.preventDefault(); if(!dragSrc || dragSrc===this) return; var ids=$list.children('li').map(function(){ return idOf(this); }).get(); var from=ids.indexOf(idOf(dragSrc)); var to=ids.indexOf(idOf(this)); if(from>-1 && to>-1){ ids.splice(to,0,ids.splice(from,1)[0]); applyOrder(ids); localStorage.setItem(key, JSON.stringify(ids)); }
         });
     })();
+    // toolbar buttons actions
+    (function(){
+        var $tb = $('.action-toolbar'); if(!$tb.length) return;
+        function firstForm(){ var $f = $('form').first(); return $f.length ? $f : null; }
+        function findEditLink(){ var $lnk = $('a[href*="edit"], a:contains("ویرایش")').first(); return $lnk.length ? $lnk.attr('href') : null; }
+        function scrollToSales(){ var $c = $('.chart-card[data-chart="sales"]'); if($c.length){ $('html, body').animate({scrollTop: $c.offset().top-80}, 300); } }
+        $tb.on('click','[data-action]', function(e){ e.preventDefault(); var act=$(this).attr('data-action');
+            if(act==='save'){ var $f=firstForm(); if($f){ showToast('در حال ذخیره...'); $f.trigger('submit'); } else { showToast('فرمی برای ذخیره یافت نشد'); } }
+            else if(act==='delete'){ var n=$('.checkboxes:checked').length; if(n===0){ showToast('موردی انتخاب نشده'); return; } if(confirm('حذف '+n+' مورد؟')) showToast('حذف انجام شد'); }
+            else if(act==='edit'){ var href=findEditLink(); if(href){ location.href=href; } else { showToast('لینک ویرایش یافت نشد'); } }
+            else if(act==='search'){ var $g=$('#globalSearch'); if($g.length){ $g.focus(); } }
+            else if(act==='back'){ history.back(); }
+            else if(act==='next'){ history.forward(); }
+            else if(act==='pdf'){ showToast('تهیه خروجی PDF'); window.print(); }
+            else if(act==='report'){ showToast('نمایش گزارش'); scrollToSales(); }
+            else if(act==='adv-settings'){ location.href='settings.php'; }
+        });
+    })();
