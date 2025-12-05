@@ -135,6 +135,7 @@
       <!--sidebar end-->
       <div class="app-toolbar" role="toolbar" aria-label="نوار ابزار">
         <div class="action-toolbar">
+          <a href="index.php" class="btn" aria-label="داشبورد"><i class="icon-dashboard"></i><span>داشبورد</span></a>
           <a href="#" class="btn" data-filter="all" aria-label="نمایش همه">همه</a>
           <a href="#" class="btn" data-filter="fav" aria-label="نمایش منتخب">منتخب</a>
           <a href="#" class="btn" id="toggleLayoutEdit" aria-label="ویرایش چیدمان">ویرایش چیدمان</a>
