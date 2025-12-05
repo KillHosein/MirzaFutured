@@ -127,16 +127,9 @@ var Script = function () {
 // theme toggle (light/dark)
     (function(){
         var key = 'theme';
-        var saved = localStorage.getItem(key);
-        if(saved !== 'light'){
-            document.body.classList.add('dark');
-            if(!saved) localStorage.setItem(key, 'dark');
-        }
-        $('#themeToggle').on('click', function(e){
-            e.preventDefault();
-            var isDark = document.body.classList.toggle('dark');
-            localStorage.setItem(key, isDark ? 'dark' : 'light');
-        });
+        document.body.classList.add('dark');
+        try{ localStorage.setItem(key,'dark'); }catch(e){}
+        $('#themeToggle').closest('li').hide();
     })();
 
     // global search in sidebar

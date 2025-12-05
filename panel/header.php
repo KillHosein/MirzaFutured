@@ -31,11 +31,7 @@
                             </li>
                         </ul>
                     </li>
-                    <li>
-                        <a id="themeToggle" href="#" title="حالت تیره">
-                            <i class="icon-moon"></i>
-                        </a>
-                    </li>
+                    
                     <!-- user login dropdown start-->
                     <li class="dropdown">
                         <a data-toggle="dropdown" class="dropdown-toggle" href="#">
