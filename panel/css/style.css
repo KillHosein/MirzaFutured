@@ -4631,3 +4631,212 @@ body.dark .form-control:focus-visible{ box-shadow: 0 0 0 3px rgba(37,99,235,.35)
 @media (prefers-reduced-motion: reduce){
     *{ transition: none !important; animation: none !important; }
 }
+
+
+/* =========================================================
+   MODERN UI OVERRIDES (added by refactor)
+   This block sits at the end so it safely overrides legacy.
+========================================================= */
+
+/* -------- Theme tuning (keep your tokens, make them prettier) -------- */
+:root{
+  --bg: #0b1220;
+  --surface: #0f172a;
+  --surface-2: #111b34;
+  --card-bg: rgba(255,255,255,0.04);
+
+  --text: #e6e9ef;
+  --text-strong: #f8fafc;
+  --text-muted: #9aa4b2;
+
+  --btn-primary: #7c5cff;
+  --btn-success: #22c55e;
+  --btn-warning: #f59e0b;
+  --btn-danger: #ff6b6b;
+  --accent-color: #22d3ee;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+
+  --shadow-xs: 0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-sm: 0 8px 30px rgba(0,0,0,0.25);
+  --shadow-md: 0 14px 45px rgba(0,0,0,0.35);
+  --shadow-lg: 0 22px 70px rgba(0,0,0,0.45);
+
+  /* fix legacy typo compat */
+  --status-disabled: #6b7280;
+  --status-disabledn: var(--status-disabled);
+}
+
+body{
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(124,92,255,0.20), transparent 60%),
+    radial-gradient(1200px 700px at 90% -20%, rgba(34,211,238,0.18), transparent 60%),
+    linear-gradient(180deg, #070b14 0%, #0b1220 65%, #0a1020 100%);
+  color: var(--text);
+}
+
+body.dark{
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(124,92,255,0.22), transparent 60%),
+    radial-gradient(1200px 700px at 90% -20%, rgba(34,211,238,0.20), transparent 60%),
+    linear-gradient(180deg, #05080f 0%, #0b1220 65%, #0a1020 100%);
+}
+
+/* -------- Glass cards / panels -------- */
+.panel, .card, .action-card, .chart-card, .setting-card, .stat-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm), var(--shadow-xs);
+  backdrop-filter: blur(6px);
+  transition: transform .15s ease, box-shadow .35s ease, border-color .15s ease;
+}
+.panel:hover, .card:hover, .action-card:hover, .chart-card:hover, .setting-card:hover, .stat-card:hover{
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(124,92,255,0.35);
+}
+
+/* -------- Action grid/cards unify -------- */
+.action-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+  gap:16px;
+  margin-top:16px;
+}
+.action-card{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding:16px;
+  min-height:120px;
+}
+.action-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:4px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: linear-gradient(90deg, var(--btn-primary), var(--accent-color));
+  opacity:.85;
+}
+.action-card::after{
+  content: attr(data-cat);
+  position:absolute;
+  top:10px; right:10px;
+  font-size:11px; font-weight:800;
+  color:#fff; padding:4px 8px;
+  border-radius:999px;
+  background: rgba(124,92,255,.9);
+  opacity:.95;
+}
+.action-card i{ font-size:22px; color: var(--btn-danger); opacity:.95; }
+.action-card .action-title{ font-weight:800; color: var(--text-strong); }
+.action-card .action-desc{ font-size:12px; color: var(--text-muted); }
+
+/* -------- Charts unify -------- */
+.charts-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+  gap:16px;
+  margin-top:16px;
+}
+.chart-card{ padding:16px; }
+
+/* -------- Buttons modern -------- */
+.btn, button, .action-btn, .btn-primary, .btn-success, .btn-warning, .btn-danger{
+  border:0 !important;
+  border-radius:999px !important;
+  padding:10px 16px !important;
+  font-weight:800 !important;
+  color:#fff !important;
+  background: linear-gradient(135deg, var(--btn-primary), var(--accent-color)) !important;
+  box-shadow: 0 10px 30px rgba(124,92,255,0.35) !important;
+  cursor:pointer;
+  transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+.btn:hover, button:hover, .action-btn:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 14px 40px rgba(34,211,238,0.35) !important;
+}
+.btn-success{ background: linear-gradient(135deg,#16a34a,#22c55e) !important; }
+.btn-warning{ background: linear-gradient(135deg,#d97706,#f59e0b) !important; }
+.btn-danger{ background: linear-gradient(135deg,#ef4444,#ff6b6b) !important; }
+
+/* -------- Inputs / form-control -------- */
+input, select, textarea, .form-control{
+  background: rgba(255,255,255,0.05) !important;
+  border:1px solid rgba(255,255,255,0.08) !important;
+  color: var(--text) !important;
+  padding:10px 12px !important;
+  border-radius: var(--radius-md) !important;
+  outline:none !important;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+input::placeholder, textarea::placeholder{ color: rgba(154,164,178,.8); }
+input:focus, select:focus, textarea:focus, .form-control:focus{
+  border-color: rgba(124,92,255,0.6) !important;
+  box-shadow: 0 0 0 4px rgba(124,92,255,0.15) !important;
+  background: rgba(255,255,255,0.07) !important;
+}
+
+/* -------- Tables cleaner -------- */
+table, .table{
+  width:100%;
+  border-collapse: separate !important;
+  border-spacing: 0 10px !important;
+}
+table thead th, .table thead th{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color: var(--text-muted) !important;
+  padding: 0 12px 6px !important;
+}
+table tbody tr, .table tbody tr{
+  background: rgba(255,255,255,0.04) !important;
+  border:1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: var(--shadow-xs) !important;
+  transition: background .15s ease, transform .15s ease;
+}
+table tbody tr:hover, .table tbody tr:hover{
+  background: rgba(124,92,255,0.08) !important;
+  transform: translateY(-2px);
+}
+table tbody td, .table tbody td{
+  padding:12px !important;
+  color: var(--text) !important;
+}
+
+/* -------- Status badges nicer -------- */
+.status-badge{
+  display:inline-flex !important;
+  align-items:center;
+  gap:6px;
+  padding:5px 10px !important;
+  border-radius:999px !important;
+  font-size:12px;
+  font-weight:800 !important;
+  color:#fff !important;
+  background: rgba(255,255,255,0.08) !important;
+  border:1px solid rgba(255,255,255,0.08) !important;
+}
+.status-active{ background: rgba(34,197,94,.18) !important; }
+.status-waiting{ background: rgba(245,158,11,.18) !important; }
+.status-reject,.status-block{ background: rgba(255,107,107,.18) !important; }
+
+/* -------- Section titles (if used) -------- */
+.section-title{
+  font-size:18px; font-weight:800; color:var(--text-strong);
+  position:relative; padding-left:12px;
+}
+.section-title::before{
+  content:""; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:4px; height:18px; border-radius:99px;
+  background: linear-gradient(180deg, var(--btn-primary), var(--accent-color));
+}
