@@ -110,7 +110,117 @@ $labelMapShop = [
     <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
     <link href="css/style.css" rel="stylesheet">
     <link href="css/style-responsive.css" rel="stylesheet" />
-  </head>
+  
+<style>
+
+/* =========================================================
+   MODERN SETTINGS OVERRIDES (Append-only)
+   Injected into settings.php
+========================================================= */
+
+html, body{
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible{
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary, #7c5cff) 55%, transparent);
+  border-radius: 10px;
+}
+
+a{
+  transition: color .15s ease, opacity .15s ease;
+}
+a:hover{ opacity:.9; }
+
+.panel, .well, .thumbnail, .list-group-item, .settings-card{
+  border: 1px solid color-mix(in oklab, rgba(255,255,255,.10) 75%, #e2e2e4);
+  border-radius: 18px;
+  background: linear-gradient(180deg,
+    color-mix(in oklab, #fff 6%, transparent),
+    color-mix(in oklab, #fff 2%, transparent)
+  );
+  box-shadow: 0 8px 30px rgba(0,0,0,.18), 0 1px 0 rgba(255,255,255,.05) inset;
+  transition: transform .15s cubic-bezier(.2,.8,.2,1),
+              box-shadow .35s cubic-bezier(.2,.8,.2,1),
+              border-color .15s cubic-bezier(.2,.8,.2,1);
+}
+.panel:hover, .settings-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 55px rgba(0,0,0,.25);
+  border-color: color-mix(in oklab, var(--primary, #7c5cff) 55%, transparent);
+}
+
+.panel-heading{
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  background: color-mix(in oklab, #fff 4%, transparent);
+  font-weight: 700;
+}
+
+.label, .badge{
+  border-radius: 999px;
+  padding: .35em .7em;
+  font-weight: 700;
+  letter-spacing: .1px;
+}
+
+.btn{
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform .15s cubic-bezier(.2,.8,.2,1),
+              filter .15s cubic-bezier(.2,.8,.2,1),
+              box-shadow .15s cubic-bezier(.2,.8,.2,1);
+}
+.btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 10px 26px rgba(0,0,0,.22);
+}
+.btn-primary{
+  background: linear-gradient(135deg, var(--primary, #41cac0), var(--primary-2, #22d3ee));
+  border-color: transparent;
+  box-shadow: 0 8px 22px rgba(65,202,192,.35);
+}
+
+.form-control{
+  border-radius: 12px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.form-control:focus{
+  border-color: color-mix(in oklab, var(--primary, #517397) 60%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary, #517397) 18%, transparent);
+  background: color-mix(in oklab, #fff 6%, transparent);
+}
+
+.dropdown-menu{
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+}
+.dropdown-menu>li>a{
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.dropdown-menu>li>a:hover{
+  background-color: color-mix(in oklab, #495d74 85%, #000);
+  color:#fff;
+}
+
+.table-hover>tbody>tr:hover>td,
+.table-hover>tbody>tr:hover>th{
+  background: color-mix(in oklab, var(--primary, #59ace2) 8%, transparent);
+  transform: translateY(-1px);
+  transition: background .15s ease, transform .15s ease;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}
+
+</style>
+</head>
   <body>
     <section id="container" class="">
       <?php include('header.php'); ?>
@@ -262,4 +372,3 @@ $labelMapShop = [
     </script>
   </body>
 </html>
-
