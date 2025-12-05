@@ -154,7 +154,160 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     <link href="css/style-responsive.css" rel="stylesheet" />
     <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
 
-  </head>
+  
+<style>
+
+/* =========================================================
+   MODERN INDEX OVERRIDES (Append-only)
+   Injected into index.php
+========================================================= */
+
+html, body{
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* background polish if page doesn't already define one */
+body{
+  background:
+    radial-gradient(1200px 700px at 10% -10%, rgba(124,92,255,0.18), transparent 60%),
+    radial-gradient(1200px 700px at 90% -20%, rgba(34,211,238,0.16), transparent 60%),
+    linear-gradient(180deg, #070b14 0%, #0b1220 65%, #0a1020 100%);
+}
+
+/* section headers */
+.section-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin: 8px 0 14px;
+}
+.section-title{
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-strong, #f8fafc);
+  position: relative;
+  padding-left: 12px;
+}
+.section-title::before{
+  content:"";
+  position:absolute;
+  left:0; top:50%;
+  transform: translateY(-50%);
+  width:4px; height:18px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, var(--primary, #7c5cff), var(--primary-2, #22d3ee));
+}
+
+/* cards/panels */
+.card, .panel, .action-card, .chart-card, .stat-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.04) inset;
+  backdrop-filter: blur(6px);
+  padding: 16px;
+  transition: transform .15s cubic-bezier(.2,.8,.2,1),
+              box-shadow .35s cubic-bezier(.2,.8,.2,1),
+              border-color .15s cubic-bezier(.2,.8,.2,1);
+}
+.card:hover, .panel:hover, .action-card:hover, .chart-card:hover, .stat-card:hover{
+  transform: translateY(-4px);
+  box-shadow: 0 22px 70px rgba(0,0,0,0.45);
+  border-color: rgba(124,92,255,0.35);
+}
+
+/* grids */
+.action-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap:16px;
+  margin-top:16px;
+}
+.charts-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap:16px;
+  margin-top:16px;
+}
+
+/* action card internals */
+.action-card{
+  position: relative;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height:120px;
+}
+.action-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:4px;
+  border-radius:22px 22px 0 0;
+  background: linear-gradient(90deg, var(--primary, #7c5cff), var(--primary-2, #22d3ee));
+  opacity:.85;
+}
+.action-card::after{
+  content: attr(data-cat);
+  position:absolute;
+  top:10px; right:10px;
+  font-size:11px; font-weight:800;
+  color:#fff;
+  padding:4px 8px;
+  border-radius:999px;
+  background: rgba(124,92,255,0.9);
+}
+.action-card i{ font-size:22px; color: var(--danger, #ff6b6b); }
+.action-card .action-title{ font-weight:800; color: var(--text-strong, #f8fafc); }
+.action-card .action-desc{ font-size:12px; color: var(--text-muted, #9aa4b2); }
+
+/* buttons */
+.btn, button, .action-btn{
+  border:0;
+  border-radius:999px;
+  padding:10px 16px;
+  font-weight:800;
+  color:#fff;
+  background: linear-gradient(135deg, var(--primary, #7c5cff), var(--primary-2, #22d3ee));
+  box-shadow: 0 10px 30px rgba(124,92,255,0.35);
+  cursor:pointer;
+  transition: transform .15s cubic-bezier(.2,.8,.2,1),
+              filter .15s cubic-bezier(.2,.8,.2,1),
+              box-shadow .15s cubic-bezier(.2,.8,.2,1);
+}
+.btn:hover, button:hover, .action-btn:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow: 0 14px 40px rgba(34,211,238,0.35);
+}
+
+/* focus ring */
+:focus-visible{
+  outline:none !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary, #7c5cff) 55%, transparent);
+  border-radius:10px;
+}
+
+/* tables hover polish */
+.table-hover>tbody>tr:hover>td,
+.table-hover>tbody>tr:hover>th{
+  background: color-mix(in oklab, var(--primary, #7c5cff) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+/* responsive stacking */
+@media (max-width: 768px){
+  .action-grid, .charts-grid{ grid-template-columns: 1fr !important; }
+  .btn, button{ width:100%; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}
+
+</style>
+</head>
 
   <body>
 
