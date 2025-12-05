@@ -133,14 +133,13 @@
           </div>
       </aside>
       <!--sidebar end-->
-      <div id="cmdPalette">
-        <section class="panel">
-          <header class="panel-heading">جستجوی سریع اقدامات</header>
-          <div class="panel-body">
-            <input id="cmdInput" type="text" placeholder="نام دکمه یا اقدام را وارد کنید..."/>
-            <div id="cmdList"></div>
-          </div>
-        </section>
+      <div class="app-toolbar" role="toolbar" aria-label="نوار ابزار">
+        <div class="action-toolbar">
+          <a href="#" class="btn" data-filter="all" aria-label="نمایش همه">همه</a>
+          <a href="#" class="btn" data-filter="fav" aria-label="نمایش منتخب">منتخب</a>
+          <a href="#" class="btn" id="toggleLayoutEdit" aria-label="ویرایش چیدمان">ویرایش چیدمان</a>
+          <a href="#" class="btn btn-default" id="resetLayout" aria-label="بازنشانی چیدمان">بازنشانی</a>
+        </div>
       </div>
       <div class="breadcrumb-bar" id="breadcrumbBar" style="padding:10px 16px;">
         <span id="crumbPath" style="font-weight:700;"></span>

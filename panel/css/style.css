@@ -484,13 +484,12 @@ body.dark .notif-item{ background:#1f2937; }
 .badge-warning{ background:#f59e0b; }
 
 /* Command Palette */
-#cmdPalette{ position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display:none; z-index: 2000; }
-#cmdPalette .panel{ width: 640px; max-width: 96%; margin: 10vh auto; }
-#cmdInput{ width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; }
-#cmdList .cmd-item{ padding: 8px 12px; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
-#cmdList .cmd-item:hover{ background: #f9fafb; }
-body.dark #cmdInput{ background:#0b1220; color:#e5e7eb; border-color:#111827; }
-body.dark #cmdList .cmd-item{ border-bottom-color:#0b1220; }
+.app-toolbar{ position: sticky; top: var(--header-h, 60px); z-index: 1001; background: rgba(255,255,255,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-color); }
+body.dark .app-toolbar{ background: rgba(17,24,39,.85); border-bottom-color: #0b1220; }
+.action-toolbar{ display: flex; gap: 8px; padding: 10px 16px; align-items: center; }
+.action-toolbar .btn{ border-radius: 999px; padding: 8px 14px; font-weight: 700; }
+.action-toolbar .btn.btn-default{ background: #e5e7eb; border-color: #e5e7eb; color: #111827; }
+body.dark .action-toolbar .btn.btn-default{ background: #374151; border-color: #374151; color: #e5e7eb; }
 .notification .notify-arrow{ border-bottom: 8px solid #f3f4f6; }
 .notification p{ font-weight:700; color:#111827; }
 .notif-item{ background:#fff; }
