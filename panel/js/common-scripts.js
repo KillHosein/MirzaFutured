@@ -380,4 +380,23 @@ var Script = function () {
             else if(act==='report'){ showToast('نمایش گزارش'); scrollToSales(); }
             else if(act==='adv-settings'){ location.href='settings.php'; }
         });
+
+        // dynamic enable/disable
+        function hasForm(){ return $('form').first().length>0; }
+        function selectedCount(){ return $('.checkboxes:checked').length; }
+        function hasEdit(){ return $('a[href*="edit"], a:contains("ویرایش")').length>0; }
+        function setDisabled(action, disabled){ var $b=$tb.find('[data-action="'+action+'"]').attr('aria-disabled', disabled?'true':'false'); }
+        function recalc(){ setDisabled('save', !hasForm()); setDisabled('delete', selectedCount()===0); setDisabled('edit', !hasEdit()); }
+        $(document).on('change','.checkboxes', recalc);
+        $(function(){ recalc(); });
+
+        // keyboard shortcuts
+        $(document).on('keydown', function(e){
+            var k = (e.key||'').toLowerCase();
+            if((e.ctrlKey||e.metaKey) && k==='s'){ e.preventDefault(); $tb.find('[data-action="save"]').trigger('click'); }
+            else if(k==='delete' && selectedCount()>0){ e.preventDefault(); $tb.find('[data-action="delete"]').trigger('click'); }
+            else if((e.ctrlKey||e.metaKey) && k==='f'){ e.preventDefault(); $tb.find('[data-action="search"]').trigger('click'); }
+            else if(e.altKey && k==='arrowleft'){ e.preventDefault(); $tb.find('[data-action="back"]').trigger('click'); }
+            else if(e.altKey && k==='arrowright'){ e.preventDefault(); $tb.find('[data-action="next"]').trigger('click'); }
+        });
     })();
