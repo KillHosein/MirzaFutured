@@ -74,7 +74,7 @@
                       </a>
                   </li>
                   <li class="sub-menu <?php echo in_array($current,['users.php','user.php'])?'active':''; ?>">
-                      <a href="javascript:;" class="">
+                      <a href="javascript:;" class="" aria-expanded="false">
                           <i class="icon-user"></i>
                           <span>کاربران</span>
                           <span class="menu-badge"><?php echo number_format($count_users); ?></span>
@@ -86,7 +86,7 @@
                       </ul>
                   </li>
                   <li class="sub-menu <?php echo in_array($current,['invoice.php','payment.php','service.php','product.php','productedit.php'])?'active':''; ?>">
-                      <a href="javascript:;" class="">
+                      <a href="javascript:;" class="" aria-expanded="false">
                           <i class="icon-briefcase"></i>
                           <span>مدیریت سرویس‌ها</span>
                           <span class="menu-badge"><?php echo number_format($count_orders); ?></span>
@@ -101,7 +101,7 @@
                       </ul>
                   </li>
                   <li class="sub-menu <?php echo in_array($current,['keyboard.php','seeting_x_ui.php','inbound.php','cancelService.php'])?'active':''; ?>">
-                      <a href="javascript:;" class="">
+                      <a href="javascript:;" class="" aria-expanded="false">
                           <i class="icon-cogs"></i>
                           <span>پیکربندی</span>
                           <span class="arrow"></span>

@@ -10,7 +10,8 @@ var Script = function () {
         jQuery('.arrow', last).removeClass("open");
         jQuery('.sub', last).slideUp(200);
         var sub = jQuery(this).next();
-        if (sub.is(":visible")) {
+        var opening = !sub.is(":visible");
+        if (!opening) {
             jQuery('.arrow', jQuery(this)).removeClass("open");
             jQuery(this).parent().removeClass("open");
             sub.slideUp(200);
@@ -19,6 +20,7 @@ var Script = function () {
             jQuery(this).parent().addClass("open");
             sub.slideDown(200);
         }
+        jQuery(this).attr('aria-expanded', opening ? 'true' : 'false');
         var o = ($(this).offset());
         diff = 200 - o.top;
         if(diff>0)
@@ -137,7 +139,8 @@ var Script = function () {
         var $input = $('#globalSearch');
         if(!$input.length) return;
         var $items = $('#sidebar ul.sidebar-menu > li');
-        $input.on('keyup', function(){
+        function debounce(fn, wait){ var t; return function(){ var ctx=this, args=arguments; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx,args); }, wait); }; }
+        $input.on('keyup', debounce(function(){
             var q = $(this).val().trim();
             if(q === ''){
                 $items.show();
@@ -153,12 +156,13 @@ var Script = function () {
                     if($li.hasClass('sub-menu')){
                         $li.addClass('open');
                         $li.find('.sub').slideDown(150);
+                        $li.find('> a').attr('aria-expanded','true');
                     }
                 } else {
                     $li.hide();
                 }
             });
-        });
+        },120));
         // shortcut: press / to focus
         $(document).on('keydown', function(e){
             if(e.key === '/' && !$(e.target).is('input, textarea')){
