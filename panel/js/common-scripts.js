@@ -128,8 +128,9 @@ var Script = function () {
     (function(){
         var key = 'theme';
         var saved = localStorage.getItem(key);
-        if(saved === 'dark') {
+        if(saved !== 'light'){
             document.body.classList.add('dark');
+            if(!saved) localStorage.setItem(key, 'dark');
         }
         $('#themeToggle').on('click', function(e){
             e.preventDefault();
