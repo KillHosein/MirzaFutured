@@ -313,15 +313,15 @@ ul.sidebar-menu li ul.sub li:last-child{
 
 ul.sidebar-menu li ul.sub li a {
     font-size: 12px;
-    padding: 0 0 0 32px;
-    line-height: 35px;
-    height: 35px;
+    padding: 0 12px 0 12px;
+    line-height: 32px;
+    height: 32px;
     -webkit-transition: all 0.3s ease;
     -moz-transition: all 0.3s ease;
     -o-transition: all 0.3s ease;
     -ms-transition: all 0.3s ease;
     transition: all 0.3s ease;
-    color: #737B83;
+    color: #cbd5e1;
 }
 
 ul.sidebar-menu li ul.sub li a:hover, ul.sidebar-menu li ul.sub li.active a {
@@ -354,7 +354,7 @@ ul.sidebar-menu li a{
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 12px 14px;
     font-size: 14px;
     border-radius: 8px;
@@ -368,14 +368,15 @@ ul.sidebar-menu li.active a, ul.sidebar-menu li a:hover, ul.sidebar-menu li a:fo
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
-ul.sidebar-menu li.sub-menu > ul.sub{ background: rgba(255,255,255,.03); border-radius: 12px; padding: 4px 6px; margin-top: 4px; }
-body.dark ul.sidebar-menu li.sub-menu > ul.sub{ background: rgba(17,24,39,.35); }
+ul.sidebar-menu li.sub-menu > ul.sub{ background: transparent; border-radius: 10px; padding: 0; margin-top: 4px; }
+body.dark ul.sidebar-menu li.sub-menu > ul.sub{ background: transparent; }
 
 
 ul.sidebar-menu li a i {
     font-size: 18px;
     padding-left: 6px;
 }
+ul.sidebar-menu li a .arrow{ margin-left: 6px; }
 
 ul.sidebar-menu li a:hover i, ul.sidebar-menu li a:focus i {
     color: #FF6C60;
@@ -590,7 +591,7 @@ ul.top-menu > li > a {
     min-width: 26px;
     text-align: center;
     box-shadow: 0 6px 16px rgba(255,108,96,.25);
-    margin-right: auto; white-space: nowrap; flex-shrink: 0;
+    margin-left: auto; white-space: nowrap; flex-shrink: 0; display:inline-flex; align-items:center; justify-content:center; height:22px; line-height:22px;
 }
 
 ul.top-menu > li > a:hover, ul.top-menu > li > a:focus {
