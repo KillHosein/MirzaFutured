@@ -371,5 +371,140 @@ ul {
     padding: 10px;
 }
 
+/* =========================================================
+   MODERN UI OVERRIDES (Append-only)
+   For bootstrap-reset.css (FlatLab/BS3 reset)
+   - Non-destructive: preserves your color scheme + resets
+   - Harmonizes with modern glass theme & BS overrides
+   - Fixes some legacy rough edges (rounded, focus, hover)
+========================================================= */
 
+/* ---- Smooth rendering ---- */
+html, body{
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
 
+/* ---- Modern focus ring while keeping legacy outline removal ---- */
+:focus-visible{
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary, #7c5cff) 55%, transparent);
+  border-radius: 10px;
+}
+
+/* ---- Links (slightly softer) ---- */
+a{
+  transition: color .15s ease, opacity .15s ease;
+}
+a:hover{
+  opacity:.9;
+}
+
+/* ---- Panels -> card feel (legacy safe) ---- */
+.panel,
+.well,
+.thumbnail,
+.list-group-item{
+  border-radius: 18px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.18);
+  border: 1px solid color-mix(in oklab, #e2e2e4 60%, transparent);
+  background: linear-gradient(180deg,
+    color-mix(in oklab, #fff 6%, transparent),
+    color-mix(in oklab, #fff 2%, transparent)
+  );
+}
+.panel-heading{
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  background: color-mix(in oklab, #fff 4%, transparent);
+}
+
+/* ---- Labels / badges -> pill ---- */
+.label, .badge{
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: .1px;
+}
+
+/* ---- Buttons -> rounder + soft hover (keeps your colors) ---- */
+.btn{
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform .15s cubic-bezier(.2,.8,.2,1),
+              filter .15s cubic-bezier(.2,.8,.2,1),
+              box-shadow .15s cubic-bezier(.2,.8,.2,1);
+}
+.btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+/* add subtle modern shadow to main variants without changing base colors */
+.btn-default,
+.btn-primary,
+.btn-success,
+.btn-info,
+.btn-warning,
+.btn-danger{
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
+.btn-default:hover,
+.btn-primary:hover,
+.btn-success:hover,
+.btn-info:hover,
+.btn-warning:hover,
+.btn-danger:hover{
+  box-shadow: 0 14px 40px rgba(0,0,0,.25);
+}
+
+/* ---- Form controls -> nicer radius + focus ---- */
+.form-control{
+  border-radius: 12px;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.form-control:focus, #focusedInput{
+  border-color: color-mix(in oklab, var(--primary, #517397) 60%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary, #517397) 18%, transparent);
+}
+
+/* ---- Dropdowns ---- */
+.dropdown-menu{
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+}
+.dropdown-menu>li>a{
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: background .12s ease, color .12s ease;
+}
+.dropdown-menu>li>a:hover,
+.dropdown-menu>li>a:focus{
+  background-color: color-mix(in oklab, #495d74 85%, #000);
+}
+
+/* ---- Navbar -> softer ---- */
+.navbar,
+.navbar-inverse{
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.18);
+}
+
+/* ---- Tables -> hover polish ---- */
+.table-hover>tbody>tr:hover>td,
+.table-hover>tbody>tr:hover>th{
+  background: color-mix(in oklab, var(--primary, #59ace2) 8%, transparent);
+  transform: translateY(-1px);
+  transition: background .15s ease, transform .15s ease;
+}
+
+/* ---- Alerts -> soft container ---- */
+.alert{
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.16);
+}
+
+/* ---- Respect reduced motion ---- */
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}
