@@ -346,7 +346,7 @@ ul.sidebar-menu li.sub-menu{
 }
 
 ul.sidebar-menu li a span{
-    display: inline-block;
+    display: inline-block; font-weight:600; letter-spacing:.2px;
 }
 
 ul.sidebar-menu li a{
@@ -368,6 +368,8 @@ ul.sidebar-menu li.active a, ul.sidebar-menu li a:hover, ul.sidebar-menu li a:fo
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
+ul.sidebar-menu li.sub-menu > ul.sub{ background: rgba(255,255,255,.03); border-radius: 12px; padding: 4px 6px; margin-top: 4px; }
+body.dark ul.sidebar-menu li.sub-menu > ul.sub{ background: rgba(17,24,39,.35); }
 
 
 ul.sidebar-menu li a i {
@@ -500,7 +502,9 @@ body.dark .notif-item{ background:#1f2937; }
 .app-toolbar{ position: sticky; top: var(--header-h, 60px); z-index: 1001; background: rgba(255,255,255,.85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border-color); }
 body.dark .app-toolbar{ background: rgba(17,24,39,.85); border-bottom-color: #0b1220; }
 .action-toolbar{ display: flex; gap: 8px; padding: 10px 16px; align-items: center; }
-.action-toolbar .btn{ border-radius: 999px; padding: 8px 14px; font-weight: 700; }
+.action-toolbar .btn{ border-radius: 999px; padding: 8px 16px; font-weight: 800; color:#fff; background: linear-gradient(135deg, var(--btn-primary), var(--accent-color)); box-shadow: 0 10px 28px color-mix(in oklab, var(--btn-primary) 35%, transparent); }
+.action-toolbar .btn:hover{ transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 14px 36px color-mix(in oklab, var(--accent-color) 35%, transparent); }
+.action-toolbar .btn:active{ transform: translateY(0); filter: none; }
 .action-toolbar .btn.btn-default{ background: #e5e7eb; border-color: #e5e7eb; color: #111827; }
 body.dark .action-toolbar .btn.btn-default{ background: #374151; border-color: #374151; color: #e5e7eb; }
 .notification .notify-arrow{ border-bottom: 8px solid #f3f4f6; }
@@ -569,11 +573,14 @@ ul.top-menu > li > a {
 
 /* menu badge */
 .menu-badge{
-    background: #ff6c60;
+    background: linear-gradient(135deg, #ff7c6c, #ff6c60);
     color: #fff;
     border-radius: 999px;
     font-size: 11px;
     padding: 2px 8px;
+    min-width: 26px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(255,108,96,.25);
     margin-right: auto;
 }
 
