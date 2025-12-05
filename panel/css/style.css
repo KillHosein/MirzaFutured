@@ -2579,6 +2579,19 @@ body.dark .table.sticky thead th{ background: #0f172a; }
 .stat-card{ display:flex; align-items:center; gap:12px; padding:16px; border-radius: var(--radius-lg); background: var(--card-bg); box-shadow: var(--shadow-sm); }
 body.dark .stat-card{ background:#1f2937; }
 
+:root{ --menu-item-h: 44px; --menu-radius: 12px; --menu-icon: 18px; --menu-gap: 10px; }
+ul.sidebar-menu > li{ transition: transform .12s ease; }
+ul.sidebar-menu > li:hover{ transform: translateY(-1px); }
+ul.sidebar-menu li a{ height: var(--menu-item-h); line-height: calc(var(--menu-item-h) - 2px); gap: var(--menu-gap); border-radius: var(--menu-radius); }
+ul.sidebar-menu li a i{ font-size: var(--menu-icon); opacity:.92; transition: color .2s ease, transform .2s ease, opacity .2s ease; }
+ul.sidebar-menu li a:hover i{ transform: translateY(-1px); opacity:1; }
+ul.sidebar-menu li.active a{ box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.menu-group-label{ display:block; padding:8px 14px; font-size:11px; color: var(--text-muted); font-weight:700; letter-spacing:.3px; }
+#sidebar ul > li > a .arrow, #sidebar ul > li > a .arrow.open{ transition: transform .2s ease; }
+#sidebar > ul > li > a .arrow.open{ transform: rotate(90deg); }
+#sidebar > ul > li.active > ul.sub{ animation: fadeIn .18s ease-out; }
+@keyframes fadeIn{ from{ opacity:0; transform: translateY(-4px);} to{ opacity:1; transform: none;} }
+
 .modal-body label {
     font-weight: 400;
     font-family: yekan,'Open Sans', sans-serif;

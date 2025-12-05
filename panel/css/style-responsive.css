@@ -399,6 +399,17 @@
     padding: 14px;
   }
 
+@media (max-width: 768px){
+  :root{ --menu-item-h: 48px; }
+  #sidebar > ul > li > a{
+    height: var(--menu-item-h) !important;
+    line-height: var(--menu-item-h) !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+  }
+  ul.sidebar-menu > li:hover{ transform: none; }
+}
+
   /* Tables scroll horizontally */
   table{
     display:block;
