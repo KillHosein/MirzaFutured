@@ -67,6 +67,16 @@ if($_GET['removeid'] && $_GET['removeid']){
                         <section class="panel">
                             <header class="panel-heading">لیست درخواست های حذف</header>
                                 <section class="panel">
+                                <div class="action-toolbar sticky" style="margin-top:8px;">
+                                    <a href="cancelService.php" class="btn btn-default" id="cancelRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
+                                    <input type="text" id="cancelQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                    <a href="#" class="btn btn-default tooltips" id="cancelSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="cancelInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="cancelClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <span id="cancelSelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-danger" id="cancelRemoveBulk"><i class="icon-trash"></i> حذف گروهی</a>
+                                    <a href="#" class="btn btn-default" id="cancelPrint"><i class="icon-print"></i> چاپ</a>
+                                </div>
                         </section>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
@@ -94,7 +104,7 @@ if($_GET['removeid'] && $_GET['removeid']){
                                         <td class=\"hidden-phone\">{$list['username']}</td>
                                         <td class=\"hidden-phone\">{$list['description']}</td>
                                         <td class=\"hidden-phone\">{$list['status']}</td>
-                                        <td  class=\"hidden-phone\"><a class = \"btn btn-danger\" href= \"cancelService.php?removeid={$list['id']}\">حذف درخواست</a></td>
+                                        <td  class="hidden-phone"><a class = "btn btn-danger" href= "cancelService.php?removeid={$list['id']}" data-confirm="آیا از حذف درخواست مطمئن هستید؟">حذف درخواست</a></td>
                                     </tr>";
                                 }
                                     ?>
@@ -124,6 +134,24 @@ if($_GET['removeid'] && $_GET['removeid']){
 
     <!--script for this page only-->
     <script src="js/dynamic-table.js"></script>
+
+    <script>
+      (function(){
+        attachTableQuickSearch('#sample_1','#cancelQuickSearch');
+        attachSelectionCounter('#sample_1','#cancelSelCount');
+        $('#cancelSelectVisible').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr:visible').each(function(){ $(this).find('.checkboxes').prop('checked', true).trigger('change'); }); });
+        $('#cancelInvertSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr').each(function(){ var $cb=$(this).find('.checkboxes'); $cb.prop('checked', !$cb.prop('checked')).trigger('change'); }); });
+        $('#cancelClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false).trigger('change'); });
+        $('#cancelRemoveBulk').on('click', function(e){
+          e.preventDefault(); var ids=[];
+          $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); });
+          if(!ids.length){ showToast('هیچ موردی انتخاب نشده است'); return; }
+          if(!confirm('حذف گروهی درخواست‌های حذف انتخاب‌شده انجام شود؟')) return;
+          var done=0; ids.forEach(function(id){ $.get('cancelService.php',{removeid:id}).always(function(){ done++; if(done===ids.length){ showToast('حذف انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); });
+        });
+        $('#cancelPrint').on('click', function(e){ e.preventDefault(); window.print(); });
+      })();
+    </script>
 
 
 </body>

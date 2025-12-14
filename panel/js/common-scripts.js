@@ -129,9 +129,23 @@ var Script = function () {
 // theme toggle (light/dark)
     (function(){
         var key = 'theme';
-        document.body.classList.add('dark');
-        try{ localStorage.setItem(key,'dark'); }catch(e){}
-        $('#themeToggle').closest('li').hide();
+        function applyTheme(t){
+            document.body.classList.toggle('dark', t === 'dark');
+        }
+        var saved = null;
+        try{ saved = localStorage.getItem(key); }catch(e){}
+        var initial = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(initial);
+        $('#themeToggle').closest('li').show();
+        $('#themeToggle').attr('aria-pressed', initial==='dark' ? 'true' : 'false');
+        $('#themeToggle').on('click', function(e){
+            e.preventDefault();
+            var now = document.body.classList.toggle('dark');
+            var v = now ? 'dark' : 'light';
+            $(this).attr('aria-pressed', now ? 'true' : 'false');
+            try{ localStorage.setItem(key, v); }catch(ex){}
+            if(window.showToast) showToast(now ? 'حالت تیره فعال شد' : 'حالت روشن فعال شد');
+        });
     })();
 
     // global search in sidebar

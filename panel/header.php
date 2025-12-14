@@ -16,6 +16,9 @@
                     <li>
                         <input id="globalSearch" type="text" class="search" placeholder="جستجو در پنل..." />
                     </li>
+                    <li>
+                        <a id="themeToggle" href="#" class="btn btn-default" title="تغییر تم" aria-pressed="false"><i class="icon-adjust"></i></a>
+                    </li>
                     <li class="dropdown" id="notifDropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="اعلان‌ها">
                             <i class="icon-bell"></i>
