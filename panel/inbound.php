@@ -8,9 +8,39 @@ $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
     $query->execute();
     $result = $query->fetch(PDO::FETCH_ASSOC);
-    $query = $pdo->prepare("SELECT * FROM Inbound");
-    $query->execute();
+    $where = [];
+    $params = [];
+    if(!empty($_GET['protocol'])){
+        $where[] = "protocol = :protocol";
+        $params[':protocol'] = $_GET['protocol'];
+    }
+    if(!empty($_GET['location'])){
+        $where[] = "location = :location";
+        $params[':location'] = $_GET['location'];
+    }
+    if(!empty($_GET['q'])){
+        $search = '%' . $_GET['q'] . '%';
+        $where[] = "(location LIKE :q OR protocol LIKE :q OR NameInbound LIKE :q)";
+        $params[':q'] = $search;
+    }
+    $sql = "SELECT * FROM Inbound";
+    if(!empty($where)){
+        $sql .= " WHERE " . implode(' AND ', $where);
+    }
+    $query = $pdo->prepare($sql);
+    $query->execute($params);
     $listinvoice = $query->fetchAll();
+    if(isset($_GET['export']) && $_GET['export']==='csv'){
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=inbounds-'.date('Y-m-d').'.csv');
+        $out = fopen('php://output','w');
+        fputcsv($out, ['Location','Protocol','Inbound Name']);
+        foreach($listinvoice as $row){
+            fputcsv($out, [$row['location'], $row['protocol'], $row['NameInbound']]);
+        }
+        fclose($out);
+        exit();
+    }
 if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
     return;
@@ -62,6 +92,38 @@ if( !isset($_SESSION["user"]) || !$result ){
                     <div class="col-lg-12">
                         <section class="panel">
                             <header class="panel-heading">لیست اینباند های مرزبان</header>
+                            <div class="panel-body">
+                                <form class="form-inline" method="get">
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" name="q" class="form-control" placeholder="نام پنل/پروتکل/اینباند" value="<?php echo isset($_GET['q'])?htmlspecialchars($_GET['q']):''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" name="protocol" class="form-control" placeholder="نام پروتکل" value="<?php echo isset($_GET['protocol'])?htmlspecialchars($_GET['protocol']):''; ?>">
+                                    </div>
+                                    <div class="form-group" style="margin-left:8px;">
+                                        <input type="text" name="location" class="form-control" placeholder="نام پنل/لوکیشن" value="<?php echo isset($_GET['location'])?htmlspecialchars($_GET['location']):''; ?>">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">فیلتر</button>
+                                    <a href="inbound.php" class="btn btn-default">پاک کردن</a>
+                                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                    <a href="#" class="btn btn-default" id="inbSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
+                                    <a href="#" class="btn btn-default" id="inbLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
+                                </form>
+                                <div class="action-toolbar sticky">
+                                    <a href="inbound.php" class="btn btn-default" id="inbRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
+                                    <input type="text" id="inbQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
+                                    <a href="#" class="btn btn-default tooltips" id="inbSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="inbInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
+                                    <a href="#" class="btn btn-default tooltips" id="inbClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
+                                    <span id="inbSelCount" class="sel-count">انتخاب‌ها: 0</span>
+                                    <a href="#" class="btn btn-info" id="inbCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
+                                    <a href="#" class="btn btn-primary" id="inbCopyNames"><i class="icon-copy"></i> کپی نام اینباندها</a>
+                                    <a href="#" class="btn btn-success" id="inbExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
+                                    <a href="#" class="btn btn-success" id="inbExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
+                                    <a href="#" class="btn btn-info tooltips" id="inbColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
+                                    <a href="#" class="btn btn-default" id="inbPrint"><i class="icon-print"></i> چاپ</a>
+                                </div>
+                            </div>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
@@ -108,6 +170,62 @@ if( !isset($_SESSION["user"]) || !$result ){
 
     <!--script for this page only-->
     <script src="js/dynamic-table.js"></script>
+    <script>
+      (function(){
+        $('#inbCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
+        attachTableQuickSearch('#sample_1','#inbQuickSearch');
+        $('#inbCopyNames').on('click', function(e){
+          e.preventDefault();
+          var names = [];
+          $('#sample_1 tbody tr').each(function(){
+            var $r=$(this);
+            if($r.find('.checkboxes').prop('checked')) names.push($r.find('td').eq(3).text().trim());
+          });
+          if(names.length){ navigator.clipboard.writeText(names.join(', ')); showToast('نام اینباندها کپی شد'); }
+          else{ showToast('هیچ ردیفی انتخاب نشده است'); }
+        });
+        $('#inbSelectVisible').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr:visible').each(function(){ $(this).find('.checkboxes').prop('checked', true); }); });
+        $('#inbInvertSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr').each(function(){ var $cb=$(this).find('.checkboxes'); $cb.prop('checked', !$cb.prop('checked')); }); });
+        $('#inbClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false); });
+        $('#inbPrint').on('click', function(e){ e.preventDefault(); window.print(); });
+        $('#inbExportVisible').on('click', function(e){
+          e.preventDefault();
+          var rows=[];
+          $('#sample_1 tbody tr:visible').each(function(){
+            var $td=$(this).find('td');
+            rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim()]);
+          });
+          if(!rows.length){ showToast('ردیفی برای خروجی وجود ندارد'); return; }
+          var csv='Location,Protocol,Inbound Name\n';
+          rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; });
+          var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a'); a.href=url; a.download='inbounds-visible-'+(new Date().toISOString().slice(0,10))+'.csv';
+          document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0);
+        });
+        $('#inbExportSelected').on('click', function(e){
+          e.preventDefault();
+          var rows=[];
+          $('#sample_1 tbody tr').each(function(){
+            var $r=$(this);
+            if($r.find('.checkboxes').prop('checked')){
+              var $td=$r.find('td');
+              rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim()]);
+            }
+          });
+          if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; }
+          var csv='Location,Protocol,Inbound Name\n';
+          rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; });
+          var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a'); a.href=url; a.download='inbounds-selected-'+(new Date().toISOString().slice(0,10))+'.csv';
+          document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0);
+        });
+        attachSelectionCounter('#sample_1','#inbSelCount');
+        setupSavedFilter('form[method="get"]','#inbSaveFilter','#inbLoadFilter','inbound');
+        attachColumnToggles('#sample_1','#inbColumnsBtn');
+      })();
+    </script>
 
 
 </body>
