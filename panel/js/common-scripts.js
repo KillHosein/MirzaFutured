@@ -221,8 +221,12 @@ var Script = function () {
 
     // toast helper
     window.showToast = function(text){
-        var $c = $('#toast-container'); if(!$c.length){ $c = $('<div id="toast-container"></div>').appendTo('body'); }
-        var $t = $('<div class="toast"></div>').text(text).appendTo($c);
+        var $c = $('#toast-container');
+        if(!$c.length){
+            $c = $('<div id="toast-container"></div>').appendTo('body');
+            $c.attr({'role':'status','aria-live':'polite','aria-atomic':'true'});
+        }
+        var $t = $('<div class="toast" tabindex="0"></div>').text(text).appendTo($c);
         setTimeout(function(){ $t.fadeOut(200, function(){ $(this).remove(); }); }, 2500);
     };
 
@@ -244,10 +248,18 @@ var Script = function () {
         var $o = $('#skeletonOverlay');
         if(!$o.length){
             $o = $('<div id="skeletonOverlay" class="skeleton-overlay"><div class="skeleton-content"><div class="skeleton-bar"></div><div class="skeleton-bar"></div><div class="skeleton-bar"></div></div></div>').appendTo('body');
+            $o.attr({'role':'status','aria-live':'polite','aria-label':'در حال بارگذاری','aria-busy':'true'});
         }
-        $o.show();
+        $o.css('display','flex');
+        $o.attr('aria-busy','true');
     };
-    window.hideSkeleton = function(){ $('#skeletonOverlay').hide(); };
+    window.hideSkeleton = function(){
+        var $o = $('#skeletonOverlay');
+        if($o.length){
+            $o.hide();
+            $o.attr('aria-busy','false');
+        }
+    };
 
     window.updateBreadcrumb = function(){
         var file = location.pathname.split('/').pop();

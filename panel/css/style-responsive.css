@@ -227,8 +227,9 @@
 
 @media (max-width: 480px) {
     .table-striped{
-        overflow:scroll;
+        overflow-x: auto;
         display:block;
+        -webkit-overflow-scrolling: touch;
     }
     .notify-row, .search, .dont-show , .inbox-head .sr-input, .inbox-head .sr-btn{
         display: none;
@@ -397,6 +398,15 @@
   .card, .panel, .action-card, .chart-card, .stat-card{
     border-radius: var(--radius-lg, 18px);
     padding: 14px;
+  }
+
+  .wrapper{
+    padding: 12px;
+  }
+
+  .action-toolbar{
+    padding: 8px 10px;
+    gap: 6px;
   }
 
 @media (max-width: 768px){
