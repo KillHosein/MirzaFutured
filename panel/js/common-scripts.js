@@ -144,6 +144,7 @@ var Script = function () {
             var v = now ? 'dark' : 'light';
             $(this).attr('aria-pressed', now ? 'true' : 'false');
             try{ localStorage.setItem(key, v); }catch(ex){}
+            try{ window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: v } })); }catch(ex2){}
             if(window.showToast) showToast(now ? 'حالت تیره فعال شد' : 'حالت روشن فعال شد');
         });
     })();
@@ -202,6 +203,12 @@ var Script = function () {
         var $fab = $('#fabToggle'); var $menu = $('#fabMenu');
         if(!$fab.length || !$menu.length) return;
         $fab.on('click', function(){ $menu.toggle(); });
+        $fab.on('keydown', function(e){
+            if(e.key === 'Enter' || e.key === ' '){
+                e.preventDefault();
+                $menu.toggle();
+            }
+        });
         $(document).on('keydown', function(e){ if(e.shiftKey && e.key.toLowerCase()==='a'){ $menu.toggle(); } });
     })();
 
@@ -216,7 +223,7 @@ var Script = function () {
             last = c; render(items); if(unseen>0){ $badge.text(unseen).show(); showToast('اعلان جدید'); } }); }
         $.getJSON('metrics.php').done(function(r){ if(r && r.ok){ last = r.counts||last; render([].concat((r.latest.orders||[]).map(function(o){ return {type:'order', id:o.id_invoice, username:o.username, status:o.Status}; }), (r.latest.payments||[]).map(function(p){ return {type:'payment', id:p.id_order, user:p.id_user, status:p.payment_Status}; }))); } });
         setInterval(tick, 10000);
-        $('#notifDropdown > a').on('click', function(){ unseen=0; $badge.hide(); });
+        $('#notifDropdown > a').on('click', function(){ unseen=0; $badge.hide(); $(this).attr('aria-expanded','true'); });
     })();
 
     // toast helper
@@ -291,6 +298,9 @@ var Script = function () {
     $(function(){
         if(window.hideSkeleton) window.hideSkeleton();
         if(window.updateBreadcrumb) window.updateBreadcrumb();
+        $('input.group-checkable').each(function(){ if(!this.hasAttribute('aria-label')) this.setAttribute('aria-label','انتخاب همه'); });
+        $('input.checkboxes').each(function(){ if(!this.hasAttribute('aria-label')) this.setAttribute('aria-label','انتخاب ردیف'); });
+        $('#sidebar .icon-reorder').each(function(){ if(!this.hasAttribute('aria-label')) this.setAttribute('aria-label','باز/بستن ناوبری'); });
         $(document).on('submit','form',function(){ if(!$(this).attr('target')) window.showSkeleton(); });
         $(document).on('click','a',function(){
             var href = $(this).attr('href');

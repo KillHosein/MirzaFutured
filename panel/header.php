@@ -1,8 +1,9 @@
+<a href="#main-content" class="skip-link">پرش به محتوا</a>
 <!--header start-->
       <header class="header white-bg">
           <div>
             <div class="sidebar-toggle-box">
-                <div data-original-title="Toggle Navigation" data-placement="right" class="icon-reorder tooltips"></div>
+                <button type="button" data-original-title="Toggle Navigation" data-placement="right" class="icon-reorder tooltips" aria-label="باز/بستن ناوبری"></button>
             </div>
             <!--logo start-->
             <a href="#" class="logo">ربات <span>میرزا</span></a>
@@ -14,13 +15,13 @@
                 <!--search & user info start-->
                 <ul class="nav pull-right top-menu">
                     <li>
-                        <input id="globalSearch" type="text" class="search" placeholder="جستجو در پنل..." />
+                        <input id="globalSearch" type="text" class="search" placeholder="جستجو در پنل..." aria-label="جستجو در پنل" autocomplete="off" />
                     </li>
                     <li>
-                        <a id="themeToggle" href="#" class="btn btn-default" title="تغییر تم" aria-pressed="false"><i class="icon-adjust"></i></a>
+                        <a id="themeToggle" href="#" class="btn btn-default" title="تغییر تم" aria-label="تغییر تم" aria-pressed="false" role="button"><i class="icon-adjust"></i></a>
                     </li>
                     <li class="dropdown" id="notifDropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="اعلان‌ها">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="اعلان‌ها" aria-label="اعلان‌ها" aria-haspopup="true" aria-expanded="false">
                             <i class="icon-bell"></i>
                             <span id="notifBadge" class="badge badge-warning" style="display:none;">0</span>
                         </a>
@@ -163,7 +164,7 @@
         <span id="crumbInfo" class="text-muted" style="margin-right:8px;"></span>
       </div>
       <div class="fab-container">
-        <div class="fab" id="fabToggle" title="اقدامات سریع"><i class="icon-plus"></i></div>
+        <div class="fab" id="fabToggle" title="اقدامات سریع" role="button" tabindex="0" aria-label="اقدامات سریع"><i class="icon-plus"></i></div>
         <div class="fab-menu" id="fabMenu">
           <a class="action" href="index.php"><i class="icon-dashboard"></i><span>داشبورد</span></a>
           <a class="action" href="users.php"><i class="icon-user"></i><span>لیست کاربران</span></a>
