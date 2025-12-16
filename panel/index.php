@@ -41,7 +41,7 @@ try {
     exit;
 }
 
-// --- توابع ساختگی برای نمونه‌سازی نمودارها ---
+// --- توابع ساختگی برای نمونه‌سازی نمودارها و داده‌های جدید ---
 function get_sales_data() {
     // داده‌های نمونه برای نمودار فروش
     return [
@@ -67,9 +67,21 @@ function get_users_data() {
     ];
 }
 
+function get_recent_activities() {
+    // داده‌های نمونه برای جدول فعالیت‌های اخیر
+    return [
+        ['id' => 101, 'type' => 'سفارش جدید', 'desc' => 'ثبت سفارش توسط کاربر جدید A.', 'time' => '15:30', 'date' => 'امروز', 'status_color' => 'bg-indigo-100 text-indigo-800'],
+        ['id' => 205, 'type' => 'تغییر وضعیت', 'desc' => 'سفارش #201 به وضعیت "تأیید شده" تغییر یافت.', 'time' => '12:00', 'date' => 'امروز', 'status_color' => 'bg-emerald-100 text-emerald-800'],
+        ['id' => 312, 'type' => 'ورود مدیر', 'desc' => 'مدیر سیستم (John Doe) وارد پنل شد.', 'time' => '08:00', 'date' => 'دیروز', 'status_color' => 'bg-gray-100 text-gray-800'],
+        ['id' => 100, 'type' => 'لغو سفارش', 'desc' => 'سفارش #100 توسط مشتری لغو شد.', 'time' => '17:45', 'date' => 'دیروز', 'status_color' => 'bg-red-100 text-red-800'],
+        ['id' => 450, 'type' => 'به‌روزرسانی محصول', 'desc' => 'قیمت محصول X به روز شد.', 'time' => '09:00', 'date' => 'دیروز', 'status_color' => 'bg-blue-100 text-blue-800'],
+    ];
+}
+
 $salesData = get_sales_data();
 $statusData = get_status_data();
 $userData = get_users_data();
+$recentActivities = get_recent_activities();
 
 // --- پایان Logic Section ---
 ?>
@@ -90,16 +102,16 @@ $userData = get_users_data();
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: #f3f4f6; /* رنگ پس‌زمینه روشن */
+            transition: background-color 0.3s, color 0.3s; /* انتقال نرم برای حالت شب */
         }
-        /* کلاس برای تغییر رنگ آیتم‌های Vue */
-        .switch-toggle:checked + .bg-gray-200 {
-            background-color: #10B981 !important; /* emerald-500 */
+        /* کلاس برای تغییر رنگ آیتم‌های Vue و Dark Mode */
+        .switch-toggle:checked + .bg-gray-200, .dark-mode-switch:checked + .bg-gray-700 {
+            background-color: #4F46E5 !important; /* primary color */
         }
     </style>
     <script>
         tailwind.config = {
-            darkMode: 'class', // یا media
+            darkMode: 'class', // فعال‌سازی حالت شب با کلاس
             theme: {
                 extend: {
                     colors: {
@@ -113,12 +125,27 @@ $userData = get_users_data();
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
 
-    <!-- Header & Sidebar (Minimal structure for a single-page dash) -->
-    <header class="bg-white shadow-md sticky top-0 z-10 dark:bg-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+    <!-- Header & Dark Mode Toggle -->
+    <header class="bg-white shadow-lg sticky top-0 z-10 dark:bg-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
             <h1 class="text-2xl font-extrabold text-primary">پنل مدیریت</h1>
             <div class="flex items-center space-s-4">
-                <a href="#" class="text-sm font-medium hover:text-primary transition">خروج</a>
+                
+                <!-- Dark Mode Toggle -->
+                <div class="flex items-center space-s-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <label class="relative inline-flex items-center cursor-pointer" onclick="toggleDarkMode()">
+                        <input type="checkbox" id="darkModeToggle" class="sr-only peer dark-mode-switch">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                    </label>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </div>
+
+                <a href="#" class="text-sm font-medium text-gray-500 hover:text-primary transition dark:text-gray-300 dark:hover:text-primary">خروج</a>
                 <span class="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">خوش آمدید، مدیر!</span>
             </div>
         </div>
@@ -134,79 +161,54 @@ $userData = get_users_data();
         </div>
 
         <!-- 1. منوی سریع (Quick Menu) - منتقل شده به بالای محتوا -->
-        <section id="quick-menu" class="mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-t-4 border-primary">
-            <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">منوی سریع و اقدامات کلیدی</h3>
+        <section id="quick-menu" class="mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border-t-8 border-primary transition duration-300">
+            <h3 class="text-xl font-extrabold mb-5 text-gray-900 dark:text-gray-100">منوی سریع و اقدامات کلیدی</h3>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <!-- دکمه ۱: ثبت سفارش جدید -->
-                <button onclick="window.location.href='new_order.php'" class="flex flex-col items-center justify-center p-4 bg-primary text-white rounded-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span class="text-sm font-medium">ثبت سفارش جدید</span>
-                </button>
                 
-                <!-- دکمه ۲: افزودن کاربر -->
-                <button onclick="window.location.href='add_user.php'" class="flex flex-col items-center justify-center p-4 bg-secondary text-white rounded-lg hover:bg-emerald-600 transition duration-300 transform hover:scale-105 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-10 2H7M5 8h2m-2 4h2" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5H5a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v3m-3 6h6" />
-                    </svg>
-                    <span class="text-sm font-medium">افزودن کاربر</span>
-                </button>
-
-                <!-- دکمه ۳: گزارشات کامل -->
-                <button onclick="window.location.href='reports.php'" class="flex flex-col items-center justify-center p-4 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-300 transform hover:scale-105 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m-6 0a2 2 0 002 2h2a2 2 0 002-2" />
-                    </svg>
-                    <span class="text-sm font-medium">گزارشات کامل</span>
-                </button>
-
-                <!-- دکمه ۴: تنظیمات سیستم -->
-                <button onclick="window.location.href='settings.php'" class="flex flex-col items-center justify-center p-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-300 transform hover:scale-105 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span class="text-sm font-medium">تنظیمات سیستم</span>
-                </button>
+                <?php
+                $quickMenu = [
+                    ['url' => 'new_order.php', 'title' => 'ثبت سفارش جدید', 'color' => 'primary', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />'],
+                    ['url' => 'add_user.php', 'title' => 'افزودن کاربر', 'color' => 'secondary', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-10 2H7M5 8h2m-2 4h2" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5H5a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v3m-3 6h6" />'],
+                    ['url' => 'reports.php', 'title' => 'گزارشات کامل', 'color' => 'yellow-500', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m-6 0a2 2 0 002 2h2a2 2 0 002-2" />'],
+                    ['url' => 'settings.php', 'title' => 'تنظیمات سیستم', 'color' => 'gray-500', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />'],
+                ];
+                
+                foreach ($quickMenu as $item) {
+                    $colorClass = $item['color'] === 'primary' ? 'bg-primary hover:bg-indigo-700' : ($item['color'] === 'secondary' ? 'bg-secondary hover:bg-emerald-600' : 'bg-' . $item['color'] . ' hover:bg-' . $item['color'] . '/80');
+                    $iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">' . $item['icon'] . '</svg>';
+                    echo '
+                    <button onclick="window.location.href=\'' . $item['url'] . '\'" class="flex flex-col items-center justify-center p-4 ' . $colorClass . ' text-white rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-xl">
+                        ' . $iconSvg . '
+                        <span class="text-sm font-bold">' . $item['title'] . '</span>
+                    </button>';
+                }
+                ?>
             </div>
         </section>
 
         <!-- 2. آمار خلاصه (Summary Metrics) -->
         <section id="summary-metrics" class="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <!-- کارت آمار ۱: کل کاربران -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-indigo-500 flex justify-between items-center">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">کل کاربران</p>
-                    <p class="text-3xl font-extrabold text-gray-900 dark:text-white mt-1"><?php echo number_format($userData['total']); ?></p>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-400 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9a1 1 0 01-1-1v-1a2 2 0 012-2h4a2 2 0 012 2v1a1 1 0 01-1 1zm0 0h-6" />
-                </svg>
-            </div>
+            <?php
+            $metricCards = [
+                ['title' => 'کل کاربران', 'value' => $userData['total'], 'color' => 'indigo', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9a1 1 0 01-1-1v-1a2 2 0 012-2h4a2 2 0 012 2v1a1 1 0 01-1 1zm0 0h-6" />'],
+                ['title' => 'کاربران جدید امروز', 'value' => $userData['new'], 'color' => 'emerald', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8m0 0l-4-4m4 4l-6 6" />'],
+                ['title' => 'کاربران فعال', 'value' => $userData['active'], 'color' => 'yellow', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.24a2 2 0 010 2.828l-8 8a2 2 0 01-2.828 0l-4-4a2 2 0 010-2.828 2 2 0 012.828 0l4 4 7.172-7.172a2 2 0 012.828 0z" />'],
+            ];
 
-            <!-- کارت آمار ۲: کاربران جدید امروز -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-emerald-500 flex justify-between items-center">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">کاربران جدید امروز</p>
-                    <p class="text-3xl font-extrabold text-gray-900 dark:text-white mt-1"><?php echo number_format($userData['new']); ?></p>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-emerald-400 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8m0 0l-4-4m4 4l-6 6" />
-                </svg>
-            </div>
-
-            <!-- کارت آمار ۳: کاربران فعال -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-yellow-500 flex justify-between items-center">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">کاربران فعال</p>
-                    <p class="text-3xl font-extrabold text-gray-900 dark:text-white mt-1"><?php echo number_format($userData['active']); ?></p>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-yellow-400 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.24a2 2 0 010 2.828l-8 8a2 2 0 01-2.828 0l-4-4a2 2 0 010-2.828 2 2 0 012.828 0l4 4 7.172-7.172a2 2 0 012.828 0z" />
-                </svg>
-            </div>
+            foreach ($metricCards as $card) {
+                $formattedValue = number_format($card['value']);
+                echo '
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-' . $card['color'] . '-500 flex justify-between items-center transition duration-300 hover:shadow-2xl">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">' . $card['title'] . '</p>
+                        <p class="text-4xl font-extrabold text-gray-900 dark:text-white mt-1">' . $formattedValue . '</p>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-' . $card['color'] . '-400 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        ' . $card['icon'] . '
+                    </svg>
+                </div>';
+            }
+            ?>
         </section>
 
 
@@ -214,13 +216,13 @@ $userData = get_users_data();
         <section id="dashPrefs" class="mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-t-4 border-gray-300 dark:border-gray-700">
             <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">تنظیمات نمایش داشبورد</h3>
             
-            <div v-if="!isVueLoaded" class="text-center py-4 text-gray-500">
+            <div v-if="!isVueLoaded" class="text-center py-4 text-gray-500 dark:text-gray-400">
                 در حال بارگذاری تنظیمات...
             </div>
 
-            <div v-cloak v-else class="flex flex-wrap gap-4 items-center">
+            <div v-cloak v-else class="flex flex-wrap gap-6 items-center">
                 <!-- توگلر نمودار فروش -->
-                <div class="flex items-center space-s-2 cursor-pointer" @click="show.sales = !show.sales">
+                <div class="flex items-center space-s-2 cursor-pointer transition duration-150 hover:opacity-80" @click="show.sales = !show.sales">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="show.sales" class="sr-only peer switch-toggle">
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
@@ -229,7 +231,7 @@ $userData = get_users_data();
                 </div>
 
                 <!-- توگلر نمودار وضعیت -->
-                <div class="flex items-center space-s-2 cursor-pointer" @click="show.status = !show.status">
+                <div class="flex items-center space-s-2 cursor-pointer transition duration-150 hover:opacity-80" @click="show.status = !show.status">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="show.status" class="sr-only peer switch-toggle">
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
@@ -238,7 +240,7 @@ $userData = get_users_data();
                 </div>
 
                 <!-- توگلر نمودار کاربران -->
-                <div class="flex items-center space-s-2 cursor-pointer" @click="show.users = !show.users">
+                <div class="flex items-center space-s-2 cursor-pointer transition duration-150 hover:opacity-80" @click="show.users = !show.users">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" v-model="show.users" class="sr-only peer switch-toggle">
                         <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
@@ -249,40 +251,90 @@ $userData = get_users_data();
         </section>
 
         <!-- 4. کانتینر نمودارها -->
-        <div id="chartContainers" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div id="chartContainers" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
             <!-- نمودار فروش -->
-            <div id="salesChartContainer" class="col-span-1 lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg transition duration-300" style="display: none;">
-                <h3 class="text-lg font-semibold mb-4 border-b pb-2 text-gray-900 dark:text-gray-100">نمودار فروش ماهانه</h3>
+            <div id="salesChartContainer" class="col-span-1 lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl transition duration-300" style="display: none;">
+                <h3 class="text-lg font-semibold mb-4 border-b pb-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">نمودار فروش ماهانه (هزار تومان)</h3>
                 <canvas id="salesChart" style="max-height: 400px;"></canvas>
             </div>
 
             <!-- نمودار وضعیت‌ها -->
-            <div id="statusChartContainer" class="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg transition duration-300" style="display: none;">
-                <h3 class="text-lg font-semibold mb-4 border-b pb-2 text-gray-900 dark:text-gray-100">درصد وضعیت‌ها</h3>
+            <div id="statusChartContainer" class="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl transition duration-300" style="display: none;">
+                <h3 class="text-lg font-semibold mb-4 border-b pb-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">درصد وضعیت سفارشات</h3>
                 <canvas id="statusChart" style="max-height: 400px;"></canvas>
             </div>
             
-            <!-- نمودار آمار کاربران (ستون ۱ از ۳ در حالت دسکتاپ) -->
-            <div id="usersChartContainer" class="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg transition duration-300" style="display: none;">
-                <h3 class="text-lg font-semibold mb-4 border-b pb-2 text-gray-900 dark:text-gray-100">آمار کاربران (نمونه)</h3>
+            <!-- آمار کاربران (این بخش کارت‌های آماری است) -->
+            <div id="usersChartContainer" class="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl transition duration-300" style="display: none;">
+                <h3 class="text-lg font-semibold mb-4 border-b pb-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">آمار کاربران (خلاصه)</h3>
                 <div class="flex flex-col space-y-4">
-                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg">
-                        <p class="text-sm text-gray-600 dark:text-gray-300">کل کاربران</p>
+                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg border-s-4 border-indigo-400">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">کل کاربران ثبت‌نام شده</p>
                         <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mt-1"><?php echo number_format($userData['total']); ?></p>
                     </div>
-                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/50 rounded-lg">
+                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/50 rounded-lg border-s-4 border-emerald-400">
                         <p class="text-sm text-gray-600 dark:text-gray-300">کاربران جدید امروز</p>
                         <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mt-1"><?php echo number_format($userData['new']); ?></p>
                     </div>
-                    <div class="p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-lg">
-                        <p class="text-sm text-gray-600 dark:text-gray-300">تعداد کاربران فعال</p>
+                    <div class="p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-lg border-s-4 border-yellow-400">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">تعداد کاربران فعال (آخرین ۳۰ روز)</p>
                         <p class="text-2xl font-bold text-yellow-700 dark:text-yellow-300 mt-1"><?php echo number_format($userData['active']); ?></p>
                     </div>
                 </div>
             </div>
 
         </div>
+        
+        <!-- 5. فعالیت‌های اخیر (New Section) -->
+        <section id="recent-activities">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl transition duration-300">
+                <h3 class="text-xl font-extrabold mb-5 border-b pb-3 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">فعالیت‌های اخیر سیستم</h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">عملیات</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300 hidden sm:table-cell">شناسه</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">توضیحات</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">زمان</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                            <?php foreach ($recentActivities as $activity): ?>
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-150">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo htmlspecialchars($activity['status_color']); ?>">
+                                            <?php echo htmlspecialchars($activity['type']); ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
+                                        #<?php echo htmlspecialchars($activity['id']); ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        <?php echo htmlspecialchars($activity['desc']); ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <time datetime="<?php echo htmlspecialchars($activity['date'] . ' ' . $activity['time']); ?>">
+                                            <?php echo htmlspecialchars($activity['time']); ?>
+                                            <span class="text-xs font-light block"><?php echo htmlspecialchars($activity['date']); ?></span>
+                                        </time>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center mt-6">
+                    <a href="log.php" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-primary hover:bg-indigo-700 transition duration-150 dark:ring-offset-gray-900 ring-4 ring-primary/50">
+                        مشاهده همه فعالیت‌ها
+                    </a>
+                </div>
+
+            </div>
+        </section>
 
     </main>
 
@@ -291,14 +343,56 @@ $userData = get_users_data();
 const salesData = <?php echo json_encode($salesData); ?>;
 const statusData = <?php echo json_encode($statusData); ?>;
 
+// --- Dark Mode Logic ---
+
+/**
+ * اولیه سازی حالت شب بر اساس ترجیح کاربر یا ذخیره محلی
+ */
+function initDarkMode() {
+    // بررسی localStorage یا ترجیح سیستم
+    const isDark = localStorage.getItem('theme') === 'dark' || 
+                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', isDark);
+    
+    // تنظیم وضعیت سوئیچ در بارگذاری اولیه
+    const toggle = document.getElementById('darkModeToggle');
+    if (toggle) {
+        toggle.checked = isDark;
+    }
+    return isDark;
+}
+
+/**
+ * جابه‌جایی بین حالت شب و روز
+ */
+function toggleDarkMode() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const newMode = !isDark ? 'dark' : 'light';
+    
+    document.documentElement.classList.toggle('dark', !isDark);
+    localStorage.setItem('theme', newMode);
+    
+    // نیاز به رندر مجدد نمودارها در حالت شب/روز برای به‌روزرسانی رنگ متن و بک‌گراند
+    if (salesChartInstance) chartRenderers['sales'](newMode);
+    if (statusChartInstance) chartRenderers['status'](newMode);
+}
+
+// --- Chart.js Logic ---
+
 // متغیرهای global برای نگهداری نمونه‌های نمودار
 let salesChartInstance = null;
 let statusChartInstance = null;
 
 const chartRenderers = {
-    'sales': function() {
+    'sales': function(mode = null) {
         const ctx = document.getElementById('salesChart');
         if (!ctx) return;
+        
+        // تشخیص رنگ متن بر اساس حالت روز/شب
+        const isDark = mode === 'dark' || (mode === null && document.documentElement.classList.contains('dark'));
+        const textColor = isDark ? '#f3f4f6' : '#1f2937'; // gray-100 / gray-800
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+        
         if (salesChartInstance) salesChartInstance.destroy(); // حذف نمونه قبلی
         salesChartInstance = new Chart(ctx, {
             type: 'bar',
@@ -307,10 +401,11 @@ const chartRenderers = {
                 datasets: [{
                     label: 'مبلغ فروش (هزار)',
                     data: salesData.data,
-                    backgroundColor: 'rgba(79, 70, 229, 0.7)', // Primary color with alpha
+                    backgroundColor: 'rgba(79, 70, 229, 0.9)', // Primary color with alpha
                     borderColor: 'rgb(79, 70, 229)',
                     borderWidth: 1,
-                    borderRadius: 4,
+                    borderRadius: 6,
+                    hoverBackgroundColor: 'rgba(79, 70, 229, 1)',
                 }]
             },
             options: {
@@ -320,13 +415,19 @@ const chartRenderers = {
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) { return Intl.NumberFormat('fa-IR').format(value); }
-                        }
+                            callback: function(value) { return Intl.NumberFormat('fa-IR').format(value); },
+                            color: textColor,
+                            font: { family: 'Vazirmatn' }
+                        },
+                        grid: { color: gridColor }
                     },
                     x: {
-                        // تنظیمات RTL برای نمودار
-                        reverse: true, // برای نمودارهای افقی
-                        ticks: { mirror: false }
+                        reverse: true, // برای نمودارهای راست‌چین
+                        ticks: {
+                            color: textColor,
+                            font: { family: 'Vazirmatn' }
+                        },
+                        grid: { color: gridColor }
                     }
                 },
                 plugins: {
@@ -334,7 +435,8 @@ const chartRenderers = {
                         display: true,
                         position: 'top',
                         labels: {
-                            font: { family: 'Vazirmatn' }
+                            font: { family: 'Vazirmatn' },
+                            color: textColor
                         }
                     },
                     tooltip: {
@@ -354,9 +456,14 @@ const chartRenderers = {
             }
         });
     },
-    'status': function() {
+    'status': function(mode = null) {
         const ctx = document.getElementById('statusChart');
         if (!ctx) return;
+        
+        // تشخیص رنگ متن بر اساس حالت روز/شب
+        const isDark = mode === 'dark' || (mode === null && document.documentElement.classList.contains('dark'));
+        const textColor = isDark ? '#f3f4f6' : '#1f2937';
+        
         if (statusChartInstance) statusChartInstance.destroy(); // حذف نمونه قبلی
         statusChartInstance = new Chart(ctx, {
             type: 'doughnut',
@@ -365,11 +472,13 @@ const chartRenderers = {
                 datasets: [{
                     data: statusData.data,
                     backgroundColor: [
-                        'rgba(245, 158, 11, 0.8)', // Yellow (در حال بررسی)
-                        'rgba(16, 185, 129, 0.8)', // Emerald (تأیید شده)
-                        'rgba(239, 68, 68, 0.8)'  // Red (لغو شده)
+                        'rgba(245, 158, 11, 0.9)', // Yellow (در حال بررسی)
+                        'rgba(16, 185, 129, 0.9)', // Emerald (تأیید شده)
+                        'rgba(239, 68, 68, 0.9)'  // Red (لغو شده)
                     ],
-                    hoverOffset: 4
+                    hoverOffset: 8,
+                    borderColor: isDark ? '#1f2937' : '#ffffff', // مرز سفید در روز، تیره در شب
+                    borderWidth: 3
                 }]
             },
             options: {
@@ -381,7 +490,8 @@ const chartRenderers = {
                         labels: {
                             font: { family: 'Vazirmatn' },
                             usePointStyle: true,
-                            padding: 20
+                            padding: 20,
+                            color: textColor
                         }
                     },
                     tooltip: {
@@ -395,7 +505,6 @@ const chartRenderers = {
     },
     'users': function() {
         // این بخش فقط نمایش کارت آمار است و نمودار Chart.js ندارد
-        // اما برای سازگاری با تابع toggleCharts باقی می‌ماند.
     }
 };
 
@@ -410,8 +519,8 @@ function toggleCharts(show) {
         if (el) {
             if (show[id]) {
                 el.style.display = 'block';
-                // رندر نمودار فقط زمانی که قابل مشاهده است
-                if (id !== 'users') { // کاربران نمودار Chart.js ندارند
+                // رندر نمودار فقط زمانی که قابل مشاهده است و در DOM قرار دارد
+                if (id !== 'users' && el.style.display !== 'none') { 
                     chartRenderers[id]();
                 }
             } else {
@@ -422,7 +531,10 @@ function toggleCharts(show) {
 }
 
 (async function() {
-    // Vue.js Application
+    // 1. Initial Dark Mode setup
+    initDarkMode();
+
+    // 2. Vue.js Application for preferences
     if (typeof Vue !== 'undefined') {
         const storedPrefs = localStorage.getItem('dash_prefs');
         let initialShow = { sales: true, status: true, users: true };
@@ -462,8 +574,7 @@ function toggleCharts(show) {
         console.warn("Vue.js not loaded. Falling back to default chart rendering.");
         chartRenderers['sales']();
         chartRenderers['status']();
-        chartRenderers['users']();
-
+        
         const salesEl = document.getElementById('salesChartContainer');
         const statusEl = document.getElementById('statusChartContainer');
         const usersEl = document.getElementById('usersChartContainer');
