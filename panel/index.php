@@ -1,10 +1,20 @@
 <?php
+// --- خطایابی و گزارش‌دهی PHP (برای پیدا کردن علت خطای 500) ---
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
-// Предполагаем, что config.php и jdf.php доступны и содержат нужные функции
-// We assume config.php and jdf.php are available and contain necessary functions
-// Ensure these paths are correct for your environment
+
+// فرض می‌کنیم این فایل‌ها در دسترس هستند و حاوی توابع مورد نیازند
+// مطمئن شوید که مسیرهای زیر ('../config.php' و '../jdf.php') درست هستند.
 require_once '../config.php';
 require_once '../jdf.php';
+
+// --- بررسی حیاتی: اطمینان از تعریف متغیر اتصال به دیتابیس ---
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    die("Fatal Error: Database connection variable (\$pdo) is not defined or is not a PDO object. Please check 'config.php'.");
+}
 
 // --- Logic Section ---
 $datefirstday = time() - 86400; // Time yesterday (for new users calculation)
@@ -16,18 +26,26 @@ if(!is_array($selectedStatuses) && !empty($selectedStatuses)) $selectedStatuses 
 
 // 1. Authentication Check
 try {
+    // از آنجایی که $_SESSION["user"] در اینجا استفاده شده، فرض می‌کنیم قبل از این خط باید احراز هویت شده باشد.
+    if( !isset($_SESSION["user"]) ){
+        header('Location: login.php');
+        exit;
+    }
+    
     $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
     $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
     $query->execute();
     $result = $query->fetch(PDO::FETCH_ASSOC);
-    if( !isset($_SESSION["user"]) || !$result ){
+    
+    if(!$result ){
         header('Location: login.php');
         exit;
     }
 } catch (PDOException $e) {
-    // Handle database error during auth
+    // در صورت وجود مشکل در کوئری احراز هویت (نه اتصال)
     error_log("Auth failed: " . $e->getMessage());
-    // In a real application, you might redirect to a maintenance page or error page
+    // نمایش یک پیغام خطای دوستانه
+    die("Database Error during authentication check. Please check logs. Message: " . $e->getMessage());
 }
 
 
@@ -50,6 +68,7 @@ if($toDate && strtotime($toDate)){
 if(!empty($selectedStatuses)){
     $ph = [];
     foreach($selectedStatuses as $i => $st){
+        // Ensure that the status value is safe for query execution (PDO binding handles this)
         $k = ":st$i";
         $ph[] = $k;
         $invoiceParams[$k] = $st;
@@ -65,55 +84,69 @@ $invoiceWhereSql = implode(' AND ', $invoiceWhere);
 
 // 3. Sales and User Counts
 
-// Total Sales Amount
-$query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from total sales
-$query->execute($invoiceParams);
-$subinvoice = $query->fetch(PDO::FETCH_ASSOC);
-$total_sales = $subinvoice['SUM(price_product)'] ?? 0;
+try {
+    // Total Sales Amount
+    $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from total sales
+    $query->execute($invoiceParams);
+    $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
+    $total_sales = $subinvoice['SUM(price_product)'] ?? 0;
 
-// Total User Counts (Overall)
-$query = $pdo->prepare("SELECT COUNT(*) FROM user");
-$query->execute();
-$resultcount = $query->fetchColumn();
+    // Total User Counts (Overall)
+    $query = $pdo->prepare("SELECT COUNT(*) FROM user");
+    $query->execute();
+    $resultcount = $query->fetchColumn();
 
-// New Users Today
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
-$stmt->bindParam(':time_register', $datefirstday);
-$stmt->execute();
-$resultcountday = $stmt->fetchColumn();
+    // New Users Today
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
+    $stmt->bindParam(':time_register', $datefirstday);
+    $stmt->execute();
+    $resultcountday = $stmt->fetchColumn();
 
-// Sales Count (Filtered)
-$query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from order count
-$query->execute($invoiceParams);
-$resultcontsell = $query->fetchColumn();
+    // Sales Count (Filtered)
+    $query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from order count
+    $query->execute($invoiceParams);
+    $resultcontsell = $query->fetchColumn();
+} catch (PDOException $e) {
+    // در صورت وجود مشکل در کوئری‌های آماری
+    die("Database Error during data retrieval. Message: " . $e->getMessage());
+}
 
 $formatted_total_sales = number_format($total_sales);
 
 // 4. Chart Data: Sales Trend
 $grouped_data = [];
 if($resultcontsell > 0){
-    // Fetch only paid sales data for the chart
-    $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;");
-    $query->execute($invoiceParams);
-    $salesData = $query->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        // Fetch only paid sales data for the chart
+        $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;");
+        $query->execute($invoiceParams);
+        $salesData = $query->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($salesData as $sell){
-        if(!is_numeric($sell['time_sell'])) continue;
-        
-        $time_sell_day = date('Y/m/d', $sell['time_sell']);
-        $price = (int)$sell['price_product'];
-        
-        if (!isset($grouped_data[$time_sell_day])) {
-            $grouped_data[$time_sell_day] = ['total_amount' => 0, 'order_count' => 0];
+        foreach ($salesData as $sell){
+            // Ensure time_sell is numeric (timestamp) before using it in date()
+            if(!is_numeric($sell['time_sell'])) continue; 
+            
+            $time_sell_day = date('Y/m/d', (int)$sell['time_sell']);
+            $price = (int)$sell['price_product'];
+            
+            if (!isset($grouped_data[$time_sell_day])) {
+                $grouped_data[$time_sell_day] = ['total_amount' => 0, 'order_count' => 0];
+            }
+            $grouped_data[$time_sell_day]['total_amount'] += $price;
+            $grouped_data[$time_sell_day]['order_count'] += 1;
         }
-        $grouped_data[$time_sell_day]['total_amount'] += $price;
-        $grouped_data[$time_sell_day]['order_count'] += 1;
+        ksort($grouped_data); // Sort by date ascending for chart
+    } catch (PDOException $e) {
+        die("Database Error while fetching Sales Trend. Message: " . $e->getMessage());
     }
-    ksort($grouped_data); // Sort by date ascending for chart
 }
 
 // Convert Gregorian dates to Persian for chart labels
-$salesLabels = array_values(array_map(function($d){ return jdate('Y/m/d', strtotime($d)); }, array_keys($grouped_data)));
+$salesLabels = array_values(array_map(function($d){ 
+    // از آنجایی که $d به فرمت Y/m/d (میلادی) است، باید به timestamp تبدیل شود.
+    // در صورتی که دیتابیس شما تاریخ شمسی ذخیره می‌کند، این قسمت باید تغییر کند. 
+    return jdate('Y/m/d', strtotime($d)); 
+}, array_keys($grouped_data)));
 $salesAmount = array_values(array_map(function($i){ return $i['total_amount']; }, $grouped_data));
 $salesCount = array_values(array_map(function($i){ return $i['order_count']; }, $grouped_data));
 
@@ -140,9 +173,13 @@ $colorMap = [
     'removebyuser' => '#cbd5e1' // Light Gray
 ];
 
-$stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
-$stmt->execute($invoiceParams);
-$statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
+    $stmt->execute($invoiceParams);
+    $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Database Error while fetching Status Distribution. Message: " . $e->getMessage());
+}
 
 $statusLabels = [];
 $statusData = [];
@@ -161,11 +198,15 @@ $userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strto
 $userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
 $daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
 
-$stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend");
-$stmt->bindParam(':ustart',$userStart,PDO::PARAM_INT);
-$stmt->bindParam(':uend',$userEnd + 86400 - 1,PDO::PARAM_INT); // End of the 'to' day
-$stmt->execute();
-$regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend");
+    $stmt->bindParam(':ustart',$userStart,PDO::PARAM_INT);
+    $stmt->bindParam(':uend',$userEnd + 86400 - 1,PDO::PARAM_INT); // End of the 'to' day
+    $stmt->execute();
+    $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Database Error while fetching New Users Trend. Message: " . $e->getMessage());
+}
 
 $userLabels = [];
 $userCounts = [];
