@@ -94,9 +94,11 @@ if (isset($_POST['login'])) {
       <form method="post" class="form-signin" action="/panel/login.php" id="loginForm">
         <h2 class="form-signin-heading">پنل مدیریت ربات میرزا</h2>
         <div class="login-wrap">
-            <p><?php echo $texterrr; ?></p>
-            <input type="text" name ="username" class="form-control" placeholder="نام کاربری" autofocus>
-            <input type="password" name = "password" class="form-control" placeholder="کلمه عبور">
+            <p id="serverError" class="login-error"><?php echo $texterrr; ?></p>
+            <input type="text" id="username" name="username" class="form-control" placeholder="نام کاربری" autocomplete="username" autofocus>
+            <div id="usernameError" class="field-error"></div>
+            <input type="password" id="password" name="password" class="form-control" placeholder="کلمه عبور" autocomplete="current-password">
+            <div id="passwordError" class="field-error"></div>
             <button class="btn btn-lg btn-login btn-block"  name="login" type="submit" id="loginBtn">ورود</button>
         </div>
 
@@ -124,15 +126,47 @@ if (isset($_POST['login'])) {
       var form = document.getElementById('loginForm');
       var btn = document.getElementById('loginBtn');
       if(!form || !btn) return;
-      form.addEventListener('submit', function(){
-        btn.classList.add('loading');
-      });
-      // toast for feedback
+      var username = document.getElementById('username');
+      var password = document.getElementById('password');
+      var usernameError = document.getElementById('usernameError');
+      var passwordError = document.getElementById('passwordError');
+      var serverError = document.getElementById('serverError');
+      if(serverError && !serverError.textContent.trim()){
+        serverError.style.display = 'none';
+      }
       var toast = document.createElement('div');
       toast.className = 'toast';
       toast.textContent = 'در حال ارسال اطلاعات ورود...';
       document.body.appendChild(toast);
-      form.addEventListener('submit', function(){
+      function clearErrors(){
+        if(usernameError) usernameError.textContent = '';
+        if(passwordError) passwordError.textContent = '';
+        if(username) username.classList.remove('is-invalid');
+        if(password) password.classList.remove('is-invalid');
+      }
+      form.addEventListener('submit', function(e){
+        clearErrors();
+        var hasError = false;
+        if(username && !username.value.trim()){
+          hasError = true;
+          if(usernameError) usernameError.textContent = 'نام کاربری نمی‌تواند خالی باشد';
+          username.classList.add('is-invalid');
+        }
+        if(password && !password.value.trim()){
+          hasError = true;
+          if(passwordError) passwordError.textContent = 'کلمه عبور نمی‌تواند خالی باشد';
+          password.classList.add('is-invalid');
+        }
+        if(hasError){
+          e.preventDefault();
+          btn.classList.remove('loading');
+          toast.classList.remove('show');
+          return;
+        }
+        if(serverError && serverError.style.display !== 'none'){
+          serverError.style.display = 'none';
+        }
+        btn.classList.add('loading');
         toast.classList.add('show');
         setTimeout(function(){ toast.classList.remove('show'); }, 2500);
       });

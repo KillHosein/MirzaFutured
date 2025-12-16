@@ -235,6 +235,58 @@ a:focus-visible {
     padding: 20px;
 }
 
+.form-signin .login-error{
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: rgba(239,68,68,0.06);
+    color: var(--error-color);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.form-signin .login-error:empty{
+    display: none;
+}
+
+.form-signin .field-error{
+    margin-top: 4px;
+    margin-bottom: 8px;
+    color: var(--error-color);
+    font-size: 12px;
+    text-align: right;
+}
+
+.form-signin .form-control.is-invalid{
+    border-color: var(--error-color);
+    box-shadow: 0 0 0 1px rgba(239,68,68,0.25);
+}
+
+.toast{
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    left: 16px;
+    max-width: 360px;
+    margin: 0 auto;
+    background: #111827;
+    color: #f9fafb;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    text-align: center;
+    z-index: 2000;
+}
+
+.toast.show{
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* table refresh */
 .table { border-collapse: separate; border-spacing: 0; }
 .table thead th { background: #f9fafb; color: var(--text-strong); font-weight: 600; }
