@@ -1,26 +1,36 @@
 <?php
 session_start();
+// Предполагаем, что config.php и jdf.php доступны и содержат нужные функции
+// We assume config.php and jdf.php are available and contain necessary functions
 require_once '../config.php';
 require_once '../jdf.php';
 
 // --- Logic Section ---
-$datefirstday = time() - 86400;
+$datefirstday = time() - 86400; // Time yesterday
 $fromDate = isset($_GET['from']) ? $_GET['from'] : null;
 $toDate = isset($_GET['to']) ? $_GET['to'] : null;
 $selectedStatuses = isset($_GET['status']) ? $_GET['status'] : [];
+
 if(!is_array($selectedStatuses) && !empty($selectedStatuses)) $selectedStatuses = [$selectedStatuses];
 
-// Check Admin
-$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-$query->execute();
-$result = $query->fetch(PDO::FETCH_ASSOC);
-if( !isset($_SESSION["user"]) || !$result ){
-    header('Location: login.php');
-    return;
+// 1. Authentication Check
+try {
+    $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+    $query->execute();
+    $result = $query->fetch(PDO::FETCH_ASSOC);
+    if( !isset($_SESSION["user"]) || !$result ){
+        header('Location: login.php');
+        exit;
+    }
+} catch (PDOException $e) {
+    // Handle database error during auth
+    error_log("Auth failed: " . $e->getMessage());
+    // Fallback to anonymous login or show a generic error
 }
 
-// Filter Logic
+
+// 2. Filter Logic for Invoices
 $invoiceWhere = ["name_product != 'سرویس تست'"];
 $invoiceParams = [];
 
@@ -33,6 +43,7 @@ if($toDate && strtotime($toDate)){
     $invoiceParams[':toTs'] = strtotime($toDate.' 23:59:59');
 }
 
+// Prepare status placeholders
 if(!empty($selectedStatuses)){
     $ph = [];
     foreach($selectedStatuses as $i => $st){
@@ -42,71 +53,67 @@ if(!empty($selectedStatuses)){
     }
     $invoiceWhere[] = "status IN (".implode(',', $ph).")";
 }else{
-    $invoiceWhere[] = "(status = 'active' OR status = 'end_of_time' OR status = 'end_of_volume' OR status = 'sendedwarn' OR status = 'send_on_hold')";
+    // Default statuses if none selected
+    $invoiceWhere[] = "status IN ('active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid')";
 }
 
 $invoiceWhereSql = implode(' AND ', $invoiceWhere);
+
+// 3. Sales and User Counts
 
 // Total Sales Amount
 $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql");
 $query->execute($invoiceParams);
 $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
+$total_sales = $subinvoice['SUM(price_product)'] ?? 0;
 
-// User Counts
-$query = $pdo->prepare("SELECT * FROM user");
+// Total User Counts
+$query = $pdo->prepare("SELECT COUNT(*) FROM user");
 $query->execute();
-$resultcount = $query->rowCount();
+$resultcount = $query->fetchColumn();
 
-$time = strtotime(date('Y/m/d'));
-$stmt = $pdo->prepare("SELECT * FROM user WHERE register > :time_register AND register != 'none'");
+// New Users Today
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
 $stmt->bindParam(':time_register', $datefirstday);
 $stmt->execute();
-$resultcountday = $stmt->rowCount();
+$resultcountday = $stmt->fetchColumn();
 
 // Sales Count
-$query = $pdo->prepare("SELECT  * FROM invoice WHERE $invoiceWhereSql");
+$query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql");
 $query->execute($invoiceParams);
-$resultcontsell = $query->rowCount();
+$resultcontsell = $query->fetchColumn();
 
-$subinvoice['SUM(price_product)'] = number_format($subinvoice['SUM(price_product)']);
+$formatted_total_sales = number_format($total_sales);
 
-// Chart Data: Sales
-$salesData = [];
+// 4. Chart Data: Sales Trend
 $grouped_data = [];
-$max_amount = 1;
-
-if($resultcontsell != 0){
-    $query = $pdo->prepare("SELECT time_sell,price_product FROM invoice WHERE $invoiceWhereSql ORDER BY time_sell DESC;");
+if($resultcontsell > 0){
+    // Fetch sales data
+    $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql ORDER BY time_sell DESC;");
     $query->execute($invoiceParams);
-    $salesData = $query->fetchAll();
+    $salesData = $query->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($salesData as $sell){
-        if(count($grouped_data) > 30) break; // Limit to 30 days
         if(!is_numeric($sell['time_sell'])) continue;
         
-        $time = date('Y/m/d',$sell['time_sell']);
+        $time_sell_day = date('Y/m/d', $sell['time_sell']);
         $price = (int)$sell['price_product'];
         
-        if (!isset($grouped_data[$time])) {
-            $grouped_data[$time] = ['total_amount' => 0, 'order_count' => 0];
+        if (!isset($grouped_data[$time_sell_day])) {
+            $grouped_data[$time_sell_day] = ['total_amount' => 0, 'order_count' => 0];
         }
-        $grouped_data[$time]['total_amount'] += $price;
-        $grouped_data[$time]['order_count'] += 1;
+        $grouped_data[$time_sell_day]['total_amount'] += $price;
+        $grouped_data[$time_sell_day]['order_count'] += 1;
     }
-    krsort($grouped_data); // Sort by date descending
-    $grouped_data = array_reverse($grouped_data); // Sort by date ascending for chart
-    $max_amount = max(array_map(function($info) { return $info['total_amount']; }, $grouped_data)) ?: 1;
+    ksort($grouped_data); // Sort by date ascending for chart
 }
 
-// Chart Data: Status
-$statusLabels = [];
-$statusData = [];
-$statusColors = [];
+$salesLabels = array_values(array_map(function($d){ return jdate('Y/m/d', strtotime($d)); }, array_keys($grouped_data)));
+$salesAmount = array_values(array_map(function($i){ return $i['total_amount']; }, $grouped_data));
+$salesCount = array_values(array_map(function($i){ return $i['order_count']; }, $grouped_data));
 
-$stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
-$stmt->execute($invoiceParams);
-$statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// 5. Chart Data: Status Distribution
 $statusMapFa = [
     'unpaid' => 'در انتظار پرداخت',
     'active' => 'فعال',
@@ -118,15 +125,23 @@ $statusMapFa = [
     'removebyuser' => 'حذف توسط کاربر'
 ];
 $colorMap = [
-    'unpaid' => '#fbbf24',     // Amber
-    'active' => '#34d399',     // Emerald
-    'disabledn' => '#9ca3af',  // Gray
-    'end_of_time' => '#f87171',// Red
-    'end_of_volume' => '#60a5fa', // Blue
-    'sendedwarn' => '#a78bfa', // Violet
-    'send_on_hold' => '#fb923c', // Orange
-    'removebyuser' => '#cbd5e1' // Light Gray
+    'unpaid' => '#fbbf24',
+    'active' => '#34d399',
+    'disabledn' => '#9ca3af',
+    'end_of_time' => '#f87171',
+    'end_of_volume' => '#60a5fa',
+    'sendedwarn' => '#a78bfa',
+    'send_on_hold' => '#fb923c',
+    'removebyuser' => '#cbd5e1'
 ];
+
+$stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
+$stmt->execute($invoiceParams);
+$statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$statusLabels = [];
+$statusData = [];
+$statusColors = [];
 
 foreach($statusRows as $r){
     $k = $r['status'];
@@ -135,15 +150,14 @@ foreach($statusRows as $r){
     $statusColors[] = isset($colorMap[$k]) ? $colorMap[$k] : '#999999';
 }
 
-// Chart Data: New Users Trend
-$daysBack = 14;
-$userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - ($daysBack-1)*86400);
+// 6. Chart Data: New Users Trend (Last 14 days or filtered period)
+$userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - (13 * 86400)); // 14 days back including today
 $userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
 $daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
 
-$stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register BETWEEN :ustart AND :uend");
+$stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend");
 $stmt->bindParam(':ustart',$userStart,PDO::PARAM_INT);
-$stmt->bindParam(':uend',$userEnd + 86400 - 1,PDO::PARAM_INT); // Add one day to include the entire 'to' day
+$stmt->bindParam(':uend',$userEnd + 86400 - 1,PDO::PARAM_INT); // End of the 'to' day
 $stmt->execute();
 $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -151,6 +165,7 @@ $userLabels = [];
 $userCounts = [];
 $indexByDate = [];
 
+// Prepare labels for the time range
 for($i=0;$i<$daysBack;$i++){
     $d = $userStart + $i*86400;
     $key = date('Y/m/d',$d);
@@ -159,6 +174,7 @@ for($i=0;$i<$daysBack;$i++){
     $userCounts[] = 0;
 }
 
+// Count registrations
 foreach($regRows as $row){
     if(!is_numeric($row['register'])) continue;
     $key = date('Y/m/d', (int)$row['register']);
@@ -167,7 +183,7 @@ foreach($regRows as $row){
     }
 }
 
-// Time Greeting Logic
+// 7. Time Greeting Logic
 $hour = date('H');
 if ($hour < 12) { $greeting = "صبح بخیر"; $greetIcon = "icon-sun"; }
 elseif ($hour < 17) { $greeting = "ظهر بخیر"; $greetIcon = "icon-coffee"; }
@@ -183,7 +199,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
     <!-- Fonts -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
-    <!-- CSS (Assuming these files are available or replaced by inline styles/Tailwind) -->
+    <!-- CSS Dependencies -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
     <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
@@ -224,7 +240,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         /* --- Global Overrides --- */
         #container { width: 100%; height: 100%; }
         #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; }
-        .wrapper { padding: 25px; display: flex; flex-direction: column; gap: 30px; max-width: 1600px; margin: 0 auto; }
+        .wrapper { padding: 25px; display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; }
         .site-header {
             position: fixed; top: 0; right: 0; left: 0; height: var(--header-height); z-index: 100;
             background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
@@ -248,7 +264,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .delay-3 { animation-delay: 0.3s; }
         .delay-4 { animation-delay: 0.4s; }
 
-        /* --- Glass Cards (FIXED: ensures boxes are visible) --- */
+        /* --- Glass Cards --- */
         .modern-card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -278,7 +294,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             display: flex; flex-wrap: wrap; align-items: center; gap: 15px;
             justify-content: space-between;
         }
-        .filter-inputs { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .filter-inputs { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; flex: 1; }
         
         .input-glass {
             background: rgba(30, 41, 59, 0.8);
@@ -327,15 +343,28 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .icon-grad-4 { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05)); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
 
         /* --- Charts --- */
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-        @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
-        
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 24px; 
+            /* Grid layout adjustments based on chart visibility are handled by Vue/JS */
+        }
         .chart-card {
             display: flex;
             flex-direction: column;
             width: 100%;
         }
+        /* Default span for sales chart to take full width */
+        #salesChartContainer { grid-column: 1 / -1; }
+        #statusChartContainer { grid-column: span 1; }
+        #usersChartContainer { grid-column: span 2; }
 
+
+        @media (max-width: 1024px) { 
+            .charts-grid { grid-template-columns: 1fr; } 
+            #salesChartContainer, #statusChartContainer, #usersChartContainer { grid-column: 1 / -1; }
+        }
+        
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .chart-title { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
         
@@ -358,6 +387,42 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .action-btn:hover { transform: translateY(-5px); }
         .action-btn:hover i { transform: scale(1.1); color: var(--accent); opacity: 1; }
         .action-btn.danger:hover i { color: var(--secondary); }
+        .action-btn.danger i { color: #f87171; }
+
+        /* Custom Checkbox Style for Preferences */
+        .custom-check {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .custom-check input[type="checkbox"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--primary);
+            border-radius: 4px;
+            margin-left: 8px;
+            position: relative;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: rgba(255,255,255,0.05);
+        }
+        .custom-check input[type="checkbox"]:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .custom-check input[type="checkbox"]:checked::after {
+            content: '\f00c'; /* Font Awesome check icon */
+            font-family: 'FontAwesome';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 10px;
+        }
 
         /* --- Footer --- */
         #footer { margin-top: 50px; padding: 20px 25px; color: var(--text-muted); text-align: center; font-size: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
@@ -392,17 +457,17 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                         <span>وضعیت سیستم پایدار است</span>
                     </div>
                 </div>
-                <!-- Time Range Presets for Desktop -->
-                <div class="btn-group hidden-xs" style="background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px;">
-                    <button class="btn-glass" id="preset7d">هفته اخیر</button>
-                    <button class="btn-glass" id="presetMonth">این ماه</button>
-                    <button class="btn-glass" id="presetYear">امسال</button>
+                <!-- Time Range Presets -->
+                <div class="btn-group" style="background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; display: flex;">
+                    <button class="btn-glass" id="preset7d">۷ روز</button>
+                    <button class="btn-glass" id="presetMonth">ماه</button>
+                    <button class="btn-glass" id="presetYear">سال</button>
                 </div>
             </div>
 
             <!-- Filter Bar -->
             <div class="filter-bar animate-enter delay-1">
-                <form class="filter-inputs" method="get" id="dashboardFilterForm" style="flex: 1;">
+                <form class="filter-inputs" method="get" id="dashboardFilterForm">
                     <!-- Date -->
                     <div style="position: relative;">
                         <input type="text" id="rangePicker" class="input-glass" placeholder="انتخاب تاریخ..." style="padding-right: 35px; text-align: right;">
@@ -413,21 +478,24 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 
                     <!-- Status -->
                     <select name="status[]" multiple class="input-glass" style="height: auto; min-height: 42px;">
+                        <!-- Selected status options are maintained via PHP -->
                         <?php foreach($statusMapFa as $sk => $sl): ?>
                             <option value="<?php echo $sk; ?>" <?php echo in_array($sk, $selectedStatuses) ? 'selected' : ''; ?>><?php echo $sl; ?></option>
                         <?php endforeach; ?>
                     </select>
-
-                    <button type="submit" class="btn-gradient">
-                        <i class="icon-filter"></i> 
-                        <span>اعمال فیلتر</span>
-                    </button>
                     
-                    <?php if($fromDate || !empty($selectedStatuses)): ?>
-                    <a href="index.php" class="btn-glass" title="حذف فیلترها" style="display: flex; align-items: center; justify-content: center;">
-                        <i class="icon-refresh"></i>
-                    </a>
-                    <?php endif; ?>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn-gradient">
+                            <i class="icon-filter"></i> 
+                            <span>اعمال فیلتر</span>
+                        </button>
+                        
+                        <?php if($fromDate || $toDate || !empty($selectedStatuses)): ?>
+                        <a href="index.php" class="btn-glass" title="حذف فیلترها" style="display: flex; align-items: center; justify-content: center; padding: 10px 14px;">
+                            <i class="icon-refresh"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
                 </form>
             </div>
 
@@ -436,7 +504,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 <div class="modern-card stat-card">
                     <div class="stat-icon-wrapper icon-grad-1"><i class="icon-bar-chart"></i></div>
                     <div class="stat-content">
-                        <h3><?php echo $subinvoice['SUM(price_product)']; ?></h3>
+                        <h3><?php echo $formatted_total_sales; ?></h3>
                         <span>مجموع فروش (تومان)</span>
                     </div>
                 </div>
@@ -467,30 +535,30 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             </div>
 
             <!-- Charts Section -->
-            <!-- NOTE: Added id and data-chart-type for lazy loading -->
+            <!-- NOTE: Using data-chart attribute for Vue and Lazy Loading logic -->
             <div class="charts-grid animate-enter delay-3" id="chartsArea">
-                <!-- Sales Chart (Bar) - Full Width on 2fr slot -->
-                <div class="chart-card modern-card" data-chart="sales" data-chart-type="bar" id="salesChartContainer" style="grid-column: 1 / -1;">
+                <!-- Sales Chart (Bar) -->
+                <div class="chart-card modern-card" data-chart="sales" id="salesChartContainer">
                     <div class="chart-header">
-                        <span class="chart-title"><i class="icon-graph"></i> روند فروش روزانه</span>
+                        <span class="chart-title"><i class="icon-line-chart"></i> روند فروش روزانه</span>
                     </div>
                     <div style="height: 320px; width: 100%;">
                         <canvas id="salesChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Status Doughnut Chart - 1fr slot -->
-                <div class="chart-card modern-card" data-chart="status" data-chart-type="doughnut" id="statusChartContainer">
+                <!-- Status Doughnut Chart -->
+                <div class="chart-card modern-card" data-chart="status" id="statusChartContainer">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-pie-chart"></i> وضعیت سفارشات</span>
                     </div>
-                    <div style="height: 260px; display: flex; justify-content: center; position: relative;">
+                    <div style="height: 260px; display: flex; justify-content: center; position: relative; min-width: 0;">
                         <canvas id="statusChart"></canvas>
                     </div>
                 </div>
 
-                <!-- Users Line Chart - 2fr slot -->
-                <div class="chart-card modern-card" data-chart="users" data-chart-type="line" id="usersChartContainer" style="grid-column: 2;">
+                <!-- Users Line Chart -->
+                <div class="chart-card modern-card" data-chart="users" id="usersChartContainer">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-user-md"></i> نرخ جذب کاربر</span>
                     </div>
@@ -541,13 +609,23 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 </div>
             </div>
 
-            <!-- Dashboard Preferences -->
+            <!-- Dashboard Preferences (Vue component container) -->
             <div class="modern-card animate-enter delay-4" id="dashPrefs" style="margin-top: 10px; padding: 15px 25px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
                 <span class="text-muted" style="font-size: 13px;"><i class="icon-cogs"></i> شخصی‌سازی داشبورد:</span>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                    <label class="custom-check"><input type="checkbox" v-model="show.sales"> نمودار فروش</label>
-                    <label class="custom-check"><input type="checkbox" v-model="show.status"> وضعیت‌ها</label>
-                    <label class="custom-check"><input type="checkbox" v-model="show.users"> کاربران جدید</label>
+                    <!-- Checkboxes bound to Vue 'show' state -->
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.sales"> 
+                        نمودار فروش
+                    </label>
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.status"> 
+                        وضعیت‌ها
+                    </label>
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.users"> 
+                        کاربران جدید
+                    </label>
                 </div>
             </div>
 
@@ -563,7 +641,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 <script src="js/bootstrap.min.js"></script>
 <script src="js/jquery.scrollTo.min.js"></script>
 <script src="js/jquery.nicescroll.js"></script>
-<!-- Chart.js and Vue.js are essential for the script below -->
+<!-- Essential Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/vue@3"></script> 
 <!-- Daterange picker dependencies -->
@@ -578,11 +656,14 @@ $(function(){
     var to = $('#rangeTo').val();
     var $input = $('#rangePicker');
     
-    var start = from ? moment(from) : moment().subtract(14, 'days');
+    // Set initial dates based on current filter or defaults (last 14 days)
+    var start = from ? moment(from) : moment().subtract(13, 'days');
     var end = to ? moment(to) : moment();
 
     function cb(start, end) {
+        // Update input field display (Persian format)
         $input.val(start.format('YYYY-MM-DD') + '  تا  ' + end.format('YYYY-MM-DD'));
+        // Update hidden fields for submission
         $('#rangeFrom').val(start.format('YYYY-MM-DD'));
         $('#rangeTo').val(end.format('YYYY-MM-DD'));
     }
@@ -594,42 +675,55 @@ $(function(){
         locale: { format: 'YYYY-MM-DD', separator: ' - ', applyLabel: 'تایید', cancelLabel: 'لغو' }
     }, cb);
 
+    // Initial display of dates if they were set
     if(from && to) { cb(start, end); } else { $input.val(''); }
 
-    $('#preset7d').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); $('#rangeTo').val(moment().format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
-    $('#presetMonth').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().startOf('month').format('YYYY-MM-DD')); $('#rangeTo').val(moment().endOf('month').format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
-    $('#presetYear').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().startOf('year').format('YYYY-MM-DD')); $('#rangeTo').val(moment().endOf('year').format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
+    // Preset buttons functionality
+    $('#preset7d').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+    $('#presetMonth').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().startOf('month').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().endOf('month').format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+    $('#presetYear').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().startOf('year').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().endOf('year').format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
 });
 </script>
 
 <script>
 (function(){
-    // Chart Config
+    // Chart.js Global Config
     Chart.defaults.font.family = 'Vazirmatn';
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.08)';
 
-    // Data from PHP
-    <?php if($resultcontsell != 0): ?>
-    var salesLabels = <?php echo json_encode(array_values(array_map(function($d){ return jdate('Y/m/d', strtotime($d)); }, array_keys($grouped_data))), JSON_UNESCAPED_UNICODE); ?>;
-    var salesAmount = <?php echo json_encode(array_values(array_map(function($i){ return $i['total_amount']; }, $grouped_data))); ?>;
-    var salesCount = <?php echo json_encode(array_values(array_map(function($i){ return $i['order_count']; }, $grouped_data))); ?>;
-    <?php else: ?>
-    var salesLabels = [], salesAmount = [], salesCount = [];
-    <?php endif; ?>
-
+    // Data from PHP, safely encoded
+    var salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var salesAmount = <?php echo json_encode($salesAmount); ?>;
     var statusLabels = <?php echo json_encode($statusLabels, JSON_UNESCAPED_UNICODE); ?>;
     var statusData = <?php echo json_encode($statusData); ?>;
     var statusColors = <?php echo json_encode($statusColors); ?>;
-
     var userLabels = <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>;
     var userCounts = <?php echo json_encode($userCounts); ?>;
 
-    // Chart Render Functions using Chart.js
     const initializedCharts = new Set();
+    const chartRenderers = {};
+    const chartContainers = document.querySelectorAll('.chart-card');
 
-    function renderSalesChart() {
-        if(initializedCharts.has('salesChart')) return;
+
+    // 1. Render Sales Chart
+    chartRenderers['sales'] = function() {
+        if(initializedCharts.has('sales')) return;
         var ctx = document.getElementById('salesChart').getContext('2d');
         var grad = ctx.createLinearGradient(0, 0, 0, 300);
         grad.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
@@ -657,7 +751,10 @@ $(function(){
                     tooltip: {
                         rtl: true,
                         callbacks: {
-                            label: function(c) { return ' ' + Number(c.raw).toLocaleString() + ' تومان'; }
+                            label: function(c) { 
+                                // Format number with commas
+                                return ' ' + Number(c.raw).toLocaleString('fa-IR') + ' تومان'; 
+                            }
                         }
                     }
                 },
@@ -667,11 +764,12 @@ $(function(){
                 }
             }
         });
-        initializedCharts.add('salesChart');
-    }
+        initializedCharts.add('sales');
+    };
 
-    function renderStatusChart() {
-        if(initializedCharts.has('statusChart')) return;
+    // 2. Render Status Chart
+    chartRenderers['status'] = function() {
+        if(initializedCharts.has('status')) return;
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
@@ -692,11 +790,12 @@ $(function(){
                 }
             }
         });
-        initializedCharts.add('statusChart');
-    }
+        initializedCharts.add('status');
+    };
 
-    function renderUsersChart() {
-        if(initializedCharts.has('usersChart')) return;
+    // 3. Render Users Chart
+    chartRenderers['users'] = function() {
+        if(initializedCharts.has('users')) return;
         var ctxU = document.getElementById('usersChart').getContext('2d');
         var gradU = ctxU.createLinearGradient(0, 0, 0, 300);
         gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
@@ -729,90 +828,122 @@ $(function(){
                 }
             }
         });
-        initializedCharts.add('usersChart');
-    }
+        initializedCharts.add('users');
+    };
 
-    // Lazy Load Initialization
+    // Lazy Loading Logic
     function lazyInitCharts(){
         if(!('IntersectionObserver' in window)) {
             // Fallback: If not supported, render all charts immediately
-            renderSalesChart();
-            renderStatusChart();
-            renderUsersChart();
+            chartRenderers['sales']();
+            chartRenderers['status']();
+            chartRenderers['users']();
             return;
         }
-
-        const chartElements = [
-            { id: 'salesChartContainer', renderer: renderSalesChart },
-            { id: 'statusChartContainer', renderer: renderStatusChart },
-            { id: 'usersChartContainer', renderer: renderUsersChart }
-        ];
 
         var io = new IntersectionObserver(function(entries, observer){ 
             entries.forEach(function(entry){ 
                 if(entry.isIntersecting){
-                    const chartId = entry.target.id;
-                    const chartToRender = chartElements.find(c => c.id === chartId);
-                    
-                    if (chartToRender && !initializedCharts.has(chartToRender.id.replace('Container', ''))) {
-                        chartToRender.renderer();
+                    const chartKey = entry.target.getAttribute('data-chart');
+                    if (chartRenderers[chartKey] && !initializedCharts.has(chartKey)) {
+                        chartRenderers[chartKey]();
                         observer.unobserve(entry.target);
                     }
                 } 
             }); 
         }, { threshold: 0.1 });
 
-        // Start observing the containers
-        chartElements.forEach(function(c){ 
-            const el = document.getElementById(c.id);
-            if(el) io.observe(el);
-        });
+        // Start observing chart containers
+        chartContainers.forEach(function(el){ io.observe(el); });
     }
 
     /**
-     * تابع نمایش/پنهان کردن کارت‌های چارت بر اساس تنظیمات داشبورد
-     * @param {object} s - شیء تنظیمات {status: bool, users: bool, sales: bool}
+     * Toggles chart visibility and updates grid layout
+     * @param {object} s - The 'show' state object from Vue: {sales: bool, status: bool, users: bool}
      */
     function toggleCharts(s){
-        // برای حفظ Grid Layout، ممکن است نیاز به تنظیمات پیچیده‌تری باشد.
-        // در اینجا فقط Display را تغییر می‌دهیم.
-        const statusEl = document.getElementById('statusChartContainer'); if(statusEl) statusEl.style.display = s.status ? 'flex' : 'none';
-        const usersEl = document.getElementById('usersChartContainer'); if(usersEl) usersEl.style.display = s.users ? 'flex' : 'none';
-        const salesEl = document.getElementById('salesChartContainer'); if(salesEl) salesEl.style.display = s.sales ? 'flex' : 'none';
-        
-        // به روز رسانی grid-column برای نمودار فروش که باید تمام عرض را بگیرد
-        const grid = document.getElementById('chartsArea');
-        if (s.sales) {
-            document.getElementById('salesChartContainer').style.gridColumn = '1 / -1';
-        }
+        const salesEl = document.getElementById('salesChartContainer');
+        const statusEl = document.getElementById('statusChartContainer');
+        const usersEl = document.getElementById('usersChartContainer');
 
-        // اگر فقط دو چارت باقی ماندند، نمایش آن‌ها را تنظیم کنید (این قسمت پیچیده است، اما برای حفظ چیدمان انجام می‌شود)
-        // اگر نمودار فروش فعال است، همیشه دو خط اول گرید را اشغال می‌کند.
+        const chartsArea = document.getElementById('chartsArea');
         
-        // منطق تنظیم گرید اصلی در CSS تعریف شده است (2fr 1fr).
-        // اگر فروش فعال باشد: فروش 1 / -1 (تمام عرض)، کاربران 2 (ستون دوم)
-        // اگر فروش غیرفعال باشد، وضعیت و کاربران در دو ستون 1fr قرار می‌گیرند (اگر هر دو فعال باشند).
-        
-        // این منطق پیچیده Grid را به Vue واگذار می‌کنیم، اما فعلاً با display: flex/none عمل می‌کنیم که مشکل اصلی را حل می‌کند.
+        // Hide/Show elements based on preference
+        if(salesEl) salesEl.style.display = s.sales ? 'flex' : 'none';
+        if(statusEl) statusEl.style.display = s.status ? 'flex' : 'none';
+        if(usersEl) usersEl.style.display = s.users ? 'flex' : 'none';
+
+        // Apply grid column spans for desktop layout
+        if (window.innerWidth > 1024) {
+            // Default: 3 columns layout (1fr 1fr 1fr). Sales should span across
+            if (s.sales) {
+                salesEl.style.gridColumn = '1 / -1'; // Sales takes full width
+                // Status and Users will default to 1fr each in the second row
+                // We manually adjust users to take the remaining space if status is hidden
+                if (s.status && s.users) {
+                     statusEl.style.gridColumn = 'span 1';
+                     usersEl.style.gridColumn = 'span 2';
+                } else if (!s.status && s.users) {
+                    usersEl.style.gridColumn = '1 / -1'; // Users takes full width if only one chart is active in the second row
+                } else if (s.status && !s.users) {
+                    statusEl.style.gridColumn = '1 / -1';
+                }
+                
+            } else {
+                // Sales is hidden, re-configure layout to 2/1 or 1/1/1 if needed
+                if (s.status && s.users) {
+                    // Two charts left: Status 1fr, Users 2fr for balance
+                    statusEl.style.gridColumn = 'span 1';
+                    usersEl.style.gridColumn = 'span 2';
+                } else {
+                    // Only one chart left (Status or Users), make it full width
+                    if (s.status) statusEl.style.gridColumn = '1 / -1';
+                    if (s.users) usersEl.style.gridColumn = '1 / -1';
+                }
+            }
+        } else {
+            // Mobile: All charts take full width
+            salesEl.style.gridColumn = '1 / -1';
+            statusEl.style.gridColumn = '1 / -1';
+            usersEl.style.gridColumn = '1 / -1';
+        }
     }
 
 
     // Vue App for Preferences
     if(window.Vue) {
         var app = Vue.createApp({
-            data(){ return { show: JSON.parse(localStorage.getItem('dash_prefs')||'{\"status\":true,\"users\":true,\"sales\":true}') } },
-            watch:{ show:{ deep:true, handler:function(v){ 
-                localStorage.setItem('dash_prefs', JSON.stringify(v)); 
-                toggleCharts(v); 
-            } } },
+            data(){ 
+                // Load from localStorage or use default
+                const defaultPrefs = {'sales':true, 'status':true, 'users':true};
+                let storedPrefs;
+                try {
+                    storedPrefs = JSON.parse(localStorage.getItem('dash_prefs'));
+                } catch (e) {
+                    console.error("Error parsing dash_prefs from localStorage:", e);
+                    storedPrefs = null;
+                }
+                return { 
+                    show: storedPrefs || defaultPrefs
+                } 
+            },
+            watch:{ 
+                show:{ 
+                    deep:true, 
+                    handler:function(v){ 
+                        localStorage.setItem('dash_prefs', JSON.stringify(v)); 
+                        toggleCharts(v); 
+                    } 
+                } 
+            },
             mounted(){ 
-                toggleCharts(this.show); 
-                lazyInitCharts(); 
+                toggleCharts(this.show); // Apply initial visibility
+                lazyInitCharts(); // Start chart rendering process
             }
         });
         app.mount('#dashPrefs');
     } else {
-        // Fallback for Vue.js not loaded
+        // Fallback if Vue.js is not loaded
         lazyInitCharts();
     }
 })();
