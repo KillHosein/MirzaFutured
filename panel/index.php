@@ -12,8 +12,7 @@ require_once '../jdf.php';
 
 // --- بررسی حیاتی: اطمینان از تعریف متغیر اتصال به دیتابیس ---
 if (!isset($pdo) || !($pdo instanceof PDO)) {
-    // This message is translated to be more friendly and helpful.
-    die("خطای مهلک: متغیر اتصال به دیتابیس (\$pdo) تعریف نشده یا یک شیء PDO نیست. لطفاً فایل 'config.php' را بررسی کنید.");
+    die("Fatal Error: Database connection variable (\$pdo) is not defined or is not a PDO object. Please check 'config.php'.");
 }
 
 // --- Logic Section ---
@@ -41,7 +40,7 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Auth failed: " . $e->getMessage());
-    die("خطای دیتابیس هنگام بررسی احراز هویت. لطفاً لاگ‌ها را بررسی کنید. پیام: " . $e->getMessage());
+    die("Database Error during authentication check. Please check logs. Message: " . $e->getMessage());
 }
 
 
@@ -90,7 +89,7 @@ try {
     $query->execute();
     $resultcount = $query->fetchColumn();
 
-    // New Users Today
+    // New Users Today (Fix applied here in previous turn: using execute array instead of bindParam)
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
     $stmt->execute([':time_register' => $datefirstday]); 
     $resultcountday = $stmt->fetchColumn();
@@ -100,7 +99,7 @@ try {
     $query->execute($invoiceParams);
     $resultcontsell = $query->fetchColumn();
 } catch (PDOException $e) {
-    die("خطای دیتابیس هنگام بازیابی داده‌ها. پیام: " . $e->getMessage());
+    die("Database Error during data retrieval. Message: " . $e->getMessage());
 }
 
 $formatted_total_sales = number_format($total_sales);
@@ -128,7 +127,7 @@ if($resultcontsell > 0){
         }
         ksort($grouped_data); // Sort by date ascending for chart
     } catch (PDOException $e) {
-        die("خطای دیتابیس هنگام دریافت روند فروش. پیام: " . $e->getMessage());
+        die("Database Error while fetching Sales Trend. Message: " . $e->getMessage());
     }
 }
 
@@ -142,7 +141,7 @@ $salesAmount = array_values(array_map(function($i){ return $i['total_amount']; }
 $statusMapFa = [
     'unpaid' => 'در انتظار پرداخت',
     'active' => 'فعال',
-    'disabledn' => 'غیرفعال', 
+    'disabledn' => 'غیرفعال', // Changed from 'ناموجود' to 'غیرفعال' for better context
     'end_of_time' => 'پایان زمان',
     'end_of_volume' => 'پایان حجم',
     'sendedwarn' => 'هشدار',
@@ -151,7 +150,7 @@ $statusMapFa = [
 ];
 $colorMap = [
     'unpaid' => '#fbbf24', // Amber
-    'active' => '#10b981', // Emerald
+    'active' => '#10b981', // Emerald (Slightly darker for better contrast)
     'disabledn' => '#94a3b8', // Slate
     'end_of_time' => '#ef4444', // Red
     'end_of_volume' => '#3b82f6', // Blue
@@ -165,7 +164,7 @@ try {
     $stmt->execute($invoiceParams);
     $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die("خطای دیتابیس هنگام دریافت توزیع وضعیت‌ها. پیام: " . $e->getMessage());
+    die("Database Error while fetching Status Distribution. Message: " . $e->getMessage());
 }
 
 $statusLabels = [];
@@ -192,7 +191,7 @@ try {
     ]);
     $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die("خطای دیتابیس هنگام دریافت روند کاربران جدید. پیام: " . $e->getMessage());
+    die("Database Error while fetching New Users Trend. Message: " . $e->getMessage());
 }
 
 $userLabels = [];
@@ -236,393 +235,544 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
     <!-- CSS Dependencies -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
-    <!-- Required for Daterange Picker -->
     <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
 
     <style>
-        /* --- CSS Variables (Enhanced Dark/Glass Theme) --- */
-        :root {
-            --bg-body: #0b1121; /* Darker Slate */
-            --glass-bg: rgba(18, 25, 40, 0.7); /* Deep glass effect */
-            --glass-border: rgba(255, 255, 255, 0.15); /* Stronger border for visibility */
-            --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            
-            --primary: #4f46e5; /* Indigo 600 */
-            --primary-glow: rgba(79, 70, 229, 0.3);
-            --secondary: #db2777; /* Pink 600 */
-            --accent: #06b6d4; /* Cyan */
-            
-            --text-main: #f8fafc; /* White */
-            --text-muted: #94a3b8; /* Slate 400 */
-            
-            --font-main: 'Vazirmatn', sans-serif;
-            --header-height: 70px;
-        }
 
-        body {
-            background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.1) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(219, 39, 119, 0.1) 0px, transparent 50%);
-            background-attachment: fixed;
-            color: var(--text-main);
-            font-family: var(--font-main);
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
+:root{
+  --bg:#0b1220;
+  --panel:#0f172a;
+  --card:#111c33;
+  --card2:#0e162c;
+  --border:rgba(255,255,255,.08);
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --accent:#3b82f6;
+  --accent2:#22c55e;
+  --danger:#ef4444;
+  --shadow: 0 18px 45px rgba(0,0,0,.45);
+  --radius:18px;
+}
 
-        /* --- Global Layout --- */
-        #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; }
-        .wrapper { padding: 30px; display: flex; flex-direction: column; gap: 30px; max-width: 1700px; margin: 0 auto; }
-        .site-header {
-            position: fixed; top: 0; right: 0; left: 0; height: var(--header-height); z-index: 100;
-            background: rgba(11, 17, 33, 0.9); backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px); /* Safari support */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex; align-items: center; padding: 0 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-        .header-title { color: #fff; font-size: 20px; font-weight: 800; padding-right: 20px; border-right: 3px solid var(--accent); }
-        .header-nav { margin-right: auto; display: flex; gap: 20px; }
-        .header-nav a { 
-            color: var(--text-muted); text-decoration: none; padding: 8px 15px; border-radius: 10px; transition: 0.2s; 
-            font-weight: 500; display: flex; align-items: center; gap: 8px;
-        }
-        .header-nav a:hover, .header-nav a.active { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
-        
-        /* Fade In Animation */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-enter { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
-        .delay-4 { animation-delay: 0.4s; }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: Vazirmatn, Tahoma, Arial, sans-serif;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,.18), transparent 60%),
+    radial-gradient(900px 500px at 100% 20%, rgba(34,197,94,.12), transparent 55%),
+    linear-gradient(180deg, #070d1a 0%, var(--bg) 40%, #050913 100%);
+  color:var(--text);
+  overflow-x:hidden;
+}
 
-        /* Glassmorphism Card Style */
-        .modern-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 28px;
-            box-shadow: var(--glass-shadow);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .modern-card:hover { transform: translateY(-4px); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5); border-color: rgba(255,255,255,0.25); }
+a{color:inherit;text-decoration:none}
+a:hover{color:#fff}
 
-        /* --- Hero Section --- */
-        .hero-banner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-        .hero-title h1 { 
-            font-size: 32px; font-weight: 900; 
-            background: linear-gradient(to right, #e2e8f0, #fff); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-            margin: 0 0 8px 0; 
-            line-height: 1.2;
-        }
-        .hero-subtitle { font-size: 16px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; font-weight: 400; }
-        .hero-subtitle i { color: var(--accent); }
+.app-shell{
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  min-height:100vh;
+}
 
-        /* --- Filter Bar & Inputs --- */
-        .filter-bar {
-            background: rgba(18, 25, 40, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 15px 25px;
-            display: flex; flex-wrap: wrap; align-items: center; gap: 15px;
-            justify-content: space-between;
-        }
-        .filter-inputs { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; flex: 1; }
-        
-        .input-glass {
-            background: rgba(45, 55, 72, 0.6);
-            border: 1px solid #334155;
-            color: var(--text-main);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-family: var(--font-main);
-            outline: none; transition: 0.3s;
-            min-width: 190px;
-            appearance: none;
-            cursor: pointer;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
-        }
-        .input-glass:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow), inset 0 1px 3px rgba(0,0,0,0.5); }
-        .input-glass option { background-color: var(--bg-body); }
+/* Sidebar */
+.sidebar{
+  position:sticky;
+  top:0;
+  height:100vh;
+  padding:18px 14px;
+  border-left:1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  backdrop-filter: blur(16px);
+}
+.sidebar .brand{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 14px;
+  border-radius:var(--radius);
+  background: rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  box-shadow: 0 10px 35px rgba(0,0,0,.25);
+}
+.brand h1{
+  font-size:18px;
+  margin:0;
+  font-weight:800;
+  letter-spacing:.2px;
+}
+.brand small{
+  display:block;
+  color:var(--muted);
+  margin-top:2px;
+  font-weight:500;
+}
+.sidebar nav{
+  margin-top:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.nav-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid transparent;
+  color:var(--text);
+  background: rgba(255,255,255,.02);
+  transition: .18s ease;
+}
+.nav-item .left{
+  display:flex; align-items:center; gap:10px;
+}
+.nav-item:hover{
+  transform: translateY(-1px);
+  border-color: var(--border);
+  background: rgba(255,255,255,.035);
+}
+.nav-item.active{
+  background: linear-gradient(90deg, rgba(59,130,246,.20), rgba(59,130,246,0));
+  border-color: rgba(59,130,246,.35);
+  box-shadow: 0 10px 30px rgba(59,130,246,.12);
+}
+.nav-item .badge{
+  font-size:12px;
+  padding:3px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  color:var(--muted);
+  background: rgba(255,255,255,.02);
+}
+.sidebar .logout{
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid rgba(239,68,68,.35);
+  background: linear-gradient(135deg, rgba(239,68,68,.10), rgba(239,68,68,.03));
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  transition:.18s ease;
+}
+.sidebar .logout:hover{transform:translateY(-1px); background: linear-gradient(135deg, rgba(239,68,68,.16), rgba(239,68,68,.05));}
 
-        .btn-gradient {
-            background: linear-gradient(135deg, var(--primary), #5a51e8);
-            color: white; border: none;
-            padding: 12px 28px; border-radius: 12px;
-            font-weight: 700; cursor: pointer;
-            transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 5px 20px var(--primary-glow);
-            display: inline-flex; align-items: center; gap: 10px;
-            text-decoration: none !important;
-            line-height: 1;
-        }
-        .btn-gradient:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--primary-glow); filter: brightness(1.1); }
-        
-        .btn-glass {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            padding: 10px 18px; border-radius: 12px;
-            transition: 0.2s; cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            font-weight: 500;
-        }
-        .btn-glass:hover { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3); }
+.sidebar .hint{
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background: rgba(255,255,255,.02);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.9;
+}
 
-        /* Time Range Presets */
-        .time-presets-group { 
-            background: rgba(255,255,255,0.05); 
-            padding: 5px; 
-            border-radius: 15px; 
-            display: flex; 
-            border: 1px solid rgba(255,255,255,0.05);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-        }
-        .time-presets-group .btn-glass { padding: 8px 14px; border-radius: 10px; border: none; background: transparent; }
-        .time-presets-group .btn-glass:hover { background: rgba(255,255,255,0.1); }
+/* Topbar + content */
+.main{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:10;
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  background: rgba(10,16,30,.55);
+  backdrop-filter: blur(16px);
+}
+.topbar-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.topbar .title{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.topbar .title strong{font-size:18px}
+.topbar .title span{color:var(--muted); font-size:12px}
+.topbar .actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.chip{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background: rgba(255,255,255,.02);
+  color:var(--muted);
+  white-space:nowrap;
+}
 
-        /* --- Stats --- */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
-        .stat-card { display: flex; align-items: center; gap: 20px; }
-        
-        .stat-icon-wrapper { 
-            width: 70px; height: 70px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 28px; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Icon Shadow */
-            position: relative; overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            background: rgba(0,0,0,0.3);
-        }
-        .stat-icon-wrapper::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            opacity: 0.15; z-index: 1;
-        }
+.content{
+  padding:18px;
+  max-width: 1400px;
+  width:100%;
+  margin:0 auto;
+}
 
-        .stat-content h3 { 
-            font-size: 30px; 
-            font-weight: 900; 
-            margin: 0 0 4px 0; 
-            color: #fff; 
-            letter-spacing: -1px; 
-            /* Light effect for numbers */
-            text-shadow: 0 0 5px rgba(255,255,255,0.2); 
-        }
-        .stat-content span { font-size: 15px; color: var(--text-muted); font-weight: 500; }
-        
-        /* Specific Icon Gradients (Background color defines the glow/accent) */
-        .icon-grad-1 { color: #60a5fa; } /* Blue - Sales */
-        .icon-grad-1::before { background-color: #60a5fa; }
-        
-        .icon-grad-2 { color: #c084fc; } /* Violet - Orders */
-        .icon-grad-2::before { background-color: #c084fc; }
+.grid{
+  display:grid;
+  grid-template-columns: 1.65fr 1fr;
+  gap:16px;
+  align-items:start;
+}
+@media (max-width: 1100px){
+  .app-shell{grid-template-columns: 1fr;}
+  .sidebar{position:fixed; right:0; top:0; transform:translateX(105%); transition:.22s ease; width:min(340px, 92vw); z-index:50;}
+  .sidebar.open{transform:translateX(0);}
+  .overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:40;}
+  .overlay.show{display:block;}
+  .grid{grid-template-columns:1fr;}
+}
+.btn{
+  border:1px solid var(--border);
+  background: rgba(255,255,255,.02);
+  color:var(--text);
+  padding:10px 14px;
+  border-radius:16px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  transition:.18s ease;
+}
+.btn:hover{transform:translateY(-1px); background: rgba(255,255,255,.04);}
+.btn-primary{
+  border-color: rgba(59,130,246,.35);
+  background: linear-gradient(135deg, rgba(59,130,246,.26), rgba(59,130,246,.10));
+  box-shadow: 0 12px 30px rgba(59,130,246,.14);
+}
+.btn-primary:hover{background: linear-gradient(135deg, rgba(59,130,246,.34), rgba(59,130,246,.12));}
+.btn-icon{
+  width:42px; height:42px; justify-content:center; padding:0;
+}
 
-        .icon-grad-3 { color: #fb923c; } /* Orange - Total Users */
-        .icon-grad-3::before { background-color: #fb923c; }
+/* Cards */
+.card{
+  border-radius:var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
+  border:1px solid var(--border);
+  box-shadow: 0 10px 40px rgba(0,0,0,.25);
+}
+.card .card-head{
+  padding:14px 16px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.card .card-head h2{
+  margin:0;
+  font-size:14px;
+  color:#fff;
+  font-weight:800;
+  letter-spacing:.2px;
+}
+.card .card-body{padding:14px 16px}
 
-        .icon-grad-4 { color: #34d399; } /* Green - New Users */
-        .icon-grad-4::before { background-color: #34d399; }
+.kpis{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:12px;
+}
+@media (max-width: 700px){ .kpis{grid-template-columns:1fr;} }
+.kpi{
+  padding:14px 14px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.07);
+  background: rgba(17,28,51,.55);
+  transition:.18s ease;
+}
+.kpi:hover{transform:translateY(-1px); box-shadow: 0 18px 40px rgba(0,0,0,.35);}
+.kpi span{display:block; color:var(--muted); font-size:12px; margin-bottom:6px;}
+.kpi strong{font-size:22px; color:#fff; letter-spacing:.2px;}
+.kpi .mini{margin-top:8px; font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center;}
+.dot{width:8px;height:8px;border-radius:99px;background:var(--accent); display:inline-block;}
+.dot.g{background:var(--accent2);}
+.dot.r{background:var(--danger);}
 
-        /* --- Charts --- */
-        .charts-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 30px; 
-        }
-        .chart-card {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
+/* Keep compatibility with existing blocks */
+.stats-grid{display:none;} /* we render KPIs in new layout */
+.modern-card{border-radius:16px; border:1px solid var(--border); background: rgba(255,255,255,.02);}
+.filter-card{padding:14px 16px}
+.filter-inputs{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.filter-inputs .input, .filter-inputs select, .filter-inputs input{
+  background: rgba(255,255,255,.02) !important;
+  border:1px solid var(--border) !important;
+  color:var(--text) !important;
+  border-radius:14px !important;
+  padding:10px 12px !important;
+  outline:none !important;
+}
+.filter-inputs label{color:var(--muted); font-size:12px; margin:0}
+.filter-inputs button{border:0}
+.btn-gradient{all:unset}
+.btn-gradient{display:inline-flex; align-items:center; gap:8px; cursor:pointer}
+.btn-gradient{
+  padding:10px 14px;
+  border-radius:16px;
+  border:1px solid rgba(59,130,246,.35);
+  background: linear-gradient(135deg, rgba(59,130,246,.28), rgba(59,130,246,.10));
+  box-shadow: 0 12px 30px rgba(59,130,246,.14);
+  color:#fff;
+  transition:.18s ease;
+}
+.btn-gradient:hover{transform:translateY(-1px); background: linear-gradient(135deg, rgba(59,130,246,.34), rgba(59,130,246,.12));}
 
-        /* Responsive Chart Layout */
-        @media (max-width: 1200px) { 
-            .charts-grid { grid-template-columns: 1fr 1fr; } 
-            /* On tablet/small desktop, status and users can share space */
-            .chart-card-full { grid-column: span 2; } /* Sales Chart takes full width */
-            .charts-grid-col-2 > div { grid-column: span 1; }
-        }
-        @media (max-width: 768px) { 
-            .charts-grid { grid-template-columns: 1fr; }
-            .chart-card-full { grid-column: span 1 !important; }
-            .wrapper { padding: 20px; gap: 20px; }
-            .site-header { padding: 0 15px; }
-            .header-nav a { padding: 6px 10px; font-size: 14px; }
-            .hero-title h1 { font-size: 24px; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .filter-bar { justify-content: center; }
-            .filter-inputs { flex-direction: column; width: 100%; }
-            /* Fixing input width on mobile */
-            .input-glass, .filter-inputs > div:first-child, .filter-inputs > select { max-width: 100% !important; min-width: 100% !important; }
-            .filter-inputs > div:last-child { width: 100%; justify-content: space-between; display: flex; }
-        }
-        
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .chart-title { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
-        .chart-title i { color: var(--accent); }
-        
-        /* Chart specific styling */
-        .chart-canvas-wrapper { position: relative; height: 350px; }
+.charts-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+@media (max-width: 900px){ .charts-grid{grid-template-columns:1fr;} }
+.chart-card{padding:14px 16px}
+.chart-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
+.chart-title{font-weight:800; color:#fff; font-size:13px}
+canvas{max-width:100%}
 
-        /* --- Quick Actions --- */
-        .section-header { 
-            margin-top: 20px; font-size: 20px; font-weight: 800; 
-            color: var(--text-main); 
-            display: flex; align-items: center; gap: 15px; 
-            margin-bottom: 25px; 
-            padding-bottom: 5px;
-            border-bottom: 2px solid var(--primary);
-            width: fit-content;
-        }
-        .section-header i { font-size: 24px; }
-        
-        .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
-        .action-btn {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 25px 15px; gap: 15px;
-            background: rgba(30, 41, 59, 0.5); /* Slightly darker card */
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 20px;
-            text-decoration: none !important; color: var(--text-main);
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative; overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            font-weight: 600;
-        }
-        .action-btn i { font-size: 36px; transition: 0.3s; color: var(--accent); opacity: 0.9; }
-        .action-btn:hover { 
-            transform: translateY(-5px); 
-            background: rgba(30, 41, 59, 0.8);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px var(--primary-glow);
-        }
-        .action-btn:hover i { transform: scale(1.1); color: var(--primary); opacity: 1; }
-        .action-btn.danger i { color: var(--secondary); }
+/* Footer */
+#footer{
+  color:rgba(255,255,255,.55);
+  font-size:12px;
+  padding:18px;
+  text-align:center;
+}
 
-        /* --- Preferences Bar --- */
-        #dashPrefs {
-            border: 1px solid rgba(255,255,255,0.15);
-            background: linear-gradient(90deg, rgba(79, 70, 229, 0.1), rgba(18, 25, 40, 0.8));
-            padding: 18px 30px;
-            border-radius: 20px;
-        }
-        .custom-check {
-            color: var(--text-main);
-            font-weight: 500;
-            transition: color 0.2s;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-        }
-        .custom-check:hover { color: #fff; }
-        .custom-check input[type="checkbox"] {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--primary);
-            border-radius: 6px;
-            margin-left: 10px;
-            background: transparent;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .custom-check input[type="checkbox"]:checked {
-            background-color: var(--primary);
-            border-color: var(--primary);
-        }
-        .custom-check input[type="checkbox"]:checked::after {
-            content: '\f00c';
-            font-family: 'FontAwesome';
-            font-size: 12px;
-            color: white;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .prefs-grid { display: flex; flex-wrap: wrap; gap: 25px; align-items: center; }
+/* Icon shim for legacy icon-* classes using FontAwesome 4 */
+[class^="icon-"]:before, [class*=" icon-"]:before{
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+  display:inline-block;
+  text-decoration: inherit;
+  width: 1.1em;
+  margin-left: .35em;
+  text-align:center;
+  opacity:.95;
+}
+.icon-dashboard:before{content:"015";}
+.icon-list-alt:before{content:"022";}
+.icon-group:before{content:"0c0";}
+.icon-users:before{content:"0c0";}
+.icon-off:before{content:"011";}
+.icon-bar-chart:before{content:"080";}
+.icon-shopping-bag:before{content:"07a";}
+.icon-user-plus:before{content:"234";}
+.icon-pie-chart:before{content:"200";}
+.icon-line-chart:before{content:"201";}
+.icon-calendar:before{content:"073";}
+.icon-filter:before{content:"0b0";}
+.icon-refresh:before{content:"021";}
+.icon-credit-card:before{content:"09d";}
+.icon-exchange:before{content:"0ec";}
+.icon-archive:before{content:"187";}
+.icon-trash:before{content:"1f8";}
+.icon-cogs:before{content:"085";}
+.icon-th:before{content:"00a";}
+.icon-edit:before{content:"044";}
+.icon-bolt:before{content:"0e7";}
 
-        /* --- Footer --- */
-        #footer { 
-            margin-top: 50px; padding: 25px; 
-            color: var(--text-muted); text-align: center; 
-            font-size: 13px; 
-            border-top: 1px solid rgba(255, 255, 255, 0.05); 
-            background: rgba(0,0,0,0.2);
-        }
-
-        /* Daterangepicker Custom Styling for Dark Mode */
-        .daterangepicker { border-radius: 12px; border: 1px solid var(--glass-border) !important; font-family: var(--font-main) !important; font-size: 14px !important; }
-        .daterangepicker .calendar-table, .daterangepicker .ranges { background: var(--bg-body) !important; color: var(--text-main) !important; }
-        .daterangepicker td.active, .daterangepicker td.active:hover { background-color: var(--primary) !important; border-color: var(--primary) !important; color: white !important; }
-        .daterangepicker td.in-range { background-color: rgba(79, 70, 229, 0.1) !important; color: white !important; }
-        .daterangepicker .drp-buttons .btn { border-radius: 8px !important; font-weight: 500 !important; margin-left: 8px; }
-        .daterangepicker .drp-buttons .btn-primary { background-color: var(--primary) !important; border-color: var(--primary) !important; }
-        .daterangepicker .drp-buttons .btn-default { background-color: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.2) !important; color: var(--text-main) !important; }
-        .daterangepicker th, .daterangepicker td { color: var(--text-main) !important; }
-        .daterangepicker .calendar-table td.available:hover { background: rgba(255,255,255,0.1) !important; }
-
-    </style>
+</style>
 </head>
 
 <body>
 
-<section id="container">
-    <!-- Header -->
-    <header class="site-header">
-        <h1 class="header-title">پنل مدیریت</h1>
-        <nav class="header-nav">
-            <a href="index.php" class="active"><i class="icon-dashboard"></i> داشبورد</a>
-            <a href="invoice.php"><i class="icon-list-alt"></i> سفارشات</a>
-            <a href="user.php"><i class="icon-group"></i> کاربران</a>
-            <a href="logout.php"><i class="icon-off"></i> خروج</a>
-        </nav>
+
+<div class="overlay" id="overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div>
+        <h1>پنل ادمین</h1>
+        <small>مدیریت رسمی • تم تیره</small>
+      </div>
+      <button class="btn btn-icon" id="closeSidebar" type="button" aria-label="بستن منو">
+        <i class="icon-off"></i>
+      </button>
+    </div>
+
+    <nav>
+      <a href="index.php" class="nav-item active">
+        <div class="left"><i class="icon-dashboard"></i><span>داشبورد</span></div>
+        <span class="badge">Home</span>
+      </a>
+      <a href="invoice.php" class="nav-item">
+        <div class="left"><i class="icon-list-alt"></i><span>سفارشات</span></div>
+      </a>
+      <a href="user.php" class="nav-item">
+        <div class="left"><i class="icon-group"></i><span>کاربران</span></div>
+      </a>
+    </nav>
+
+    <a href="logout.php" class="logout">
+      <i class="icon-off"></i>
+      <span>خروج</span>
+    </a>
+
+    <div class="hint">
+      <b>راهنما:</b> برای دیدن نمودارها، از بخش «نمایش نمودارها» انتخاب کنید. اگر داده‌ای وجود نداشته باشد، نمودارها خالی نمایش داده می‌شوند.
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <button class="btn btn-icon" id="menuBtn" type="button" aria-label="باز کردن منو">
+          <i class="icon-th"></i>
+        </button>
+
+        <div class="title">
+          <strong>داشبورد</strong>
+          <span>گزارش‌ها و آمار کلی سیستم</span>
+        </div>
+
+        <div class="actions">
+          <div class="chip">
+            <i class="icon-calendar"></i>
+            <span>فیلتر تاریخ/وضعیت از ستون سمت راست</span>
+          </div>
+        </div>
+      </div>
     </header>
 
-    <section id="main-content">
-        <section class="wrapper">
-            
-            <!-- Hero Section (Greeting and Date) -->
-            <div class="hero-banner animate-enter">
-                <div class="hero-title">
-                    <h1><?php echo $greeting; ?>، مدیر عزیز</h1>
-                    <div class="hero-subtitle">
-                        <i class="fa <?php echo $greetIcon; ?>"></i>
-                        <span>امروز: <?php echo jdate('l، j F Y'); ?></span>
-                        <span style="margin: 0 10px; opacity: 0.3;">|</span>
-                        <span>وضعیت: <span style="color: #34d399;">سیستم پایدار است</span></span>
-                    </div>
-                </div>
-                <!-- Time Range Presets -->
-                <div class="time-presets-group">
-                    <button class="btn-glass" id="preset7d">۷ روز</button>
-                    <button class="btn-glass" id="presetMonth">ماه اخیر</button>
-                    <button class="btn-glass" id="presetYear">سال اخیر</button>
+    <div class="content">
+      
+<section id="main-content">
+  <section class="wrapper">
+    <div class="grid">
+      <div class="left-col">
+        
+<div class="card">
+  <div class="card-head">
+    <h2>نمای کلی</h2>
+    <span class="badge">Live</span>
+  </div>
+  <div class="card-body">
+    <div class="kpis">
+      <div class="kpi">
+        <span><i class="icon-bar-chart"></i> مجموع فروش (تومان)</span>
+        <strong><?php echo $formatted_total_sales; ?></strong>
+        <div class="mini"><span class="dot"></span> جمع سفارشاتِ غیرِ «در انتظار پرداخت»</div>
+      </div>
+      <div class="kpi">
+        <span><i class="icon-shopping-bag"></i> تعداد سفارشات</span>
+        <strong><?php echo number_format($resultcontsell); ?></strong>
+        <div class="mini"><span class="dot g"></span> بر اساس فیلترهای انتخابی</div>
+      </div>
+      <div class="kpi">
+        <span><i class="icon-users"></i> کل کاربران</span>
+        <strong><?php echo number_format($resultcount); ?></strong>
+        <div class="mini"><span class="dot"></span> مجموع کاربران سیستم</div>
+      </div>
+      <div class="kpi">
+        <span><i class="icon-user-plus"></i> کاربران جدید امروز</span>
+        <strong><?php echo number_format($resultcountday); ?></strong>
+        <div class="mini"><span class="dot g"></span> ثبت‌نام‌های امروز</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+        
+<div class="card" style="margin-top:16px;">
+  <div class="card-head">
+    <h2>نمودارها</h2>
+    <button class="btn btn-icon" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="رفتن به بالا">
+      <i class="icon-refresh"></i>
+    </button>
+  </div>
+  <div class="card-body">
+    <!-- Dashboard Preferences -->
+            <div class="modern-card animate-enter delay-2" id="dashPrefs" style="padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                <span class="text-muted" style="font-size: 15px; font-weight: 500; color: #cbd5e1;"><i class="icon-cogs"></i> نمایش نمودارها:</span>
+                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                    <!-- Checkboxes bound to Vue 'show' state -->
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.sales"> 
+                        روند فروش
+                    </label>
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.status"> 
+                        توزیع وضعیت‌ها
+                    </label>
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.users"> 
+                        جذب کاربر
+                    </label>
                 </div>
             </div>
 
-            <!-- Filter Bar -->
-            <div class="filter-bar animate-enter delay-1">
+            
+    <!-- Charts Section (Dynamically controlled by Vue) -->
+            <div class="charts-grid animate-enter delay-3" id="chartsArea">
+                <!-- Sales Chart (Bar) -->
+                <div class="chart-card modern-card" data-chart="sales" id="salesChartContainer" style="grid-column: 1 / -1; ">
+                    <div class="chart-header">
+                        <span class="chart-title"><i class="icon-bar-chart"></i> تحلیل فروش روزانه</span>
+                    </div>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status Doughnut Chart -->
+                <div class="chart-card modern-card" data-chart="status" id="statusChartContainer" style="grid-column: span 1; ">
+                    <div class="chart-header">
+                        <span class="chart-title"><i class="icon-pie-chart"></i> توزیع وضعیت سفارشات</span>
+                    </div>
+                    <div style="height: 300px; display: flex; justify-content: center; position: relative; min-width: 0;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Users Line Chart -->
+                <div class="chart-card modern-card" data-chart="users" id="usersChartContainer" style="grid-column: span 2; ">
+                    <div class="chart-header">
+                        <span class="chart-title"><i class="icon-line-chart"></i> روند ثبت نام کاربران جدید</span>
+                    </div>
+                    <div style="height: 300px; width: 100%;">
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            
+  </div>
+</div>
+
+      </div>
+      <div class="right-col">
+        
+<div class="card">
+  <div class="card-head">
+    <h2>فیلترها</h2>
+    <span class="badge">Dashboard</span>
+  </div>
+  <div class="card-body">
+    <div class="filter-bar animate-enter delay-1">
                 <form class="filter-inputs" method="get" id="dashboardFilterForm">
                     <!-- Date Picker Input -->
                     <div style="position: relative; flex-grow: 1; max-width: 300px;">
                         <input type="text" id="rangePicker" class="input-glass" placeholder="انتخاب محدوده تاریخ..." style="padding-right: 40px; text-align: right; width: 100%;">
-                        <i class="fa icon-calendar" style="position: absolute; right: 15px; top: 14px; color: var(--text-muted); pointer-events: none;"></i>
+                        <i class="icon-calendar" style="position: absolute; right: 15px; top: 14px; color: var(--text-muted); pointer-events: none;"></i>
                     </div>
                     <!-- Hidden fields to store date range values for submission -->
                     <input type="hidden" name="from" id="rangeFrom" value="<?php echo htmlspecialchars($fromDate ?? '', ENT_QUOTES); ?>">
@@ -638,208 +788,221 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                     
                     <div style="display: flex; gap: 10px;">
                         <button type="submit" class="btn-gradient">
-                            <i class="fa icon-filter"></i> 
+                            <i class="icon-filter"></i> 
                             <span>اعمال فیلتر</span>
                         </button>
                         
                         <?php if($fromDate || $toDate || !empty($selectedStatuses)): ?>
                         <!-- Reset Filter Button -->
                         <a href="index.php" class="btn-glass" title="حذف فیلترها" style="display: flex; align-items: center; justify-content: center; padding: 12px 18px;">
-                            <i class="fa icon-refresh"></i>
+                            <i class="icon-refresh"></i>
                         </a>
                         <?php endif; ?>
                     </div>
                 </form>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid animate-enter delay-2">
-                <!-- Card 1: Total Sales Amount -->
-                <div class="modern-card stat-card">
-                    <div class="stat-icon-wrapper icon-grad-1"><i class="fa icon-line-chart"></i></div>
-                    <div class="stat-content">
-                        <!-- PHP Logic remains here -->
-                        <h3><?php echo $formatted_total_sales; ?></h3>
-                        <span>مجموع فروش (ریال)</span>
-                    </div>
-                </div>
+            
+  </div>
+</div>
 
-                <!-- Card 2: Total Orders Count -->
-                <div class="modern-card stat-card">
-                    <div class="stat-icon-wrapper icon-grad-2"><i class="fa icon-shopping-cart"></i></div>
-                    <div class="stat-content">
-                        <!-- PHP Logic remains here -->
-                        <h3><?php echo number_format($resultcontsell); ?></h3>
-                        <span>تعداد کل سفارشات (فیلتر شده)</span>
-                    </div>
+        
+<div class="card" style="margin-top:16px;">
+  <div class="card-head">
+    <h2>عملیات سریع</h2>
+    <span class="badge">Shortcut</span>
+  </div>
+  <div class="card-body">
+    <!-- Quick Actions Section -->
+            <div class="animate-enter delay-4">
+                <div class="section-header">
+                    <i class="icon-bolt" style="color: var(--accent);"></i> عملیات سریع
                 </div>
-
-                <!-- Card 3: Total Users Count -->
-                <div class="modern-card stat-card">
-                    <div class="stat-icon-wrapper icon-grad-3"><i class="fa icon-users"></i></div>
-                    <div class="stat-content">
-                        <!-- PHP Logic remains here -->
-                        <h3><?php echo number_format($resultcount); ?></h3>
-                        <span>تعداد کل کاربران</span>
-                    </div>
-                </div>
-
-                <!-- Card 4: New Users Today -->
-                <div class="modern-card stat-card">
-                    <div class="stat-icon-wrapper icon-grad-4"><i class="fa icon-user-plus"></i></div>
-                    <div class="stat-content">
-                        <!-- PHP Logic remains here -->
-                        <h3><?php echo number_format($resultcountday); ?></h3>
-                        <span>کاربر جدید (امروز)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chart Visibility Preferences (Using Vue.js for state management) -->
-            <div class="modern-card animate-enter delay-3" id="dashPrefs">
-                <div class="chart-header">
-                    <div class="chart-title"><i class="fa icon-sliders"></i> تنظیمات نمایش نمودارها</div>
-                </div>
-                <div class="prefs-grid">
-                    <label class="custom-check">
-                        <input type="checkbox" v-model="show.sales">
-                        نمودار روند فروش
-                    </label>
-                    <label class="custom-check">
-                        <input type="checkbox" v-model="show.status">
-                        نمودار توزیع وضعیت‌ها
-                    </label>
-                    <label class="custom-check">
-                        <input type="checkbox" v-model="show.users">
-                        نمودار روند کاربران جدید
-                    </label>
+                <div class="actions-grid">
+                    <a href="invoice.php" class="action-btn">
+                        <i class="icon-list-alt"></i>
+                        <span>مشاهده سفارشات</span>
+                    </a>
+                    <a href="user.php" class="action-btn">
+                        <i class="icon-users"></i>
+                        <span>مدیریت کاربران</span>
+                    </a>
+                    <a href="product.php" class="action-btn">
+                        <i class="icon-archive"></i>
+                        <span>تعریف محصولات</span>
+                    </a>
+                    <a href="inbound.php" class="action-btn">
+                        <i class="icon-exchange"></i>
+                        <span>تعیین ورودی‌ها</span>
+                    </a>
+                    <a href="payment.php" class="action-btn">
+                        <i class="icon-credit-card"></i>
+                        <span>لیست پرداخت‌ها</span>
+                    </a>
+                    <a href="cancelService.php" class="action-btn danger">
+                        <i class="icon-trash"></i>
+                        <span>حذف سرویس</span>
+                    </a>
+                    <a href="keyboard.php" class="action-btn">
+                        <i class="icon-th"></i>
+                        <span>تنظیمات کیبورد</span>
+                    </a>
+                    <a href="productedit.php" class="action-btn">
+                        <i class="icon-edit"></i>
+                        <span>ویرایش سریع</span>
+                    </a>
                 </div>
             </div>
 
-            <!-- Charts Grid (Managed by Vue.js/CSS) -->
-            <div class="charts-grid charts-grid-col-2" id="chartsGrid">
-                
-                <!-- Chart 1: Sales Trend -->
-                <div class="modern-card chart-card chart-card-full animate-enter delay-4" id="salesChartContainer" style="display: none;">
-                    <div class="chart-header">
-                        <div class="chart-title"><i class="fa icon-area-chart"></i> روند فروش در بازه زمانی (مبالغ به ریال)</div>
-                    </div>
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
+        
+  </div>
+</div>
 
-                <!-- Chart 2: Status Distribution -->
-                <div class="modern-card chart-card animate-enter delay-4" id="statusChartContainer" style="display: none;">
-                    <div class="chart-header">
-                        <div class="chart-title"><i class="fa icon-pie-chart"></i> توزیع وضعیت سفارشات</div>
-                    </div>
-                    <div class="chart-canvas-wrapper" style="height: 300px;">
-                        <canvas id="statusChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Chart 3: New Users Trend -->
-                <div class="modern-card chart-card animate-enter delay-4" id="usersChartContainer" style="display: none;">
-                    <div class="chart-header">
-                        <div class="chart-title"><i class="fa icon-user-plus"></i> روند ثبت‌نام کاربران جدید</div>
-                    </div>
-                    <div class="chart-canvas-wrapper">
-                        <canvas id="usersChart"></canvas>
-                    </div>
-                </div>
-                
-            </div>
-
-            <!-- Quick Actions -->
-            <h2 class="section-header animate-enter delay-4"><i class="fa icon-cogs"></i> اقدامات سریع</h2>
-            <div class="actions-grid animate-enter delay-5">
-                <a href="invoice.php?status[]=unpaid" class="action-btn">
-                    <i class="fa icon-money"></i>
-                    بررسی پرداخت‌های معلق
-                </a>
-                <a href="user.php?new=1" class="action-btn">
-                    <i class="fa icon-user-plus"></i>
-                    مشاهده کاربران جدید
-                </a>
-                <a href="invoice.php?status[]=end_of_time&status[]=end_of_volume" class="action-btn danger">
-                    <i class="fa icon-warning"></i>
-                    سرویس‌های در حال اتمام
-                </a>
-                <a href="invoice.php" class="action-btn">
-                    <i class="fa icon-list"></i>
-                    مشاهده کل سفارشات
-                </a>
-                <a href="setting.php" class="action-btn">
-                    <i class="fa icon-gear"></i>
-                    تنظیمات سیستم
-                </a>
-            </div>
-
-        </section>
-        <!-- /wrapper -->
-    </section>
-    <!-- /main-content -->
-
-    <!-- Footer -->
-    <footer id="footer">
-        © <?php echo date('Y'); ?> پنل مدیریت حرفه‌ای. تمامی حقوق محفوظ است. | طراحی و توسعه با عشق 🚀
-    </footer>
-    
+      </div>
+    </div>
+  </section>
 </section>
 
-<!-- Required JavaScript Dependencies -->
+    </div>
+
+    <footer id="footer">
+      2024 &copy; پنل مدیریت حرفه‌ای. تمامی حقوق محفوظ است.
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const menuBtn = document.getElementById('menuBtn');
+  const closeBtn = document.getElementById('closeSidebar');
+
+  function openSidebar(){
+    if(!sidebar) return;
+    sidebar.classList.add('open');
+    overlay && overlay.classList.add('show');
+  }
+  function closeSidebar(){
+    if(!sidebar) return;
+    sidebar.classList.remove('open');
+    overlay && overlay.classList.remove('show');
+  }
+
+  if(menuBtn) menuBtn.addEventListener('click', openSidebar);
+  if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if(overlay) overlay.addEventListener('click', closeSidebar);
+})();
+</script>
+
+
+<!-- Scripts -->
 <script src="js/jquery.js"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="js/chart.min.js"></script> <!-- Chart.js for data visualization -->
-<script src="https://cdn.jsdelivr.net/npm/vue@3.4.27/dist/vue.global.prod.js"></script> <!-- Vue.js for component and reactivity -->
-
-<!-- Date Range Picker Dependencies -->
+<script src="js/jquery.scrollTo.min.js"></script>
+<script src="js/jquery.nicescroll.js"></script>
+<!-- Essential Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/vue@3"></script> 
+<!-- Daterange picker dependencies -->
 <script src="assets/bootstrap-daterangepicker/moment.min.js"></script>
 <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
+<!-- The original common-scripts.js is expected to be present -->
+<script src="js/common-scripts.js"></script>
 
-<!-- Custom Script for Dashboard Logic and Chart Rendering -->
 <script>
-// PHP data injection for JavaScript
-const salesChartData = {
-    labels: <?php echo json_encode($salesLabels); ?>,
-    data: <?php echo json_encode($salesAmount); ?>
-};
-const statusChartData = {
-    labels: <?php echo json_encode($statusLabels); ?>,
-    data: <?php echo json_encode($statusData); ?>,
-    colors: <?php echo json_encode($statusColors); ?>
-};
-const usersChartData = {
-    labels: <?php echo json_encode($userLabels); ?>,
-    data: <?php echo json_encode($userCounts); ?>
-};
+$(function(){
+    // Date Picker Logic
+    var from = $('#rangeFrom').val();
+    var to = $('#rangeTo').val();
+    var $input = $('#rangePicker');
+    
+    // Set initial dates based on current filter or defaults (last 13 days + today)
+    var start = from ? moment(from) : moment().subtract(13, 'days');
+    var end = to ? moment(to) : moment();
 
-// --- Chart Rendering Logic ---
-const chartInstances = {};
-const chartRenderers = {
-    // 1. Sales Chart (Line/Area)
-    sales: function(){
-        const ctx = document.getElementById('salesChart');
-        if(!ctx) return;
-        
-        // Destroy existing instance if any
-        if(chartInstances['sales']) chartInstances['sales'].destroy();
+    function cb(start, end) {
+        // Update input field display (Gregorian format for submission clarity, but user sees Persian via jdf)
+        // Since jdf is PHP-based, we keep moment formats for internal use
+        $input.val(start.format('YYYY/MM/DD') + '  تا  ' + end.format('YYYY/MM/DD'));
+        // Update hidden fields for submission
+        $('#rangeFrom').val(start.format('YYYY-MM-DD'));
+        $('#rangeTo').val(end.format('YYYY-MM-DD'));
+    }
 
-        chartInstances['sales'] = new Chart(ctx, {
-            type: 'line',
+    $input.daterangepicker({
+        startDate: start,
+        endDate: end,
+        opens: 'right', // Changed to right for better RTL compatibility
+        locale: { format: 'YYYY/MM/DD', separator: ' - ', applyLabel: 'تایید', cancelLabel: 'لغو' }
+    }, cb);
+
+    // Initial display of dates if they were set
+    if(from && to) { cb(start, end); } else { $input.val(''); }
+
+    // Preset buttons functionality to automatically submit the form
+    $('#preset7d').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+    $('#presetMonth').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(30, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+    $('#presetYear').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(365, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+});
+</script>
+
+<script>
+(function(){
+    // Chart.js Global Config for Vazirmatn and Dark Theme
+    Chart.defaults.font.family = 'Vazirmatn';
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.08)';
+
+    // Data from PHP, safely encoded
+    var salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var salesAmount = <?php echo json_encode($salesAmount); ?>;
+    var statusLabels = <?php echo json_encode($statusLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var statusData = <?php echo json_encode($statusData); ?>;
+    var statusColors = <?php echo json_encode($statusColors); ?>;
+    var userLabels = <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var userCounts = <?php echo json_encode($userCounts); ?>;
+
+    const initializedCharts = new Set();
+    const chartRenderers = {};
+    const chartContainers = document.querySelectorAll('.chart-card');
+
+
+    // 1. Render Sales Chart
+    chartRenderers['sales'] = function() {
+        if(initializedCharts.has('sales')) return;
+        var ctx = document.getElementById('salesChart').getContext('2d');
+        var grad = ctx.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(79, 70, 229, 0.5)'); // Primary Indigo
+        grad.addColorStop(1, 'rgba(79, 70, 229, 0.05)');
+
+        new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: salesChartData.labels,
+                labels: salesLabels,
                 datasets: [{
-                    label: 'مجموع فروش (ریال)',
-                    data: salesChartData.data,
-                    backgroundColor: 'rgba(96, 165, 250, 0.2)', // icon-grad-1 color
-                    borderColor: '#60a5fa',
-                    borderWidth: 3,
-                    fill: 'start',
-                    tension: 0.4, // Smooth curve
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
+                    label: 'فروش (تومان)',
+                    data: salesAmount,
+                    backgroundColor: grad,
+                    borderColor: '#4f46e5',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    hoverBackgroundColor: '#818cf8'
                 }]
             },
             options: {
@@ -847,260 +1010,224 @@ const chartRenderers = {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: { rtl: true, bodyFont: { family: 'Vazirmatn' }, titleFont: { family: 'Vazirmatn' } }
+                    tooltip: {
+                        rtl: true,
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 14 },
+                        callbacks: {
+                            label: function(c) { 
+                                return ' ' + Number(c.raw).toLocaleString('fa-IR') + ' تومان'; 
+                            }
+                        }
+                    }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { 
-                            color: '#94a3b8',
-                            font: { family: 'Vazirmatn' },
-                            callback: function(value, index, values) {
-                                // Format numbers for better readability (e.g., 1,000,000)
-                                return value.toLocaleString('fa-IR');
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false }, 
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: {
+                            color: '#cbd5e1',
+                            callback: function(value) {
+                                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'م';
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'هز';
+                                return value;
                             }
                         }
                     },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { family: 'Vazirmatn' } }
-                    }
+                    x: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
                 }
             }
         });
-    },
+        initializedCharts.add('sales');
+    };
 
-    // 2. Status Chart (Doughnut)
-    status: function(){
-        const ctx = document.getElementById('statusChart');
-        if(!ctx) return;
-        
-        if(chartInstances['status']) chartInstances['status'].destroy();
-
-        chartInstances['status'] = new Chart(ctx, {
+    // 2. Render Status Chart
+    chartRenderers['status'] = function() {
+        if(initializedCharts.has('status')) return;
+        new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
-                labels: statusChartData.labels,
+                labels: statusLabels,
                 datasets: [{
-                    data: statusChartData.data,
-                    backgroundColor: statusChartData.colors,
-                    borderColor: 'var(--bg-body)',
-                    borderWidth: 2,
-                    hoverOffset: 10
+                    data: statusData,
+                    backgroundColor: statusColors,
+                    borderWidth: 4,
+                    borderColor: 'var(--bg-body)' // Border matches body background for floating effect
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '65%',
                 plugins: {
                     legend: { 
                         position: 'right', 
                         labels: { 
-                            color: '#fff',
-                            font: { family: 'Vazirmatn', size: 13 },
-                            boxWidth: 15
-                        },
-                        rtl: true
+                            boxWidth: 12, 
+                            padding: 15,
+                            font: { size: 14 }
+                        } 
                     },
-                    tooltip: { rtl: true, bodyFont: { family: 'Vazirmatn' }, titleFont: { family: 'Vazirmatn' } }
+                    tooltip: { rtl: true, backgroundColor: 'rgba(30, 41, 59, 0.9)' }
                 }
             }
         });
-    },
+        initializedCharts.add('status');
+    };
 
-    // 3. New Users Chart (Bar)
-    users: function(){
-        const ctx = document.getElementById('usersChart');
-        if(!ctx) return;
-        
-        if(chartInstances['users']) chartInstances['users'].destroy();
+    // 3. Render Users Chart
+    chartRenderers['users'] = function() {
+        if(initializedCharts.has('users')) return;
+        var ctxU = document.getElementById('usersChart').getContext('2d');
+        var gradU = ctxU.createLinearGradient(0, 0, 0, 300);
+        gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)'); // Cyan
+        gradU.addColorStop(1, 'rgba(6, 182, 212, 0)');
 
-        chartInstances['users'] = new Chart(ctx, {
-            type: 'bar',
+        new Chart(ctxU, {
+            type: 'line',
             data: {
-                labels: usersChartData.labels,
+                labels: userLabels,
                 datasets: [{
-                    label: 'تعداد کاربران جدید',
-                    data: usersChartData.data,
-                    backgroundColor: '#34d399', // icon-grad-4 color
-                    borderColor: '#34d399',
-                    borderWidth: 1,
-                    borderRadius: 4
+                    label: 'کاربر جدید',
+                    data: userCounts,
+                    borderColor: '#06b6d4',
+                    backgroundColor: gradU,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#06b6d4',
+                    pointBorderColor: '#1e293b',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
+                plugins: { 
                     legend: { display: false },
-                    tooltip: { rtl: true, bodyFont: { family: 'Vazirmatn' }, titleFont: { family: 'Vazirmatn' } }
+                    tooltip: { rtl: true, backgroundColor: 'rgba(30, 41, 59, 0.9)' }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { 
-                            color: '#94a3b8',
-                            font: { family: 'Vazirmatn' },
-                            stepSize: 1
-                        }
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false }, 
+                        padding: { top: 10, bottom: 0 }, 
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: { precision: 0, color: '#cbd5e1' }
                     },
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { family: 'Vazirmatn' } }
+                    x: { 
+                        grid: { display: true, color: 'rgba(255,255,255,0.08)' }, 
+                        ticks: { maxRotation: 0, autoSkipPadding: 20, color: '#cbd5e1' } 
                     }
                 }
             }
         });
-    }
-};
-
-// --- Main Initialization Function ---
-(function() {
-    // Helper function for Persian date range formatting
-    const formatDate = (date) => moment(date).format('YYYY/MM/DD');
-    const today = moment().format('YYYY/MM/DD');
-    
-    // 1. Daterange Picker Initialization
-    const rangePicker = $('#rangePicker');
-    const rangeFrom = $('#rangeFrom');
-    const rangeTo = $('#rangeTo');
-    
-    // Check if initial dates are set from PHP/GET parameters
-    const initialStart = rangeFrom.val() ? moment(rangeFrom.val()) : null;
-    const initialEnd = rangeTo.val() ? moment(rangeTo.val()) : null;
-
-    if (initialStart && initialEnd) {
-        rangePicker.val(initialStart.format('YYYY/MM/DD') + ' - ' + initialEnd.format('YYYY/MM/DD'));
-    }
-
-    rangePicker.daterangepicker({
-        startDate: initialStart || moment().subtract(29, 'days'),
-        endDate: initialEnd || moment(),
-        opens: 'left',
-        // Define Custom Ranges in Persian
-        ranges: {
-            'امروز': [moment(), moment()],
-            'دیروز': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            '۷ روز اخیر': [moment().subtract(6, 'days'), moment()],
-            '۳۰ روز اخیر': [moment().subtract(29, 'days'), moment()],
-            'این ماه': [moment().startOf('month'), moment().endOf('month')],
-            'ماه گذشته': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-        },
-        locale: {
-            format: 'YYYY/MM/DD',
-            separator: ' - ',
-            applyLabel: 'اعمال',
-            cancelLabel: 'لغو',
-            fromLabel: 'از',
-            toLabel: 'تا',
-            customRangeLabel: 'بازه دلخواه',
-            weekLabel: 'ه',
-            daysOfWeek: ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش'],
-            monthNames: ['ژانویه', 'فوریه', 'مارس', 'آوریل', 'مه', 'ژوئن', 'جولای', 'آگوست', 'سپتامبر', 'اکتبر', 'نوامبر', 'دسامبر'],
-            firstDay: 6 // Saturday (or 0 for Sunday)
-        }
-    }, function(start, end, label) {
-        rangeFrom.val(start.format('YYYY/MM/DD'));
-        rangeTo.val(end.format('YYYY/MM/DD'));
-    });
-
-    // 2. Preset Buttons Logic (7 Days, Month, Year)
-    $('#preset7d').on('click', function(e) {
-        e.preventDefault();
-        rangeFrom.val(formatDate(moment().subtract(6, 'days')));
-        rangeTo.val(today);
-        $('#dashboardFilterForm').submit();
-    });
-
-    $('#presetMonth').on('click', function(e) {
-        e.preventDefault();
-        rangeFrom.val(formatDate(moment().subtract(1, 'month')));
-        rangeTo.val(today);
-        $('#dashboardFilterForm').submit();
-    });
-
-    $('#presetYear').on('click', function(e) {
-        e.preventDefault();
-        rangeFrom.val(formatDate(moment().subtract(1, 'year')));
-        rangeTo.val(today);
-        $('#dashboardFilterForm').submit();
-    });
-
-
-    // 3. Chart Visibility/Layout Toggle (Vue.js Component)
-    const toggleCharts = (showState) => {
-        const grid = document.getElementById('chartsGrid');
-        const containers = {
-            sales: document.getElementById('salesChartContainer'),
-            status: document.getElementById('statusChartContainer'),
-            users: document.getElementById('usersChartContainer')
-        };
-        
-        let visibleCount = 0;
-        
-        for (const key in containers) {
-            if (containers[key]) {
-                containers[key].style.display = showState[key] ? 'flex' : 'none';
-                if (showState[key]) {
-                    visibleCount++;
-                    // Lazy render chart when it becomes visible
-                    if (!chartInstances[key]) {
-                        chartRenderers[key]();
-                    } else {
-                        // Ensure chart is redrawn on resize/visibility change
-                        chartInstances[key].resize();
-                    }
-                }
-            }
-        }
-        
-        // Adjust grid layout based on visible charts
-        if (grid) {
-            if (visibleCount >= 3) {
-                grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-                if (containers.sales) containers.sales.classList.remove('chart-card-full');
-            } else if (visibleCount === 2) {
-                 grid.style.gridTemplateColumns = '1fr 1fr';
-                 // If sales chart is visible among 2, give it priority for 2 columns on larger screens
-                 if (showState.sales) {
-                     grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-                     containers.sales.classList.add('chart-card-full');
-                 } else {
-                     grid.style.gridTemplateColumns = '1fr 1fr';
-                     if (containers.sales) containers.sales.classList.remove('chart-card-full');
-                 }
-            } else if (visibleCount === 1) {
-                grid.style.gridTemplateColumns = '1fr';
-                if (containers.sales) containers.sales.classList.remove('chart-card-full');
-            } else {
-                grid.style.gridTemplateColumns = '1fr';
-            }
-        }
+        initializedCharts.add('users');
     };
 
-    // Load preferences from localStorage or use defaults
-    let initialPrefs = { sales: true, status: true, users: true };
-    try {
-        const storedPrefs = localStorage.getItem('dash_prefs');
-        if (storedPrefs) {
-            initialPrefs = JSON.parse(storedPrefs);
-            // Ensure all keys exist in case of schema change
-            if (typeof initialPrefs.sales === 'undefined') initialPrefs.sales = true;
-            if (typeof initialPrefs.status === 'undefined') initialPrefs.status = true;
-            if (typeof initialPrefs.users === 'undefined') initialPrefs.users = true;
+    // --- Chart Visibility and Layout Logic (Vue integration) ---
+
+    // Array of chart keys
+    const chartKeys = ['sales', 'status', 'users'];
+
+    /**
+     * Toggles chart visibility and updates grid layout based on Vue state
+     * @param {object} s - The 'show' state object from Vue: {sales: bool, status: bool, users: bool}
+     */
+    function toggleCharts(s){
+        const visibleKeys = chartKeys.filter(key => s[key]);
+        const activeCount = visibleKeys.length;
+        const chartsArea = document.getElementById('chartsArea');
+        
+        // Hide/Show elements based on preference and render if needed
+        chartKeys.forEach(key => {
+            const el = document.getElementById(key + 'ChartContainer');
+            if (el) {
+                if (s[key]) {
+                    el.style.display = 'flex';
+                    if (chartRenderers[key]) chartRenderers[key](); // Render on first show
+                } else {
+                    el.style.display = 'none';
+                }
+                el.style.gridColumn = 'unset'; // Reset column span
+            }
+        });
+        
+        if (activeCount === 0) {
+            chartsArea.style.display = 'none';
+            return;
+        } else {
+            chartsArea.style.display = 'grid';
         }
-    } catch (e) {
-        console.error("Error loading dashboard preferences:", e);
+
+        // --- Layout Adjustment for Desktop (1200px+) ---
+        if (window.innerWidth > 1200) {
+            const salesEl = document.getElementById('salesChartContainer');
+            const statusEl = document.getElementById('statusChartContainer');
+            const usersEl = document.getElementById('usersChartContainer');
+            
+            if (s.sales) {
+                // Sales (Row 1) takes full width (span 3)
+                salesEl.style.gridColumn = '1 / -1'; 
+                
+                // Row 2: Status and Users
+                if (s.status && s.users) {
+                    // Status 1/3, Users 2/3 (3 columns total)
+                    statusEl.style.gridColumn = 'span 1';
+                    usersEl.style.gridColumn = 'span 2';
+                } else if (s.status) {
+                    // Status takes full width (span 3)
+                    statusEl.style.gridColumn = '1 / -1'; 
+                } else if (s.users) {
+                    // Users takes full width (span 3)
+                    usersEl.style.gridColumn = '1 / -1'; 
+                }
+            } else if (activeCount > 0) {
+                // Sales is hidden. Status and Users share the 3 columns.
+                if (s.status && s.users) {
+                    // Status 1/3, Users 2/3
+                    statusEl.style.gridColumn = 'span 1';
+                    usersEl.style.gridColumn = 'span 2';
+                } else if (s.status) {
+                    statusEl.style.gridColumn = '1 / -1';
+                } else if (s.users) {
+                    usersEl.style.gridColumn = '1 / -1';
+                }
+            }
+        }
+        // --- Layout Adjustment for Tablet (768px-1200px) ---
+        else if (window.innerWidth > 768 && window.innerWidth <= 1200) {
+            // Charts share 2 columns equally.
+            visibleKeys.forEach(key => {
+                const el = document.getElementById(key + 'ChartContainer');
+                if (el) el.style.gridColumn = 'span 1';
+            });
+            // If only one chart is visible, make it full width
+            if (activeCount === 1) {
+                document.getElementById(visibleKeys[0] + 'ChartContainer').style.gridColumn = '1 / -1';
+            }
+        }
     }
 
-    if (typeof Vue !== 'undefined') {
-        const app = Vue.createApp({
-            data() {
-                return {
-                    show: initialPrefs
+
+    // Vue App for Preferences
+    if(window.Vue) {
+        var app = Vue.createApp({
+            data(){ 
+                const defaultPrefs = {'sales':true, 'status':true, 'users':true};
+                let storedPrefs;
+                try {
+                    storedPrefs = JSON.parse(localStorage.getItem('dash_prefs'));
+                } catch (e) {
+                    storedPrefs = null;
                 }
+                return { 
+                    // Load from localStorage or use default. Ensure all keys exist.
+                    show: {...defaultPrefs, ...storedPrefs} 
+                } 
             },
             watch:{ 
                 show:{ 
