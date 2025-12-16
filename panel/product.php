@@ -126,6 +126,7 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                     <div class="col-lg-12">
                         <section class="panel">
                             <header class="panel-heading">لیست محصولات</header>
+                            <?php $total = count($listinvoice); ?>
                                 <section class="panel">
                                 <a href="#addproduct" data-toggle="modal"  class="btn btn-info  btn-sm">اضافه کردن محصول</a>
                                 <a href="#moveradif" data-toggle="modal"  class="btn btn-success  btn-sm">جابه جایی ردیف محصول</a>
@@ -147,6 +148,15 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                     <a href="#" class="btn btn-default" id="prodPrint"><i class="icon-print"></i> چاپ</a>
                                 </div>
                         </section>
+                            <?php if(!$total){ ?>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-tags"></i>
+                                    </div>
+                                    <h3>محصولی یافت نشد</h3>
+                                    <p>می‌توانید محصول جدید اضافه کنید یا شرایط را دوباره بررسی کنید.</p>
+                                </div>
+                            <?php } ?>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
@@ -166,6 +176,7 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                     </tr>
                                 </thead>
                                 <tbody> <?php
+                                if($total){
                                 foreach($listinvoice as $list){
                                     if($list['category'] == null){
                                         $list['category'] = "ندارد";
@@ -185,6 +196,7 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                                         <td class=\"hidden-phone\">{$list['category']}</td>
                                         <td  class=\"hidden-phone\"><a class=\"btn btn-primary\" href=\"productedit.php?id={$list['id']}\">مشاهده</a> <a class = \"btn btn-info\" href= \"productedit.php?id={$list['id']}\">ویرایش</a> <a class = \"btn btn-danger\" href= \"product.php?removeid={$list['id']}\" data-confirm=\"آیا از حذف محصول مطمئن هستید؟\">حذف</a></td>
                                     </tr>";
+                                }
                                 }
                                     ?>
                                 </tbody>

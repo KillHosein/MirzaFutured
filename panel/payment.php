@@ -134,7 +134,7 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                         <section class="panel">
                             <header class="panel-heading">جستجوی پیشرفته</header>
                             <div class="panel-body">
-                                <form class="form-inline" role="form" method="get">
+                                <form class="form-inline filter-bar" role="form" method="get">
                                     <div class="form-group" style="margin-left:8px;">
                                         <input type="text" class="form-control" name="q" placeholder="آیدی کاربر یا سفارش" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
                                     </div>
@@ -159,6 +159,20 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
                                     <a href="#" class="btn btn-default" id="paySaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
                                     <a href="#" class="btn btn-default" id="payLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
+                                    <div class="filter-chips">
+                                        <?php if(!empty($_GET['q'])){ ?>
+                                            <span class="filter-chip">جستجو: <?php echo htmlspecialchars($_GET['q']); ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['status'])){ ?>
+                                            <span class="filter-chip">وضعیت: <?php echo isset($statuses[$_GET['status']]) ? $statuses[$_GET['status']]['label'] : htmlspecialchars($_GET['status']); ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['method'])){ ?>
+                                            <span class="filter-chip">روش: <?php echo isset($methods[$_GET['method']]) ? $methods[$_GET['method']] : htmlspecialchars($_GET['method']); ?></span>
+                                        <?php } ?>
+                                        <?php if(empty($_GET['q']) && empty($_GET['status']) && empty($_GET['method'])){ ?>
+                                            <span class="filter-chip muted">هیچ فیلتری اعمال نشده است</span>
+                                        <?php } ?>
+                                    </div>
                                 </form>
                                 <div class="action-toolbar sticky">
                                     <a href="payment.php" class="btn btn-default" id="payRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
@@ -192,6 +206,43 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                         </section>
                         <section class="panel">
                             <header class="panel-heading">لیست تراکنش ها</header>
+                            <?php
+                            $total = count($listpayment);
+                            $paidCount = 0;
+                            $unpaidCount = 0;
+                            $waitingCount = 0;
+                            $rejectCount = 0;
+                            $expireCount = 0;
+                            $totalPaidAmount = 0;
+                            foreach($listpayment as $p){
+                                if($p['payment_Status'] === 'paid'){ $paidCount++; $totalPaidAmount += (float)$p['price']; }
+                                elseif($p['payment_Status'] === 'Unpaid') $unpaidCount++;
+                                elseif($p['payment_Status'] === 'waiting') $waitingCount++;
+                                elseif($p['payment_Status'] === 'reject') $rejectCount++;
+                                elseif($p['payment_Status'] === 'expire') $expireCount++;
+                            }
+                            ?>
+                            <div class="stat-grid">
+                                <div class="stat-card"><div class="stat-title">تعداد نتایج</div><div class="stat-value"><?php echo number_format($total); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">مجموع مبلغ پرداخت‌شده</div><div class="stat-value"><?php echo number_format($totalPaidAmount); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">پرداخت شده</div><div class="stat-value"><?php echo number_format($paidCount); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">پرداخت نشده</div><div class="stat-value"><?php echo number_format($unpaidCount); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">در انتظار تایید</div><div class="stat-value"><?php echo number_format($waitingCount); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">رد شده</div><div class="stat-value"><?php echo number_format($rejectCount); ?></div></div>
+                                <div class="stat-card"><div class="stat-title">منقضی شده</div><div class="stat-value"><?php echo number_format($expireCount); ?></div></div>
+                            </div>
+                            <?php if(!$total){ ?>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-credit-card"></i>
+                                    </div>
+                                    <h3>تراکنشی یافت نشد</h3>
+                                    <p>هنوز تراکنشی ثبت نشده است یا نتایج با فیلترهای فعلی منطبق نیستند.</p>
+                                    <div class="empty-actions">
+                                        <a href="payment.php" class="btn btn-default">نمایش همه تراکنش‌ها</a>
+                                    </div>
+                                </div>
+                            <?php } ?>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
@@ -206,12 +257,14 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                                     </tr>
                                 </thead>
                                 <tbody> <?php
+                                if($total){
                                 foreach($listpayment as $list){
                                     $status_label = isset($statuses[$list['payment_Status']]) ? $statuses[$list['payment_Status']]['label'] : $list['payment_Status'];
                                     $status_color = isset($statuses[$list['payment_Status']]) ? $statuses[$list['payment_Status']]['color'] : '#999';
                                     $method_label = isset($methods[$list['Payment_Method']]) ? $methods[$list['Payment_Method']] : $list['Payment_Method'];
                                     $statusClass = 'status-'.strtolower($list['payment_Status']);
                                     echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id_user']}</td>\n                                        <td class=\"hidden-phone\">{$list['id_order']}</td>\n                                        <td class=\"hidden-phone\">" . number_format($list['price']) . "</td>\n                                        <td class=\"hidden-phone\">{$list['time']}</td>\n                                        <td class=\"hidden-phone\">{$method_label}</td>\n                                        <td class=\"hidden-phone\"><span class=\"status-badge {$statusClass}\">{$status_label}</span></td>\n                                    </tr>";
+                                }
                                 }
                                     ?>
                             </tbody>
