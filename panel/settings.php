@@ -231,7 +231,17 @@ a:hover{ opacity:.9; }
           <?php } ?>
           <div class="settings-grid">
             <section class="panel setting-card">
-              <header class="panel-heading">تنظیمات عمومی</header>
+              <header class="panel-heading panel-heading--modern">
+                <div class="panel-heading-main">
+                  <span class="panel-heading-icon">
+                    <i class="icon-cogs"></i>
+                  </span>
+                  <div class="panel-heading-text">
+                    <div class="panel-heading-title">تنظیمات عمومی</div>
+                    <div class="panel-heading-subtitle">پیکربندی کلی سیستم و رفتار ربات</div>
+                  </div>
+                </div>
+              </header>
               <div class="panel-body">
                 <form method="post">
                   <input type="hidden" name="action" value="save_general" />
@@ -250,7 +260,17 @@ a:hover{ opacity:.9; }
               </div>
             </section>
             <section class="panel setting-card">
-              <header class="panel-heading">دسترسی با آی‌پی</header>
+              <header class="panel-heading panel-heading--modern">
+                <div class="panel-heading-main">
+                  <span class="panel-heading-icon">
+                    <i class="icon-shield"></i>
+                  </span>
+                  <div class="panel-heading-text">
+                    <div class="panel-heading-title">دسترسی با آی‌پی</div>
+                    <div class="panel-heading-subtitle">محدود کردن ورود مدیران تنها از آی‌پی‌های مجاز</div>
+                  </div>
+                </div>
+              </header>
               <div class="panel-body">
                 <form method="post">
                   <input type="hidden" name="action" value="save_general" />
@@ -272,7 +292,17 @@ a:hover{ opacity:.9; }
               </div>
             </section>
             <section class="panel setting-card">
-              <header class="panel-heading">تنظیمات فروشگاه</header>
+              <header class="panel-heading panel-heading--modern">
+                <div class="panel-heading-main">
+                  <span class="panel-heading-icon">
+                    <i class="icon-shopping-cart"></i>
+                  </span>
+                  <div class="panel-heading-text">
+                    <div class="panel-heading-title">تنظیمات فروشگاه</div>
+                    <div class="panel-heading-subtitle">مدیریت رفتار فروش، تخفیف‌ها و پیام‌های خرید</div>
+                  </div>
+                </div>
+              </header>
               <div class="panel-body">
                 <form method="post">
                   <input type="hidden" name="action" value="save_shop" />
@@ -291,7 +321,17 @@ a:hover{ opacity:.9; }
               </div>
             </section>
             <section class="panel setting-card">
-              <header class="panel-heading">ظاهر و برندینگ</header>
+              <header class="panel-heading panel-heading--modern">
+                <div class="panel-heading-main">
+                  <span class="panel-heading-icon">
+                    <i class="icon-picture"></i>
+                  </span>
+                  <div class="panel-heading-text">
+                    <div class="panel-heading-title">ظاهر و برندینگ</div>
+                    <div class="panel-heading-subtitle">شخصی‌سازی رنگ‌ها و هویت بصری پنل</div>
+                  </div>
+                </div>
+              </header>
               <div class="panel-body">
                 <div class="form-grid">
                   <div class="form-field"><label>Primary</label><input type="color" id="brandPrimary" value="#3b82f6" /></div>
@@ -309,7 +349,17 @@ a:hover{ opacity:.9; }
               </div>
             </section>
             <section class="panel setting-card">
-              <header class="panel-heading">چیدمان کیبورد ربات</header>
+              <header class="panel-heading panel-heading--modern">
+                <div class="panel-heading-main">
+                  <span class="panel-heading-icon">
+                    <i class="icon-keyboard"></i>
+                  </span>
+                  <div class="panel-heading-text">
+                    <div class="panel-heading-title">چیدمان کیبورد ربات</div>
+                    <div class="panel-heading-subtitle">ویرایش سریع ساختار دکمه‌های صفحه‌کلید ربات</div>
+                  </div>
+                </div>
+              </header>
               <div class="panel-body">
                 <form method="post">
                   <input type="hidden" name="action" value="save_keyboard" />
@@ -326,7 +376,17 @@ a:hover{ opacity:.9; }
             </section>
           </div>
             <section class="panel setting-card">
-              <header class="panel-heading">پشتیبان‌گیری و بازگردانی</header>
+              <header class="panel-heading panel-heading--modern">
+                <div class="panel-heading-main">
+                  <span class="panel-heading-icon">
+                    <i class="icon-hdd"></i>
+                  </span>
+                  <div class="panel-heading-text">
+                    <div class="panel-heading-title">پشتیبان‌گیری و بازگردانی</div>
+                    <div class="panel-heading-subtitle">دانلود و بازیابی تنظیمات سیستم از طریق فایل JSON</div>
+                  </div>
+                </div>
+              </header>
               <div class="panel-body">
                 <div style="margin-bottom:10px;">
                   <a class="btn btn-primary btn-space tooltips" href="settings.php?export=settings" data-original-title="دانلود نسخه پشتیبان" aria-label="دانلود تنظیمات"><i class="icon-download"></i> دریافت فایل تنظیمات</a>

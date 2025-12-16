@@ -132,7 +132,17 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                 <div class="row">
                     <div class="col-lg-12">
                         <section class="panel">
-                            <header class="panel-heading">جستجوی پیشرفته</header>
+                            <header class="panel-heading">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-search"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">جستجوی پیشرفته تراکنش‌ها</div>
+                                        <div class="panel-heading-subtitle">فیلتر سریع تراکنش‌ها بر اساس وضعیت، روش پرداخت و شناسه‌ها</div>
+                                    </div>
+                                </div>
+                            </header>
                             <div class="panel-body">
                                 <form class="form-inline filter-bar" role="form" method="get">
                                     <div class="form-group" style="margin-left:8px;">
@@ -205,7 +215,17 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                             </div>
                         </section>
                         <section class="panel">
-                            <header class="panel-heading">لیست تراکنش ها</header>
+                            <header class="panel-heading panel-heading--modern">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-credit-card"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">لیست تراکنش ها</div>
+                                        <div class="panel-heading-subtitle">نمایش وضعیت تراکنش‌های مالی کاربران و مدیریت سریع آن‌ها</div>
+                                    </div>
+                                </div>
+                            </header>
                             <?php
                             $total = count($listpayment);
                             $paidCount = 0;

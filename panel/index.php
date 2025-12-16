@@ -320,7 +320,17 @@ body{
               <div class="row">
                   <div class="col-lg-12">
                       <section class="panel">
-                          <header class="panel-heading">فیلتر داشبورد</header>
+                          <header class="panel-heading">
+                              <div class="panel-heading-main">
+                                  <span class="panel-heading-icon">
+                                      <i class="icon-filter"></i>
+                                  </span>
+                                  <div class="panel-heading-text">
+                                      <div class="panel-heading-title">فیلتر داشبورد</div>
+                                      <div class="panel-heading-subtitle">انتخاب بازه زمانی و وضعیت سفارش برای تحلیل دقیق‌تر</div>
+                                  </div>
+                              </div>
+                          </header>
                           <div class="panel-body">
                               <form class="form-inline" method="get" id="dashboardFilterForm">
                                   <div class="form-group" style="margin-left:8px;">
@@ -532,7 +542,17 @@ body{
                   </div>
               </div>
               <section class="panel" style="margin-top:12px;">
-                <header class="panel-heading">سفارشی‌سازی داشبورد</header>
+                <header class="panel-heading panel-heading--modern">
+                  <div class="panel-heading-main">
+                    <span class="panel-heading-icon">
+                      <i class="icon-dashboard"></i>
+                    </span>
+                    <div class="panel-heading-text">
+                      <div class="panel-heading-title">سفارشی‌سازی داشبورد</div>
+                      <div class="panel-heading-subtitle">انتخاب نمودارهای نمایشی بر اساس نیاز شما</div>
+                    </div>
+                  </div>
+                </header>
                 <div class="panel-body">
                   <div id="dashPrefs">
                     <div class="row">

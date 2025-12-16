@@ -61,7 +61,17 @@ if( !isset($_SESSION["user"]) || !$result ){
                 <div class="row">
                     <div class="col-lg-12">
                         <section class="panel">
-                            <header class="panel-heading">لیست خدمات های انجام شده</header>
+                            <header class="panel-heading panel-heading--modern">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-wrench"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">لیست خدمات های انجام شده</div>
+                                        <div class="panel-heading-subtitle">پیگیری عملیات تمدید، حجم اضافه و تغییرات روی سرویس‌ها</div>
+                                    </div>
+                                </div>
+                            </header>
                             <?php $total = count($listinvoice); ?>
                             <?php if(!$total){ ?>
                                 <div class="empty-state">

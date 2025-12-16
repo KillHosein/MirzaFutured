@@ -211,8 +211,16 @@ if($user['number'] == "none")$user['number'] ="بدون شماره ";
                             </div>
                         </section>
                         <section class="panel">
-                            <header class="panel-heading">
-                                مدیریت کاربر
+                            <header class="panel-heading panel-heading--modern">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-user"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">مدیریت کاربر</div>
+                                        <div class="panel-heading-subtitle">اقدام‌های سریع مدیریتی برای این حساب کاربری</div>
+                                    </div>
+                                </div>
                             </header>
                             <div class="panel-body">
                                 <a class="btn btn-default btn-sm" href="user.php?id=<?php echo $user['id'];?>&status=block" data-confirm="کاربر مسدود شود؟">مسدود کردن کاربر</a>

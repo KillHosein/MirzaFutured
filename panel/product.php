@@ -125,7 +125,17 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
                 <div class="row">
                     <div class="col-lg-12">
                         <section class="panel">
-                            <header class="panel-heading">لیست محصولات</header>
+                            <header class="panel-heading panel-heading--modern">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-tags"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">لیست محصولات</div>
+                                        <div class="panel-heading-subtitle">مدیریت پلن‌ها، قیمت‌ها و ویژگی‌های سرویس‌ها</div>
+                                    </div>
+                                </div>
+                            </header>
                             <?php $total = count($listinvoice); ?>
                                 <section class="panel">
                                 <a href="#addproduct" data-toggle="modal"  class="btn btn-info  btn-sm">اضافه کردن محصول</a>

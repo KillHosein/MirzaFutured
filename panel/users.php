@@ -95,7 +95,17 @@ if( !isset($_SESSION["user"]) || !$result ){
                 <div class="row">
                     <div class="col-lg-12">
                         <section class="panel">
-                            <header class="panel-heading">لیست کاربران</header>
+                            <header class="panel-heading panel-heading--modern">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-user"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">لیست کاربران</div>
+                                        <div class="panel-heading-subtitle">مدیریت کاربران، وضعیت حساب و عملیات گروهی</div>
+                                    </div>
+                                </div>
+                            </header>
                             <div class="panel-body">
                                 <form class="form-inline filter-bar" method="get" id="usersFilterForm">
                                     <div class="form-group">

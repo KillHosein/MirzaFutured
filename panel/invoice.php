@@ -196,8 +196,18 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                 <!-- page start-->
                 <div class="row">
                     <div class="col-lg-12">
-                        <section class="panel">
-                            <header class="panel-heading">جستجوی پیشرفته</header>
+                    <section class="panel">
+                            <header class="panel-heading">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-search"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">جستجوی پیشرفته سفارش‌ها</div>
+                                        <div class="panel-heading-subtitle">فیلتر فاکتور‌ها بر اساس تاریخ، وضعیت، محصول و کاربر</div>
+                                    </div>
+                                </div>
+                            </header>
                             <div class="panel-body">
                                 <form class="form-inline filter-bar" role="form" method="get" id="invoiceFilterForm">
                                     <div class="form-group">
@@ -307,7 +317,17 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                             </div>
                         </section>
                         <section class="panel">
-                            <header class="panel-heading">لیست سفارشات</header>
+                            <header class="panel-heading panel-heading--modern">
+                                <div class="panel-heading-main">
+                                    <span class="panel-heading-icon">
+                                        <i class="icon-list-alt"></i>
+                                    </span>
+                                    <div class="panel-heading-text">
+                                        <div class="panel-heading-title">لیست سفارشات</div>
+                                        <div class="panel-heading-subtitle">نمایش و مدیریت وضعیت سرویس‌های فروخته‌شده</div>
+                                    </div>
+                                </div>
+                            </header>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
