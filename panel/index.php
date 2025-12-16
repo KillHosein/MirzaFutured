@@ -240,7 +240,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
-            border-top: 1px solid rgba(255,255,255,0.12);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 20px;
             padding: 24px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
@@ -743,8 +743,15 @@ $(function(){
                             maintainAspectRatio: false,
                             plugins: { legend: { display: false } },
                             scales: {
-                                y: { beginAtZero: true, border: { display: false } },
-                                x: { grid: { display: false } }
+                                y: { 
+                                    beginAtZero: true, 
+                                    border: { display: false }, 
+                                    padding: { top: 10, bottom: 0 } // اضافه کردن فاصله از بالا
+                                },
+                                x: { 
+                                    grid: { display: true, color: 'rgba(255,255,255,0.08)' }, // اضافه کردن خطوط شبکه‌ای ملایم
+                                    ticks: { maxRotation: 0, autoSkipPadding: 20 } // بهبود خوانایی تاریخ‌ها
+                                }
                             }
                         }
                     });
