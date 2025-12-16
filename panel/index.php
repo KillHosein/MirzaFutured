@@ -81,7 +81,7 @@ if($resultcontsell != 0){
     $salesData = $query->fetchAll();
 
     foreach ($salesData as $sell){
-        if(count($grouped_data) > 15) break;
+        if(count($grouped_data) > 30) break; // Limit to 30 days
         if(!is_numeric($sell['time_sell'])) continue;
         
         $time = date('Y/m/d',$sell['time_sell']);
@@ -93,6 +93,8 @@ if($resultcontsell != 0){
         $grouped_data[$time]['total_amount'] += $price;
         $grouped_data[$time]['order_count'] += 1;
     }
+    krsort($grouped_data); // Sort by date descending
+    $grouped_data = array_reverse($grouped_data); // Sort by date ascending for chart
     $max_amount = max(array_map(function($info) { return $info['total_amount']; }, $grouped_data)) ?: 1;
 }
 
@@ -135,13 +137,13 @@ foreach($statusRows as $r){
 
 // Chart Data: New Users Trend
 $daysBack = 14;
-$userStart = ($fromDate && strtotime($fromDate)) ? strtotime($fromDate) : (strtotime(date('Y/m/d')) - ($daysBack-1)*86400);
-$userEnd = ($toDate && strtotime($toDate)) ? strtotime($toDate.' 23:59:59') : strtotime(date('Y/m/d'));
+$userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - ($daysBack-1)*86400);
+$userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
 $daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
 
 $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register BETWEEN :ustart AND :uend");
 $stmt->bindParam(':ustart',$userStart,PDO::PARAM_INT);
-$stmt->bindParam(':uend',$userEnd,PDO::PARAM_INT);
+$stmt->bindParam(':uend',$userEnd + 86400 - 1,PDO::PARAM_INT); // Add one day to include the entire 'to' day
 $stmt->execute();
 $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -150,7 +152,7 @@ $userCounts = [];
 $indexByDate = [];
 
 for($i=0;$i<$daysBack;$i++){
-    $d = strtotime(date('Y/m/d', $userStart + $i*86400));
+    $d = $userStart + $i*86400;
     $key = date('Y/m/d',$d);
     $indexByDate[$key] = count($userLabels);
     $userLabels[] = jdate('Y/m/d',$d);
@@ -202,6 +204,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             --text-muted: #94a3b8;
             
             --font-main: 'Vazirmatn', sans-serif;
+            --header-height: 60px;
         }
 
         body {
@@ -218,11 +221,49 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- Layout --- */
+        /* --- Global Overrides (Necessary for integrated header) --- */
         #container { width: 100%; height: 100%; }
-        #main-content { margin-right: 0px; padding-top: 60px; transition: all 0.3s; }
+        #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; } /* Adjusted for fixed header */
         .wrapper { padding: 25px; display: flex; flex-direction: column; gap: 30px; max-width: 1600px; margin: 0 auto; }
-
+        .site-header {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: var(--header-height);
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        .header-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            padding-right: 15px;
+            border-right: 2px solid var(--primary);
+        }
+        .header-nav {
+            margin-right: auto;
+            display: flex;
+            gap: 15px;
+        }
+        .header-nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+        .header-nav a:hover, .header-nav a.active {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
         /* --- Animations --- */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
@@ -292,8 +333,10 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             font-family: var(--font-main);
             outline: none; transition: 0.2s;
             min-width: 180px;
+            appearance: none; /* Remove default arrow for select */
         }
         .input-glass:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
+        .input-glass[multiple] { height: auto !important; min-height: 42px; }
 
         .btn-gradient {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -337,6 +380,12 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
         @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
         
+        .chart-card { /* Added chart card wrapper for better structure */
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .chart-title { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
         .chart-title i { color: var(--accent); }
@@ -370,13 +419,31 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .custom-check:hover { background: rgba(255,255,255,0.05); color: #fff; }
         .custom-check input { accent-color: var(--primary); }
 
+        /* --- Footer (Added for completeness) --- */
+        #footer {
+            margin-top: 50px;
+            padding: 20px 25px;
+            color: var(--text-muted);
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
     </style>
 </head>
 
 <body>
 
 <section id="container">
-    <?php include("header.php"); ?>
+    <!-- Manual Header Inclusion (Simplified for Canvas environment) -->
+    <header class="site-header">
+        <h1 class="header-title">پنل مدیریت</h1>
+        <nav class="header-nav">
+            <a href="index.php" class="active"><i class="icon-dashboard"></i> داشبورد</a>
+            <a href="invoice.php"><i class="icon-list-alt"></i> سفارشات</a>
+            <a href="user.php"><i class="icon-group"></i> کاربران</a>
+            <a href="logout.php"><i class="icon-off"></i> خروج</a>
+        </nav>
+    </header>
 
     <section id="main-content">
         <section class="wrapper">
@@ -412,7 +479,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                     <input type="hidden" name="to" id="rangeTo" value="<?php echo htmlspecialchars($toDate ?? '', ENT_QUOTES); ?>">
 
                     <!-- Status -->
-                    <select name="status[]" multiple class="input-glass" style="height: 42px;">
+                    <select name="status[]" multiple class="input-glass" style="height: auto; min-height: 42px;">
                         <?php foreach($statusMapFa as $sk => $sl): ?>
                             <option value="<?php echo $sk; ?>" <?php echo in_array($sk, $selectedStatuses) ? 'selected' : ''; ?>><?php echo $sl; ?></option>
                         <?php endforeach; ?>
@@ -420,7 +487,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 
                     <button type="submit" class="btn-gradient">
                         <i class="icon-filter"></i> 
-                        <span>فیلتر کن</span>
+                        <span>اعمال فیلتر</span>
                     </button>
                     
                     <?php if($fromDate || !empty($selectedStatuses)): ?>
@@ -468,9 +535,8 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 
             <!-- Charts Section -->
             <div class="charts-grid animate-enter delay-3" id="chartsArea">
-                <!-- Sales Chart -->
-                <?php if($resultcontsell != 0): ?>
-                <div class="modern-card" style="grid-column: span 2;" v-show="show.sales" id="cardSales">
+                <!-- Sales Chart (Bar) - Full Width on 2fr slot -->
+                <div class="chart-card modern-card" data-chart="sales" style="grid-column: 1 / -1;">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-graph"></i> روند فروش روزانه</span>
                     </div>
@@ -478,10 +544,9 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                         <canvas id="salesChart"></canvas>
                     </div>
                 </div>
-                <?php endif; ?>
 
-                <!-- Donut Chart -->
-                <div class="modern-card" v-show="show.status" id="cardStatus">
+                <!-- Status Doughnut Chart - 1fr slot -->
+                <div class="chart-card modern-card" data-chart="status">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-pie-chart"></i> وضعیت سفارشات</span>
                     </div>
@@ -490,8 +555,8 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                     </div>
                 </div>
 
-                <!-- Line Chart -->
-                <div class="modern-card" v-show="show.users" id="cardUsers">
+                <!-- Users Line Chart - 2fr slot -->
+                <div class="chart-card modern-card" data-chart="users" style="grid-column: 2;">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-user-md"></i> نرخ جذب کاربر</span>
                     </div>
@@ -553,6 +618,9 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             </div>
 
         </section>
+        <footer id="footer">
+            2024 &copy; پنل مدیریت
+        </footer>
     </section>
 </section>
 
@@ -574,7 +642,7 @@ $(function(){
     var to = $('#rangeTo').val();
     var $input = $('#rangePicker');
     
-    var start = from ? moment(from) : moment();
+    var start = from ? moment(from) : moment().subtract(14, 'days'); // Default to 14 days ago
     var end = to ? moment(to) : moment();
 
     function cb(start, end) {
@@ -590,7 +658,7 @@ $(function(){
         locale: { format: 'YYYY-MM-DD', separator: ' - ', applyLabel: 'تایید', cancelLabel: 'لغو' }
     }, cb);
 
-    if(from && to) { cb(start, end); }
+    if(from && to) { cb(start, end); } else { $input.val(''); } // Clear default if no dates are set
 
     $('#preset7d').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); $('#rangeTo').val(moment().format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
     $('#presetMonth').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().startOf('month').format('YYYY-MM-DD')); $('#rangeTo').val(moment().endOf('month').format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
@@ -603,7 +671,7 @@ $(function(){
     // Chart Config
     Chart.defaults.font.family = 'Vazirmatn';
     Chart.defaults.color = '#94a3b8';
-    Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.04)';
+    Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.08)';
 
     // Data from PHP
     <?php if($resultcontsell != 0): ?>
@@ -621,7 +689,7 @@ $(function(){
     var userLabels = <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>;
     var userCounts = <?php echo json_encode($userCounts); ?>;
 
-    // Vue App
+    // Vue App for Preferences
     const app = Vue.createApp({
         data() {
             return {
@@ -631,19 +699,42 @@ $(function(){
         watch: {
             show: {
                 deep: true,
-                handler(v) { localStorage.setItem('dash_prefs', JSON.stringify(v)); this.updateVisibility(v); }
+                handler(v) { 
+                    localStorage.setItem('dash_prefs', JSON.stringify(v)); 
+                    this.updateVisibility(v);
+                }
             }
         },
         mounted() {
-            this.initCharts();
             this.updateVisibility(this.show);
+            this.initCharts();
         },
         methods: {
             updateVisibility(v){
-                const toggle = (id, s) => { const el = document.getElementById(id); if(el) el.style.display = s ? 'block' : 'none'; };
-                toggle('cardSales', v.sales);
-                toggle('cardStatus', v.status);
-                toggle('cardUsers', v.users);
+                const toggle = (dataAttr, s) => { 
+                    const el = document.querySelector(`[data-chart="${dataAttr}"]`); 
+                    if(el) el.style.display = s ? 'flex' : 'none'; // Use flex for card display
+                };
+                toggle('sales', v.sales);
+                toggle('status', v.status);
+                toggle('users', v.users);
+
+                // Adjust grid based on visibility
+                const grid = document.getElementById('chartsArea');
+                if (v.sales && v.status && v.users) {
+                    grid.style.gridTemplateColumns = '2fr 1fr';
+                    document.querySelector('[data-chart="sales"]').style.gridColumn = '1 / -1';
+                    document.querySelector('[data-chart="users"]').style.gridColumn = '2';
+                } else if (v.sales && (!v.status || !v.users)) {
+                    grid.style.gridTemplateColumns = '1fr';
+                    document.querySelector('[data-chart="sales"]').style.gridColumn = '1 / -1';
+                } else if (v.status && v.users) {
+                    grid.style.gridTemplateColumns = '1fr 1fr';
+                    document.querySelector('[data-chart="status"]').style.gridColumn = '1';
+                    document.querySelector('[data-chart="users"]').style.gridColumn = '2';
+                } else {
+                     grid.style.gridTemplateColumns = '1fr'; // single chart or none
+                }
             },
             initCharts() {
                 // Sales Bar
@@ -677,14 +768,21 @@ $(function(){
                                     padding: 12,
                                     titleFont: { family: 'Vazirmatn', size: 14 },
                                     bodyFont: { family: 'Vazirmatn', size: 13 },
+                                    rtl: true,
                                     callbacks: {
                                         label: function(c) { return ' ' + Number(c.raw).toLocaleString() + ' تومان'; }
                                     }
                                 }
                             },
                             scales: {
-                                y: { beginAtZero: true, border: { display: false } },
-                                x: { grid: { display: false } }
+                                y: { 
+                                    beginAtZero: true, 
+                                    border: { display: false },
+                                    grid: { color: 'rgba(255,255,255,0.08)' }
+                                },
+                                x: { 
+                                    grid: { display: false } 
+                                }
                             }
                         }
                     });
@@ -708,7 +806,14 @@ $(function(){
                             maintainAspectRatio: false,
                             cutout: '75%',
                             plugins: {
-                                legend: { position: 'right', labels: { boxWidth: 10, padding: 15, font: { family: 'Vazirmatn', size: 12 } } }
+                                legend: { 
+                                    position: 'right', 
+                                    labels: { 
+                                        boxWidth: 10, 
+                                        padding: 15, 
+                                        font: { family: 'Vazirmatn', size: 12 } 
+                                    } 
+                                }
                             }
                         }
                     });
@@ -746,11 +851,12 @@ $(function(){
                                 y: { 
                                     beginAtZero: true, 
                                     border: { display: false }, 
-                                    padding: { top: 10, bottom: 0 } // اضافه کردن فاصله از بالا
+                                    padding: { top: 10, bottom: 0 },
+                                    grid: { color: 'rgba(255,255,255,0.08)' }
                                 },
                                 x: { 
-                                    grid: { display: true, color: 'rgba(255,255,255,0.08)' }, // اضافه کردن خطوط شبکه‌ای ملایم
-                                    ticks: { maxRotation: 0, autoSkipPadding: 20 } // بهبود خوانایی تاریخ‌ها
+                                    grid: { display: true, color: 'rgba(255,255,255,0.08)' }, 
+                                    ticks: { maxRotation: 0, autoSkipPadding: 20 }
                                 }
                             }
                         }
