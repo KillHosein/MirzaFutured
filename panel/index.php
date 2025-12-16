@@ -1,88 +1,97 @@
 <?php
 // --- خطایابی و گزارش‌دهی PHP (برای پیدا کردن علت خطای 500) ---
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+ini_set("display_errors", 1);
+ini_set("display_startup_errors", 1);
 error_reporting(E_ALL);
 
 session_start();
 
 // فرض می‌کنیم این فایل‌ها در دسترس هستند و حاوی توابع مورد نیازند
-require_once '../config.php';
-require_once '../jdf.php';
+require_once "../config.php";
+require_once "../jdf.php";
 
 // --- بررسی حیاتی: اطمینان از تعریف متغیر اتصال به دیتابیس ---
 if (!isset($pdo) || !($pdo instanceof PDO)) {
-    die("Fatal Error: Database connection variable (\$pdo) is not defined or is not a PDO object. Please check 'config.php'.");
+    die(
+        "Fatal Error: Database connection variable (\$pdo) is not defined or is not a PDO object. Please check 'config.php'."
+    );
 }
 
 // --- Logic Section ---
 $datefirstday = time() - 86400; // Time yesterday (for new users calculation)
-$fromDate = isset($_GET['from']) ? $_GET['from'] : null;
-$toDate = isset($_GET['to']) ? $_GET['to'] : null;
-$selectedStatuses = isset($_GET['status']) ? $_GET['status'] : [];
+$fromDate = isset($_GET["from"]) ? $_GET["from"] : null;
+$toDate = isset($_GET["to"]) ? $_GET["to"] : null;
+$selectedStatuses = isset($_GET["status"]) ? $_GET["status"] : [];
 
-if(!is_array($selectedStatuses) && !empty($selectedStatuses)) $selectedStatuses = [$selectedStatuses];
+if (!is_array($selectedStatuses) && !empty($selectedStatuses)) {
+    $selectedStatuses = [$selectedStatuses];
+}
 
 // 1. Authentication Check
 try {
-    if( !isset($_SESSION["user"]) ){
-        header('Location: login.php');
-        exit;
+    if (!isset($_SESSION["user"])) {
+        header("Location: login.php");
+        exit();
     }
-    
+
     $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $query->execute(['username' => $_SESSION["user"]]); 
+    $query->execute(["username" => $_SESSION["user"]]);
     $result = $query->fetch(PDO::FETCH_ASSOC);
-    
-    if(!$result ){
-        header('Location: login.php');
-        exit;
+
+    if (!$result) {
+        header("Location: login.php");
+        exit();
     }
 } catch (PDOException $e) {
     error_log("Auth failed: " . $e->getMessage());
-    die("Database Error during authentication check. Please check logs. Message: " . $e->getMessage());
+    die(
+        "Database Error during authentication check. Please check logs. Message: " .
+            $e->getMessage()
+    );
 }
-
 
 // 2. Filter Logic for Invoices
 $invoiceWhere = ["name_product != 'سرویس تست'"];
 $invoiceParams = [];
 
 // Date Filtering
-if($fromDate && strtotime($fromDate)){
+if ($fromDate && strtotime($fromDate)) {
     $invoiceWhere[] = "time_sell >= :fromTs";
-    $invoiceParams[':fromTs'] = strtotime($fromDate);
+    $invoiceParams[":fromTs"] = strtotime($fromDate);
 }
-if($toDate && strtotime($toDate)){
+if ($toDate && strtotime($toDate)) {
     $invoiceWhere[] = "time_sell <= :toTs";
     // Adding 23:59:59 to include the entire 'to' day
-    $invoiceParams[':toTs'] = strtotime($toDate.' 23:59:59');
+    $invoiceParams[":toTs"] = strtotime($toDate . " 23:59:59");
 }
 
 // Status Filtering
-if(!empty($selectedStatuses)){
+if (!empty($selectedStatuses)) {
     $placeholders = [];
     foreach ($selectedStatuses as $i => $status) {
         $placeholder = ":status_$i";
         $placeholders[] = $placeholder;
         $invoiceParams[$placeholder] = $status;
     }
-    $invoiceWhere[] = "status IN (" . implode(', ', $placeholders) . ")";
-}else{
+    $invoiceWhere[] = "status IN (" . implode(", ", $placeholders) . ")";
+} else {
     // Default statuses to include most relevant orders if no filter is applied
-    $invoiceWhere[] = "status IN ('active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid')";
+    $invoiceWhere[] =
+        "status IN ('active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid')";
 }
 
-$invoiceWhereSql = implode(' AND ', $invoiceWhere);
+$invoiceWhereSql = implode(" AND ", $invoiceWhere);
 
 // 3. Sales and User Counts
 
 try {
     // Total Sales Amount
-    $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from total sales
+    $query = $pdo->prepare(
+        "SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"
+    ); // Exclude unpaid from total sales
     $query->execute($invoiceParams);
     $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
-    $total_sales = $subinvoice['SUM(price_product)'] ?? 0;
+    $total_sales = $subinvoice["SUM(price_product)"] ?? 0;
 
     // Total User Counts (Overall)
     $query = $pdo->prepare("SELECT COUNT(*) FROM user");
@@ -90,12 +99,16 @@ try {
     $resultcount = $query->fetchColumn();
 
     // New Users Today (Fix applied here in previous turn: using execute array instead of bindParam)
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
-    $stmt->execute([':time_register' => $datefirstday]); 
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'"
+    );
+    $stmt->execute([":time_register" => $datefirstday]);
     $resultcountday = $stmt->fetchColumn();
 
     // Sales Count (Filtered)
-    $query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from order count
+    $query = $pdo->prepare(
+        "SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"
+    ); // Exclude unpaid from order count
     $query->execute($invoiceParams);
     $resultcontsell = $query->fetchColumn();
 } catch (PDOException $e) {
@@ -106,92 +119,124 @@ $formatted_total_sales = number_format($total_sales);
 
 // 4. Chart Data: Sales Trend
 $grouped_data = [];
-if($resultcontsell > 0){
+if ($resultcontsell > 0) {
     try {
         // Fetch only paid sales data for the chart
-        $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;");
+        $query = $pdo->prepare(
+            "SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;"
+        );
         $query->execute($invoiceParams);
         $salesData = $query->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach ($salesData as $sell){
-            if(!is_numeric($sell['time_sell'])) continue; 
-            
-            $time_sell_day = date('Y/m/d', (int)$sell['time_sell']);
-            $price = (int)$sell['price_product'];
-            
-            if (!isset($grouped_data[$time_sell_day])) {
-                $grouped_data[$time_sell_day] = ['total_amount' => 0, 'order_count' => 0];
+        foreach ($salesData as $sell) {
+            if (!is_numeric($sell["time_sell"])) {
+                continue;
             }
-            $grouped_data[$time_sell_day]['total_amount'] += $price;
-            $grouped_data[$time_sell_day]['order_count'] += 1;
+
+            $time_sell_day = date("Y/m/d", (int) $sell["time_sell"]);
+            $price = (int) $sell["price_product"];
+
+            if (!isset($grouped_data[$time_sell_day])) {
+                $grouped_data[$time_sell_day] = [
+                    "total_amount" => 0,
+                    "order_count" => 0,
+                ];
+            }
+            $grouped_data[$time_sell_day]["total_amount"] += $price;
+            $grouped_data[$time_sell_day]["order_count"] += 1;
         }
         ksort($grouped_data); // Sort by date ascending for chart
     } catch (PDOException $e) {
-        die("Database Error while fetching Sales Trend. Message: " . $e->getMessage());
+        die(
+            "Database Error while fetching Sales Trend. Message: " .
+                $e->getMessage()
+        );
     }
 }
 
 // Convert Gregorian dates to Persian for chart labels
-$salesLabels = array_values(array_map(function($d){ 
-    return jdate('Y/m/d', strtotime($d)); 
-}, array_keys($grouped_data)));
-$salesAmount = array_values(array_map(function($i){ return $i['total_amount']; }, $grouped_data));
+$salesLabels = array_values(
+    array_map(function ($d) {
+        return jdate("Y/m/d", strtotime($d));
+    }, array_keys($grouped_data))
+);
+$salesAmount = array_values(
+    array_map(function ($i) {
+        return $i["total_amount"];
+    }, $grouped_data)
+);
 
 // 5. Chart Data: Status Distribution
 $statusMapFa = [
-    'unpaid' => 'در انتظار پرداخت',
-    'active' => 'فعال',
-    'disabledn' => 'غیرفعال', // Changed from 'ناموجود' to 'غیرفعال' for better context
-    'end_of_time' => 'پایان زمان',
-    'end_of_volume' => 'پایان حجم',
-    'sendedwarn' => 'هشدار',
-    'send_on_hold' => 'در انتظار اتصال',
-    'removebyuser' => 'حذف شده'
+    "unpaid" => "در انتظار پرداخت",
+    "active" => "فعال",
+    "disabledn" => "غیرفعال", // Changed from 'ناموجود' to 'غیرفعال' for better context
+    "end_of_time" => "پایان زمان",
+    "end_of_volume" => "پایان حجم",
+    "sendedwarn" => "هشدار",
+    "send_on_hold" => "در انتظار اتصال",
+    "removebyuser" => "حذف شده",
 ];
 $colorMap = [
-    'unpaid' => '#fbbf24', // Amber
-    'active' => '#10b981', // Emerald (Slightly darker for better contrast)
-    'disabledn' => '#94a3b8', // Slate
-    'end_of_time' => '#ef4444', // Red
-    'end_of_volume' => '#3b82f6', // Blue
-    'sendedwarn' => '#a855f7', // Violet
-    'send_on_hold' => '#f97316', // Orange
-    'removebyuser' => '#475569' // Dark Slate
+    "unpaid" => "#fbbf24", // Amber
+    "active" => "#10b981", // Emerald (Slightly darker for better contrast)
+    "disabledn" => "#94a3b8", // Slate
+    "end_of_time" => "#ef4444", // Red
+    "end_of_volume" => "#3b82f6", // Blue
+    "sendedwarn" => "#a855f7", // Violet
+    "send_on_hold" => "#f97316", // Orange
+    "removebyuser" => "#475569", // Dark Slate
 ];
 
 try {
-    $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
+    $stmt = $pdo->prepare(
+        "SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status"
+    );
     $stmt->execute($invoiceParams);
     $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die("Database Error while fetching Status Distribution. Message: " . $e->getMessage());
+    die(
+        "Database Error while fetching Status Distribution. Message: " .
+            $e->getMessage()
+    );
 }
 
 $statusLabels = [];
 $statusData = [];
 $statusColors = [];
 
-foreach($statusRows as $r){
-    $k = $r['status'];
+foreach ($statusRows as $r) {
+    $k = $r["status"];
     $statusLabels[] = isset($statusMapFa[$k]) ? $statusMapFa[$k] : $k;
-    $statusData[] = (int)$r['cnt'];
-    $statusColors[] = isset($colorMap[$k]) ? $colorMap[$k] : '#64748b';
+    $statusData[] = (int) $r["cnt"];
+    $statusColors[] = isset($colorMap[$k]) ? $colorMap[$k] : "#64748b";
 }
 
 // 6. Chart Data: New Users Trend
-$userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - (13 * 86400));
-$userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
-$daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
+$userStart =
+    $fromDate && strtotime($fromDate)
+        ? strtotime(date("Y/m/d", strtotime($fromDate)))
+        : strtotime(date("Y/m/d")) - 13 * 86400;
+$userEnd =
+    $toDate && strtotime($toDate)
+        ? strtotime(date("Y/m/d", strtotime($toDate)))
+        : strtotime(date("Y/m/d"));
+$daysBack = max(1, floor(($userEnd - $userStart) / 86400) + 1);
 
 try {
-    $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend");
+    $stmt = $pdo->prepare(
+        "SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend"
+    );
     $stmt->execute([
-        ':ustart' => $userStart,
-        ':uend' => $userEnd + 86400 - 1
+        ":ustart" => $userStart,
+        ":uend" => $userEnd + 86400 - 1,
     ]);
     $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die("Database Error while fetching New Users Trend. Message: " . $e->getMessage());
+    die(
+        "Database Error while fetching New Users Trend. Message: " .
+            $e->getMessage()
+    );
 }
 
 $userLabels = [];
@@ -199,28 +244,37 @@ $userCounts = [];
 $indexByDate = [];
 
 // Prepare labels for the time range
-for($i=0;$i<$daysBack;$i++){
-    $d = $userStart + $i*86400;
-    $key = date('Y/m/d',$d);
+for ($i = 0; $i < $daysBack; $i++) {
+    $d = $userStart + $i * 86400;
+    $key = date("Y/m/d", $d);
     $indexByDate[$key] = count($userLabels);
-    $userLabels[] = jdate('Y/m/d',$d); // Persian date label
+    $userLabels[] = jdate("Y/m/d", $d); // Persian date label
     $userCounts[] = 0;
 }
 
 // Count registrations
-foreach($regRows as $row){
-    if(!is_numeric($row['register'])) continue;
-    $key = date('Y/m/d', (int)$row['register']);
-    if(isset($indexByDate[$key])){
+foreach ($regRows as $row) {
+    if (!is_numeric($row["register"])) {
+        continue;
+    }
+    $key = date("Y/m/d", (int) $row["register"]);
+    if (isset($indexByDate[$key])) {
         $userCounts[$indexByDate[$key]]++;
     }
 }
 
 // 7. Time Greeting Logic
-$hour = date('H');
-if ($hour < 12) { $greeting = "صبح بخیر"; $greetIcon = "icon-sun"; }
-elseif ($hour < 17) { $greeting = "ظهر بخیر"; $greetIcon = "icon-coffee"; }
-else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
+$hour = date("H");
+if ($hour < 12) {
+    $greeting = "صبح بخیر";
+    $greetIcon = "icon-sun";
+} elseif ($hour < 17) {
+    $greeting = "ظهر بخیر";
+    $greetIcon = "icon-coffee";
+} else {
+    $greeting = "عصر بخیر";
+    $greetIcon = "icon-moon";
+}
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -545,7 +599,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                     <h1><?php echo $greeting; ?>، مدیر عزیز</h1>
                     <div class="hero-subtitle">
                         <i class="<?php echo $greetIcon; ?>"></i>
-                        <span>امروز: <?php echo jdate('l، j F Y'); ?></span>
+                        <span>امروز: <?php echo jdate("l، j F Y"); ?></span>
                         <span style="margin: 0 10px; opacity: 0.3;">|</span>
                         <span>وضعیت: <span style="color: #34d399;">سیستم پایدار است</span></span>
                     </div>
@@ -567,14 +621,25 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                         <i class="icon-calendar" style="position: absolute; right: 15px; top: 14px; color: var(--text-muted); pointer-events: none;"></i>
                     </div>
                     <!-- Hidden fields to store date range values for submission -->
-                    <input type="hidden" name="from" id="rangeFrom" value="<?php echo htmlspecialchars($fromDate ?? '', ENT_QUOTES); ?>">
-                    <input type="hidden" name="to" id="rangeTo" value="<?php echo htmlspecialchars($toDate ?? '', ENT_QUOTES); ?>">
+                    <input type="hidden" name="from" id="rangeFrom" value="<?php echo htmlspecialchars(
+                        $fromDate ?? "",
+                        ENT_QUOTES
+                    ); ?>">
+                    <input type="hidden" name="to" id="rangeTo" value="<?php echo htmlspecialchars(
+                        $toDate ?? "",
+                        ENT_QUOTES
+                    ); ?>">
 
                     <!-- Status Multi-Select -->
                     <select name="status[]" multiple class="input-glass" style="height: auto; min-height: 46px; flex-grow: 1; max-width: 300px;">
                         <!-- Populate status options from PHP data -->
-                        <?php foreach($statusMapFa as $sk => $sl): ?>
-                            <option value="<?php echo $sk; ?>" <?php echo in_array($sk, $selectedStatuses) ? 'selected' : ''; ?>><?php echo $sl; ?></option>
+                        <?php foreach ($statusMapFa as $sk => $sl): ?>
+                            <option value="<?php echo $sk; ?>" <?php echo in_array(
+    $sk,
+    $selectedStatuses
+)
+    ? "selected"
+    : ""; ?>><?php echo $sl; ?></option>
                         <?php endforeach; ?>
                     </select>
                     
@@ -584,7 +649,11 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                             <span>اعمال فیلتر</span>
                         </button>
                         
-                        <?php if($fromDate || $toDate || !empty($selectedStatuses)): ?>
+                        <?php if (
+                            $fromDate ||
+                            $toDate ||
+                            !empty($selectedStatuses)
+                        ): ?>
                         <!-- Reset Filter Button -->
                         <a href="index.php" class="btn-glass" title="حذف فیلترها" style="display: flex; align-items: center; justify-content: center; padding: 12px 18px;">
                             <i class="icon-refresh"></i>
@@ -804,12 +873,21 @@ $(function(){
     Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.08)';
 
     // Data from PHP, safely encoded
-    var salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var salesLabels = <?php echo json_encode(
+        $salesLabels,
+        JSON_UNESCAPED_UNICODE
+    ); ?>;
     var salesAmount = <?php echo json_encode($salesAmount); ?>;
-    var statusLabels = <?php echo json_encode($statusLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var statusLabels = <?php echo json_encode(
+        $statusLabels,
+        JSON_UNESCAPED_UNICODE
+    ); ?>;
     var statusData = <?php echo json_encode($statusData); ?>;
     var statusColors = <?php echo json_encode($statusColors); ?>;
-    var userLabels = <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var userLabels = <?php echo json_encode(
+        $userLabels,
+        JSON_UNESCAPED_UNICODE
+    ); ?>;
     var userCounts = <?php echo json_encode($userCounts); ?>;
 
     const initializedCharts = new Set();
