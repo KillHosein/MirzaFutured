@@ -97,30 +97,49 @@ if( !isset($_SESSION["user"]) || !$result ){
                         <section class="panel">
                             <header class="panel-heading">لیست کاربران</header>
                             <div class="panel-body">
-                                <form class="form-inline" method="get">
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <input type="text" name="q" class="form-control" placeholder="جستجو نام کاربری/آیدی/شماره" value="<?php echo isset($_GET['q'])?htmlspecialchars($_GET['q']):''; ?>">
+                                <form class="form-inline filter-bar" method="get" id="usersFilterForm">
+                                    <div class="form-group">
+                                        <label for="filterSearch" class="control-label">جستجو</label>
+                                        <input type="text" id="filterSearch" name="q" class="form-control" placeholder="نام کاربری، آیدی یا شماره" value="<?php echo isset($_GET['q'])?htmlspecialchars($_GET['q']):''; ?>">
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <select name="status" class="form-control">
+                                    <div class="form-group">
+                                        <label for="filterStatus" class="control-label">وضعیت</label>
+                                        <select id="filterStatus" name="status" class="form-control">
                                             <option value="">همه وضعیت‌ها</option>
                                             <option value="active" <?php echo (isset($_GET['status']) && $_GET['status']==='active')?'selected':''; ?>>فعال</option>
                                             <option value="block" <?php echo (isset($_GET['status']) && $_GET['status']==='block')?'selected':''; ?>>مسدود</option>
                                         </select>
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <select name="agent" class="form-control">
+                                    <div class="form-group">
+                                        <label for="filterAgent" class="control-label">نوع کاربر</label>
+                                        <select id="filterAgent" name="agent" class="form-control">
                                             <option value="">همه گروه‌ها</option>
                                             <option value="f" <?php echo (isset($_GET['agent']) && $_GET['agent']==='f')?'selected':''; ?>>کاربر عادی</option>
                                             <option value="n" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n')?'selected':''; ?>>نماینده معمولی</option>
                                             <option value="n2" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n2')?'selected':''; ?>>نماینده پیشرفته</option>
                                         </select>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">فیلتر</button>
-                                    <a href="users.php" class="btn btn-default">پاک کردن</a>
-                                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
-                                    <a href="#" class="btn btn-default" id="usersSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
-                                    <a href="#" class="btn btn-default" id="usersLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
+                                    <div class="filter-actions">
+                                        <button type="submit" class="btn btn-primary" id="usersFilterSubmit">اعمال فیلتر</button>
+                                        <a href="users.php" class="btn btn-default">پاک کردن</a>
+                                        <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                        <a href="#" class="btn btn-default" id="usersSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
+                                        <a href="#" class="btn btn-default" id="usersLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
+                                    </div>
+                                    <div class="filter-chips">
+                                        <?php if(!empty($_GET['q'])){ ?>
+                                            <span class="filter-chip">جستجو: <?php echo htmlspecialchars($_GET['q']); ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['status'])){ ?>
+                                            <span class="filter-chip">وضعیت: <?php echo $_GET['status']==='active'?'فعال':'مسدود'; ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['agent'])){ ?>
+                                            <span class="filter-chip">نوع: <?php echo $_GET['agent']==='f'?'کاربر عادی':($_GET['agent']==='n'?'نماینده معمولی':'نماینده پیشرفته'); ?></span>
+                                        <?php } ?>
+                                        <?php if(empty($_GET['q']) && empty($_GET['status']) && empty($_GET['agent'])){ ?>
+                                            <span class="filter-chip muted">هیچ فیلتری اعمال نشده است</span>
+                                        <?php } ?>
+                                    </div>
                                 </form>
                                 <div class="action-toolbar sticky">
                                     <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
@@ -164,6 +183,18 @@ if( !isset($_SESSION["user"]) || !$result ){
                                 <div class="stat-card"><div class="stat-title">فعال</div><div class="stat-value"><?php echo number_format($activeCount); ?></div></div>
                                 <div class="stat-card"><div class="stat-title">مسدود</div><div class="stat-value"><?php echo number_format($blockCount); ?></div></div>
                             </div>
+                            <?php if(!$total){ ?>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-user"></i>
+                                    </div>
+                                    <h3>کاربری یافت نشد</h3>
+                                    <p>می‌توانید فیلترها را تغییر دهید یا جستجو را خالی کنید و دوباره تلاش کنید.</p>
+                                    <div class="empty-actions">
+                                        <a href="users.php" class="btn btn-default">نمایش همه کاربران</a>
+                                    </div>
+                                </div>
+                            <?php } ?>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
@@ -179,6 +210,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     </tr>
                                 </thead>
                                 <tbody> <?php
+                                if($total){
                                 foreach($listusers as $list){
                                     $statusKey = strtolower($list['User_Status']);
                                     $status_user = [
@@ -189,6 +221,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     if($list['number'] == "none")$list['number'] ="بدون شماره ";
                                    $statusClass = 'status-'.strtolower($statusKey);
                                    echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id']}</td>\n                                        <td class=\"hidden-phone\">{$list['username']}</td>\n                                        <td class=\"hidden-phone\">{$list['number']}</td>\n                                        <td class=\"hidden-phone\">".number_format($list['Balance'])."</td>\n                                        <td class=\"hidden-phone\">{$list['affiliatescount']}</td>\n                                        <td class=\"hidden-phone\"><span class=\"status-badge {$statusClass}\">{$status_user}</span></td>\n                                        <td class=\"hidden-phone\">\n                                        <a class = \"btn btn-success\" href= \"user.php?id={$list['id']}\">مدیریت کاربر </a></td>\n                                    </tr>";
+                                }
                                 }
                                     ?>
                                 </tbody>
@@ -239,8 +272,8 @@ if( !isset($_SESSION["user"]) || !$result ){
         }
         $('#usersBlockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('block'); });
         $('#usersUnblockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('active'); });
-        $('#usersPresetActive').on('click', function(e){ e.preventDefault(); var $f=$('form[method="get"]'); $f.find('select[name="status"]').val('active'); $f.submit(); });
-        $('#usersPresetBlock').on('click', function(e){ e.preventDefault(); var $f=$('form[method="get"]'); $f.find('select[name="status"]').val('block'); $f.submit(); });
+        $('#usersPresetActive').on('click', function(e){ e.preventDefault(); var $f=$('#usersFilterForm'); $f.find('select[name="status"]').val('active'); $f.submit(); });
+        $('#usersPresetBlock').on('click', function(e){ e.preventDefault(); var $f=$('#usersFilterForm'); $f.find('select[name="status"]').val('block'); $f.submit(); });
         $('#usersSendMsg').on('click', function(e){ e.preventDefault(); var txt=$('#usersMessage').val(); if(!txt){ showToast('متن پیام را وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,textmessage:txt}).always(function(){ done++; if(done===ids.length){ showToast('پیام‌ها ارسال شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
         function bulkBalance(param){ var amt=parseInt($('#usersAmount').val(),10); if(!(amt>0)){ showToast('مبلغ معتبر وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; var key = param==='add' ? 'priceadd' : 'pricelow'; ids.forEach(function(id){ var args={id:id}; args[key]=amt; $.get('user.php',args).always(function(){ done++; if(done===ids.length){ showToast('عملیات موجودی انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); }
         $('#usersAddBalance').on('click', function(e){ e.preventDefault(); bulkBalance('add'); });
@@ -253,7 +286,7 @@ if( !isset($_SESSION["user"]) || !$result ){
         $('#usersExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
         $('#usersExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
         attachSelectionCounter('#sample_1','#usersSelCount');
-        setupSavedFilter('form[method="get"]','#usersSaveFilter','#usersLoadFilter','users');
+        setupSavedFilter('#usersFilterForm','#usersSaveFilter','#usersLoadFilter','users');
         attachColumnToggles('#sample_1','#usersColumnsBtn');
       })();
     </script>
