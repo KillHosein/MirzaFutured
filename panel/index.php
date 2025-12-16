@@ -2,11 +2,12 @@
 session_start();
 // Предполагаем, что config.php и jdf.php доступны и содержат нужные функции
 // We assume config.php and jdf.php are available and contain necessary functions
+// Ensure these paths are correct for your environment
 require_once '../config.php';
 require_once '../jdf.php';
 
 // --- Logic Section ---
-$datefirstday = time() - 86400; // Time yesterday
+$datefirstday = time() - 86400; // Time yesterday (for new users calculation)
 $fromDate = isset($_GET['from']) ? $_GET['from'] : null;
 $toDate = isset($_GET['to']) ? $_GET['to'] : null;
 $selectedStatuses = isset($_GET['status']) ? $_GET['status'] : [];
@@ -26,7 +27,7 @@ try {
 } catch (PDOException $e) {
     // Handle database error during auth
     error_log("Auth failed: " . $e->getMessage());
-    // Fallback to anonymous login or show a generic error
+    // In a real application, you might redirect to a maintenance page or error page
 }
 
 
@@ -34,16 +35,18 @@ try {
 $invoiceWhere = ["name_product != 'سرویس تست'"];
 $invoiceParams = [];
 
+// Date Filtering
 if($fromDate && strtotime($fromDate)){
     $invoiceWhere[] = "time_sell >= :fromTs";
     $invoiceParams[':fromTs'] = strtotime($fromDate);
 }
 if($toDate && strtotime($toDate)){
     $invoiceWhere[] = "time_sell <= :toTs";
+    // Adding 23:59:59 to include the entire 'to' day
     $invoiceParams[':toTs'] = strtotime($toDate.' 23:59:59');
 }
 
-// Prepare status placeholders
+// Status Filtering
 if(!empty($selectedStatuses)){
     $ph = [];
     foreach($selectedStatuses as $i => $st){
@@ -51,9 +54,10 @@ if(!empty($selectedStatuses)){
         $ph[] = $k;
         $invoiceParams[$k] = $st;
     }
+    // Using IN clause for status filtering
     $invoiceWhere[] = "status IN (".implode(',', $ph).")";
 }else{
-    // Default statuses if none selected
+    // Default statuses to include most relevant orders if no filter is applied
     $invoiceWhere[] = "status IN ('active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid')";
 }
 
@@ -62,12 +66,12 @@ $invoiceWhereSql = implode(' AND ', $invoiceWhere);
 // 3. Sales and User Counts
 
 // Total Sales Amount
-$query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql");
+$query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from total sales
 $query->execute($invoiceParams);
 $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
 $total_sales = $subinvoice['SUM(price_product)'] ?? 0;
 
-// Total User Counts
+// Total User Counts (Overall)
 $query = $pdo->prepare("SELECT COUNT(*) FROM user");
 $query->execute();
 $resultcount = $query->fetchColumn();
@@ -78,8 +82,8 @@ $stmt->bindParam(':time_register', $datefirstday);
 $stmt->execute();
 $resultcountday = $stmt->fetchColumn();
 
-// Sales Count
-$query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql");
+// Sales Count (Filtered)
+$query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from order count
 $query->execute($invoiceParams);
 $resultcontsell = $query->fetchColumn();
 
@@ -88,8 +92,8 @@ $formatted_total_sales = number_format($total_sales);
 // 4. Chart Data: Sales Trend
 $grouped_data = [];
 if($resultcontsell > 0){
-    // Fetch sales data
-    $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql ORDER BY time_sell DESC;");
+    // Fetch only paid sales data for the chart
+    $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;");
     $query->execute($invoiceParams);
     $salesData = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -108,12 +112,13 @@ if($resultcontsell > 0){
     ksort($grouped_data); // Sort by date ascending for chart
 }
 
+// Convert Gregorian dates to Persian for chart labels
 $salesLabels = array_values(array_map(function($d){ return jdate('Y/m/d', strtotime($d)); }, array_keys($grouped_data)));
 $salesAmount = array_values(array_map(function($i){ return $i['total_amount']; }, $grouped_data));
 $salesCount = array_values(array_map(function($i){ return $i['order_count']; }, $grouped_data));
 
 
-// 5. Chart Data: Status Distribution
+// 5. Chart Data: Status Distribution (All statuses in filtered period)
 $statusMapFa = [
     'unpaid' => 'در انتظار پرداخت',
     'active' => 'فعال',
@@ -125,14 +130,14 @@ $statusMapFa = [
     'removebyuser' => 'حذف توسط کاربر'
 ];
 $colorMap = [
-    'unpaid' => '#fbbf24',
-    'active' => '#34d399',
-    'disabledn' => '#9ca3af',
-    'end_of_time' => '#f87171',
-    'end_of_volume' => '#60a5fa',
-    'sendedwarn' => '#a78bfa',
-    'send_on_hold' => '#fb923c',
-    'removebyuser' => '#cbd5e1'
+    'unpaid' => '#fbbf24', // Amber
+    'active' => '#34d399', // Emerald
+    'disabledn' => '#9ca3af', // Gray
+    'end_of_time' => '#f87171', // Red
+    'end_of_volume' => '#60a5fa', // Blue
+    'sendedwarn' => '#a78bfa', // Violet
+    'send_on_hold' => '#fb923c', // Orange
+    'removebyuser' => '#cbd5e1' // Light Gray
 ];
 
 $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
@@ -151,6 +156,7 @@ foreach($statusRows as $r){
 }
 
 // 6. Chart Data: New Users Trend (Last 14 days or filtered period)
+// Determine time range for user registration chart
 $userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - (13 * 86400)); // 14 days back including today
 $userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
 $daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
@@ -170,7 +176,7 @@ for($i=0;$i<$daysBack;$i++){
     $d = $userStart + $i*86400;
     $key = date('Y/m/d',$d);
     $indexByDate[$key] = count($userLabels);
-    $userLabels[] = jdate('Y/m/d',$d);
+    $userLabels[] = jdate('Y/m/d',$d); // Persian date label
     $userCounts[] = 0;
 }
 
@@ -196,7 +202,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پنل مدیریت حرفه‌ای</title>
     
-    <!-- Fonts -->
+    <!-- Fonts: Vazirmatn is standard for Persian typography -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
     <!-- CSS Dependencies -->
@@ -205,6 +211,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
     <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
 
     <style>
+        /* CSS variables for a dark, glassmorphism theme */
         :root {
             --bg-body: #0f172a; /* Slate 900 */
             --glass-bg: rgba(30, 41, 59, 0.65);
@@ -225,6 +232,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 
         body {
             background-color: var(--bg-body);
+            /* Background gradients for visual depth */
             background-image: 
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
@@ -237,7 +245,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- Global Overrides --- */
+        /* --- Global Layout --- */
         #container { width: 100%; height: 100%; }
         #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; }
         .wrapper { padding: 25px; display: flex; flex-direction: column; gap: 24px; max-width: 1600px; margin: 0 auto; }
@@ -253,7 +261,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .header-nav a { color: var(--text-muted); text-decoration: none; padding: 5px 10px; border-radius: 8px; transition: 0.2s; }
         .header-nav a:hover, .header-nav a.active { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
         
-        /* --- Animations --- */
+        /* Fade In Animation */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -264,7 +272,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .delay-3 { animation-delay: 0.3s; }
         .delay-4 { animation-delay: 0.4s; }
 
-        /* --- Glass Cards --- */
+        /* Glassmorphism Card Style */
         .modern-card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -281,11 +289,11 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .modern-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.35); border-color: rgba(255,255,255,0.2); }
 
         /* --- Hero Section --- */
-        .hero-banner { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+        .hero-banner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
         .hero-title h1 { font-size: 28px; font-weight: 800; background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
         .hero-subtitle { font-size: 15px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
 
-        /* --- Filter Bar --- */
+        /* --- Filter Bar & Inputs --- */
         .filter-bar {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--glass-border);
@@ -306,6 +314,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             outline: none; transition: 0.2s;
             min-width: 180px;
             appearance: none;
+            cursor: pointer;
         }
         .input-glass:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
 
@@ -347,22 +356,18 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
             gap: 24px; 
-            /* Grid layout adjustments based on chart visibility are handled by Vue/JS */
+            /* Layout is adjusted dynamically by JS/Vue based on visibility */
         }
         .chart-card {
             display: flex;
             flex-direction: column;
             width: 100%;
         }
-        /* Default span for sales chart to take full width */
-        #salesChartContainer { grid-column: 1 / -1; }
-        #statusChartContainer { grid-column: span 1; }
-        #usersChartContainer { grid-column: span 2; }
 
-
+        /* Responsive Layout Adjustments */
         @media (max-width: 1024px) { 
             .charts-grid { grid-template-columns: 1fr; } 
-            #salesChartContainer, #statusChartContainer, #usersChartContainer { grid-column: 1 / -1; }
+            #salesChartContainer, #statusChartContainer, #usersChartContainer { grid-column: 1 / -1 !important; }
         }
         
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -389,7 +394,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .action-btn.danger:hover i { color: var(--secondary); }
         .action-btn.danger i { color: #f87171; }
 
-        /* Custom Checkbox Style for Preferences */
+        /* Custom Checkbox Style for Preferences (Vue component) */
         .custom-check {
             display: inline-flex;
             align-items: center;
@@ -446,7 +451,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
     <section id="main-content">
         <section class="wrapper">
             
-            <!-- Hero Section -->
+            <!-- Hero Section (Greeting and Date) -->
             <div class="hero-banner animate-enter">
                 <div class="hero-title">
                     <h1><?php echo $greeting; ?>، مدیر عزیز 👋</h1>
@@ -468,17 +473,18 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             <!-- Filter Bar -->
             <div class="filter-bar animate-enter delay-1">
                 <form class="filter-inputs" method="get" id="dashboardFilterForm">
-                    <!-- Date -->
+                    <!-- Date Picker Input -->
                     <div style="position: relative;">
                         <input type="text" id="rangePicker" class="input-glass" placeholder="انتخاب تاریخ..." style="padding-right: 35px; text-align: right;">
                         <i class="icon-calendar" style="position: absolute; right: 12px; top: 12px; color: var(--text-muted); pointer-events: none;"></i>
                     </div>
+                    <!-- Hidden fields to store date range values for submission -->
                     <input type="hidden" name="from" id="rangeFrom" value="<?php echo htmlspecialchars($fromDate ?? '', ENT_QUOTES); ?>">
                     <input type="hidden" name="to" id="rangeTo" value="<?php echo htmlspecialchars($toDate ?? '', ENT_QUOTES); ?>">
 
-                    <!-- Status -->
+                    <!-- Status Multi-Select -->
                     <select name="status[]" multiple class="input-glass" style="height: auto; min-height: 42px;">
-                        <!-- Selected status options are maintained via PHP -->
+                        <!-- Populate status options from PHP data -->
                         <?php foreach($statusMapFa as $sk => $sl): ?>
                             <option value="<?php echo $sk; ?>" <?php echo in_array($sk, $selectedStatuses) ? 'selected' : ''; ?>><?php echo $sl; ?></option>
                         <?php endforeach; ?>
@@ -491,6 +497,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                         </button>
                         
                         <?php if($fromDate || $toDate || !empty($selectedStatuses)): ?>
+                        <!-- Reset Filter Button -->
                         <a href="index.php" class="btn-glass" title="حذف فیلترها" style="display: flex; align-items: center; justify-content: center; padding: 10px 14px;">
                             <i class="icon-refresh"></i>
                         </a>
@@ -534,8 +541,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <!-- NOTE: Using data-chart attribute for Vue and Lazy Loading logic -->
+            <!-- Charts Section (Lazy-loaded and controlled by Vue) -->
             <div class="charts-grid animate-enter delay-3" id="chartsArea">
                 <!-- Sales Chart (Bar) -->
                 <div class="chart-card modern-card" data-chart="sales" id="salesChartContainer">
@@ -552,6 +558,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-pie-chart"></i> وضعیت سفارشات</span>
                     </div>
+                    <!-- min-width: 0 is important for Chart.js in flex containers -->
                     <div style="height: 260px; display: flex; justify-content: center; position: relative; min-width: 0;">
                         <canvas id="statusChart"></canvas>
                     </div>
@@ -568,7 +575,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- Quick Actions Section -->
             <div class="animate-enter delay-4">
                 <div class="section-header">
                     <i class="icon-bolt" style="color: var(--accent);"></i> دسترسی سریع
@@ -647,6 +654,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 <!-- Daterange picker dependencies -->
 <script src="assets/bootstrap-daterangepicker/moment.min.js"></script>
 <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
+<!-- The original common-scripts.js is expected to be present -->
 <script src="js/common-scripts.js"></script>
 
 <script>
@@ -672,13 +680,15 @@ $(function(){
         startDate: start,
         endDate: end,
         opens: 'left',
+        // Note: The moment.js date formats used here are Gregorian, which is required
+        // by the PHP processing logic (strtotime). The labels are what the user sees.
         locale: { format: 'YYYY-MM-DD', separator: ' - ', applyLabel: 'تایید', cancelLabel: 'لغو' }
     }, cb);
 
     // Initial display of dates if they were set
     if(from && to) { cb(start, end); } else { $input.val(''); }
 
-    // Preset buttons functionality
+    // Preset buttons functionality to automatically submit the form
     $('#preset7d').click(function(e){ 
         e.preventDefault(); 
         $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); 
@@ -688,13 +698,13 @@ $(function(){
     $('#presetMonth').click(function(e){ 
         e.preventDefault(); 
         $('#rangeFrom').val(moment().startOf('month').format('YYYY-MM-DD')); 
-        $('#rangeTo').val(moment().endOf('month').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
         $('#dashboardFilterForm').submit(); 
     });
     $('#presetYear').click(function(e){ 
         e.preventDefault(); 
         $('#rangeFrom').val(moment().startOf('year').format('YYYY-MM-DD')); 
-        $('#rangeTo').val(moment().endOf('year').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
         $('#dashboardFilterForm').submit(); 
     });
 });
@@ -702,7 +712,7 @@ $(function(){
 
 <script>
 (function(){
-    // Chart.js Global Config
+    // Chart.js Global Config for Vazirmatn and Dark Theme
     Chart.defaults.font.family = 'Vazirmatn';
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.08)';
@@ -726,7 +736,7 @@ $(function(){
         if(initializedCharts.has('sales')) return;
         var ctx = document.getElementById('salesChart').getContext('2d');
         var grad = ctx.createLinearGradient(0, 0, 0, 300);
-        grad.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+        grad.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Indigo
         grad.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
 
         new Chart(ctx, {
@@ -749,7 +759,7 @@ $(function(){
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        rtl: true,
+                        rtl: true, // Enable RTL for Persian text
                         callbacks: {
                             label: function(c) { 
                                 // Format number with commas
@@ -759,7 +769,19 @@ $(function(){
                     }
                 },
                 scales: {
-                    y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false }, 
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: {
+                            callback: function(value) {
+                                // Simple formatting for large numbers on the axis
+                                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'م';
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'هز';
+                                return value;
+                            }
+                        }
+                    },
                     x: { grid: { display: false } }
                 }
             }
@@ -798,7 +820,7 @@ $(function(){
         if(initializedCharts.has('users')) return;
         var ctxU = document.getElementById('usersChart').getContext('2d');
         var gradU = ctxU.createLinearGradient(0, 0, 0, 300);
-        gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
+        gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)'); // Cyan
         gradU.addColorStop(1, 'rgba(6, 182, 212, 0)');
 
         new Chart(ctxU, {
@@ -823,15 +845,24 @@ $(function(){
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, border: { display: false }, padding: { top: 10, bottom: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
-                    x: { grid: { display: true, color: 'rgba(255,255,255,0.08)' }, ticks: { maxRotation: 0, autoSkipPadding: 20 } }
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false }, 
+                        padding: { top: 10, bottom: 0 }, 
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: { precision: 0 } // Ensure whole numbers for counts
+                    },
+                    x: { 
+                        grid: { display: true, color: 'rgba(255,255,255,0.08)' }, 
+                        ticks: { maxRotation: 0, autoSkipPadding: 20 } 
+                    }
                 }
             }
         });
         initializedCharts.add('users');
     };
 
-    // Lazy Loading Logic
+    // Lazy Loading Logic with IntersectionObserver
     function lazyInitCharts(){
         if(!('IntersectionObserver' in window)) {
             // Fallback: If not supported, render all charts immediately
@@ -853,12 +884,16 @@ $(function(){
             }); 
         }, { threshold: 0.1 });
 
-        // Start observing chart containers
-        chartContainers.forEach(function(el){ io.observe(el); });
+        // Only observe visible containers initially
+        chartContainers.forEach(function(el){ 
+            if(el.style.display !== 'none'){
+                io.observe(el); 
+            }
+        });
     }
 
     /**
-     * Toggles chart visibility and updates grid layout
+     * Toggles chart visibility and updates grid layout based on Vue state
      * @param {object} s - The 'show' state object from Vue: {sales: bool, status: bool, users: bool}
      */
     function toggleCharts(s){
@@ -866,46 +901,50 @@ $(function(){
         const statusEl = document.getElementById('statusChartContainer');
         const usersEl = document.getElementById('usersChartContainer');
 
-        const chartsArea = document.getElementById('chartsArea');
+        // Render charts that are now visible if they haven't been rendered yet
+        if(s.sales && !initializedCharts.has('sales')) chartRenderers['sales']();
+        if(s.status && !initializedCharts.has('status')) chartRenderers['status']();
+        if(s.users && !initializedCharts.has('users')) chartRenderers['users']();
         
         // Hide/Show elements based on preference
         if(salesEl) salesEl.style.display = s.sales ? 'flex' : 'none';
         if(statusEl) statusEl.style.display = s.status ? 'flex' : 'none';
         if(usersEl) usersEl.style.display = s.users ? 'flex' : 'none';
 
-        // Apply grid column spans for desktop layout
+        // --- Grid Layout Adjustment for Desktop (1024px+) ---
         if (window.innerWidth > 1024) {
-            // Default: 3 columns layout (1fr 1fr 1fr). Sales should span across
+            
+            // Default reset
+            salesEl.style.gridColumn = 'unset';
+            statusEl.style.gridColumn = 'unset';
+            usersEl.style.gridColumn = 'unset';
+
             if (s.sales) {
-                salesEl.style.gridColumn = '1 / -1'; // Sales takes full width
-                // Status and Users will default to 1fr each in the second row
-                // We manually adjust users to take the remaining space if status is hidden
+                salesEl.style.gridColumn = '1 / -1'; // Sales takes full width (row 1)
+                
+                // Row 2: Status and Users
                 if (s.status && s.users) {
                      statusEl.style.gridColumn = 'span 1';
-                     usersEl.style.gridColumn = 'span 2';
+                     usersEl.style.gridColumn = 'span 2'; // Users takes 2/3 for visual balance
                 } else if (!s.status && s.users) {
-                    usersEl.style.gridColumn = '1 / -1'; // Users takes full width if only one chart is active in the second row
+                    usersEl.style.gridColumn = '1 / -1'; 
                 } else if (s.status && !s.users) {
                     statusEl.style.gridColumn = '1 / -1';
                 }
                 
             } else {
-                // Sales is hidden, re-configure layout to 2/1 or 1/1/1 if needed
-                if (s.status && s.users) {
-                    // Two charts left: Status 1fr, Users 2fr for balance
+                // Sales is hidden. All remaining charts share 3 columns in one row.
+                const activeCount = (s.status ? 1 : 0) + (s.users ? 1 : 0);
+                if (activeCount === 2) {
+                    // Status 1fr, Users 2fr
                     statusEl.style.gridColumn = 'span 1';
                     usersEl.style.gridColumn = 'span 2';
-                } else {
-                    // Only one chart left (Status or Users), make it full width
+                } else if (activeCount === 1) {
+                    // One chart remaining, make it full width
                     if (s.status) statusEl.style.gridColumn = '1 / -1';
                     if (s.users) usersEl.style.gridColumn = '1 / -1';
                 }
             }
-        } else {
-            // Mobile: All charts take full width
-            salesEl.style.gridColumn = '1 / -1';
-            statusEl.style.gridColumn = '1 / -1';
-            usersEl.style.gridColumn = '1 / -1';
         }
     }
 
@@ -918,9 +957,9 @@ $(function(){
                 const defaultPrefs = {'sales':true, 'status':true, 'users':true};
                 let storedPrefs;
                 try {
+                    // NOTE: Changed key from 'dash_show' to 'dash_prefs' for clarity
                     storedPrefs = JSON.parse(localStorage.getItem('dash_prefs'));
                 } catch (e) {
-                    console.error("Error parsing dash_prefs from localStorage:", e);
                     storedPrefs = null;
                 }
                 return { 
@@ -943,7 +982,7 @@ $(function(){
         });
         app.mount('#dashPrefs');
     } else {
-        // Fallback if Vue.js is not loaded
+        // Fallback if Vue.js is not loaded, still attempt to initialize charts
         lazyInitCharts();
     }
 })();
