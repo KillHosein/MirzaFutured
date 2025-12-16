@@ -62,6 +62,16 @@ if( !isset($_SESSION["user"]) || !$result ){
                     <div class="col-lg-12">
                         <section class="panel">
                             <header class="panel-heading">لیست خدمات های انجام شده</header>
+                            <?php $total = count($listinvoice); ?>
+                            <?php if(!$total){ ?>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="icon-wrench"></i>
+                                    </div>
+                                    <h3>خدمتی یافت نشد</h3>
+                                    <p>هنوز خدمتی ثبت نشده است یا نتایج با فیلترهای فعلی منطبق نیستند.</p>
+                                </div>
+                            <?php } ?>
                             <table class="table table-striped border-top" id="sample_1">
                                 <thead>
                                     <tr>
@@ -76,6 +86,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                     </tr>
                                 </thead>
                                 <tbody> <?php
+                                if($total){
                                 foreach($listinvoice as $list){
                                     $list['time'] = jdate('Y/m/d |  H:i:s',$list['time']);
                                     $list['type'] = [
@@ -98,6 +109,7 @@ if( !isset($_SESSION["user"]) || !$result ){
                                         <td class=\"hidden-phone\">{$list['price']}</td>
                                         <td class=\"hidden-phone\">{$list['type']}</td>
                                     </tr>";
+                                }
                                 }
                                     ?>
                                 </tbody>

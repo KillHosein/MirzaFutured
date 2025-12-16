@@ -199,39 +199,70 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
                         <section class="panel">
                             <header class="panel-heading">جستجوی پیشرفته</header>
                             <div class="panel-body">
-                                <form class="form-inline" role="form" method="get">
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <input type="text" class="form-control" name="q" placeholder="آیدی کاربر/سفارش یا نام کاربری" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
+                                <form class="form-inline filter-bar" role="form" method="get" id="invoiceFilterForm">
+                                    <div class="form-group">
+                                        <label for="invSearch" class="control-label">جستجو</label>
+                                        <input type="text" id="invSearch" class="form-control" name="q" placeholder="آیدی کاربر، سفارش یا نام کاربری" value="<?php echo isset($_GET['q']) ? htmlspecialchars($_GET['q']) : ''; ?>">
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <label style="margin-left:6px;">از تاریخ</label>
-                                        <input type="date" class="form-control" name="from" value="<?php echo isset($_GET['from']) ? htmlspecialchars($_GET['from']) : ''; ?>">
+                                    <div class="form-group">
+                                        <label for="invFrom" class="control-label">از تاریخ</label>
+                                        <input type="date" id="invFrom" class="form-control" name="from" value="<?php echo isset($_GET['from']) ? htmlspecialchars($_GET['from']) : ''; ?>">
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <label style="margin-left:6px;">تا تاریخ</label>
-                                        <input type="date" class="form-control" name="to" value="<?php echo isset($_GET['to']) ? htmlspecialchars($_GET['to']) : ''; ?>">
+                                    <div class="form-group">
+                                        <label for="invTo" class="control-label">تا تاریخ</label>
+                                        <input type="date" id="invTo" class="form-control" name="to" value="<?php echo isset($_GET['to']) ? htmlspecialchars($_GET['to']) : ''; ?>">
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <select name="status" class="form-control">
+                                    <div class="form-group">
+                                        <label for="invStatus" class="control-label">وضعیت</label>
+                                        <select id="invStatus" name="status" class="form-control">
                                             <option value="">همه وضعیت‌ها</option>
                                             <?php foreach($statuses as $key => $val): ?>
                                                 <option value="<?php echo $key; ?>" <?php echo (isset($_GET['status']) && $_GET['status'] === $key) ? 'selected' : ''; ?>><?php echo $val['label']; ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <input type="text" class="form-control" name="product" placeholder="نام محصول" value="<?php echo isset($_GET['product']) ? htmlspecialchars($_GET['product']) : ''; ?>">
+                                    <div class="form-group">
+                                        <label for="invProduct" class="control-label">محصول</label>
+                                        <input type="text" id="invProduct" class="form-control" name="product" placeholder="نام محصول" value="<?php echo isset($_GET['product']) ? htmlspecialchars($_GET['product']) : ''; ?>">
                                     </div>
-                                    <div class="form-group" style="margin-left:8px;">
-                                        <input type="text" class="form-control" name="location" placeholder="لوکیشن سرویس" value="<?php echo isset($_GET['location']) ? htmlspecialchars($_GET['location']) : ''; ?>">
+                                    <div class="form-group">
+                                        <label for="invLocation" class="control-label">لوکیشن</label>
+                                        <input type="text" id="invLocation" class="form-control" name="location" placeholder="لوکیشن سرویس" value="<?php echo isset($_GET['location']) ? htmlspecialchars($_GET['location']) : ''; ?>">
                                     </div>
-                                    <button type="submit" class="btn btn-primary">فیلتر</button>
-                                    <a href="invoice.php" class="btn btn-default">پاک کردن</a>
-                                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
-                                    <div class="btn-group" style="margin-right:8px;">
-                                        <a href="#" class="btn btn-info" id="preset7dInv">۷ روز اخیر</a>
-                                        <a href="#" class="btn btn-info" id="presetMonthInv">ماه جاری</a>
-                                        <a href="#" class="btn btn-info" id="presetYearInv">سال جاری</a>
+                                    <div class="filter-actions">
+                                        <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                                        <a href="invoice.php" class="btn btn-default">پاک کردن</a>
+                                        <a href="?<?php echo http_build_query(array_merge($_GET, ['export' => 'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
+                                        <div class="btn-group">
+                                            <a href="#" class="btn btn-info" id="preset7dInv">۷ روز اخیر</a>
+                                            <a href="#" class="btn btn-info" id="presetMonthInv">ماه جاری</a>
+                                            <a href="#" class="btn btn-info" id="presetYearInv">سال جاری</a>
+                                        </div>
+                                    </div>
+                                    <div class="filter-chips">
+                                        <?php if(!empty($_GET['q'])){ ?>
+                                            <span class="filter-chip">جستجو: <?php echo htmlspecialchars($_GET['q']); ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['from']) || !empty($_GET['to'])){ ?>
+                                            <span class="filter-chip">
+                                                تاریخ:
+                                                <?php echo !empty($_GET['from']) ? htmlspecialchars($_GET['from']) : 'از ابتدا'; ?>
+                                                تا
+                                                <?php echo !empty($_GET['to']) ? htmlspecialchars($_GET['to']) : 'اکنون'; ?>
+                                            </span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['status'])){ ?>
+                                            <span class="filter-chip">وضعیت: <?php echo isset($statuses[$_GET['status']]) ? $statuses[$_GET['status']]['label'] : htmlspecialchars($_GET['status']); ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['product'])){ ?>
+                                            <span class="filter-chip">محصول: <?php echo htmlspecialchars($_GET['product']); ?></span>
+                                        <?php } ?>
+                                        <?php if(!empty($_GET['location'])){ ?>
+                                            <span class="filter-chip">لوکیشن: <?php echo htmlspecialchars($_GET['location']); ?></span>
+                                        <?php } ?>
+                                        <?php if(empty($_GET['q']) && empty($_GET['from']) && empty($_GET['to']) && empty($_GET['status']) && empty($_GET['product']) && empty($_GET['location'])){ ?>
+                                            <span class="filter-chip muted">هیچ فیلتری اعمال نشده است</span>
+                                        <?php } ?>
                                     </div>
                                     <div class="action-toolbar sticky">
                                         <a href="invoice.php" class="btn btn-default" id="invRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
