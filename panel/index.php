@@ -1,5 +1,5 @@
 <?php
-// --- خطایابی و گزارش‌دهی PHP ---
+// --- خطایابی و گزارش‌دهی PHP (برای پیدا کردن علت خطای 500) ---
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -12,12 +12,11 @@ require_once '../jdf.php';
 
 // --- بررسی حیاتی: اطمینان از تعریف متغیر اتصال به دیتابیس ---
 if (!isset($pdo) || !($pdo instanceof PDO)) {
-    die("Fatal Error: Database connection variable (\\$pdo) is not defined or is not a PDO object. Please check 'config.php'.");
+    die("Fatal Error: Database connection variable (\$pdo) is not defined or is not a PDO object. Please check 'config.php'.");
 }
 
 // --- Logic Section ---
-// توابع و متغیرهای مورد نیاز برای نمایش آمار (کد کامل در اینجا نیست، اما فرض می‌کنیم اجرا می‌شوند)
-$datefirstday = time() - 86400; // Time yesterday (برای محاسبه کاربران جدید)
+$datefirstday = time() - 86400; // Time yesterday (for new users calculation)
 $fromDate = isset($_GET['from']) ? $_GET['from'] : null;
 $toDate = isset($_GET['to']) ? $_GET['to'] : null;
 $selectedStatuses = isset($_GET['status']) ? $_GET['status'] : [];
@@ -31,527 +30,1038 @@ try {
         exit;
     }
     
-    // فرض می‌کنیم این کوئری برای اعتبارسنجی کاربر است
-    $query = $pdo->prepare("SELECT * FROM admin WHERE username = :username");
-    // ... ادامه اعتبارسنجی و فیلتر کردن اطلاعات
+    $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+    $query->execute(['username' => $_SESSION["user"]]); 
+    $result = $query->fetch(PDO::FETCH_ASSOC);
     
-} catch (\PDOException $e) {
-    // خطای دیتابیس
-    echo "Database Error: " . $e->getMessage();
-    exit;
+    if(!$result ){
+        header('Location: login.php');
+        exit;
+    }
+} catch (PDOException $e) {
+    error_log("Auth failed: " . $e->getMessage());
+    die("Database Error during authentication check. Please check logs. Message: " . $e->getMessage());
 }
 
-// --- توابع ساختگی برای نمونه‌سازی نمودارها و داده‌های جدید ---
-function get_sales_data() {
-    // داده‌های نمونه برای نمودار فروش
-    return [
-        'labels' => ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور'],
-        'data' => [1200, 1900, 3000, 5000, 2500, 3700]
-    ];
+
+// 2. Filter Logic for Invoices
+$invoiceWhere = ["name_product != 'سرویس تست'"];
+$invoiceParams = [];
+
+// Date Filtering
+if($fromDate && strtotime($fromDate)){
+    $invoiceWhere[] = "time_sell >= :fromTs";
+    $invoiceParams[':fromTs'] = strtotime($fromDate);
+}
+if($toDate && strtotime($toDate)){
+    $invoiceWhere[] = "time_sell <= :toTs";
+    // Adding 23:59:59 to include the entire 'to' day
+    $invoiceParams[':toTs'] = strtotime($toDate.' 23:59:59');
 }
 
-function get_status_data() {
-    // داده‌های نمونه برای وضعیت‌ها
-    return [
-        'labels' => ['در حال بررسی', 'تأیید شده', 'لغو شده'],
-        'data' => [5, 15, 3]
-    ];
+// Status Filtering
+if(!empty($selectedStatuses)){
+    $placeholders = [];
+    foreach ($selectedStatuses as $i => $status) {
+        $placeholder = ":status_$i";
+        $placeholders[] = $placeholder;
+        $invoiceParams[$placeholder] = $status;
+    }
+    $invoiceWhere[] = "status IN (" . implode(', ', $placeholders) . ")";
+}else{
+    // Default statuses to include most relevant orders if no filter is applied
+    $invoiceWhere[] = "status IN ('active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid')";
 }
 
-function get_users_data() {
-    // داده‌های نمونه برای کاربران
-    return [
-        'total' => 452,
-        'new' => 12,
-        'active' => 310
-    ];
+$invoiceWhereSql = implode(' AND ', $invoiceWhere);
+
+// 3. Sales and User Counts
+
+try {
+    // Total Sales Amount
+    $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from total sales
+    $query->execute($invoiceParams);
+    $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
+    $total_sales = $subinvoice['SUM(price_product)'] ?? 0;
+
+    // Total User Counts (Overall)
+    $query = $pdo->prepare("SELECT COUNT(*) FROM user");
+    $query->execute();
+    $resultcount = $query->fetchColumn();
+
+    // New Users Today (Fix applied here in previous turn: using execute array instead of bindParam)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
+    $stmt->execute([':time_register' => $datefirstday]); 
+    $resultcountday = $stmt->fetchColumn();
+
+    // Sales Count (Filtered)
+    $query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'"); // Exclude unpaid from order count
+    $query->execute($invoiceParams);
+    $resultcontsell = $query->fetchColumn();
+} catch (PDOException $e) {
+    die("Database Error during data retrieval. Message: " . $e->getMessage());
 }
 
-function get_recent_activities() {
-    // داده‌های نمونه برای جدول فعالیت‌های اخیر
-    return [
-        ['id' => 101, 'type' => 'سفارش جدید', 'desc' => 'ثبت سفارش توسط کاربر جدید A.', 'time' => '15:30', 'date' => 'امروز', 'status_color' => 'bg-indigo-100 text-indigo-800'],
-        ['id' => 205, 'type' => 'تغییر وضعیت', 'desc' => 'سفارش #201 به وضعیت "تأیید شده" تغییر یافت.', 'time' => '12:00', 'date' => 'امروز', 'status_color' => 'bg-emerald-100 text-emerald-800'],
-        ['id' => 312, 'type' => 'ورود مدیر', 'desc' => 'مدیر سیستم (John Doe) وارد پنل شد.', 'time' => '08:00', 'date' => 'دیروز', 'status_color' => 'bg-gray-100 text-gray-800'],
-        ['id' => 100, 'type' => 'لغو سفارش', 'desc' => 'سفارش #100 توسط مشتری لغو شد.', 'time' => '17:45', 'date' => 'دیروز', 'status_color' => 'bg-red-100 text-red-800'],
-        ['id' => 450, 'type' => 'به‌روزرسانی محصول', 'desc' => 'قیمت محصول X به روز شد.', 'time' => '09:00', 'date' => 'دیروز', 'status_color' => 'bg-blue-100 text-blue-800'],
-    ];
+$formatted_total_sales = number_format($total_sales);
+
+// 4. Chart Data: Sales Trend
+$grouped_data = [];
+if($resultcontsell > 0){
+    try {
+        // Fetch only paid sales data for the chart
+        $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;");
+        $query->execute($invoiceParams);
+        $salesData = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($salesData as $sell){
+            if(!is_numeric($sell['time_sell'])) continue; 
+            
+            $time_sell_day = date('Y/m/d', (int)$sell['time_sell']);
+            $price = (int)$sell['price_product'];
+            
+            if (!isset($grouped_data[$time_sell_day])) {
+                $grouped_data[$time_sell_day] = ['total_amount' => 0, 'order_count' => 0];
+            }
+            $grouped_data[$time_sell_day]['total_amount'] += $price;
+            $grouped_data[$time_sell_day]['order_count'] += 1;
+        }
+        ksort($grouped_data); // Sort by date ascending for chart
+    } catch (PDOException $e) {
+        die("Database Error while fetching Sales Trend. Message: " . $e->getMessage());
+    }
 }
 
-$salesData = get_sales_data();
-$statusData = get_status_data();
-$userData = get_users_data();
-$recentActivities = get_recent_activities();
+// Convert Gregorian dates to Persian for chart labels
+$salesLabels = array_values(array_map(function($d){ 
+    return jdate('Y/m/d', strtotime($d)); 
+}, array_keys($grouped_data)));
+$salesAmount = array_values(array_map(function($i){ return $i['total_amount']; }, $grouped_data));
 
-// --- پایان Logic Section ---
+// 5. Chart Data: Status Distribution
+$statusMapFa = [
+    'unpaid' => 'در انتظار پرداخت',
+    'active' => 'فعال',
+    'disabledn' => 'غیرفعال', // Changed from 'ناموجود' to 'غیرفعال' for better context
+    'end_of_time' => 'پایان زمان',
+    'end_of_volume' => 'پایان حجم',
+    'sendedwarn' => 'هشدار',
+    'send_on_hold' => 'در انتظار اتصال',
+    'removebyuser' => 'حذف شده'
+];
+$colorMap = [
+    'unpaid' => '#fbbf24', // Amber
+    'active' => '#10b981', // Emerald (Slightly darker for better contrast)
+    'disabledn' => '#94a3b8', // Slate
+    'end_of_time' => '#ef4444', // Red
+    'end_of_volume' => '#3b82f6', // Blue
+    'sendedwarn' => '#a855f7', // Violet
+    'send_on_hold' => '#f97316', // Orange
+    'removebyuser' => '#475569' // Dark Slate
+];
+
+try {
+    $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
+    $stmt->execute($invoiceParams);
+    $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Database Error while fetching Status Distribution. Message: " . $e->getMessage());
+}
+
+$statusLabels = [];
+$statusData = [];
+$statusColors = [];
+
+foreach($statusRows as $r){
+    $k = $r['status'];
+    $statusLabels[] = isset($statusMapFa[$k]) ? $statusMapFa[$k] : $k;
+    $statusData[] = (int)$r['cnt'];
+    $statusColors[] = isset($colorMap[$k]) ? $colorMap[$k] : '#64748b';
+}
+
+// 6. Chart Data: New Users Trend
+$userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - (13 * 86400));
+$userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
+$daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
+
+try {
+    $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend");
+    $stmt->execute([
+        ':ustart' => $userStart,
+        ':uend' => $userEnd + 86400 - 1
+    ]);
+    $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("Database Error while fetching New Users Trend. Message: " . $e->getMessage());
+}
+
+$userLabels = [];
+$userCounts = [];
+$indexByDate = [];
+
+// Prepare labels for the time range
+for($i=0;$i<$daysBack;$i++){
+    $d = $userStart + $i*86400;
+    $key = date('Y/m/d',$d);
+    $indexByDate[$key] = count($userLabels);
+    $userLabels[] = jdate('Y/m/d',$d); // Persian date label
+    $userCounts[] = 0;
+}
+
+// Count registrations
+foreach($regRows as $row){
+    if(!is_numeric($row['register'])) continue;
+    $key = date('Y/m/d', (int)$row['register']);
+    if(isset($indexByDate[$key])){
+        $userCounts[$indexByDate[$key]]++;
+    }
+}
+
+// 7. Time Greeting Logic
+$hour = date('H');
+if ($hour < 12) { $greeting = "صبح بخیر"; $greetIcon = "icon-sun"; }
+elseif ($hour < 17) { $greeting = "ظهر بخیر"; $greetIcon = "icon-coffee"; }
+else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبورد مدیریت - سیستم</title>
-    <!-- Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    <!-- Vue.js (برای مدیریت ترجیحات) -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <title>پنل مدیریت حرفه‌ای</title>
+    
+    <!-- Fonts: Vazirmatn is standard for Persian typography -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <!-- CSS Dependencies -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
+    <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
+
     <style>
-        /* تنظیم فونت Inter (مناسب برای اعداد و حروف لاتین) و فونت‌های فارسی */
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
-        body {
-            font-family: 'Vazirmatn', sans-serif;
-            transition: background-color 0.3s, color 0.3s; /* انتقال نرم برای حالت شب */
+        /* --- CSS Variables (Enhanced Dark/Glass Theme) --- */
+        :root {
+            --bg-body: #0b1121; /* Darker Slate */
+            --glass-bg: rgba(18, 25, 40, 0.7); /* Deep glass effect */
+            --glass-border: rgba(255, 255, 255, 0.15); /* Stronger border for visibility */
+            --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            
+            --primary: #4f46e5; /* Indigo 600 */
+            --primary-glow: rgba(79, 70, 229, 0.3);
+            --secondary: #db2777; /* Pink 600 */
+            --accent: #06b6d4; /* Cyan */
+            
+            --text-main: #f8fafc; /* White */
+            --text-muted: #94a3b8; /* Slate 400 */
+            
+            --font-main: 'Vazirmatn', sans-serif;
+            --header-height: 70px;
         }
-        /* کلاس برای تغییر رنگ آیتم‌های Vue و Dark Mode */
-        .switch-toggle:checked + .bg-gray-200, .dark-mode-switch:checked + .bg-gray-700 {
-            background-color: #4F46E5 !important; /* primary color */
+
+        body {
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(219, 39, 119, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Global Layout --- */
+        #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; }
+        .wrapper { padding: 30px; display: flex; flex-direction: column; gap: 30px; max-width: 1700px; margin: 0 auto; }
+        .site-header {
+            position: fixed; top: 0; right: 0; left: 0; height: var(--header-height); z-index: 100;
+            background: rgba(11, 17, 33, 0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; align-items: center; padding: 0 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        .header-title { color: #fff; font-size: 20px; font-weight: 800; padding-right: 20px; border-right: 3px solid var(--accent); }
+        .header-nav { margin-right: auto; display: flex; gap: 20px; }
+        .header-nav a { 
+            color: var(--text-muted); text-decoration: none; padding: 8px 15px; border-radius: 10px; transition: 0.2s; 
+            font-weight: 500; display: flex; align-items: center; gap: 8px;
+        }
+        .header-nav a:hover, .header-nav a.active { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
+        
+        /* Fade In Animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-enter { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* Glassmorphism Card Style */
+        .modern-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .modern-card:hover { transform: translateY(-4px); box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5); border-color: rgba(255,255,255,0.25); }
+
+        /* --- Hero Section --- */
+        .hero-banner { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .hero-title h1 { 
+            font-size: 32px; font-weight: 900; 
+            background: linear-gradient(to right, #e2e8f0, #fff); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            margin: 0 0 8px 0; 
+            line-height: 1.2;
+        }
+        .hero-subtitle { font-size: 16px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; font-weight: 400; }
+        .hero-subtitle i { color: var(--accent); }
+
+        /* --- Filter Bar & Inputs --- */
+        .filter-bar {
+            background: rgba(18, 25, 40, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px 25px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 15px;
+            justify-content: space-between;
+        }
+        .filter-inputs { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; flex: 1; }
+        
+        .input-glass {
+            background: rgba(45, 55, 72, 0.6);
+            border: 1px solid #334155;
+            color: var(--text-main);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-family: var(--font-main);
+            outline: none; transition: 0.3s;
+            min-width: 190px;
+            appearance: none;
+            cursor: pointer;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .input-glass:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow), inset 0 1px 3px rgba(0,0,0,0.5); }
+        .input-glass option { background-color: var(--bg-body); }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary), #5a51e8);
+            color: white; border: none;
+            padding: 12px 28px; border-radius: 12px;
+            font-weight: 700; cursor: pointer;
+            transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 5px 20px var(--primary-glow);
+            display: inline-flex; align-items: center; gap: 10px;
+            text-decoration: none !important;
+            line-height: 1;
+        }
+        .btn-gradient:hover { transform: translateY(-3px); box-shadow: 0 8px 30px var(--primary-glow); filter: brightness(1.1); }
+        
+        .btn-glass {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 10px 18px; border-radius: 12px;
+            transition: 0.2s; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-weight: 500;
+        }
+        .btn-glass:hover { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3); }
+
+        /* Time Range Presets */
+        .time-presets-group { background: rgba(255,255,255,0.05); padding: 5px; border-radius: 15px; display: flex; border: 1px solid rgba(255,255,255,0.05); }
+        .time-presets-group .btn-glass { padding: 8px 14px; border-radius: 10px; border: none; background: transparent; }
+        .time-presets-group .btn-glass:hover { background: rgba(255,255,255,0.1); }
+
+        /* --- Stats --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        .stat-card { display: flex; align-items: center; gap: 20px; }
+        
+        .stat-icon-wrapper { 
+            width: 70px; height: 70px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 28px; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); /* Icon Shadow */
+            position: relative; overflow: hidden;
+        }
+        .stat-icon-wrapper::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0.15; z-index: 1;
+        }
+
+        .stat-content h3 { font-size: 30px; font-weight: 900; margin: 0 0 4px 0; color: #fff; letter-spacing: -1px; }
+        .stat-content span { font-size: 15px; color: var(--text-muted); font-weight: 500; }
+        
+        /* Specific Icon Gradients (Background color defines the glow/accent) */
+        .icon-grad-1 { color: #60a5fa; } /* Blue */
+        .icon-grad-1::before { background-color: #60a5fa; }
+        
+        .icon-grad-2 { color: #c084fc; } /* Violet */
+        .icon-grad-2::before { background-color: #c084fc; }
+
+        .icon-grad-3 { color: #fb923c; } /* Orange */
+        .icon-grad-3::before { background-color: #fb923c; }
+
+        .icon-grad-4 { color: #34d399; } /* Green */
+        .icon-grad-4::before { background-color: #34d399; }
+
+        /* --- Charts --- */
+        .charts-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 30px; 
+        }
+        .chart-card {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        /* Responsive Chart Layout */
+        @media (max-width: 1200px) { 
+            .charts-grid { grid-template-columns: 1fr 1fr; } 
+            /* On tablet/small desktop, status and users can share space */
+        }
+        @media (max-width: 768px) { 
+            .charts-grid { grid-template-columns: 1fr; }
+            .wrapper { padding: 20px; gap: 20px; }
+            .site-header { padding: 0 15px; }
+            .header-nav a { padding: 6px 10px; font-size: 14px; }
+            .hero-title h1 { font-size: 24px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+        
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .chart-title { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .chart-title i { color: var(--accent); }
+        
+        /* --- Quick Actions --- */
+        .section-header { 
+            margin-top: 20px; font-size: 20px; font-weight: 800; 
+            color: var(--text-main); 
+            display: flex; align-items: center; gap: 15px; 
+            margin-bottom: 25px; 
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--primary);
+            width: fit-content;
+        }
+        .section-header i { font-size: 24px; }
+        
+        .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+        .action-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 25px 15px; gap: 15px;
+            background: rgba(30, 41, 59, 0.5); /* Slightly darker card */
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 20px;
+            text-decoration: none !important; color: var(--text-main);
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            font-weight: 600;
+        }
+        .action-btn i { font-size: 36px; transition: 0.3s; color: var(--accent); opacity: 0.9; }
+        .action-btn:hover { 
+            transform: translateY(-5px); 
+            background: rgba(30, 41, 59, 0.8);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px var(--primary-glow);
+        }
+        .action-btn:hover i { transform: scale(1.1); color: var(--primary); opacity: 1; }
+        .action-btn.danger i { color: var(--secondary); }
+
+        /* --- Preferences Bar --- */
+        #dashPrefs {
+            border: 1px solid rgba(255,255,255,0.15);
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.1), rgba(18, 25, 40, 0.8));
+            padding: 18px 30px;
+            border-radius: 20px;
+        }
+        .custom-check {
+            color: var(--text-main);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .custom-check:hover { color: #fff; }
+        .custom-check input[type="checkbox"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            margin-left: 10px;
+            background: transparent;
+        }
+        .custom-check input[type="checkbox"]:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        .custom-check input[type="checkbox"]:checked::after {
+            content: '\f00c';
+            font-family: 'FontAwesome';
+            font-size: 12px;
+        }
+
+        /* --- Footer --- */
+        #footer { 
+            margin-top: 50px; padding: 25px; 
+            color: var(--text-muted); text-align: center; 
+            font-size: 13px; 
+            border-top: 1px solid rgba(255, 255, 255, 0.05); 
+            background: rgba(0,0,0,0.2);
         }
     </style>
-    <script>
-        tailwind.config = {
-            darkMode: 'class', // فعال‌سازی حالت شب با کلاس
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': '#4F46E5', // indigo-600
-                        'secondary': '#10B981', // emerald-500
-                    },
-                }
-            }
-        }
-    </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
 
-    <!-- Header & Dark Mode Toggle -->
-    <header class="bg-white shadow-lg sticky top-0 z-10 dark:bg-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-            <h1 class="text-2xl font-extrabold text-primary">پنل مدیریت</h1>
-            <div class="flex items-center space-s-4">
-                
-                <!-- Dark Mode Toggle -->
-                <div class="flex items-center space-s-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <label class="relative inline-flex items-center cursor-pointer" onclick="toggleDarkMode()">
-                        <input type="checkbox" id="darkModeToggle" class="sr-only peer dark-mode-switch">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    </label>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                </div>
+<body>
 
-                <a href="#" class="text-sm font-medium text-gray-500 hover:text-primary transition dark:text-gray-300 dark:hover:text-primary">خروج</a>
-                <span class="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">خوش آمدید، مدیر!</span>
-            </div>
-        </div>
+<section id="container">
+    <!-- Header -->
+    <header class="site-header">
+        <h1 class="header-title">پنل مدیریت</h1>
+        <nav class="header-nav">
+            <a href="index.php" class="active"><i class="icon-dashboard"></i> داشبورد</a>
+            <a href="invoice.php"><i class="icon-list-alt"></i> سفارشات</a>
+            <a href="user.php"><i class="icon-group"></i> کاربران</a>
+            <a href="logout.php"><i class="icon-off"></i> خروج</a>
+        </nav>
     </header>
 
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- عنوان اصلی و تاریخ -->
-        <div class="px-4 py-2 sm:px-0 mb-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">داشبورد خلاصه</h2>
-                <span class="text-gray-500 text-sm mt-2 sm:mt-0">امروز: <?php echo jdate('l, d F Y'); ?></span>
-            </div>
-        </div>
-
-        <!-- 1. منوی سریع (Quick Menu) - منتقل شده به بالای محتوا -->
-        <section id="quick-menu" class="mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border-t-8 border-primary transition duration-300">
-            <h3 class="text-xl font-extrabold mb-5 text-gray-900 dark:text-gray-100">منوی سریع و اقدامات کلیدی</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                
-                <?php
-                $quickMenu = [
-                    ['url' => 'new_order.php', 'title' => 'ثبت سفارش جدید', 'color' => 'primary', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />'],
-                    ['url' => 'add_user.php', 'title' => 'افزودن کاربر', 'color' => 'secondary', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-10 2H7M5 8h2m-2 4h2" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5H5a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v3m-3 6h6" />'],
-                    ['url' => 'reports.php', 'title' => 'گزارشات کامل', 'color' => 'yellow-500', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6m-6 0a2 2 0 002 2h2a2 2 0 002-2" />'],
-                    ['url' => 'settings.php', 'title' => 'تنظیمات سیستم', 'color' => 'gray-500', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />'],
-                ];
-                
-                foreach ($quickMenu as $item) {
-                    $colorClass = $item['color'] === 'primary' ? 'bg-primary hover:bg-indigo-700' : ($item['color'] === 'secondary' ? 'bg-secondary hover:bg-emerald-600' : 'bg-' . $item['color'] . ' hover:bg-' . $item['color'] . '/80');
-                    $iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">' . $item['icon'] . '</svg>';
-                    echo '
-                    <button onclick="window.location.href=\'' . $item['url'] . '\'" class="flex flex-col items-center justify-center p-4 ' . $colorClass . ' text-white rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-xl">
-                        ' . $iconSvg . '
-                        <span class="text-sm font-bold">' . $item['title'] . '</span>
-                    </button>';
-                }
-                ?>
-            </div>
-        </section>
-
-        <!-- 2. آمار خلاصه (Summary Metrics) -->
-        <section id="summary-metrics" class="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <?php
-            $metricCards = [
-                ['title' => 'کل کاربران', 'value' => $userData['total'], 'color' => 'indigo', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9a1 1 0 01-1-1v-1a2 2 0 012-2h4a2 2 0 012 2v1a1 1 0 01-1 1zm0 0h-6" />'],
-                ['title' => 'کاربران جدید امروز', 'value' => $userData['new'], 'color' => 'emerald', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8m0 0l-4-4m4 4l-6 6" />'],
-                ['title' => 'کاربران فعال', 'value' => $userData['active'], 'color' => 'yellow', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.24a2 2 0 010 2.828l-8 8a2 2 0 01-2.828 0l-4-4a2 2 0 010-2.828 2 2 0 012.828 0l4 4 7.172-7.172a2 2 0 012.828 0z" />'],
-            ];
-
-            foreach ($metricCards as $card) {
-                $formattedValue = number_format($card['value']);
-                echo '
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-' . $card['color'] . '-500 flex justify-between items-center transition duration-300 hover:shadow-2xl">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">' . $card['title'] . '</p>
-                        <p class="text-4xl font-extrabold text-gray-900 dark:text-white mt-1">' . $formattedValue . '</p>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-' . $card['color'] . '-400 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        ' . $card['icon'] . '
-                    </svg>
-                </div>';
-            }
-            ?>
-        </section>
-
-
-        <!-- 3. نمودارها و ترجیحات نمایش -->
-        <section id="dashPrefs" class="mb-8 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg border-t-4 border-gray-300 dark:border-gray-700">
-            <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">تنظیمات نمایش داشبورد</h3>
+    <section id="main-content">
+        <section class="wrapper">
             
-            <div v-if="!isVueLoaded" class="text-center py-4 text-gray-500 dark:text-gray-400">
-                در حال بارگذاری تنظیمات...
-            </div>
-
-            <div v-cloak v-else class="flex flex-wrap gap-6 items-center">
-                <!-- توگلر نمودار فروش -->
-                <div class="flex items-center space-s-2 cursor-pointer transition duration-150 hover:opacity-80" @click="show.sales = !show.sales">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" v-model="show.sales" class="sr-only peer switch-toggle">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    </label>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">نمایش نمودار فروش</span>
-                </div>
-
-                <!-- توگلر نمودار وضعیت -->
-                <div class="flex items-center space-s-2 cursor-pointer transition duration-150 hover:opacity-80" @click="show.status = !show.status">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" v-model="show.status" class="sr-only peer switch-toggle">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    </label>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">نمایش نمودار وضعیت‌ها</span>
-                </div>
-
-                <!-- توگلر نمودار کاربران -->
-                <div class="flex items-center space-s-2 cursor-pointer transition duration-150 hover:opacity-80" @click="show.users = !show.users">
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" v-model="show.users" class="sr-only peer switch-toggle">
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    </label>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">نمایش آمار کاربران</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. کانتینر نمودارها -->
-        <div id="chartContainers" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
-            <!-- نمودار فروش -->
-            <div id="salesChartContainer" class="col-span-1 lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl transition duration-300" style="display: none;">
-                <h3 class="text-lg font-semibold mb-4 border-b pb-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">نمودار فروش ماهانه (هزار تومان)</h3>
-                <canvas id="salesChart" style="max-height: 400px;"></canvas>
-            </div>
-
-            <!-- نمودار وضعیت‌ها -->
-            <div id="statusChartContainer" class="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl transition duration-300" style="display: none;">
-                <h3 class="text-lg font-semibold mb-4 border-b pb-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">درصد وضعیت سفارشات</h3>
-                <canvas id="statusChart" style="max-height: 400px;"></canvas>
-            </div>
-            
-            <!-- آمار کاربران (این بخش کارت‌های آماری است) -->
-            <div id="usersChartContainer" class="col-span-1 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl transition duration-300" style="display: none;">
-                <h3 class="text-lg font-semibold mb-4 border-b pb-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">آمار کاربران (خلاصه)</h3>
-                <div class="flex flex-col space-y-4">
-                    <div class="p-3 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg border-s-4 border-indigo-400">
-                        <p class="text-sm text-gray-600 dark:text-gray-300">کل کاربران ثبت‌نام شده</p>
-                        <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mt-1"><?php echo number_format($userData['total']); ?></p>
-                    </div>
-                    <div class="p-3 bg-emerald-50 dark:bg-emerald-900/50 rounded-lg border-s-4 border-emerald-400">
-                        <p class="text-sm text-gray-600 dark:text-gray-300">کاربران جدید امروز</p>
-                        <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mt-1"><?php echo number_format($userData['new']); ?></p>
-                    </div>
-                    <div class="p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-lg border-s-4 border-yellow-400">
-                        <p class="text-sm text-gray-600 dark:text-gray-300">تعداد کاربران فعال (آخرین ۳۰ روز)</p>
-                        <p class="text-2xl font-bold text-yellow-700 dark:text-yellow-300 mt-1"><?php echo number_format($userData['active']); ?></p>
+            <!-- Hero Section (Greeting and Date) -->
+            <div class="hero-banner animate-enter">
+                <div class="hero-title">
+                    <h1><?php echo $greeting; ?>، مدیر عزیز</h1>
+                    <div class="hero-subtitle">
+                        <i class="<?php echo $greetIcon; ?>"></i>
+                        <span>امروز: <?php echo jdate('l، j F Y'); ?></span>
+                        <span style="margin: 0 10px; opacity: 0.3;">|</span>
+                        <span>وضعیت: <span style="color: #34d399;">سیستم پایدار است</span></span>
                     </div>
                 </div>
+                <!-- Time Range Presets -->
+                <div class="time-presets-group">
+                    <button class="btn-glass" id="preset7d">۷ روز</button>
+                    <button class="btn-glass" id="presetMonth">ماه اخیر</button>
+                    <button class="btn-glass" id="presetYear">سال اخیر</button>
+                </div>
             </div>
 
-        </div>
-        
-        <!-- 5. فعالیت‌های اخیر (New Section) -->
-        <section id="recent-activities">
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl transition duration-300">
-                <h3 class="text-xl font-extrabold mb-5 border-b pb-3 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-gray-100">فعالیت‌های اخیر سیستم</h3>
-                
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">عملیات</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300 hidden sm:table-cell">شناسه</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">توضیحات</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">زمان</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                            <?php foreach ($recentActivities as $activity): ?>
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-150">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo htmlspecialchars($activity['status_color']); ?>">
-                                            <?php echo htmlspecialchars($activity['type']); ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden sm:table-cell">
-                                        #<?php echo htmlspecialchars($activity['id']); ?>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                        <?php echo htmlspecialchars($activity['desc']); ?>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        <time datetime="<?php echo htmlspecialchars($activity['date'] . ' ' . $activity['time']); ?>">
-                                            <?php echo htmlspecialchars($activity['time']); ?>
-                                            <span class="text-xs font-light block"><?php echo htmlspecialchars($activity['date']); ?></span>
-                                        </time>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+            <!-- Filter Bar -->
+            <div class="filter-bar animate-enter delay-1">
+                <form class="filter-inputs" method="get" id="dashboardFilterForm">
+                    <!-- Date Picker Input -->
+                    <div style="position: relative; flex-grow: 1; max-width: 300px;">
+                        <input type="text" id="rangePicker" class="input-glass" placeholder="انتخاب محدوده تاریخ..." style="padding-right: 40px; text-align: right; width: 100%;">
+                        <i class="icon-calendar" style="position: absolute; right: 15px; top: 14px; color: var(--text-muted); pointer-events: none;"></i>
+                    </div>
+                    <!-- Hidden fields to store date range values for submission -->
+                    <input type="hidden" name="from" id="rangeFrom" value="<?php echo htmlspecialchars($fromDate ?? '', ENT_QUOTES); ?>">
+                    <input type="hidden" name="to" id="rangeTo" value="<?php echo htmlspecialchars($toDate ?? '', ENT_QUOTES); ?>">
+
+                    <!-- Status Multi-Select -->
+                    <select name="status[]" multiple class="input-glass" style="height: auto; min-height: 46px; flex-grow: 1; max-width: 300px;">
+                        <!-- Populate status options from PHP data -->
+                        <?php foreach($statusMapFa as $sk => $sl): ?>
+                            <option value="<?php echo $sk; ?>" <?php echo in_array($sk, $selectedStatuses) ? 'selected' : ''; ?>><?php echo $sl; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn-gradient">
+                            <i class="icon-filter"></i> 
+                            <span>اعمال فیلتر</span>
+                        </button>
+                        
+                        <?php if($fromDate || $toDate || !empty($selectedStatuses)): ?>
+                        <!-- Reset Filter Button -->
+                        <a href="index.php" class="btn-glass" title="حذف فیلترها" style="display: flex; align-items: center; justify-content: center; padding: 12px 18px;">
+                            <i class="icon-refresh"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid animate-enter delay-2">
+                <div class="modern-card stat-card">
+                    <div class="stat-icon-wrapper icon-grad-1"><i class="icon-bar-chart"></i></div>
+                    <div class="stat-content">
+                        <h3><?php echo $formatted_total_sales; ?></h3>
+                        <span>مجموع فروش (تومان)</span>
+                    </div>
                 </div>
                 
-                <div class="text-center mt-6">
-                    <a href="log.php" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-primary hover:bg-indigo-700 transition duration-150 dark:ring-offset-gray-900 ring-4 ring-primary/50">
-                        مشاهده همه فعالیت‌ها
+                <div class="modern-card stat-card">
+                    <div class="stat-icon-wrapper icon-grad-2"><i class="icon-shopping-bag"></i></div>
+                    <div class="stat-content">
+                        <h3><?php echo number_format($resultcontsell); ?></h3>
+                        <span>تعداد سفارشات</span>
+                    </div>
+                </div>
+
+                <div class="modern-card stat-card">
+                    <div class="stat-icon-wrapper icon-grad-3"><i class="icon-users"></i></div>
+                    <div class="stat-content">
+                        <h3><?php echo number_format($resultcount); ?></h3>
+                        <span>کل کاربران سیستم</span>
+                    </div>
+                </div>
+
+                <div class="modern-card stat-card">
+                    <div class="stat-icon-wrapper icon-grad-4"><i class="icon-user-plus"></i></div>
+                    <div class="stat-content">
+                        <h3><?php echo number_format($resultcountday); ?></h3>
+                        <span>کاربران جدید امروز</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Preferences -->
+            <div class="modern-card animate-enter delay-2" id="dashPrefs" style="padding: 15px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                <span class="text-muted" style="font-size: 15px; font-weight: 500; color: #cbd5e1;"><i class="icon-cogs"></i> نمایش نمودارها:</span>
+                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                    <!-- Checkboxes bound to Vue 'show' state -->
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.sales"> 
+                        روند فروش
+                    </label>
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.status"> 
+                        توزیع وضعیت‌ها
+                    </label>
+                    <label class="custom-check">
+                        <input type="checkbox" v-model="show.users"> 
+                        جذب کاربر
+                    </label>
+                </div>
+            </div>
+
+            <!-- Charts Section (Dynamically controlled by Vue) -->
+            <div class="charts-grid animate-enter delay-3" id="chartsArea">
+                <!-- Sales Chart (Bar) -->
+                <div class="chart-card modern-card" data-chart="sales" id="salesChartContainer" style="grid-column: 1 / -1; display: none;">
+                    <div class="chart-header">
+                        <span class="chart-title"><i class="icon-bar-chart"></i> تحلیل فروش روزانه</span>
+                    </div>
+                    <div style="height: 350px; width: 100%;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Status Doughnut Chart -->
+                <div class="chart-card modern-card" data-chart="status" id="statusChartContainer" style="grid-column: span 1; display: none;">
+                    <div class="chart-header">
+                        <span class="chart-title"><i class="icon-pie-chart"></i> توزیع وضعیت سفارشات</span>
+                    </div>
+                    <div style="height: 300px; display: flex; justify-content: center; position: relative; min-width: 0;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Users Line Chart -->
+                <div class="chart-card modern-card" data-chart="users" id="usersChartContainer" style="grid-column: span 2; display: none;">
+                    <div class="chart-header">
+                        <span class="chart-title"><i class="icon-line-chart"></i> روند ثبت نام کاربران جدید</span>
+                    </div>
+                    <div style="height: 300px; width: 100%;">
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="animate-enter delay-4">
+                <div class="section-header">
+                    <i class="icon-bolt" style="color: var(--accent);"></i> عملیات سریع
+                </div>
+                <div class="actions-grid">
+                    <a href="invoice.php" class="action-btn">
+                        <i class="icon-list-alt"></i>
+                        <span>مشاهده سفارشات</span>
+                    </a>
+                    <a href="user.php" class="action-btn">
+                        <i class="icon-users"></i>
+                        <span>مدیریت کاربران</span>
+                    </a>
+                    <a href="product.php" class="action-btn">
+                        <i class="icon-archive"></i>
+                        <span>تعریف محصولات</span>
+                    </a>
+                    <a href="inbound.php" class="action-btn">
+                        <i class="icon-exchange"></i>
+                        <span>تعیین ورودی‌ها</span>
+                    </a>
+                    <a href="payment.php" class="action-btn">
+                        <i class="icon-credit-card"></i>
+                        <span>لیست پرداخت‌ها</span>
+                    </a>
+                    <a href="cancelService.php" class="action-btn danger">
+                        <i class="icon-trash"></i>
+                        <span>حذف سرویس</span>
+                    </a>
+                    <a href="keyboard.php" class="action-btn">
+                        <i class="icon-th"></i>
+                        <span>تنظیمات کیبورد</span>
+                    </a>
+                    <a href="productedit.php" class="action-btn">
+                        <i class="icon-edit"></i>
+                        <span>ویرایش سریع</span>
                     </a>
                 </div>
-
             </div>
+
         </section>
+        <footer id="footer">
+            2024 &copy; پنل مدیریت حرفه‌ای. تمامی حقوق محفوظ است.
+        </footer>
+    </section>
+</section>
 
-    </main>
+<!-- Scripts -->
+<script src="js/jquery.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.scrollTo.min.js"></script>
+<script src="js/jquery.nicescroll.js"></script>
+<!-- Essential Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/vue@3"></script> 
+<!-- Daterange picker dependencies -->
+<script src="assets/bootstrap-daterangepicker/moment.min.js"></script>
+<script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
+<!-- The original common-scripts.js is expected to be present -->
+<script src="js/common-scripts.js"></script>
 
-<!-- JavaScript Section -->
 <script>
-const salesData = <?php echo json_encode($salesData); ?>;
-const statusData = <?php echo json_encode($statusData); ?>;
-
-// --- Dark Mode Logic ---
-
-/**
- * اولیه سازی حالت شب بر اساس ترجیح کاربر یا ذخیره محلی
- */
-function initDarkMode() {
-    // بررسی localStorage یا ترجیح سیستم
-    const isDark = localStorage.getItem('theme') === 'dark' || 
-                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.classList.toggle('dark', isDark);
+$(function(){
+    // Date Picker Logic
+    var from = $('#rangeFrom').val();
+    var to = $('#rangeTo').val();
+    var $input = $('#rangePicker');
     
-    // تنظیم وضعیت سوئیچ در بارگذاری اولیه
-    const toggle = document.getElementById('darkModeToggle');
-    if (toggle) {
-        toggle.checked = isDark;
+    // Set initial dates based on current filter or defaults (last 13 days + today)
+    var start = from ? moment(from) : moment().subtract(13, 'days');
+    var end = to ? moment(to) : moment();
+
+    function cb(start, end) {
+        // Update input field display (Gregorian format for submission clarity, but user sees Persian via jdf)
+        // Since jdf is PHP-based, we keep moment formats for internal use
+        $input.val(start.format('YYYY/MM/DD') + '  تا  ' + end.format('YYYY/MM/DD'));
+        // Update hidden fields for submission
+        $('#rangeFrom').val(start.format('YYYY-MM-DD'));
+        $('#rangeTo').val(end.format('YYYY-MM-DD'));
     }
-    return isDark;
-}
 
-/**
- * جابه‌جایی بین حالت شب و روز
- */
-function toggleDarkMode() {
-    const isDark = document.documentElement.classList.contains('dark');
-    const newMode = !isDark ? 'dark' : 'light';
-    
-    document.documentElement.classList.toggle('dark', !isDark);
-    localStorage.setItem('theme', newMode);
-    
-    // نیاز به رندر مجدد نمودارها در حالت شب/روز برای به‌روزرسانی رنگ متن و بک‌گراند
-    if (salesChartInstance) chartRenderers['sales'](newMode);
-    if (statusChartInstance) chartRenderers['status'](newMode);
-}
+    $input.daterangepicker({
+        startDate: start,
+        endDate: end,
+        opens: 'right', // Changed to right for better RTL compatibility
+        locale: { format: 'YYYY/MM/DD', separator: ' - ', applyLabel: 'تایید', cancelLabel: 'لغو' }
+    }, cb);
 
-// --- Chart.js Logic ---
+    // Initial display of dates if they were set
+    if(from && to) { cb(start, end); } else { $input.val(''); }
 
-// متغیرهای global برای نگهداری نمونه‌های نمودار
-let salesChartInstance = null;
-let statusChartInstance = null;
+    // Preset buttons functionality to automatically submit the form
+    $('#preset7d').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+    $('#presetMonth').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(30, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+    $('#presetYear').click(function(e){ 
+        e.preventDefault(); 
+        $('#rangeFrom').val(moment().subtract(365, 'days').format('YYYY-MM-DD')); 
+        $('#rangeTo').val(moment().format('YYYY-MM-DD')); 
+        $('#dashboardFilterForm').submit(); 
+    });
+});
+</script>
 
-const chartRenderers = {
-    'sales': function(mode = null) {
-        const ctx = document.getElementById('salesChart');
-        if (!ctx) return;
-        
-        // تشخیص رنگ متن بر اساس حالت روز/شب
-        const isDark = mode === 'dark' || (mode === null && document.documentElement.classList.contains('dark'));
-        const textColor = isDark ? '#f3f4f6' : '#1f2937'; // gray-100 / gray-800
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-        
-        if (salesChartInstance) salesChartInstance.destroy(); // حذف نمونه قبلی
-        salesChartInstance = new Chart(ctx, {
+<script>
+(function(){
+    // Chart.js Global Config for Vazirmatn and Dark Theme
+    Chart.defaults.font.family = 'Vazirmatn';
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.08)';
+
+    // Data from PHP, safely encoded
+    var salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var salesAmount = <?php echo json_encode($salesAmount); ?>;
+    var statusLabels = <?php echo json_encode($statusLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var statusData = <?php echo json_encode($statusData); ?>;
+    var statusColors = <?php echo json_encode($statusColors); ?>;
+    var userLabels = <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>;
+    var userCounts = <?php echo json_encode($userCounts); ?>;
+
+    const initializedCharts = new Set();
+    const chartRenderers = {};
+    const chartContainers = document.querySelectorAll('.chart-card');
+
+
+    // 1. Render Sales Chart
+    chartRenderers['sales'] = function() {
+        if(initializedCharts.has('sales')) return;
+        var ctx = document.getElementById('salesChart').getContext('2d');
+        var grad = ctx.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(79, 70, 229, 0.5)'); // Primary Indigo
+        grad.addColorStop(1, 'rgba(79, 70, 229, 0.05)');
+
+        new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: salesData.labels,
+                labels: salesLabels,
                 datasets: [{
-                    label: 'مبلغ فروش (هزار)',
-                    data: salesData.data,
-                    backgroundColor: 'rgba(79, 70, 229, 0.9)', // Primary color with alpha
-                    borderColor: 'rgb(79, 70, 229)',
+                    label: 'فروش (تومان)',
+                    data: salesAmount,
+                    backgroundColor: grad,
+                    borderColor: '#4f46e5',
                     borderWidth: 1,
-                    borderRadius: 6,
-                    hoverBackgroundColor: 'rgba(79, 70, 229, 1)',
+                    borderRadius: 8,
+                    hoverBackgroundColor: '#818cf8'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) { return Intl.NumberFormat('fa-IR').format(value); },
-                            color: textColor,
-                            font: { family: 'Vazirmatn' }
-                        },
-                        grid: { color: gridColor }
-                    },
-                    x: {
-                        reverse: true, // برای نمودارهای راست‌چین
-                        ticks: {
-                            color: textColor,
-                            font: { family: 'Vazirmatn' }
-                        },
-                        grid: { color: gridColor }
-                    }
-                },
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            font: { family: 'Vazirmatn' },
-                            color: textColor
-                        }
-                    },
+                    legend: { display: false },
                     tooltip: {
                         rtl: true,
-                        titleFont: { family: 'Vazirmatn' },
-                        bodyFont: { family: 'Vazirmatn' },
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 14 },
                         callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                label += Intl.NumberFormat('fa-IR').format(context.raw) + ' هزار تومان';
-                                return label;
+                            label: function(c) { 
+                                return ' ' + Number(c.raw).toLocaleString('fa-IR') + ' تومان'; 
                             }
                         }
                     }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false }, 
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: {
+                            color: '#cbd5e1',
+                            callback: function(value) {
+                                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'م';
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'هز';
+                                return value;
+                            }
+                        }
+                    },
+                    x: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
                 }
             }
         });
-    },
-    'status': function(mode = null) {
-        const ctx = document.getElementById('statusChart');
-        if (!ctx) return;
-        
-        // تشخیص رنگ متن بر اساس حالت روز/شب
-        const isDark = mode === 'dark' || (mode === null && document.documentElement.classList.contains('dark'));
-        const textColor = isDark ? '#f3f4f6' : '#1f2937';
-        
-        if (statusChartInstance) statusChartInstance.destroy(); // حذف نمونه قبلی
-        statusChartInstance = new Chart(ctx, {
+        initializedCharts.add('sales');
+    };
+
+    // 2. Render Status Chart
+    chartRenderers['status'] = function() {
+        if(initializedCharts.has('status')) return;
+        new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
-                labels: statusData.labels,
+                labels: statusLabels,
                 datasets: [{
-                    data: statusData.data,
-                    backgroundColor: [
-                        'rgba(245, 158, 11, 0.9)', // Yellow (در حال بررسی)
-                        'rgba(16, 185, 129, 0.9)', // Emerald (تأیید شده)
-                        'rgba(239, 68, 68, 0.9)'  // Red (لغو شده)
-                    ],
-                    hoverOffset: 8,
-                    borderColor: isDark ? '#1f2937' : '#ffffff', // مرز سفید در روز، تیره در شب
-                    borderWidth: 3
+                    data: statusData,
+                    backgroundColor: statusColors,
+                    borderWidth: 4,
+                    borderColor: 'var(--bg-body)' // Border matches body background for floating effect
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '65%',
                 plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            font: { family: 'Vazirmatn' },
-                            usePointStyle: true,
-                            padding: 20,
-                            color: textColor
-                        }
+                    legend: { 
+                        position: 'right', 
+                        labels: { 
+                            boxWidth: 12, 
+                            padding: 15,
+                            font: { size: 14 }
+                        } 
                     },
-                    tooltip: {
-                        rtl: true,
-                        titleFont: { family: 'Vazirmatn' },
-                        bodyFont: { family: 'Vazirmatn' },
+                    tooltip: { rtl: true, backgroundColor: 'rgba(30, 41, 59, 0.9)' }
+                }
+            }
+        });
+        initializedCharts.add('status');
+    };
+
+    // 3. Render Users Chart
+    chartRenderers['users'] = function() {
+        if(initializedCharts.has('users')) return;
+        var ctxU = document.getElementById('usersChart').getContext('2d');
+        var gradU = ctxU.createLinearGradient(0, 0, 0, 300);
+        gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)'); // Cyan
+        gradU.addColorStop(1, 'rgba(6, 182, 212, 0)');
+
+        new Chart(ctxU, {
+            type: 'line',
+            data: {
+                labels: userLabels,
+                datasets: [{
+                    label: 'کاربر جدید',
+                    data: userCounts,
+                    borderColor: '#06b6d4',
+                    backgroundColor: gradU,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#06b6d4',
+                    pointBorderColor: '#1e293b',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { rtl: true, backgroundColor: 'rgba(30, 41, 59, 0.9)' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false }, 
+                        padding: { top: 10, bottom: 0 }, 
+                        grid: { color: 'rgba(255,255,255,0.08)' },
+                        ticks: { precision: 0, color: '#cbd5e1' }
+                    },
+                    x: { 
+                        grid: { display: true, color: 'rgba(255,255,255,0.08)' }, 
+                        ticks: { maxRotation: 0, autoSkipPadding: 20, color: '#cbd5e1' } 
                     }
                 }
             }
         });
-    },
-    'users': function() {
-        // این بخش فقط نمایش کارت آمار است و نمودار Chart.js ندارد
-    }
-};
+        initializedCharts.add('users');
+    };
 
-/**
- * مدیریت نمایش/عدم نمایش کانتینر نمودارها و رندر نمودار در صورت نیاز.
- * @param {object} show - آبجکت Vue.js شامل وضعیت نمایش نمودارها
- */
-function toggleCharts(show) {
-    const chartIds = ['sales', 'status', 'users'];
-    chartIds.forEach(id => {
-        const el = document.getElementById(`${id}ChartContainer`);
-        if (el) {
-            if (show[id]) {
-                el.style.display = 'block';
-                // رندر نمودار فقط زمانی که قابل مشاهده است و در DOM قرار دارد
-                if (id !== 'users' && el.style.display !== 'none') { 
-                    chartRenderers[id]();
+    // --- Chart Visibility and Layout Logic (Vue integration) ---
+
+    // Array of chart keys
+    const chartKeys = ['sales', 'status', 'users'];
+
+    /**
+     * Toggles chart visibility and updates grid layout based on Vue state
+     * @param {object} s - The 'show' state object from Vue: {sales: bool, status: bool, users: bool}
+     */
+    function toggleCharts(s){
+        const visibleKeys = chartKeys.filter(key => s[key]);
+        const activeCount = visibleKeys.length;
+        const chartsArea = document.getElementById('chartsArea');
+        
+        // Hide/Show elements based on preference and render if needed
+        chartKeys.forEach(key => {
+            const el = document.getElementById(key + 'ChartContainer');
+            if (el) {
+                if (s[key]) {
+                    el.style.display = 'flex';
+                    if (chartRenderers[key]) chartRenderers[key](); // Render on first show
+                } else {
+                    el.style.display = 'none';
                 }
-            } else {
-                el.style.display = 'none';
+                el.style.gridColumn = 'unset'; // Reset column span
             }
-        }
-    });
-}
-
-(async function() {
-    // 1. Initial Dark Mode setup
-    initDarkMode();
-
-    // 2. Vue.js Application for preferences
-    if (typeof Vue !== 'undefined') {
-        const storedPrefs = localStorage.getItem('dash_prefs');
-        let initialShow = { sales: true, status: true, users: true };
-        if (storedPrefs) {
-            try {
-                initialShow = JSON.parse(storedPrefs);
-            } catch (e) {
-                console.error("Error parsing stored dashboard preferences:", e);
-            }
+        });
+        
+        if (activeCount === 0) {
+            chartsArea.style.display = 'none';
+            return;
+        } else {
+            chartsArea.style.display = 'grid';
         }
 
-        const app = Vue.createApp({
-            data() {
-                return {
-                    show: initialShow,
-                    isVueLoaded: true // برای مخفی کردن پیام loading
-                };
+        // --- Layout Adjustment for Desktop (1200px+) ---
+        if (window.innerWidth > 1200) {
+            const salesEl = document.getElementById('salesChartContainer');
+            const statusEl = document.getElementById('statusChartContainer');
+            const usersEl = document.getElementById('usersChartContainer');
+            
+            if (s.sales) {
+                // Sales (Row 1) takes full width (span 3)
+                salesEl.style.gridColumn = '1 / -1'; 
+                
+                // Row 2: Status and Users
+                if (s.status && s.users) {
+                    // Status 1/3, Users 2/3 (3 columns total)
+                    statusEl.style.gridColumn = 'span 1';
+                    usersEl.style.gridColumn = 'span 2';
+                } else if (s.status) {
+                    // Status takes full width (span 3)
+                    statusEl.style.gridColumn = '1 / -1'; 
+                } else if (s.users) {
+                    // Users takes full width (span 3)
+                    usersEl.style.gridColumn = '1 / -1'; 
+                }
+            } else if (activeCount > 0) {
+                // Sales is hidden. Status and Users share the 3 columns.
+                if (s.status && s.users) {
+                    // Status 1/3, Users 2/3
+                    statusEl.style.gridColumn = 'span 1';
+                    usersEl.style.gridColumn = 'span 2';
+                } else if (s.status) {
+                    statusEl.style.gridColumn = '1 / -1';
+                } else if (s.users) {
+                    usersEl.style.gridColumn = '1 / -1';
+                }
+            }
+        }
+        // --- Layout Adjustment for Tablet (768px-1200px) ---
+        else if (window.innerWidth > 768 && window.innerWidth <= 1200) {
+            // Charts share 2 columns equally.
+            visibleKeys.forEach(key => {
+                const el = document.getElementById(key + 'ChartContainer');
+                if (el) el.style.gridColumn = 'span 1';
+            });
+            // If only one chart is visible, make it full width
+            if (activeCount === 1) {
+                document.getElementById(visibleKeys[0] + 'ChartContainer').style.gridColumn = '1 / -1';
+            }
+        }
+    }
+
+
+    // Vue App for Preferences
+    if(window.Vue) {
+        var app = Vue.createApp({
+            data(){ 
+                const defaultPrefs = {'sales':true, 'status':true, 'users':true};
+                let storedPrefs;
+                try {
+                    storedPrefs = JSON.parse(localStorage.getItem('dash_prefs'));
+                } catch (e) {
+                    storedPrefs = null;
+                }
+                return { 
+                    // Load from localStorage or use default. Ensure all keys exist.
+                    show: {...defaultPrefs, ...storedPrefs} 
+                } 
             },
             watch:{ 
                 show:{ 
@@ -563,24 +1073,26 @@ function toggleCharts(show) {
                 } 
             },
             mounted(){ 
-                // اعمال اولیه دیداری و رندر نمودارها
+                // Initial application of visibility and layout
                 toggleCharts(this.show); 
+                // Since we render charts on first show, no separate lazyInit is strictly needed,
+                // but we keep the concept for future use or heavy charts.
                 window.addEventListener('resize', () => toggleCharts(this.show));
             }
         });
         app.mount('#dashPrefs');
     } else {
-        // Fallback: اگر Vue.js بارگذاری نشده است، همه نمودارها را رندر و نمایش بده
-        console.warn("Vue.js not loaded. Falling back to default chart rendering.");
+        // Fallback: If Vue.js is not loaded, just render all charts initially
         chartRenderers['sales']();
         chartRenderers['status']();
-        
+        chartRenderers['users']();
+        // Since Vue is not running, we set initial display inline (already done in HTML for safety)
         const salesEl = document.getElementById('salesChartContainer');
         const statusEl = document.getElementById('statusChartContainer');
         const usersEl = document.getElementById('usersChartContainer');
-        if (salesEl) salesEl.style.display = 'block';
-        if (statusEl) statusEl.style.display = 'block';
-        if (usersEl) usersEl.style.display = 'block';
+        if (salesEl) salesEl.style.display = 'flex';
+        if (statusEl) statusEl.style.display = 'flex';
+        if (usersEl) usersEl.style.display = 'flex';
     }
 })();
 </script>
