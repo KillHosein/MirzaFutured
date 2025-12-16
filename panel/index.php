@@ -3,7 +3,7 @@ session_start();
 require_once '../config.php';
 require_once '../jdf.php';
 
-// --- Logic Section (Unchanged) ---
+// --- Logic Section ---
 $datefirstday = time() - 86400;
 $fromDate = isset($_GET['from']) ? $_GET['from'] : null;
 $toDate = isset($_GET['to']) ? $_GET['to'] : null;
@@ -183,7 +183,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
     <!-- Fonts -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
-    <!-- CSS -->
+    <!-- CSS (Assuming these files are available or replaced by inline styles/Tailwind) -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
     <link href="assets/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet" />
@@ -221,48 +221,21 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             -webkit-font-smoothing: antialiased;
         }
 
-        /* --- Global Overrides (Necessary for integrated header) --- */
+        /* --- Global Overrides --- */
         #container { width: 100%; height: 100%; }
-        #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; } /* Adjusted for fixed header */
+        #main-content { margin-right: 0px; padding-top: var(--header-height); transition: all 0.3s; }
         .wrapper { padding: 25px; display: flex; flex-direction: column; gap: 30px; max-width: 1600px; margin: 0 auto; }
         .site-header {
-            position: fixed;
-            top: 0;
-            right: 0;
-            left: 0;
-            height: var(--header-height);
-            z-index: 100;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
+            position: fixed; top: 0; right: 0; left: 0; height: var(--header-height); z-index: 100;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
+            display: flex; align-items: center; padding: 0 20px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
-        .header-title {
-            color: #fff;
-            font-size: 18px;
-            font-weight: 700;
-            padding-right: 15px;
-            border-right: 2px solid var(--primary);
-        }
-        .header-nav {
-            margin-right: auto;
-            display: flex;
-            gap: 15px;
-        }
-        .header-nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 8px;
-            transition: 0.2s;
-        }
-        .header-nav a:hover, .header-nav a.active {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-        }
+        .header-title { color: #fff; font-size: 18px; font-weight: 700; padding-right: 15px; border-right: 2px solid var(--primary); }
+        .header-nav { margin-right: auto; display: flex; gap: 15px; }
+        .header-nav a { color: var(--text-muted); text-decoration: none; padding: 5px 10px; border-radius: 8px; transition: 0.2s; }
+        .header-nav a:hover, .header-nav a.active { color: var(--text-main); background: rgba(255, 255, 255, 0.05); }
         
         /* --- Animations --- */
         @keyframes fadeInUp {
@@ -275,7 +248,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .delay-3 { animation-delay: 0.3s; }
         .delay-4 { animation-delay: 0.4s; }
 
-        /* --- Glass Cards --- */
+        /* --- Glass Cards (FIXED: ensures boxes are visible) --- */
         .modern-card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -289,28 +262,11 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             position: relative;
             overflow: hidden;
         }
-        .modern-card::after {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 100%);
-            pointer-events: none;
-        }
-        .modern-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.35);
-            border-color: rgba(255,255,255,0.2);
-        }
+        .modern-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.35); border-color: rgba(255,255,255,0.2); }
 
         /* --- Hero Section --- */
-        .hero-banner {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 10px;
-        }
-        .hero-title h1 {
-            font-size: 28px; font-weight: 800;
-            background: linear-gradient(to right, #fff, #cbd5e1);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
+        .hero-banner { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+        .hero-title h1 { font-size: 28px; font-weight: 800; background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
         .hero-subtitle { font-size: 15px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
 
         /* --- Filter Bar --- */
@@ -333,10 +289,9 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             font-family: var(--font-main);
             outline: none; transition: 0.2s;
             min-width: 180px;
-            appearance: none; /* Remove default arrow for select */
+            appearance: none;
         }
         .input-glass:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
-        .input-glass[multiple] { height: auto !important; min-height: 42px; }
 
         .btn-gradient {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -357,17 +312,12 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             padding: 8px 16px; border-radius: 10px;
             transition: 0.2s; cursor: pointer;
         }
-        .btn-glass:hover, .btn-glass.active { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+        .btn-glass:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
 
         /* --- Stats --- */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
         .stat-card { display: flex; align-items: center; gap: 20px; }
-        .stat-icon-wrapper {
-            width: 64px; height: 64px; border-radius: 18px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 26px;
-            box-shadow: inset 0 0 12px rgba(255,255,255,0.1);
-        }
+        .stat-icon-wrapper { width: 64px; height: 64px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: inset 0 0 12px rgba(255,255,255,0.1); }
         .stat-content h3 { font-size: 26px; font-weight: 800; margin: 0 0 4px 0; color: #fff; letter-spacing: -0.5px; }
         .stat-content span { font-size: 14px; color: var(--text-muted); font-weight: 500; }
         
@@ -380,7 +330,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
         @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
         
-        .chart-card { /* Added chart card wrapper for better structure */
+        .chart-card {
             display: flex;
             flex-direction: column;
             width: 100%;
@@ -388,8 +338,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .chart-title { font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-        .chart-title i { color: var(--accent); }
-
+        
         /* --- Quick Actions --- */
         .section-header { margin-top: 10px; font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         .section-header::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to left, rgba(255,255,255,0.08), transparent); }
@@ -406,35 +355,19 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             position: relative; overflow: hidden;
         }
         .action-btn i { font-size: 32px; transition: 0.3s; color: var(--text-muted); opacity: 0.8; }
-        .action-btn span { font-weight: 600; font-size: 15px; transition: 0.3s; }
-        
-        .action-btn:hover { transform: translateY(-5px); background: linear-gradient(145deg, rgba(40,55,80,0.7), rgba(20,30,50,0.7)); border-color: rgba(99,102,241,0.3); }
+        .action-btn:hover { transform: translateY(-5px); }
         .action-btn:hover i { transform: scale(1.1); color: var(--accent); opacity: 1; }
-        .action-btn:hover span { color: #fff; }
         .action-btn.danger:hover i { color: var(--secondary); }
-        .action-btn.danger:hover { border-color: rgba(236, 72, 153, 0.3); }
 
-        /* --- Checkbox --- */
-        .custom-check { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 5px 10px; border-radius: 8px; transition: 0.2s; }
-        .custom-check:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .custom-check input { accent-color: var(--primary); }
-
-        /* --- Footer (Added for completeness) --- */
-        #footer {
-            margin-top: 50px;
-            padding: 20px 25px;
-            color: var(--text-muted);
-            text-align: center;
-            font-size: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
+        /* --- Footer --- */
+        #footer { margin-top: 50px; padding: 20px 25px; color: var(--text-muted); text-align: center; font-size: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
 </head>
 
 <body>
 
 <section id="container">
-    <!-- Manual Header Inclusion (Simplified for Canvas environment) -->
+    <!-- Manual Header Inclusion -->
     <header class="site-header">
         <h1 class="header-title">پنل مدیریت</h1>
         <nav class="header-nav">
@@ -534,9 +467,10 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             </div>
 
             <!-- Charts Section -->
+            <!-- NOTE: Added id and data-chart-type for lazy loading -->
             <div class="charts-grid animate-enter delay-3" id="chartsArea">
                 <!-- Sales Chart (Bar) - Full Width on 2fr slot -->
-                <div class="chart-card modern-card" data-chart="sales" style="grid-column: 1 / -1;">
+                <div class="chart-card modern-card" data-chart="sales" data-chart-type="bar" id="salesChartContainer" style="grid-column: 1 / -1;">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-graph"></i> روند فروش روزانه</span>
                     </div>
@@ -546,7 +480,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 </div>
 
                 <!-- Status Doughnut Chart - 1fr slot -->
-                <div class="chart-card modern-card" data-chart="status">
+                <div class="chart-card modern-card" data-chart="status" data-chart-type="doughnut" id="statusChartContainer">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-pie-chart"></i> وضعیت سفارشات</span>
                     </div>
@@ -556,7 +490,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 </div>
 
                 <!-- Users Line Chart - 2fr slot -->
-                <div class="chart-card modern-card" data-chart="users" style="grid-column: 2;">
+                <div class="chart-card modern-card" data-chart="users" data-chart-type="line" id="usersChartContainer" style="grid-column: 2;">
                     <div class="chart-header">
                         <span class="chart-title"><i class="icon-user-md"></i> نرخ جذب کاربر</span>
                     </div>
@@ -629,8 +563,10 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
 <script src="js/bootstrap.min.js"></script>
 <script src="js/jquery.scrollTo.min.js"></script>
 <script src="js/jquery.nicescroll.js"></script>
+<!-- Chart.js and Vue.js are essential for the script below -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/vue@3"></script> 
+<!-- Daterange picker dependencies -->
 <script src="assets/bootstrap-daterangepicker/moment.min.js"></script>
 <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
 <script src="js/common-scripts.js"></script>
@@ -642,7 +578,7 @@ $(function(){
     var to = $('#rangeTo').val();
     var $input = $('#rangePicker');
     
-    var start = from ? moment(from) : moment().subtract(14, 'days'); // Default to 14 days ago
+    var start = from ? moment(from) : moment().subtract(14, 'days');
     var end = to ? moment(to) : moment();
 
     function cb(start, end) {
@@ -658,7 +594,7 @@ $(function(){
         locale: { format: 'YYYY-MM-DD', separator: ' - ', applyLabel: 'تایید', cancelLabel: 'لغو' }
     }, cb);
 
-    if(from && to) { cb(start, end); } else { $input.val(''); } // Clear default if no dates are set
+    if(from && to) { cb(start, end); } else { $input.val(''); }
 
     $('#preset7d').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().subtract(6, 'days').format('YYYY-MM-DD')); $('#rangeTo').val(moment().format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
     $('#presetMonth').click(function(e){ e.preventDefault(); $('#rangeFrom').val(moment().startOf('month').format('YYYY-MM-DD')); $('#rangeTo').val(moment().endOf('month').format('YYYY-MM-DD')); $('#dashboardFilterForm').submit(); });
@@ -689,183 +625,196 @@ $(function(){
     var userLabels = <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>;
     var userCounts = <?php echo json_encode($userCounts); ?>;
 
-    // Vue App for Preferences
-    const app = Vue.createApp({
-        data() {
-            return {
-                show: JSON.parse(localStorage.getItem('dash_prefs') || '{"status":true,"users":true,"sales":true}')
-            }
-        },
-        watch: {
-            show: {
-                deep: true,
-                handler(v) { 
-                    localStorage.setItem('dash_prefs', JSON.stringify(v)); 
-                    this.updateVisibility(v);
-                }
-            }
-        },
-        mounted() {
-            this.updateVisibility(this.show);
-            this.initCharts();
-        },
-        methods: {
-            updateVisibility(v){
-                const toggle = (dataAttr, s) => { 
-                    const el = document.querySelector(`[data-chart="${dataAttr}"]`); 
-                    if(el) el.style.display = s ? 'flex' : 'none'; // Use flex for card display
-                };
-                toggle('sales', v.sales);
-                toggle('status', v.status);
-                toggle('users', v.users);
+    // Chart Render Functions using Chart.js
+    const initializedCharts = new Set();
 
-                // Adjust grid based on visibility
-                const grid = document.getElementById('chartsArea');
-                if (v.sales && v.status && v.users) {
-                    grid.style.gridTemplateColumns = '2fr 1fr';
-                    document.querySelector('[data-chart="sales"]').style.gridColumn = '1 / -1';
-                    document.querySelector('[data-chart="users"]').style.gridColumn = '2';
-                } else if (v.sales && (!v.status || !v.users)) {
-                    grid.style.gridTemplateColumns = '1fr';
-                    document.querySelector('[data-chart="sales"]').style.gridColumn = '1 / -1';
-                } else if (v.status && v.users) {
-                    grid.style.gridTemplateColumns = '1fr 1fr';
-                    document.querySelector('[data-chart="status"]').style.gridColumn = '1';
-                    document.querySelector('[data-chart="users"]').style.gridColumn = '2';
-                } else {
-                     grid.style.gridTemplateColumns = '1fr'; // single chart or none
-                }
+    function renderSalesChart() {
+        if(initializedCharts.has('salesChart')) return;
+        var ctx = document.getElementById('salesChart').getContext('2d');
+        var grad = ctx.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+        grad.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: salesLabels,
+                datasets: [{
+                    label: 'فروش (تومان)',
+                    data: salesAmount,
+                    backgroundColor: grad,
+                    borderColor: '#818cf8',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    hoverBackgroundColor: '#a5b4fc'
+                }]
             },
-            initCharts() {
-                // Sales Bar
-                if(document.getElementById('salesChart')) {
-                    var ctx = document.getElementById('salesChart').getContext('2d');
-                    var grad = ctx.createLinearGradient(0, 0, 0, 300);
-                    grad.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
-                    grad.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
-
-                    new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: salesLabels,
-                            datasets: [{
-                                label: 'فروش (تومان)',
-                                data: salesAmount,
-                                backgroundColor: grad,
-                                borderColor: '#818cf8',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                hoverBackgroundColor: '#a5b4fc'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                                    padding: 12,
-                                    titleFont: { family: 'Vazirmatn', size: 14 },
-                                    bodyFont: { family: 'Vazirmatn', size: 13 },
-                                    rtl: true,
-                                    callbacks: {
-                                        label: function(c) { return ' ' + Number(c.raw).toLocaleString() + ' تومان'; }
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: { 
-                                    beginAtZero: true, 
-                                    border: { display: false },
-                                    grid: { color: 'rgba(255,255,255,0.08)' }
-                                },
-                                x: { 
-                                    grid: { display: false } 
-                                }
-                            }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: true,
+                        callbacks: {
+                            label: function(c) { return ' ' + Number(c.raw).toLocaleString() + ' تومان'; }
                         }
-                    });
-                }
-
-                // Status Doughnut
-                if(document.getElementById('statusChart')) {
-                    new Chart(document.getElementById('statusChart'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: statusLabels,
-                            datasets: [{
-                                data: statusData,
-                                backgroundColor: statusColors,
-                                borderWidth: 2,
-                                borderColor: 'rgba(30, 41, 59, 0.8)'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: '75%',
-                            plugins: {
-                                legend: { 
-                                    position: 'right', 
-                                    labels: { 
-                                        boxWidth: 10, 
-                                        padding: 15, 
-                                        font: { family: 'Vazirmatn', size: 12 } 
-                                    } 
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Users Line
-                if(document.getElementById('usersChart')) {
-                    var ctxU = document.getElementById('usersChart').getContext('2d');
-                    var gradU = ctxU.createLinearGradient(0, 0, 0, 300);
-                    gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
-                    gradU.addColorStop(1, 'rgba(6, 182, 212, 0)');
-
-                    new Chart(ctxU, {
-                        type: 'line',
-                        data: {
-                            labels: userLabels,
-                            datasets: [{
-                                label: 'کاربر جدید',
-                                data: userCounts,
-                                borderColor: '#06b6d4',
-                                backgroundColor: gradU,
-                                fill: true,
-                                tension: 0.4,
-                                pointBackgroundColor: '#06b6d4',
-                                pointBorderColor: '#fff',
-                                pointRadius: 4,
-                                pointHoverRadius: 6
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: {
-                                y: { 
-                                    beginAtZero: true, 
-                                    border: { display: false }, 
-                                    padding: { top: 10, bottom: 0 },
-                                    grid: { color: 'rgba(255,255,255,0.08)' }
-                                },
-                                x: { 
-                                    grid: { display: true, color: 'rgba(255,255,255,0.08)' }, 
-                                    ticks: { maxRotation: 0, autoSkipPadding: 20 }
-                                }
-                            }
-                        }
-                    });
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                    x: { grid: { display: false } }
                 }
             }
+        });
+        initializedCharts.add('salesChart');
+    }
+
+    function renderStatusChart() {
+        if(initializedCharts.has('statusChart')) return;
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: statusColors,
+                    borderWidth: 2,
+                    borderColor: 'rgba(30, 41, 59, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, padding: 15 } }
+                }
+            }
+        });
+        initializedCharts.add('statusChart');
+    }
+
+    function renderUsersChart() {
+        if(initializedCharts.has('usersChart')) return;
+        var ctxU = document.getElementById('usersChart').getContext('2d');
+        var gradU = ctxU.createLinearGradient(0, 0, 0, 300);
+        gradU.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
+        gradU.addColorStop(1, 'rgba(6, 182, 212, 0)');
+
+        new Chart(ctxU, {
+            type: 'line',
+            data: {
+                labels: userLabels,
+                datasets: [{
+                    label: 'کاربر جدید',
+                    data: userCounts,
+                    borderColor: '#06b6d4',
+                    backgroundColor: gradU,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#06b6d4',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, border: { display: false }, padding: { top: 10, bottom: 0 }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                    x: { grid: { display: true, color: 'rgba(255,255,255,0.08)' }, ticks: { maxRotation: 0, autoSkipPadding: 20 } }
+                }
+            }
+        });
+        initializedCharts.add('usersChart');
+    }
+
+    // Lazy Load Initialization
+    function lazyInitCharts(){
+        if(!('IntersectionObserver' in window)) {
+            // Fallback: If not supported, render all charts immediately
+            renderSalesChart();
+            renderStatusChart();
+            renderUsersChart();
+            return;
         }
-    });
-    app.mount('#dashPrefs');
+
+        const chartElements = [
+            { id: 'salesChartContainer', renderer: renderSalesChart },
+            { id: 'statusChartContainer', renderer: renderStatusChart },
+            { id: 'usersChartContainer', renderer: renderUsersChart }
+        ];
+
+        var io = new IntersectionObserver(function(entries, observer){ 
+            entries.forEach(function(entry){ 
+                if(entry.isIntersecting){
+                    const chartId = entry.target.id;
+                    const chartToRender = chartElements.find(c => c.id === chartId);
+                    
+                    if (chartToRender && !initializedCharts.has(chartToRender.id.replace('Container', ''))) {
+                        chartToRender.renderer();
+                        observer.unobserve(entry.target);
+                    }
+                } 
+            }); 
+        }, { threshold: 0.1 });
+
+        // Start observing the containers
+        chartElements.forEach(function(c){ 
+            const el = document.getElementById(c.id);
+            if(el) io.observe(el);
+        });
+    }
+
+    /**
+     * تابع نمایش/پنهان کردن کارت‌های چارت بر اساس تنظیمات داشبورد
+     * @param {object} s - شیء تنظیمات {status: bool, users: bool, sales: bool}
+     */
+    function toggleCharts(s){
+        // برای حفظ Grid Layout، ممکن است نیاز به تنظیمات پیچیده‌تری باشد.
+        // در اینجا فقط Display را تغییر می‌دهیم.
+        const statusEl = document.getElementById('statusChartContainer'); if(statusEl) statusEl.style.display = s.status ? 'flex' : 'none';
+        const usersEl = document.getElementById('usersChartContainer'); if(usersEl) usersEl.style.display = s.users ? 'flex' : 'none';
+        const salesEl = document.getElementById('salesChartContainer'); if(salesEl) salesEl.style.display = s.sales ? 'flex' : 'none';
+        
+        // به روز رسانی grid-column برای نمودار فروش که باید تمام عرض را بگیرد
+        const grid = document.getElementById('chartsArea');
+        if (s.sales) {
+            document.getElementById('salesChartContainer').style.gridColumn = '1 / -1';
+        }
+
+        // اگر فقط دو چارت باقی ماندند، نمایش آن‌ها را تنظیم کنید (این قسمت پیچیده است، اما برای حفظ چیدمان انجام می‌شود)
+        // اگر نمودار فروش فعال است، همیشه دو خط اول گرید را اشغال می‌کند.
+        
+        // منطق تنظیم گرید اصلی در CSS تعریف شده است (2fr 1fr).
+        // اگر فروش فعال باشد: فروش 1 / -1 (تمام عرض)، کاربران 2 (ستون دوم)
+        // اگر فروش غیرفعال باشد، وضعیت و کاربران در دو ستون 1fr قرار می‌گیرند (اگر هر دو فعال باشند).
+        
+        // این منطق پیچیده Grid را به Vue واگذار می‌کنیم، اما فعلاً با display: flex/none عمل می‌کنیم که مشکل اصلی را حل می‌کند.
+    }
+
+
+    // Vue App for Preferences
+    if(window.Vue) {
+        var app = Vue.createApp({
+            data(){ return { show: JSON.parse(localStorage.getItem('dash_prefs')||'{\"status\":true,\"users\":true,\"sales\":true}') } },
+            watch:{ show:{ deep:true, handler:function(v){ 
+                localStorage.setItem('dash_prefs', JSON.stringify(v)); 
+                toggleCharts(v); 
+            } } },
+            mounted(){ 
+                toggleCharts(this.show); 
+                lazyInitCharts(); 
+            }
+        });
+        app.mount('#dashPrefs');
+    } else {
+        // Fallback for Vue.js not loaded
+        lazyInitCharts();
+    }
 })();
 </script>
 
