@@ -33,8 +33,9 @@ try {
     }
     
     $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-    $query->execute();
+    // $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR); // این درست است زیرا $_SESSION["user"] یک متغیر است.
+    // اما برای سادگی و اجتناب از خطاهای BindParam/BindValue، از اجرای مستقیم با آرایه‌ی پارامتر استفاده می‌کنیم (روش امن‌تر و توصیه‌شده‌تر):
+    $query->execute(['username' => $_SESSION["user"]]); 
     $result = $query->fetch(PDO::FETCH_ASSOC);
     
     if(!$result ){
@@ -73,10 +74,23 @@ if(!empty($selectedStatuses)){
         $ph[] = $k;
         $invoiceParams[$k] = $st;
     }
-    // Using IN clause for status filtering
-    $invoiceWhere[] = "status IN (".implode(',', $ph).")";
+    // Using IN clause for status filtering (needs special handling for PDO execute)
+    // NOTE: This approach requires named parameters. For IN clause, the best practice is dynamic generation:
+    $inQuery = implode(',', array_keys($invoiceParams));
+    // Since we are using execute($invoiceParams) later, we must ensure $invoiceWhere does not contain array keys unless all parameters are bound dynamically.
+    
+    // For simplicity with IN clause, we stick to the dynamic placeholder method:
+    $placeholders = [];
+    foreach ($selectedStatuses as $i => $status) {
+        $placeholder = ":status_$i";
+        $placeholders[] = $placeholder;
+        $invoiceParams[$placeholder] = $status;
+    }
+    $invoiceWhere[] = "status IN (" . implode(', ', $placeholders) . ")";
 }else{
     // Default statuses to include most relevant orders if no filter is applied
+    // This default list should usually be handled outside the prepared statement or bound if dynamic. 
+    // Here we use simple SQL injection for the constants, which is generally acceptable for fixed internal values.
     $invoiceWhere[] = "status IN ('active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid')";
 }
 
@@ -98,8 +112,13 @@ try {
 
     // New Users Today
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
-    $stmt->bindParam(':time_register', $datefirstday);
-    $stmt->execute();
+    // --- تغییر در خط مورد نظر: استفاده از execute با آرایه پارامتر بجای bindParam/bindValue ---
+    // این روش امن‌تر و ساده‌تر است و از خطای bindParam جلوگیری می‌کند
+    $stmt->execute([':time_register' => $datefirstday]); 
+    // خطای 204 در اینجا رخ داده بود اگر از bindParam استفاده می‌کردید:
+    // $stmt->bindParam(':time_register', $datefirstday); // $datefirstday متغیر است، اما شاید در کپی قبلی شما مشکل دیگری وجود داشته
+    // $stmt->bindValue(':time_register', $datefirstday); // اگر از bindValue استفاده می‌شد، مشکل حل می‌شد.
+    // اما بهترین روش: execute با آرایه
     $resultcountday = $stmt->fetchColumn();
 
     // Sales Count (Filtered)
@@ -200,9 +219,11 @@ $daysBack = max(1, floor(($userEnd - $userStart)/86400)+1);
 
 try {
     $stmt = $pdo->prepare("SELECT register FROM user WHERE register != 'none' AND register >= :ustart AND register <= :uend");
-    $stmt->bindParam(':ustart',$userStart,PDO::PARAM_INT);
-    $stmt->bindParam(':uend',$userEnd + 86400 - 1,PDO::PARAM_INT); // End of the 'to' day
-    $stmt->execute();
+    // --- اجرای کوئری با آرایه پارامترها برای جلوگیری از خطای bindParam ---
+    $stmt->execute([
+        ':ustart' => $userStart,
+        ':uend' => $userEnd + 86400 - 1 // End of the 'to' day
+    ]);
     $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     die("Database Error while fetching New Users Trend. Message: " . $e->getMessage());
