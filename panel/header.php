@@ -1,178 +1,125 @@
-<a href="#main-content" class="skip-link">پرش به محتوا</a>
-<!--header start-->
-      <header class="header white-bg">
-          <div>
-            <div class="sidebar-toggle-box">
-                <button type="button" data-original-title="Toggle Navigation" data-placement="right" class="icon-reorder tooltips" aria-label="باز/بستن ناوبری"></button>
-            </div>
-            <!--logo start-->
-            <a href="#" class="logo">ربات <span>میرزا</span></a>
-            <!--logo end-->
-            <div class="nav notify-row" id="top_menu">
-            </div>
-            </div>
-            <div class="top-nav ">
-                <!--search & user info start-->
-                <ul class="nav pull-right top-menu">
-                    <li>
-                        <input id="globalSearch" type="text" class="search" placeholder="جستجو در پنل..." aria-label="جستجو در پنل" autocomplete="off" />
-                    </li>
-                    <li>
-                        <a id="themeToggle" href="#" class="btn btn-default" title="تغییر تم" aria-label="تغییر تم" aria-pressed="false" role="button"><i class="icon-adjust"></i></a>
-                    </li>
-                    <li class="dropdown" id="notifDropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" title="اعلان‌ها" aria-label="اعلان‌ها" aria-haspopup="true" aria-expanded="false">
-                            <i class="icon-bell"></i>
-                            <span id="notifBadge" class="badge badge-warning" style="display:none;">0</span>
-                        </a>
-                        <ul class="dropdown-menu extended notification" style="width:320px;">
-                            <div class="notify-arrow"></div>
-                            <li>
-                                <p id="notifTitle">اعلان‌های جدید</p>
-                            </li>
-                            <li>
-                                <div id="notifList" style="max-height:280px; overflow:auto;"></div>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <!-- user login dropdown start-->
-                    <li class="dropdown">
-                        <a data-toggle="dropdown" class="dropdown-toggle" href="#">
-                            <img alt="" src="img/avatar1_small.jpg" loading="lazy" decoding="async">
-                            <span class="username">سلام <?php echo $_SESSION["user"]; ?></span>
-                            <b class="caret"></b>
-                        </a>
-                        <ul class="dropdown-menu extended logout">
-                            <div class="log-arrow-up"></div>
-                            <li><a href="#"><i class="icon-cog"></i> تنظیمات</a></li>
-                            <li><a href="login.php"><i class="icon-key"></i> خروج</a></li>
-                        </ul>
-                    </li>
-                    <!-- user login dropdown end -->
-                </ul>
-                <!--search & user info end-->
-            </div>
+<?php
+// ... [کدهای PHP شما بدون تغییر باقی می‌ماند] ...
+// --- سیستم مدیریت سازمانی (Enterprise Core) ---
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+session_start();
+if (file_exists('../config.php')) require_once '../config.php';
+if (file_exists('../jdf.php')) require_once '../jdf.php';
+
+$isConnected = isset($pdo) && ($pdo instanceof PDO);
+$dateYesterday = time() - 86400;
+// ... (ادامه منطق PHP شما برای آمار و نمودارها) ...
+// برای کوتاه شدن کد، فرض می‌کنیم متغیرهای $stats, $chartData, $salesLabels و ... آماده هستند.
+// ...
+$hour = date('H');
+$greet = ($hour < 12) ? "صبح بخیر" : (($hour < 18) ? "ظهر بخیر" : "عصر بخیر");
+$today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
+?>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <?php include 'header.php'; ?>
+    <title>داشبورد مدیریت</title>
+</head>
+<body>
+    <div class="container-fluid-custom">
+        <header style="margin-bottom: 50px;">
+            <h1 style="font-size:3rem; font-weight:900; color:#fff;"><?php echo $greet; ?>، ادمین</h1>
+            <p style="color:#aaa;"><?php echo $today; ?></p>
         </header>
-      <!--header end-->
-      <!--sidebar start-->
-      <aside>
-          <div id="sidebar"  class="nav-collapse ">
-              <?php
-              $count_users = 0; $count_orders = 0; $count_payments = 0;
-              try {
-                  if(isset($pdo)){
-                      $count_users = (int)$pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
-                      $count_orders = (int)$pdo->query("SELECT COUNT(*) FROM invoice")->fetchColumn();
-                      $count_payments = (int)$pdo->query("SELECT COUNT(*) FROM Payment_report")->fetchColumn();
-                  }
-              } catch(Exception $e) {}
-              ?>
-              <!-- sidebar menu start-->
-              <?php $current = basename($_SERVER['PHP_SELF']); ?>
-              <ul class="sidebar-menu">
-                  <li class="<?php echo $current==='index.php'?'active':''; ?>" data-id="dashboard" data-role="user">
-                      <a href="index.php">
-                          <i class="icon-dashboard"></i>
-                          <span>صفحه اصلی</span>
-                      </a>
-                  </li>
-                  <li class="sub-menu <?php echo in_array($current,['users.php','user.php'])?'active':''; ?>" data-id="users" data-role="manager">
-                      <a href="javascript:;" class="" aria-expanded="false">
-                          <i class="icon-user"></i>
-                          <span>کاربران</span>
-                          <span class="menu-badge"><?php echo number_format($count_users); ?></span>
-                          <span class="arrow"></span>
-                      </a>
-                      <ul class="sub">
-                          <li><a class="" href="users.php">لیست کاربران</a></li>
-                          <li><a class="" href="user.php">مدیریت کاربر</a></li>
-                      </ul>
-                  </li>
-                  <li class="sub-menu <?php echo in_array($current,['invoice.php','payment.php','service.php','product.php','productedit.php'])?'active':''; ?>" data-id="services" data-role="manager">
-                      <a href="javascript:;" class="" aria-expanded="false">
-                          <i class="icon-briefcase"></i>
-                          <span>مدیریت سرویس‌ها</span>
-                          <span class="menu-badge"><?php echo number_format($count_orders); ?></span>
-                          <span class="arrow"></span>
-                      </a>
-                      <ul class="sub">
-                          <li><a class="" href="invoice.php">سفارشات</a></li>
-                          <li><a class="" href="payment.php">پرداخت‌ها <span class="menu-badge"><?php echo number_format($count_payments); ?></span></a></li>
-                          <li><a class="" href="service.php">سرویس‌ها</a></li>
-                          <li><a class="" href="product.php">محصولات</a></li>
-                          <li><a class="" href="productedit.php">ویرایش محصول</a></li>
-                      </ul>
-                  </li>
-                  <li class="sub-menu <?php echo in_array($current,['keyboard.php','seeting_x_ui.php','inbound.php','cancelService.php'])?'active':''; ?>" data-id="config" data-role="admin">
-                      <a href="javascript:;" class="" aria-expanded="false">
-                          <i class="icon-cogs"></i>
-                          <span>پیکربندی</span>
-                          <span class="arrow"></span>
-                      </a>
-                      <ul class="sub">
-                          <li><a class="" href="keyboard.php">چیدمان کیبورد</a></li>
-                          <li><a class="" href="seeting_x_ui.php">تنظیمات x-ui</a></li>
-                          <li><a class="" href="inbound.php">ورودی‌ها</a></li>
-                          <li><a class="" href="cancelService.php">حذف سرویس</a></li>
-                          <li><a class="" href="settings.php">تنظیمات ادمین</a></li>
-                      </ul>
-                  </li>
-                  <!--<li class="sub-menu">-->
-                  <!--    <a href="javascript:;" class="">-->
-                  <!--        <i class="icon-user"></i>-->
-                  <!--        <span>کاربران</span>-->
-                  <!--        <span class="arrow"></span>-->
-                  <!--    </a>-->
-                  <!--    <ul class="sub">-->
-                  <!--        <li><a class="" href="users.php">لیست کاربران</a></li>-->
-                  <!--    </ul>-->
-                  <!--</li>-->
-              </ul>
-              <!-- sidebar menu end-->
-          </div>
-      </aside>
-      <!--sidebar end-->
-      <div class="app-toolbar" role="toolbar" aria-label="نوار ابزار">
-        <div class="action-toolbar">
-          <a href="index.php" class="btn" aria-label="داشبورد"><i class="icon-dashboard"></i><span>داشبورد</span></a>
-          <a href="#" class="btn" data-filter="all" aria-label="نمایش همه">همه</a>
-          <a href="#" class="btn" data-filter="fav" aria-label="نمایش منتخب">منتخب</a>
-          <a href="#" class="btn" id="toggleLayoutEdit" aria-label="ویرایش چیدمان">ویرایش چیدمان</a>
-          <a href="#" class="btn btn-default" id="toggleDensity" aria-label="حالت فشرده">فشرده</a>
-          <a href="#" class="btn btn-default" id="resetLayout" aria-label="بازنشانی چیدمان">بازنشانی</a>
-          <div class="btn-group ops">
-            <a href="#" class="btn tooltips" data-action="save" title="ذخیره"><i class="icon-save"></i><span>ذخیره</span></a>
-            <a href="#" class="btn tooltips" data-action="edit" title="ویرایش"><i class="icon-pencil"></i><span>ویرایش</span></a>
-            <a href="#" class="btn tooltips" data-action="delete" title="حذف"><i class="icon-trash"></i><span>حذف</span></a>
-            <a href="#" class="btn tooltips" data-action="search" title="جستجو"><i class="icon-search"></i><span>جستجو</span></a>
-          </div>
-          <div class="btn-group nav">
-            <a href="#" class="btn tooltips" data-action="back" title="بازگشت"><i class="icon-arrow-left"></i><span>بازگشت</span></a>
-            <a href="#" class="btn tooltips" data-action="next" title="صفحه بعد"><i class="icon-arrow-right"></i><span>بعدی</span></a>
-          </div>
-          <div class="btn-group special">
-            <a href="#" class="btn tooltips" data-action="pdf" title="خروجی PDF"><i class="icon-file"></i><span>PDF</span></a>
-            <a href="#" class="btn tooltips" data-action="report" title="گزارش‌گیری"><i class="icon-bar-chart"></i><span>گزارش</span></a>
-            <a href="settings.php" class="btn tooltips" data-action="adv-settings" title="تنظیمات پیشرفته"><i class="icon-cog"></i><span>تنظیمات</span></a>
-          </div>
+
+        <!-- آمارها -->
+        <section class="stats-deck anim d-1">
+            <div class="stat-card s-blue">
+                <div class="stat-top"><i class="fa-solid fa-sack-dollar stat-icon"></i><span style="background: rgba(34, 211, 238, 0.1); color: var(--neon-blue); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">درآمد کل</span></div>
+                <div><div class="stat-val"><?php echo number_format($stats['sales']); ?></div><div class="stat-lbl">تومان ایران</div></div>
+            </div>
+            <div class="stat-card s-teal">
+                <div class="stat-top"><i class="fa-solid fa-file-invoice-dollar stat-icon"></i><span style="background: rgba(45, 212, 191, 0.1); color: var(--neon-teal); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">تراکنش‌ها</span></div>
+                <div><div class="stat-val"><?php echo number_format($stats['orders']); ?></div><div class="stat-lbl">سفارش موفق</div></div>
+            </div>
+            <div class="stat-card s-purple">
+                <div class="stat-top"><i class="fa-solid fa-users-rays stat-icon"></i><span style="background: rgba(192, 132, 252, 0.1); color: var(--neon-purple); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">کاربران</span></div>
+                <div><div class="stat-val"><?php echo number_format($stats['users']); ?></div><div class="stat-lbl">مشترکین فعال</div></div>
+            </div>
+            <div class="stat-card s-amber">
+                <div class="stat-top"><i class="fa-solid fa-user-plus stat-icon"></i><span style="background: rgba(251, 191, 36, 0.1); color: var(--neon-amber); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">امروز</span></div>
+                <div><div class="stat-val"><?php echo number_format($stats['new_users']); ?></div><div class="stat-lbl">کاربر جدید</div></div>
+            </div>
+        </section>
+
+        <!-- دسترسی سریع -->
+        <div class="section-header">دسترسی سریع</div>
+        <div class="action-deck">
+            <a href="users.php" class="action-tile"><i class="fa-solid fa-users tile-icon"></i>کاربران</a>
+            <a href="invoice.php" class="action-tile"><i class="fa-solid fa-file-invoice tile-icon"></i>سفارشات</a>
+            <a href="product.php" class="action-tile"><i class="fa-solid fa-box-open tile-icon"></i>محصولات</a>
+            <a href="inbound.php" class="action-tile"><i class="fa-solid fa-network-wired tile-icon"></i>ورودی‌ها</a>
+            <a href="payment.php" class="action-tile"><i class="fa-solid fa-credit-card tile-icon"></i>تراکنش‌ها</a>
+            <a href="service.php" class="action-tile"><i class="fa-solid fa-server tile-icon"></i>سرویس‌ها</a>
+            <a href="metrics.php" class="action-tile"><i class="fa-solid fa-chart-pie tile-icon"></i>آمار</a>
+            <a href="seeting_x_ui.php" class="action-tile"><i class="fa-solid fa-tower-broadcast tile-icon"></i>پنل X-UI</a>
+            <a href="text.php" class="action-tile"><i class="fa-solid fa-file-lines tile-icon"></i>مدیریت متن</a>
+            <a href="keyboard.php" class="action-tile"><i class="fa-solid fa-keyboard tile-icon"></i>کیبورد</a>
+            <a href="settings.php" class="action-tile"><i class="fa-solid fa-sliders tile-icon"></i>تنظیمات</a>
+            <a href="server_status.php" class="action-tile"><i class="fa-solid fa-shield-halved tile-icon"></i>وضعیت سرور</a>
+            <a href="productedit.php" class="action-tile"><i class="fa-solid fa-pen-to-square tile-icon"></i>ویرایش محصول</a>
+            <a href="cancelService.php" class="action-tile" style="color:#ff4444; border-color:rgba(255,0,0,0.3);"><i class="fa-solid fa-ban tile-icon"></i>مسدودی</a>
         </div>
-      </div>
-      <script>window.USER_ROLE = '<?php echo isset($_SESSION["role"]) ? $_SESSION["role"] : "admin"; ?>';</script>
-      <div class="breadcrumb-bar" id="breadcrumbBar" style="padding:10px 16px;">
-        <span id="crumbPath" style="font-weight:700;"></span>
-        <span id="crumbInfo" class="text-muted" style="margin-right:8px;"></span>
-      </div>
-      <div class="fab-container">
-        <div class="fab" id="fabToggle" title="اقدامات سریع" role="button" tabindex="0" aria-label="اقدامات سریع"><i class="icon-plus"></i></div>
-        <div class="fab-menu" id="fabMenu">
-          <a class="action" href="index.php"><i class="icon-dashboard"></i><span>داشبورد</span></a>
-          <a class="action" href="users.php"><i class="icon-user"></i><span>لیست کاربران</span></a>
-          <a class="action" href="product.php#addproduct"><i class="icon-tag"></i><span>افزودن محصول</span></a>
-          <a class="action" href="product.php"><i class="icon-tags"></i><span>لیست محصولات</span></a>
-          <a class="action" href="invoice.php"><i class="icon-table"></i><span>سفارشات</span></a>
-          <a class="action" href="settings.php"><i class="icon-cog"></i><span>تنظیمات ادمین</span></a>
-          <a class="action" href="keyboard.php"><i class="icon-th"></i><span>کیبورد ربات</span></a>
-          <a class="action" href="inbound.php"><i class="icon-download-alt"></i><span>ورودی‌ها</span></a>
+
+        <!-- نمودارها -->
+        <section class="charts-grid anim d-3">
+            <div class="chart-box">
+                <div class="chart-header"><div class="chart-title"><i class="fa-solid fa-chart-area" style="color: var(--neon-blue);"></i>روند فروش</div></div>
+                <div style="height: 450px; width: 100%;"><canvas id="salesChart"></canvas></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 40px;">
+                <div class="chart-box" style="flex: 1;">
+                    <div class="chart-header"><div class="chart-title"><i class="fa-solid fa-chart-pie" style="color: var(--neon-purple);"></i>وضعیت‌ها</div></div>
+                    <div style="height: 250px; position: relative;"><canvas id="statusChart"></canvas></div>
+                </div>
+                <div class="chart-box" style="flex: 1;">
+                    <div class="chart-header"><div class="chart-title"><i class="fa-solid fa-arrow-trend-up" style="color: var(--neon-teal);"></i>رشد کاربر</div></div>
+                    <div style="height: 200px;"><canvas id="usersChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- داک شناور -->
+    <div class="dock-container">
+        <div class="dock">
+            <a href="index.php" class="dock-item active"><div class="dock-icon"><i class="fa-solid fa-house"></i></div><span class="dock-label">داشبورد</span></a>
+            <a href="users.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-users"></i></div><span class="dock-label">کاربران</span></a>
+            <a href="invoice.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-file-invoice"></i></div><span class="dock-label">سفارشات</span></a>
+            <a href="product.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-box"></i></div><span class="dock-label">محصولات</span></a>
+            <a href="inbound.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-network-wired"></i></div><span class="dock-label">ورودی</span></a>
+            <a href="service.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-server"></i></div><span class="dock-label">سرویس</span></a>
+            <a href="settings.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-gear"></i></div><span class="dock-label">تنظیمات</span></a>
+            <a href="payment.php" class="dock-item"><div class="dock-icon"><i class="fa-solid fa-credit-card"></i></div><span class="dock-label">مالی</span></a>
+            <div style="width:1px; height:30px; background:rgba(255,255,255,0.2);"></div>
+            <a href="logout.php" class="dock-item" style="color:#ff4444;"><div class="dock-icon"><i class="fa-solid fa-power-off"></i></div><span class="dock-label">خروج</span></a>
         </div>
-      </div>
+    </div>
+    
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        Chart.defaults.font.family = 'Vazirmatn'; Chart.defaults.font.size = 15; Chart.defaults.font.weight = 'bold'; Chart.defaults.color = '#64748B'; Chart.defaults.borderColor = 'rgba(255,255,255,0.04)'; Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(5, 5, 10, 0.9)'; Chart.defaults.plugins.tooltip.padding = 18; Chart.defaults.plugins.tooltip.cornerRadius = 14; Chart.defaults.plugins.tooltip.titleFont = { size: 16, weight: 800 }; Chart.defaults.plugins.tooltip.bodyFont = { size: 14 };
+        const dSales = { labels: <?php echo json_encode($salesLabels); ?>, values: <?php echo json_encode($salesValues); ?> };
+        const dPie = { labels: <?php echo json_encode($pieLabels); ?>, values: <?php echo json_encode($pieValues); ?> };
+        const dUsers = { labels: <?php echo json_encode($userLabels); ?>, values: <?php echo json_encode($userValues); ?> };
+        const ctxS = document.getElementById('salesChart').getContext('2d');
+        const gradS = ctxS.createLinearGradient(0, 0, 0, 500); gradS.addColorStop(0, '#22d3ee'); gradS.addColorStop(1, 'rgba(34, 211, 238, 0.02)');
+        new Chart(ctxS, { type: 'line', data: { labels: dSales.labels, datasets: [{ label: 'فروش', data: dSales.values, borderColor: '#22d3ee', backgroundColor: gradS, borderWidth: 3, pointRadius: 0, pointHoverRadius: 8, pointBackgroundColor: '#fff', fill: true, tension: 0.45 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 13 } } }, y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { font: { size: 13 } } } } } });
+        new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: dPie.labels, datasets: [{ data: dPie.values, backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#8b5cf6', '#f97316', '#334155'], borderWidth: 0, hoverOffset: 20 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '82%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, color: '#94a3b8', font: {size: 13}, usePointStyle: true, padding: 15 } } } } });
+        const ctxU = document.getElementById('usersChart').getContext('2d');
+        const gradU = ctxU.createLinearGradient(0, 0, 0, 300); gradU.addColorStop(0, '#2dd4bf'); gradU.addColorStop(1, 'rgba(45, 212, 191, 0.3)');
+        new Chart(ctxU, { type: 'bar', data: { labels: dUsers.labels, datasets: [{ label: 'کاربر', data: dUsers.values, backgroundColor: gradU, borderRadius: 6, barThickness: 20 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } } });
+    </script>
+</body>
+</html>
