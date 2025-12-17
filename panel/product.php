@@ -441,9 +441,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-arrow-right-arrow-left"></i> جابجایی
                 </a>
                 
-                <a href="?export=csv" class="btn-act">
-                    <i class="fa-solid fa-file-csv"></i> اکسل
-                </a>
+                <a href="payment.php" class="nav-tile">
+                        <i class="fa-solid fa-wallet nt-icon"></i>
+                        <span class="nt-label">امور مالی</span>
+                    </a>
             </div>
 
             <!-- Bulk Selection Toolbar -->
