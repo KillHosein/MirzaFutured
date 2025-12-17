@@ -443,7 +443,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 
                 <a href="productedit.php" class="nav-box">
   <i class="fa-solid fa-wallet"></i>
-  <span>ویرایش محصولات</span>
+  <span>ویرایش</span>
 </a>
 
 <style>
@@ -452,7 +452,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 4px;
 
     width: 90px;
     height: 70px;
@@ -461,25 +461,26 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     color: #fff;
     text-decoration: none;
 
-    border-radius: 18px;
-    box-shadow: 0 10px 25px rgba(106,124,255,.35);
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(106,124,255,.35);
 
-    transition: all .25s ease;
+    transition: all .2s ease;
   }
 
   .nav-box i {
-    font-size: 12px;
+    font-size: 18px;
   }
 
   .nav-box span {
-    font-size: 15px;
+    font-size: 11px;
     font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
   }
 
   .nav-box:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 18px 35px rgba(106,124,255,.45);
-    background: linear-gradient(135deg, #5a6cff, #7f8cff);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(106,124,255,.45);
   }
 </style>
 
