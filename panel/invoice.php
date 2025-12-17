@@ -437,12 +437,12 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         /* Unified Dock Labels (No Duplicate Tooltips) */
         .dock-label { 
             font-size: 0.9rem; font-weight: 600; opacity: 0; position: absolute; 
-            bottom: -35px; transition: 0.3s; white-space: nowrap; 
+            bottom: 100%; transition: 0.3s; white-space: nowrap; 
             background: rgba(0,0,0,0.9); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; pointer-events: none;
+            color: #fff; pointer-events: none; margin-bottom: 15px;
         }
-        .dock-item:hover .dock-label { opacity: 1; bottom: -45px; }
-        .dock-item.active .dock-label { opacity: 1; bottom: -45px; color: var(--neon-blue); }
+        .dock-item:hover .dock-label { opacity: 1; bottom: 100%; transform: translateY(-5px); }
+        .dock-item.active .dock-label { opacity: 1; bottom: 100%; color: var(--neon-blue); }
 
         .dock-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); margin: 0 6px; flex-shrink: 0; }
 
