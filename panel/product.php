@@ -433,110 +433,17 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <input type="text" id="prodQuickSearch" class="input-search" placeholder="جستجو در نام، کد یا قیمت...">
                 </div>
                 
-                <!doctype html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="utf-8">
-  <title>Action Buttons</title>
-
-  <!-- Font Awesome (اگر قبلاً لود نشده) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-
-  <style>
-    body {
-      background: #0f1115;
-      font-family: system-ui, -apple-system, "Segoe UI", Arial;
-      padding: 30px;
-    }
-
-    /* کانتینر دکمه‌ها */
-    .actions {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    /* دکمه پایه */
-    .btn-act {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-
-      height: 56px;
-      padding: 0 26px;
-
-      border-radius: 18px;
-      text-decoration: none;
-
-      font-size: 14px;
-      font-weight: 600;
-
-      transition: all .25s ease;
-      white-space: nowrap;
-    }
-
-    .btn-act i {
-      font-size: 16px;
-    }
-
-    /* دکمه تیره */
-    .btn-dark {
-      background: #1f232a;
-      color: #cfd3da;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-    }
-
-    /* دکمه بنفش */
-    .btn-purple {
-      background: #7c88ff;
-      color: #fff;
-      box-shadow: 0 8px 22px rgba(124,136,255,.35);
-    }
-
-    /* دکمه فیروزه‌ای */
-    .btn-cyan {
-      background: #00f2ff;
-      color: #001b1e;
-      box-shadow: 0 8px 22px rgba(0,242,255,.35);
-    }
-
-    /* hover */
-    .btn-act:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 14px 30px rgba(0,0,0,.35);
-    }
-
-    /* active */
-    .btn-act:active {
-      transform: translateY(-1px) scale(.98);
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="actions">
-    <a href="#addproduct" data-toggle="modal" class="btn-act btn-cyan">
-      <i class="fa-solid fa-plus-circle"></i>
-      افزودن محصول جدید
-    </a>
-
-    <a href="#moveradif" data-toggle="modal" class="btn-act btn-dark">
-      <i class="fa-solid fa-arrow-right-arrow-left"></i>
-      جابجایی
-    </a>
-
-    <a href="productedit.php" class="btn-act btn-purple">
-      <i class="fa-solid fa-wallet"></i>
-      ویرایش محصولات
-    </a>
-  </div>
-
-</body>
-</html>
-
-
+                <a href="#addproduct" data-toggle="modal" class="btn-act btn-primary-glow">
+                    <i class="fa-solid fa-plus-circle"></i> افزودن محصول جدید
+                </a>
+                
+                <a href="#moveradif" data-toggle="modal" class="btn-act">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i> جابجایی
+                </a>
+                
+                <a href="?export=csv" class="btn-act">
+                    <i class="fa-solid fa-file-csv"></i> اکسل
+                </a>
             </div>
 
             <!-- Bulk Selection Toolbar -->
