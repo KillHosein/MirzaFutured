@@ -36,16 +36,17 @@ if($method == "POST" && is_array($keyboard)){
     exit;
 }
 
-// منطق ریست کردن (GET)
+// منطق ریست کردن (GET) - بازگشت به متغیرهای اصلی ربات
 $action = filter_input(INPUT_GET, 'action');
 if($action === "reaset"){
+    // استفاده از کلمات کلیدی سیستمی ربات
     $defaultKeyboard = json_encode([
         "keyboard" => [
-            [["text" => "🛍 خرید سرویس"], ["text" => "🔄 تمدید سرویس"]],
-            [["text" => "👤 حساب کاربری"], ["text" => "💳 کیف پول"]],
-            [["text" => "🔥 تست رایگان"], ["text" => "🎰 گردونه شانس"]],
-            [["text" => "🤝 همکاری در فروش"], ["text" => "📋 لیست تعرفه‌ها"]],
-            [["text" => "🎧 پشتیبانی"], ["text" => "📚 راهنما"]]
+            [["text" => "text_sell"], ["text" => "text_extend"]],
+            [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
+            [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
+            [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
+            [["text" => "text_support"], ["text" => "text_help"]]
         ]
     ], JSON_UNESCAPED_UNICODE);
     
@@ -66,13 +67,14 @@ try {
             $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
     } else {
+         // فال‌بک به متغیرهای سیستمی
          $def = [
             "keyboard" => [
-                [["text" => "🛍 خرید سرویس"], ["text" => "🔄 تمدید سرویس"]],
-                [["text" => "👤 حساب کاربری"], ["text" => "💳 کیف پول"]],
-                [["text" => "🔥 تست رایگان"], ["text" => "🎰 گردونه شانس"]],
-                [["text" => "🤝 همکاری در فروش"], ["text" => "📋 لیست تعرفه‌ها"]],
-                [["text" => "🎧 پشتیبانی"], ["text" => "📚 راهنما"]]
+                [["text" => "text_sell"], ["text" => "text_extend"]],
+                [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
+                [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
+                [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
+                [["text" => "text_support"], ["text" => "text_help"]]
             ]
          ];
          $currentKeyboardJSON = json_encode($def['keyboard']);
@@ -384,6 +386,28 @@ try {
         .action-mini-btn:hover { color: white; background: var(--accent-primary); }
         .action-mini-btn.del:hover { background: #ef4444; }
 
+        .key-meta {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .key-title {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff;
+            direction: ltr; /* Force LTR for variable names */
+        }
+        .key-desc {
+            font-size: 11px;
+            color: #71717a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         /* Add Buttons */
         .add-key-inline {
             width: 40px;
@@ -446,7 +470,7 @@ try {
         <!-- LEFT: PREVIEW -->
         <div class="preview-pane glass-panel hidden lg:flex">
             <div class="absolute top-5 left-5 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                Realtime Preview
+                Bot Realtime Preview
             </div>
 
             <div class="phone-mockup animate__animated animate__fadeInLeft">
@@ -464,7 +488,7 @@ try {
                 <div class="tg-chat">
                     <div class="tg-bubble animate__animated animate__fadeInUp" contenteditable="true" title="برای ویرایش کلیک کنید">
                         سلام! من ربات میرزا هستم. 👋<br>
-                        از منوی زیر استفاده کنید.
+                        (نمایش دکمه‌های سیستمی)
                     </div>
                 </div>
 
@@ -536,6 +560,20 @@ try {
         let initialDataStr = JSON.stringify(keyboardRows);
         let isDirty = false;
 
+        // دیکشنری ترجمه برای نمایش (صرفاً بصری)
+        const keyMap = {
+            'text_sell': 'خرید سرویس',
+            'text_extend': 'تمدید سرویس',
+            'text_usertest': 'تست رایگان',
+            'text_wheel_luck': 'گردونه شانس',
+            'text_Purchased_services': 'سرویس‌های من',
+            'accountwallet': 'کیف پول',
+            'text_affiliates': 'همکاری در فروش',
+            'text_Tariff_list': 'لیست تعرفه‌ها',
+            'text_support': 'پشتیبانی',
+            'text_help': 'راهنما'
+        };
+
         const editorContainer = document.getElementById('editor-container');
         const previewContainer = document.getElementById('preview-container');
         const saveBtn = document.getElementById('btn-save');
@@ -584,12 +622,18 @@ try {
 
                 // Buttons in Row
                 row.forEach((btn, btnIndex) => {
+                    // دریافت ترجمه (اگر وجود نداشت خود متن را نشان بده)
+                    const desc = keyMap[btn.text] || 'دکمه سفارشی';
+
                     const btnEl = document.createElement('div');
                     btnEl.className = 'key-btn';
                     btnEl.innerHTML = `
-                        <div class="flex items-center gap-3 overflow-hidden">
-                            <i class="fa-regular fa-square text-gray-600 text-xs"></i>
-                            <span class="truncate text-sm font-medium" title="${btn.text}">${btn.text}</span>
+                        <div class="flex items-center gap-3 overflow-hidden" style="width: 100%;">
+                            <i class="fa-solid fa-code text-gray-600 text-xs"></i>
+                            <div class="key-meta">
+                                <span class="key-title" title="${btn.text}">${btn.text}</span>
+                                <span class="key-desc">${desc}</span>
+                            </div>
                         </div>
                         <div class="key-actions">
                             <div class="action-mini-btn" onclick="editButton(${rowIndex}, ${btnIndex})" title="Edit">
@@ -639,6 +683,7 @@ try {
                 row.forEach(btn => {
                     const btnEl = document.createElement('div');
                     btnEl.className = 'tg-key flex-1';
+                    // در پیش‌نمایش هم نام متغیر را نشان می‌دهیم تا دقیق باشد
                     btnEl.innerText = btn.text;
                     rowEl.appendChild(btnEl);
                 });
@@ -669,7 +714,7 @@ try {
 
         // --- Actions ---
         function addRow() {
-            keyboardRows.push([{text: 'دکمه جدید'}]);
+            keyboardRows.push([{text: 'text_new'}]);
             render();
             // Scroll to bottom
             setTimeout(() => {
@@ -684,9 +729,9 @@ try {
 
         async function addButton(rowIdx) {
             const { value: text } = await SwalTheme.fire({
-                title: 'افزودن دکمه',
+                title: 'افزودن دکمه (نام متغیر)',
                 input: 'text',
-                inputValue: 'دکمه جدید',
+                inputValue: 'text_new',
                 showCancelButton: true,
                 confirmButtonText: 'افزودن',
                 cancelButtonText: 'لغو'
@@ -705,7 +750,7 @@ try {
         async function editButton(rowIdx, btnIdx) {
             const current = keyboardRows[rowIdx][btnIdx].text;
             const { value: text } = await SwalTheme.fire({
-                title: 'ویرایش متن',
+                title: 'ویرایش نام متغیر',
                 input: 'text',
                 inputValue: current,
                 showCancelButton: true,
@@ -765,16 +810,16 @@ try {
             const domRows = editorContainer.querySelectorAll('.row-wrapper');
             domRows.forEach(domRow => {
                 const rowData = [];
-                const buttons = domRow.querySelectorAll('.key-btn span'); // The text span
-                buttons.forEach(span => rowData.push({text: span.innerText}));
+                // توجه: ما از تایتل المان برای گرفتن متن اصلی استفاده می‌کنیم
+                const buttons = domRow.querySelectorAll('.key-title');
+                buttons.forEach(span => rowData.push({text: span.getAttribute('title')}));
                 
-                // Keep row if it has buttons OR has an add button (meaning it exists visually)
                 if (rowData.length > 0 || domRow.querySelector('.add-key-inline')) {
                     newRows.push(rowData);
                 }
             });
             keyboardRows = newRows;
-            render(); // Rerender to sync visuals perfectly
+            render(); 
         }
 
         // --- Save ---
@@ -810,7 +855,6 @@ try {
             });
         }
 
-        // Warn on exit if dirty
         window.onbeforeunload = function() {
             if (isDirty) return "تغییرات ذخیره نشده دارید. آیا مطمئن هستید؟";
         };
