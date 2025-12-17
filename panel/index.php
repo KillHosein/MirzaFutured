@@ -533,8 +533,47 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
             </div>
         </div>
 
+        <!-- Quick Actions (MOVED TO TOP) -->
+        <div class="actions-section animate-enter delay-100">
+            <h3><i class="icon-rocket" style="color: #f59e0b;"></i> دسترسی سریع</h3>
+            <div class="actions-grid">
+                <a href="invoice.php" class="action-item">
+                    <i class="icon-list-alt"></i>
+                    <span>سفارشات</span>
+                </a>
+                <a href="user.php" class="action-item">
+                    <i class="icon-group"></i>
+                    <span>کاربران</span>
+                </a>
+                <a href="product.php" class="action-item">
+                    <i class="icon-cube"></i>
+                    <span>محصولات</span>
+                </a>
+                <a href="inbound.php" class="action-item">
+                    <i class="icon-exchange"></i>
+                    <span>ورودی‌ها</span>
+                </a>
+                <a href="payment.php" class="action-item">
+                    <i class="icon-credit-card"></i>
+                    <span>تراکنش‌ها</span>
+                </a>
+                <a href="keyboard.php" class="action-item">
+                    <i class="icon-keyboard"></i>
+                    <span>کیبورد</span>
+                </a>
+                <a href="cancelService.php" class="action-item danger">
+                    <i class="icon-remove-sign"></i>
+                    <span>حذف سرویس</span>
+                </a>
+                <a href="server_status.php" class="action-item">
+                    <i class="icon-hdd"></i>
+                    <span>سرور</span>
+                </a>
+            </div>
+        </div>
+
         <!-- Filter Section -->
-        <div class="filter-container animate-enter delay-100">
+        <div class="filter-container animate-enter delay-200">
             <form id="filterForm" method="get" style="display: contents;">
                 <!-- Date Picker -->
                 <div class="filter-group">
@@ -567,7 +606,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         </div>
 
         <!-- Stats Overview -->
-        <div class="stats-grid animate-enter delay-200">
+        <div class="stats-grid animate-enter delay-300">
             <!-- Sales -->
             <div class="glass-card stat-box">
                 <div class="stat-header">
@@ -618,7 +657,7 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
         </div>
 
         <!-- Charts Section -->
-        <div class="charts-container animate-enter delay-300">
+        <div class="charts-container animate-enter delay-400">
             <!-- Sales Chart -->
             <div class="glass-card chart-main">
                 <div class="chart-header">
@@ -648,45 +687,6 @@ else { $greeting = "عصر بخیر"; $greetIcon = "icon-moon"; }
                 <div style="height: 250px; width: 100%; position: relative;">
                     <canvas id="statusChart"></canvas>
                 </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="actions-section animate-enter delay-400">
-            <h3><i class="icon-rocket" style="color: #f59e0b;"></i> دسترسی سریع</h3>
-            <div class="actions-grid">
-                <a href="invoice.php" class="action-item">
-                    <i class="icon-list-alt"></i>
-                    <span>سفارشات</span>
-                </a>
-                <a href="user.php" class="action-item">
-                    <i class="icon-group"></i>
-                    <span>کاربران</span>
-                </a>
-                <a href="product.php" class="action-item">
-                    <i class="icon-cube"></i>
-                    <span>محصولات</span>
-                </a>
-                <a href="inbound.php" class="action-item">
-                    <i class="icon-exchange"></i>
-                    <span>ورودی‌ها</span>
-                </a>
-                <a href="payment.php" class="action-item">
-                    <i class="icon-credit-card"></i>
-                    <span>تراکنش‌ها</span>
-                </a>
-                <a href="keyboard.php" class="action-item">
-                    <i class="icon-keyboard"></i>
-                    <span>کیبورد</span>
-                </a>
-                <a href="cancelService.php" class="action-item danger">
-                    <i class="icon-remove-sign"></i>
-                    <span>حذف سرویس</span>
-                </a>
-                <a href="server_status.php" class="action-item">
-                    <i class="icon-hdd"></i>
-                    <span>سرور</span>
-                </a>
             </div>
         </div>
 
