@@ -94,21 +94,21 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <style>
         :root {
             /* Palette: Midnight Neon */
-            --bg-body: #050505;
-            --bg-glass: rgba(20, 20, 25, 0.7);
-            --bg-dock: rgba(10, 10, 15, 0.85);
+            --bg-body: #020204;
+            --bg-glass: rgba(20, 20, 25, 0.85); /* تیره‌تر برای خوانایی بیشتر */
+            --bg-dock: rgba(10, 10, 10, 0.95);
             
             --neon-blue: #00f3ff;
             --neon-purple: #bc13fe;
-            --neon-green: #0aff68;
-            --neon-red: #ff073a;
-            --neon-amber: #ffaa00;
+            --neon-green: #00ff88;
+            --neon-red: #ff004c;
+            --neon-amber: #ffb700;
             
             --text-main: #ffffff;
-            --text-muted: #a0a0a0;
+            --text-muted: #b0b0b0;
             
-            --border-glass: 1px solid rgba(255, 255, 255, 0.1);
-            --shadow-float: 0 10px 40px rgba(0,0,0,0.8);
+            --border-glass: 1px solid rgba(255, 255, 255, 0.12);
+            --shadow-float: 0 15px 50px rgba(0,0,0,0.9);
             
             --radius-lg: 24px;
             --radius-md: 16px;
@@ -123,12 +123,12 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             margin: 0; padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
-            /* پس‌زمینه کهکشانی */
+            /* پس‌زمینه کهکشانی تاریک */
             background-image: 
-                radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(188, 19, 254, 0.05) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(0, 243, 255, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(188, 19, 254, 0.04) 0%, transparent 40%);
             background-attachment: fixed;
-            padding-bottom: 140px; /* فضای خالی برای داک */
+            padding-bottom: 160px; /* فضای بیشتر برای داک */
         }
 
         a { text-decoration: none; color: inherit; transition: 0.3s; }
@@ -143,43 +143,47 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         /* --- Layout --- */
         .container-fluid-custom {
-            width: 100%; padding: 40px 5%; max-width: 1800px; margin: 0 auto;
+            width: 100%; padding: 40px 4%; max-width: 1900px; margin: 0 auto;
         }
 
         /* --- Header --- */
         .page-header {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 50px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;
+            margin-bottom: 50px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 25px;
         }
         .page-title h1 {
-            font-size: 3rem; font-weight: 900; margin: 0; color: #fff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.1);
+            font-size: 3.5rem; font-weight: 900; margin: 0; color: #fff;
+            text-shadow: 0 0 25px rgba(255,255,255,0.15); letter-spacing: -1px;
         }
         .page-title p {
-            color: var(--text-muted); font-size: 1.2rem; margin-top: 10px;
+            color: var(--text-muted); font-size: 1.3rem; margin-top: 10px; font-weight: 400;
         }
 
         /* --- Stats Cards --- */
         .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px; margin-bottom: 50px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px; margin-bottom: 50px;
         }
         .stat-card {
             background: var(--bg-glass);
             backdrop-filter: blur(20px); border: var(--border-glass);
-            border-radius: var(--radius-lg); padding: 25px;
+            border-radius: var(--radius-lg); padding: 30px;
             display: flex; align-items: center; justify-content: space-between;
             transition: 0.3s;
         }
-        .stat-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .stat-card:hover { 
+            transform: translateY(-8px); 
+            border-color: rgba(255,255,255,0.3); 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+        }
         
-        .stat-info .val { font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1.1; }
-        .stat-info .lbl { font-size: 1.1rem; color: var(--text-muted); margin-top: 5px; }
-        .stat-icon { font-size: 3rem; opacity: 0.8; }
+        .stat-info .val { font-size: 3rem; font-weight: 800; color: #fff; line-height: 1; }
+        .stat-info .lbl { font-size: 1.2rem; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
+        .stat-icon { font-size: 3.5rem; opacity: 0.9; }
         
-        .c-users { color: var(--neon-blue); }
-        .c-active { color: var(--neon-green); }
-        .c-block { color: var(--neon-red); }
+        .c-users { color: var(--neon-blue); filter: drop-shadow(0 0 10px rgba(0,243,255,0.3)); }
+        .c-active { color: var(--neon-green); filter: drop-shadow(0 0 10px rgba(0,255,136,0.3)); }
+        .c-block { color: var(--neon-red); filter: drop-shadow(0 0 10px rgba(255,0,76,0.3)); }
 
         /* --- Control Panel (Filters & Actions) --- */
         .control-panel {
@@ -191,94 +195,94 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             box-shadow: var(--shadow-float);
         }
 
-        /* Filters Styling (Improved Readability) */
+        /* Filters Styling (IMPROVED READABILITY) */
         .filters-row {
             display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
-            padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px;
+            padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 30px;
         }
         
         .form-group { flex: 1; min-width: 250px; }
         .form-group label {
-            display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; font-weight: 700;
+            display: block; color: #fff; font-size: 1rem; margin-bottom: 10px; font-weight: 700;
         }
         
-        .input-high-contrast {
-            width: 100%; height: 55px;
-            background: #1a1a20; /* پس‌زمینه تیره‌تر برای کنتراست */
-            border: 2px solid #333;
-            color: #fff; /* متن کاملاً سفید */
-            padding: 0 20px; border-radius: 12px;
-            font-family: inherit; font-size: 1.1rem; font-weight: 500;
+        .input-readable {
+            width: 100%; height: 60px; /* باکس بزرگتر */
+            background: #000000; /* پس‌زمینه کاملا مشکی */
+            border: 2px solid #444;
+            color: #ffffff; /* متن سفید خالص */
+            padding: 0 20px; border-radius: 14px;
+            font-family: inherit; font-size: 1.2rem; font-weight: 500;
             transition: 0.3s;
         }
-        .input-high-contrast:focus {
+        .input-readable:focus {
             border-color: var(--neon-blue);
-            background: #000;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
         }
-        .input-high-contrast::placeholder { color: #666; }
+        .input-readable::placeholder { color: #888; font-size: 1.1rem; }
+        select.input-readable { cursor: pointer; }
         
         .btn-filter {
-            height: 55px; padding: 0 40px; margin-top: 28px; /* Align with inputs */
+            height: 60px; padding: 0 45px; margin-top: 32px;
             background: var(--neon-blue); color: #000;
-            border: none; border-radius: 12px;
-            font-size: 1.2rem; font-weight: 800; cursor: pointer;
+            border: none; border-radius: 14px;
+            font-size: 1.3rem; font-weight: 800; cursor: pointer;
             transition: 0.3s; display: flex; align-items: center; gap: 10px;
         }
-        .btn-filter:hover { box-shadow: 0 0 25px var(--neon-blue); transform: translateY(-2px); }
+        .btn-filter:hover { box-shadow: 0 0 30px var(--neon-blue); transform: translateY(-3px); }
 
         /* Action Buttons */
         .actions-row {
             display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
         }
         .btn-act {
-            height: 50px; padding: 0 25px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; color: #fff;
-            font-size: 1rem; font-weight: 600; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 8px;
+            height: 55px; padding: 0 30px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 14px; color: #fff;
+            font-size: 1.1rem; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 10px;
             transition: 0.3s; text-decoration: none;
         }
-        .btn-act:hover { background: rgba(255,255,255,0.1); border-color: #fff; transform: translateY(-2px); }
+        .btn-act:hover { background: rgba(255,255,255,0.15); border-color: #fff; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         
-        .btn-red { color: var(--neon-red); border-color: rgba(255, 7, 58, 0.3); }
-        .btn-red:hover { background: rgba(255, 7, 58, 0.1); box-shadow: 0 0 15px var(--neon-red); }
+        .btn-red { color: var(--neon-red); border-color: rgba(255, 7, 58, 0.4); }
+        .btn-red:hover { background: rgba(255, 7, 58, 0.15); box-shadow: 0 0 20px var(--neon-red); color: #fff; border-color: var(--neon-red); }
         
-        .btn-green { color: var(--neon-green); border-color: rgba(10, 255, 104, 0.3); }
-        .btn-green:hover { background: rgba(10, 255, 104, 0.1); box-shadow: 0 0 15px var(--neon-green); }
+        .btn-green { color: var(--neon-green); border-color: rgba(10, 255, 104, 0.4); }
+        .btn-green:hover { background: rgba(10, 255, 104, 0.15); box-shadow: 0 0 20px var(--neon-green); color: #fff; border-color: var(--neon-green); }
 
-        /* --- Table Styling (Big & Readable) --- */
+        /* --- Table Styling (Big & Clear) --- */
         .table-wrap { overflow-x: auto; border-radius: var(--radius-lg); }
         .glass-table {
-            width: 100%; border-collapse: separate; border-spacing: 0 12px;
-            font-size: 1.2rem; /* فونت درشت */
+            width: 100%; border-collapse: separate; border-spacing: 0 15px;
+            font-size: 1.3rem; /* فونت بسیار درشت */
         }
         .glass-table th {
-            text-align: right; padding: 20px;
-            color: var(--text-muted); font-size: 1rem; font-weight: 700;
+            text-align: right; padding: 20px 25px;
+            color: var(--text-muted); font-size: 1.1rem; font-weight: 700;
             text-transform: uppercase; letter-spacing: 1px;
         }
         .glass-table tbody tr {
-            background: rgba(255,255,255,0.02);
+            background: rgba(255,255,255,0.03);
             transition: 0.3s;
         }
         .glass-table tbody tr:hover {
-            background: rgba(255,255,255,0.07);
-            transform: scale(1.01);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.08);
+            transform: scale(1.005);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
         .glass-table td {
-            padding: 25px 20px; color: #fff; vertical-align: middle;
-            border-top: 1px solid rgba(255,255,255,0.03);
-            border-bottom: 1px solid rgba(255,255,255,0.03);
+            padding: 30px 25px; color: #fff; vertical-align: middle;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-        .glass-table td:first-child { border-radius: 0 16px 16px 0; border-right: 1px solid rgba(255,255,255,0.03); }
-        .glass-table td:last-child { border-radius: 16px 0 0 16px; border-left: 1px solid rgba(255,255,255,0.03); }
+        .glass-table td:first-child { border-radius: 0 20px 20px 0; border-right: 1px solid rgba(255,255,255,0.04); }
+        .glass-table td:last-child { border-radius: 20px 0 0 20px; border-left: 1px solid rgba(255,255,255,0.04); }
 
         /* Badges */
         .badge {
-            padding: 8px 16px; border-radius: 50px; font-size: 1rem; font-weight: 700;
+            padding: 10px 20px; border-radius: 50px; font-size: 1.1rem; font-weight: 700;
             display: inline-flex; align-items: center; gap: 8px;
         }
         .badge.active { background: rgba(10, 255, 104, 0.15); color: var(--neon-green); border: 1px solid rgba(10, 255, 104, 0.3); }
@@ -287,51 +291,62 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         /* Checkbox */
         .custom-check {
-            width: 24px; height: 24px; border: 2px solid #666; background: transparent; cursor: pointer;
-            appearance: none; border-radius: 6px; position: relative;
+            width: 28px; height: 28px; border: 2px solid #666; background: transparent; cursor: pointer;
+            appearance: none; border-radius: 8px; position: relative; transition: 0.2s;
         }
         .custom-check:checked { background: var(--neon-blue); border-color: var(--neon-blue); }
         .custom-check:checked::after {
-            content: '✔'; position: absolute; color: #000; top: -2px; left: 4px; font-size: 16px; font-weight: 900;
+            content: '✔'; position: absolute; color: #000; top: 0px; left: 5px; font-size: 18px; font-weight: 900;
         }
 
-        /* --- Floating Dock (Bottom Center) --- */
+        /* --- Floating Dock (FIXED CENTER) --- */
         .dock-container {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; width: auto;
+            position: fixed;
+            bottom: 30px;
+            left: 0; 
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 2000;
+            pointer-events: none; /* اجازه کلیک در اطراف داک */
         }
         .dock {
-            display: flex; align-items: center; gap: 15px;
+            pointer-events: auto; /* فعال کردن کلیک روی خود داک */
+            display: flex; align-items: center; gap: 20px;
             background: var(--bg-dock);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 35px; padding: 15px 30px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            backdrop-filter: blur(35px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 40px; padding: 15px 35px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9);
         }
         .dock-item {
-            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
             color: var(--text-muted); text-decoration: none;
-            transition: 0.3s; position: relative; padding: 0 10px;
+            transition: 0.3s; position: relative; padding: 0 5px;
         }
         .dock-icon {
-            font-size: 1.8rem; transition: 0.3s;
-            width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-            border-radius: 18px;
+            font-size: 2rem; transition: 0.3s;
+            width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
+            border-radius: 20px;
         }
-        .dock-label { font-size: 0.9rem; font-weight: 500; opacity: 0; position: absolute; bottom: -25px; transition: 0.3s; white-space: nowrap; }
+        .dock-label { 
+            font-size: 1rem; font-weight: 600; opacity: 0; position: absolute; 
+            bottom: -35px; transition: 0.3s; white-space: nowrap; 
+            background: #000; padding: 4px 10px; border-radius: 6px; border: 1px solid #333;
+        }
         
         .dock-item:hover .dock-icon {
-            transform: translateY(-15px) scale(1.2);
-            background: rgba(255,255,255,0.1);
-            color: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            transform: translateY(-20px) scale(1.2);
+            background: rgba(255,255,255,0.15);
+            color: #fff; box-shadow: 0 15px 30px rgba(0,0,0,0.6);
         }
-        .dock-item:hover .dock-label { opacity: 1; bottom: -35px; color: #fff; }
+        .dock-item:hover .dock-label { opacity: 1; bottom: -45px; color: #fff; }
         
         .dock-item.active .dock-icon {
             color: var(--neon-blue); background: rgba(0, 243, 255, 0.15);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3); transform: translateY(-10px);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4); transform: translateY(-10px);
         }
-        .dock-item.active .dock-label { opacity: 1; bottom: -35px; color: var(--neon-blue); }
+        .dock-item.active .dock-label { opacity: 1; bottom: -45px; color: var(--neon-blue); }
 
         /* Responsive */
         @media (max-width: 1200px) {
@@ -339,11 +354,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             .btn-filter { margin-top: 10px; }
         }
         @media (max-width: 768px) {
-            .container-fluid-custom { padding: 30px 15px 140px 15px; }
-            .glass-table { font-size: 1rem; }
-            .dock { padding: 10px 15px; gap: 5px; width: 95vw; justify-content: space-around; }
-            .dock-icon { font-size: 1.5rem; width: 40px; height: 40px; }
-            .stat-val { font-size: 2.5rem; }
+            .container-fluid-custom { padding: 30px 15px 160px 15px; }
+            .glass-table { font-size: 1.1rem; }
+            .dock { padding: 12px 20px; gap: 10px; width: 95%; justify-content: space-between; border-radius: 25px; }
+            .dock-icon { font-size: 1.6rem; width: 45px; height: 45px; }
+            .stat-val { font-size: 2.8rem; }
         }
     </style>
 </head>
@@ -354,11 +369,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         <!-- Header -->
         <header class="page-header anim">
             <div class="page-title">
-                <h1>کاربران</h1>
+                <h1>مدیریت کاربران</h1>
                 <p>
                     <i class="fa-solid fa-users-gear" style="color: var(--neon-purple);"></i>
-                    مدیریت مشترکین و نظارت بر حساب‌ها
-                    <span style="opacity:0.3; margin:0 10px;">|</span>
+                    لیست کامل مشترکین و ابزارهای مدیریتی
+                    <span style="opacity:0.3; margin:0 15px;">|</span>
                     <?php echo $todayDate; ?>
                 </p>
             </div>
@@ -395,13 +410,13 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <!-- Filter Section (High Readability) -->
             <form method="get" class="filters-row">
                 <div class="form-group">
-                    <label>جستجو</label>
-                    <input type="text" name="q" class="input-high-contrast" placeholder="نام، آیدی یا شماره تلفن..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+                    <label>جستجو در کاربران</label>
+                    <input type="text" name="q" class="input-readable" placeholder="نام، آیدی عددی یا شماره تلفن..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
                 </div>
                 
                 <div class="form-group">
                     <label>وضعیت حساب</label>
-                    <select name="status" class="input-high-contrast">
+                    <select name="status" class="input-readable">
                         <option value="">همه وضعیت‌ها</option>
                         <option value="active" <?php echo (isset($_GET['status']) && $_GET['status']==='active')?'selected':''; ?>>فعال</option>
                         <option value="block" <?php echo (isset($_GET['status']) && $_GET['status']==='block')?'selected':''; ?>>مسدود</option>
@@ -409,10 +424,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 </div>
                 
                 <div class="form-group">
-                    <label>نوع کاربر</label>
-                    <select name="agent" class="input-high-contrast">
+                    <label>سطح کاربری</label>
+                    <select name="agent" class="input-readable">
                         <option value="">همه کاربران</option>
-                        <option value="f" <?php echo (isset($_GET['agent']) && $_GET['agent']==='f')?'selected':''; ?>>عادی</option>
+                        <option value="f" <?php echo (isset($_GET['agent']) && $_GET['agent']==='f')?'selected':''; ?>>کاربر عادی</option>
                         <option value="n" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n')?'selected':''; ?>>نماینده</option>
                         <option value="n2" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n2')?'selected':''; ?>>نماینده ارشد</option>
                     </select>
@@ -423,18 +438,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 </button>
                 
                 <?php if(!empty($_GET['q']) || !empty($_GET['status']) || !empty($_GET['agent'])): ?>
-                    <a href="users.php" class="btn-act" style="margin-top: 28px;">
-                        <i class="fa-solid fa-rotate-right"></i>
+                    <a href="users.php" class="btn-act" style="margin-top: 32px; height: 60px;" title="پاک کردن فیلترها">
+                        <i class="fa-solid fa-rotate-right" style="font-size: 1.4rem;"></i>
                     </a>
                 <?php endif; ?>
             </form>
 
             <!-- Actions Toolbar -->
             <div class="actions-row">
-                <span id="usersSelCount" style="color: var(--neon-blue); font-weight: bold; font-size: 1.1rem; margin-left: 15px;">0 انتخاب</span>
+                <span id="usersSelCount" style="color: var(--neon-blue); font-weight: 800; font-size: 1.3rem; margin-left: 20px;">0 انتخاب</span>
                 
-                <button class="btn-act" id="usersSelectVisible"><i class="fa-solid fa-check-double"></i> همه</button>
-                <button class="btn-act" id="usersClearSelection"><i class="fa-solid fa-minus"></i> هیچ</button>
+                <button class="btn-act" id="usersSelectVisible"><i class="fa-solid fa-check-double"></i> انتخاب همه</button>
+                <button class="btn-act" id="usersClearSelection"><i class="fa-solid fa-minus"></i> لغو</button>
                 
                 <div style="flex:1"></div>
                 
@@ -442,31 +457,32 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <button class="btn-act btn-green" id="usersUnblockSel"><i class="fa-solid fa-unlock"></i> فعال‌سازی</button>
                 <button class="btn-act btn-red" id="usersBlockSel"><i class="fa-solid fa-ban"></i> مسدودسازی</button>
                 
-                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> اکسل</a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> خروجی اکسل</a>
             </div>
             
-            <div class="actions-row" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-                <input type="number" id="usersAmount" class="input-high-contrast" placeholder="مبلغ (تومان)" style="max-width: 180px; height: 45px;">
+            <div class="actions-row" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
+                <input type="number" id="usersAmount" class="input-readable" placeholder="مبلغ (تومان)" style="max-width: 220px; height: 55px; font-size: 1.1rem;">
                 <button class="btn-act" id="usersAddBalance"><i class="fa-solid fa-plus"></i> شارژ</button>
                 <button class="btn-act" id="usersLowBalance"><i class="fa-solid fa-minus"></i> کسر</button>
                 
-                <input type="text" id="usersMessage" class="input-high-contrast" placeholder="پیام گروهی..." style="max-width: 300px; height: 45px;">
+                <input type="text" id="usersMessage" class="input-readable" placeholder="متن پیام گروهی..." style="max-width: 350px; height: 55px; font-size: 1.1rem;">
                 <button class="btn-act" id="usersSendMsg"><i class="fa-solid fa-paper-plane"></i> ارسال پیام</button>
             </div>
 
             <!-- Table -->
-            <div style="margin-top: 30px;">
+            <div style="margin-top: 40px;">
                 <?php if(!$totalUsers): ?>
-                    <div style="text-align: center; padding: 60px; color: var(--text-dim);">
-                        <i class="fa-solid fa-folder-open" style="font-size: 5rem; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <h3>نتیجه‌ای یافت نشد</h3>
+                    <div style="text-align: center; padding: 80px; color: var(--text-dim);">
+                        <i class="fa-solid fa-magnifying-glass" style="font-size: 6rem; margin-bottom: 25px; opacity: 0.4;"></i>
+                        <h3 style="font-size: 2rem;">کاربری با این مشخصات یافت نشد</h3>
+                        <p style="font-size: 1.2rem;">لطفاً فیلترها را تغییر دهید.</p>
                     </div>
                 <?php else: ?>
                     <div class="table-wrap">
                         <table class="glass-table" id="sample_1">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px;"><i class="fa-solid fa-check"></i></th>
+                                    <th style="width: 60px;"><i class="fa-solid fa-check"></i></th>
                                     <th>آیدی عددی</th>
                                     <th>نام کاربری</th>
                                     <th>شماره تماس</th>
@@ -481,18 +497,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                                     $s = strtolower($list['User_Status']);
                                     $statusLabel = ($s === 'active') ? 'فعال' : (($s === 'block') ? 'مسدود' : $list['User_Status']);
                                     $statusClass = ($s === 'active') ? 'active' : (($s === 'block') ? 'block' : 'other');
-                                    $phone = ($list['number'] == "none") ? '<span style="opacity:0.3">---</span>' : $list['number'];
+                                    $phone = ($list['number'] == "none") ? '<span style="opacity:0.3; font-size: 0.9rem;">---</span>' : $list['number'];
                                 ?>
                                 <tr>
                                     <td><input type="checkbox" class="checkboxes custom-check" value="1"></td>
-                                    <td style="font-family: monospace; color: var(--neon-blue); letter-spacing: 1px;"><?php echo $list['id']; ?></td>
-                                    <td style="font-weight: 800; color: #fff;"><?php echo htmlspecialchars($list['username']); ?></td>
-                                    <td><?php echo $phone; ?></td>
-                                    <td style="color: var(--neon-amber); font-weight: 800;"><?php echo number_format($list['Balance']); ?></td>
-                                    <td style="font-weight: bold;"><?php echo number_format($list['affiliatescount']); ?></td>
+                                    <td style="font-family: monospace; color: var(--neon-blue); letter-spacing: 1.5px; font-weight: 700;"><?php echo $list['id']; ?></td>
+                                    <td style="font-weight: 800; color: #fff; font-size: 1.25rem;"><?php echo htmlspecialchars($list['username']); ?></td>
+                                    <td style="font-size: 1.2rem;"><?php echo $phone; ?></td>
+                                    <td style="color: var(--neon-amber); font-weight: 800; font-size: 1.25rem;"><?php echo number_format($list['Balance']); ?></td>
+                                    <td style="font-weight: bold; font-size: 1.2rem;"><?php echo number_format($list['affiliatescount']); ?></td>
                                     <td><span class="badge <?php echo $statusClass; ?>"><?php echo $statusLabel; ?></span></td>
                                     <td>
-                                        <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-act" style="height: 40px; font-size: 0.9rem; background: rgba(255,255,255,0.08);">
+                                        <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-act" style="height: 45px; font-size: 1rem; background: rgba(255,255,255,0.08);">
                                             <i class="fa-solid fa-gear"></i> مدیریت
                                         </a>
                                     </td>
@@ -508,7 +524,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     </div>
 
-    <!-- Floating Dock (Bottom Center) -->
+    <!-- Floating Dock (Fixed Center) -->
     <div class="dock-container anim d-3">
         <div class="dock">
             <a href="index.php" class="dock-item">
@@ -531,7 +547,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <span class="dock-label">ادمین</span>
             </a>
-            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1);"></div>
+            <div style="width: 2px; height: 35px; background: rgba(255,255,255,0.15);"></div>
             <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
                 <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div>
                 <span class="dock-label">خروج</span>
@@ -587,7 +603,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             });
             
             if(!ids.length){ showToast('کاربری انتخاب نشده است'); return; }
-            if(!confirm('آیا مطمئن هستید؟')) return;
+            if(!confirm('آیا از اعمال تغییرات روی ' + ids.length + ' کاربر مطمئن هستید؟')) return;
 
             var done=0, total=ids.length;
             ids.forEach(function(id){ 
@@ -600,7 +616,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
                 $.get('user.php', data).always(function(){ 
                     done++; 
-                    if(done === total){ showToast('انجام شد'); setTimeout(function(){ location.reload(); }, 800); } 
+                    if(done === total){ showToast('عملیات با موفقیت انجام شد'); setTimeout(function(){ location.reload(); }, 800); } 
                 }); 
             });
         }
