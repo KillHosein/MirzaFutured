@@ -1,90 +1,110 @@
 <?php
 /**
- * Keyboard Editor Logic
- * Enterprise Grade Structure
+ * Keyboard Editor - Self Contained Version
+ * Single file solution - No external local JS required.
  */
 
 session_start();
 
-// 1. Load Dependencies
+// 1. Load Configurations
+// مسیرهای فایل‌های کانفیگ را طبق ساختار سرور خود تنظیم کنید
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../jdf.php';
 require_once __DIR__ . '/../function.php';
 
-// 2. Constants & Configuration
-const DEFAULT_KEYBOARD_CONFIG = [
-    "keyboard" => [
-        [["text" => "text_sell"], ["text" => "text_extend"]],
-        [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
-        [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
-        [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
-        [["text" => "text_support"], ["text" => "text_help"]]
-    ]
-];
-
-// 3. Authentication Middleware
+// 2. Authentication Check
 if (!isset($_SESSION["user"])) {
     header('Location: login.php');
     exit;
 }
 
 try {
-    $authStmt = $pdo->prepare("SELECT id FROM admin WHERE username=:username LIMIT 1");
-    $authStmt->execute([':username' => $_SESSION["user"]]);
-    if (!$authStmt->fetch()) {
+    $authStmt = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+    $authStmt->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+    $authStmt->execute();
+    $adminRow = $authStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$adminRow) {
         header('Location: login.php');
         exit;
     }
-} catch (PDOException $e) {
-    die("Database Connection Error.");
+} catch (Exception $e) {
+    die("Database Error: " . $e->getMessage());
 }
 
-// 4. Request Controller
-$method = $_SERVER['REQUEST_METHOD'];
-$action = $_GET['action'] ?? null;
+// حفظ کوئری فاکتورها طبق فایل اصلی شما (جهت جلوگیری از خطا در هدر)
+try {
+    $invoiceStmt = $pdo->prepare("SELECT * FROM invoice");
+    $invoiceStmt->execute();
+    $listinvoice = $invoiceStmt->fetchAll();
+} catch (Exception $e) { /* Ignore */ }
 
-// -> API: Save Keyboard (AJAX)
+
+// 3. API Handler (Save Logic)
+$method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'POST') {
-    $payload = json_decode(file_get_contents('php://input'), true);
-    
-    if (is_array($payload)) {
-        $dataToSave = ['keyboard' => $payload];
-        update("setting", "keyboardmain", json_encode($dataToSave, JSON_UNESCAPED_UNICODE), null, null);
+    $inputJSON = file_get_contents("php://input");
+    $inputData = json_decode($inputJSON, true);
+
+    if (is_array($inputData)) {
+        // Wrap array in standard Telegram keyboard structure
+        $keyboardStruct = ['keyboard' => $inputData];
+        
+        // Save to Database
+        update("setting", "keyboardmain", json_encode($keyboardStruct, JSON_UNESCAPED_UNICODE), null, null);
         
         header('Content-Type: application/json');
-        echo json_encode(['status' => 'success', 'timestamp' => time()]);
+        echo json_encode(['status' => 'success', 'ts' => time()]);
         exit;
     }
 }
 
-// -> Action: Reset Configuration
-if ($method === 'GET' && $action === 'reaset') {
-    $defaultJson = json_encode(DEFAULT_KEYBOARD_CONFIG, JSON_UNESCAPED_UNICODE);
-    update("setting", "keyboardmain", $defaultJson, null, null);
+// 4. Reset Logic
+if (isset($_GET['action']) && $_GET['action'] === 'reaset') {
+    $defaultKeyboard = json_encode([
+        "keyboard" => [
+            [["text" => "text_sell"], ["text" => "text_extend"]],
+            [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
+            [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
+            [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
+            [["text" => "text_support"], ["text" => "text_help"]]
+        ]
+    ], JSON_UNESCAPED_UNICODE);
+    
+    update("setting", "keyboardmain", $defaultKeyboard, null, null);
     header('Location: keyboard.php');
     exit;
 }
 
-// 5. Data Fetching (View Model)
-$viewData = '[]';
+// 5. Fetch Current Data
+$currentKeyboardJSON = '[]';
 try {
     $stmt = $pdo->prepare("SELECT keyboardmain FROM setting LIMIT 1");
     $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $settings = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($row && !empty($row['keyboardmain'])) {
-        $decoded = json_decode($row['keyboardmain'], true);
+    if ($settings && !empty($settings['keyboardmain'])) {
+        $decoded = json_decode($settings['keyboardmain'], true);
         if (isset($decoded['keyboard'])) {
-            $viewData = json_encode($decoded['keyboard']);
+            $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
     }
     
-    // Fallback if empty
-    if ($viewData === '[]' || empty($viewData)) {
-        $viewData = json_encode(DEFAULT_KEYBOARD_CONFIG['keyboard']);
+    // Fallback if DB is empty
+    if ($currentKeyboardJSON == '[]' || $currentKeyboardJSON == 'null') {
+         $def = [
+            "keyboard" => [
+                [["text" => "text_sell"], ["text" => "text_extend"]],
+                [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
+                [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
+                [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
+                [["text" => "text_support"], ["text" => "text_help"]]
+            ]
+         ];
+         $currentKeyboardJSON = json_encode($def['keyboard']);
     }
-} catch (Exception $e) {
-    $viewData = '[]';
+} catch (Exception $e) { 
+    $currentKeyboardJSON = '[]'; 
 }
 ?>
 
@@ -99,42 +119,41 @@ try {
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Fonts -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
-        /* --- Design System: Developer Studio --- */
+        /* --- Design System: Obsidian --- */
         :root {
-            --bg-canvas: #09090b;
-            --bg-sidebar: #121214;
-            --bg-card: #1c1c1f;
-            --border-subtle: #27272a;
-            --primary: #6366f1; /* Indigo */
-            --primary-dim: rgba(99, 102, 241, 0.15);
-            --text-main: #e4e4e7;
-            --text-muted: #a1a1aa;
+            --bg-deep: #020617;       
+            --bg-panel: #0f172a;      
+            --bg-card: #1e293b;    
+            --border: #334155;    
+            --primary: #6366f1; 
+            --text-main: #f8fafc;     
+            --text-muted: #94a3b8;      
             --danger: #ef4444;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-canvas);
+            background-color: var(--bg-deep);
             color: var(--text-main);
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
         /* Header */
         .studio-header {
-            height: 60px;
-            background: var(--bg-sidebar);
-            border-bottom: 1px solid var(--border-subtle);
+            height: 64px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -143,41 +162,30 @@ try {
         }
 
         .btn-action {
-            height: 34px;
-            padding: 0 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            cursor: pointer;
+            height: 36px; padding: 0 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; transition: 0.2s;
             border: 1px solid transparent;
         }
-        .btn-secondary { background: var(--bg-card); border-color: var(--border-subtle); color: var(--text-muted); }
-        .btn-secondary:hover { background: #27272a; color: var(--text-main); }
-        .btn-danger { color: var(--danger); background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px var(--primary-dim); }
-        .btn-primary:hover { filter: brightness(1.1); }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); }
+        .btn-ghost { color: var(--text-muted); border-color: var(--border); }
+        .btn-ghost:hover { background: var(--bg-card); color: white; }
+        .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+        .btn-danger:hover { background: rgba(239,68,68,0.1); }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-primary:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; transform: none; }
 
         /* Workspace */
         .workspace { display: flex; flex: 1; overflow: hidden; }
 
         /* Left: Preview */
         .preview-panel {
-            width: 400px;
+            width: 420px;
             background: #000;
-            border-left: 1px solid var(--border-subtle);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            border-left: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             position: relative;
-            background-image: radial-gradient(#1c1c1f 1px, transparent 1px);
-            background-size: 20px 20px;
         }
 
         .mobile-viewport {
@@ -185,26 +193,26 @@ try {
             background: #000;
             border-radius: 40px;
             border: 8px solid #1a1a1a;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            box-shadow: 0 0 0 2px #333, 0 30px 60px rgba(0,0,0,0.8);
             overflow: hidden;
             display: flex; flex-direction: column;
             position: relative;
         }
 
-        .tg-top {
+        .tg-header {
             padding: 40px 16px 12px; background: #1c1c1e;
-            border-bottom: 1px solid #000; display: flex; align-items: center; gap: 12px; color: white;
+            border-bottom: 1px solid #000; display: flex; align-items: center; gap: 10px; color: white;
         }
-        .tg-content {
+        .tg-chat {
             flex: 1; background: #0e1621;
             background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%23182533' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
             display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 8px;
         }
-        .tg-keys-area {
+        .tg-keyboard {
             background: #1c1c1e; padding: 6px; min-height: 200px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            border-top: 1px solid #000;
         }
-        .tg-key {
+        .tg-btn {
             background: #2b5278; color: white; border-radius: 6px;
             padding: 10px 4px; margin: 2px; text-align: center; font-size: 12px;
             box-shadow: 0 1px 0 rgba(0,0,0,0.5);
@@ -218,18 +226,18 @@ try {
             display: flex; flex-direction: column; position: relative;
         }
         .editor-canvas {
-            flex: 1; overflow-y: auto; padding: 40px;
+            flex: 1; overflow-y: auto; padding: 40px 60px;
         }
 
-        /* Modules */
+        /* Editor Items */
         .row-module {
-            background: var(--bg-sidebar);
-            border: 1px solid var(--border-subtle);
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
             border-radius: 12px; padding: 12px; margin-bottom: 16px;
             display: flex; flex-wrap: wrap; gap: 10px;
             position: relative; transition: all 0.2s;
         }
-        .row-module:hover { border-color: #3f3f46; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .row-module:hover { border-color: #64748b; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
 
         .drag-handle {
             position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
@@ -240,15 +248,13 @@ try {
         .key-block {
             flex: 1; min-width: 140px;
             background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border);
             border-radius: 8px; padding: 10px 14px;
             position: relative; cursor: grab;
             display: flex; flex-direction: column; gap: 4px;
             transition: all 0.2s;
         }
-        .key-block:hover {
-            border-color: var(--primary); background: #232326;
-        }
+        .key-block:hover { border-color: var(--primary); background: #232326; }
 
         .key-code {
             font-family: 'JetBrains Mono', monospace; font-size: 12px;
@@ -261,87 +267,89 @@ try {
         }
         .key-block:hover .key-actions { opacity: 1; }
 
-        .mini-btn {
+        .icon-btn {
             width: 22px; height: 22px; border-radius: 4px;
             background: rgba(255,255,255,0.08); color: white;
             display: flex; align-items: center; justify-content: center;
             font-size: 10px; cursor: pointer;
         }
-        .mini-btn:hover { background: var(--primary); }
-        .mini-btn.del:hover { background: var(--danger); }
+        .icon-btn:hover { background: var(--primary); }
+        .icon-btn.del:hover { background: var(--danger); }
 
         .add-placeholder {
             width: 100%; padding: 16px; margin-top: 24px;
-            border: 2px dashed var(--border-subtle); border-radius: 12px;
+            border: 2px dashed var(--border); border-radius: 12px;
             color: var(--text-muted); font-weight: 500; font-size: 14px;
             display: flex; align-items: center; justify-content: center; gap: 8px;
             cursor: pointer; transition: 0.2s;
         }
         .add-placeholder:hover {
-            border-color: var(--primary); color: var(--primary); background: var(--primary-dim);
+            border-color: var(--primary); color: var(--primary); background: rgba(99, 102, 241, 0.05);
         }
 
-        /* Responsive */
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 99px; }
+
         @media (max-width: 1024px) { .preview-panel { display: none; } }
     </style>
 </head>
 <body>
 
-    <!-- App Header -->
+    <!-- Header -->
     <header class="studio-header">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg">
                 <i class="fa-solid fa-code text-white text-xs"></i>
             </div>
-            <div>
-                <h1 class="font-bold text-sm text-white tracking-wide">MIRZABOT STUDIO</h1>
-            </div>
+            <h1 class="font-bold text-sm text-white tracking-wide">MIRZABOT STUDIO</h1>
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="index.php" class="btn-action btn-secondary">
+            <a href="index.php" class="action-button btn-ghost">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 <span class="hidden sm:block">خروج</span>
             </a>
-            <a href="keyboard.php?action=reaset" onclick="return confirm('تنظیمات به حالت اولیه بازگردد؟')" class="btn-action btn-danger">
+            <a href="keyboard.php?action=reaset" onclick="return confirm('تنظیمات به حالت اولیه بازگردد؟')" class="action-button btn-danger">
                 <i class="fa-solid fa-rotate-right"></i>
             </a>
-            <button onclick="App.save()" id="btn-save" class="btn-action btn-primary" disabled>
+            <button onclick="App.save()" id="btn-save" class="action-button btn-solid" disabled>
                 <i class="fa-solid fa-floppy-disk"></i>
                 <span>ذخیره تغییرات</span>
             </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="workspace">
+    <!-- Workspace -->
+    <div class="workspace-grid">
         
-        <!-- Live Preview (Left) -->
+        <!-- Preview (Left) -->
         <div class="preview-panel">
-            <div class="absolute top-6 left-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest">REALTIME PREVIEW</div>
+            <div class="absolute top-6 left-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest">LIVE PREVIEW</div>
             
             <div class="mobile-viewport animate__animated animate__fadeInLeft">
-                <div class="tg-top">
+                <div class="tg-header">
                     <i class="fa-solid fa-arrow-right text-gray-400"></i>
                     <div class="flex-1 font-bold text-sm">Mirza Bot <span class="text-xs text-blue-400 font-normal">bot</span></div>
                     <i class="fa-solid fa-ellipsis-vertical text-gray-400"></i>
                 </div>
-                <div class="tg-content">
+                <div class="tg-chat">
                     <div class="bg-[#2b5278] text-white text-xs px-3 py-2 rounded-xl rounded-tl-sm mx-3 mb-2 max-w-[85%] shadow">
                         پیش‌نمایش زنده منوی ربات 👇
                     </div>
                 </div>
-                <div id="preview-render" class="tg-keys-area flex flex-col justify-end">
-                    <!-- Buttons Render Here -->
+                <div id="preview-render" class="tg-keyboard flex flex-col justify-end">
+                    <!-- JS renders buttons here -->
                 </div>
             </div>
         </div>
 
-        <!-- Editor Canvas (Right) -->
+        <!-- Editor (Right) -->
         <div class="editor-panel">
             <div class="editor-canvas">
                 <div id="editor-render" class="max-w-4xl mx-auto pb-8">
-                    <!-- Rows Render Here -->
+                    <!-- JS renders rows here -->
                 </div>
                 
                 <div class="max-w-4xl mx-auto pb-24">
@@ -355,16 +363,14 @@ try {
 
     </div>
 
-    <!-- Frontend Application -->
+    <!-- Application Logic -->
     <script>
-        /**
-         * App Logic - Self Contained
-         */
         const App = {
             data: {
-                keyboard: <?php echo $viewData; ?>,
+                // دریافت دیتای PHP به صورت امن
+                keyboard: <?php echo $currentKeyboardJSON ?: '[]'; ?>,
                 initialSnapshot: '',
-                // Human-readable labels for technical variable names
+                // دیکشنری ترجمه
                 labels: {
                     'text_sell': '🛍 خرید سرویس',
                     'text_extend': '🔄 تمدید سرویس',
@@ -389,13 +395,13 @@ try {
                 if (!Array.isArray(this.data.keyboard)) this.data.keyboard = [];
                 this.data.initialSnapshot = JSON.stringify(this.data.keyboard);
                 
-                // Initialize SweetAlert with theme
+                // Initialize SweetAlert
                 this.swal = Swal.mixin({
                     background: '#121214',
                     color: '#e4e4e7',
                     confirmButtonColor: '#6366f1',
                     cancelButtonColor: '#ef4444',
-                    customClass: { popup: 'border border-[#27272a] rounded-xl' }
+                    customClass: { popup: 'border border-[#334155] rounded-xl' }
                 });
 
                 this.render();
@@ -433,8 +439,8 @@ try {
                             <div class="key-code" title="${btn.text}">${btn.text}</div>
                             <div class="key-label">${label}</div>
                             <div class="key-actions">
-                                <div class="mini-btn" onclick="App.editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
-                                <div class="mini-btn del" onclick="App.deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
+                                <div class="icon-btn" onclick="App.editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
+                                <div class="icon-btn del" onclick="App.deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
                             </div>
                         `;
                         rowEl.appendChild(keyEl);
@@ -474,7 +480,7 @@ try {
                     
                     row.forEach(btn => {
                         const btnDiv = document.createElement('div');
-                        btnDiv.className = 'tg-key flex-1 truncate';
+                        btnDiv.className = 'tg-btn flex-1 truncate';
                         // Show Persian label in preview
                         btnDiv.innerText = this.data.labels[btn.text] || btn.text; 
                         rowDiv.appendChild(btnDiv);
@@ -578,7 +584,7 @@ try {
             save() {
                 const { saveBtn } = this.dom;
                 const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
+                saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ...';
                 saveBtn.disabled = true;
 
                 fetch('keyboard.php', {
