@@ -200,7 +200,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدیریت سفارشات | پنل حرفه‌ای</title>
+    <title>مدیریت سفارشات | نسخه الترا پلاس</title>
     
     <!-- Assets -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
@@ -210,213 +210,266 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            /* Palette: Midnight Neon */
-            --bg-body: #020204;
+            /* Theme Core */
+            --bg-body: #050509;
+            --bg-card: rgba(23, 23, 30, 0.75);
+            --bg-card-hover: rgba(35, 35, 45, 0.9);
             --bg-glass: rgba(20, 20, 25, 0.85);
             --bg-dock: rgba(10, 10, 15, 0.95);
             --bg-modal: rgba(20, 20, 25, 0.98);
             
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-green: #00ff88;
-            --neon-red: #ff004c;
-            --neon-amber: #ffaa00;
+            /* Neons */
+            --neon-blue: #00f2ff;
+            --neon-purple: #c026d3;
+            --neon-green: #00ffa3;
+            --neon-red: #ff2a6d;
+            --neon-gold: #fbbf24;
             
-            --text-main: #ffffff;
-            --text-muted: #b0b0b0;
+            /* Text */
+            --text-pri: #ffffff;
+            --text-sec: #94a3b8;
             
-            --border-glass: 1px solid rgba(255, 255, 255, 0.12);
-            --shadow-float: 0 15px 50px rgba(0,0,0,0.9);
+            /* Borders */
+            --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+            --border-highlight: 1px solid rgba(255, 255, 255, 0.2);
+            --shadow-card: 0 15px 50px rgba(0,0,0,0.6);
             
+            --radius-main: 28px;
             --radius-lg: 24px;
-            --radius-md: 16px;
         }
 
         /* --- Global Reset --- */
         * { box-sizing: border-box; outline: none; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
         body {
             background-color: var(--bg-body);
-            color: var(--text-main);
+            color: var(--text-pri);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 15% 15%, rgba(0, 243, 255, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 85% 85%, rgba(188, 19, 254, 0.05) 0%, transparent 40%);
+                radial-gradient(circle at 15% 15%, rgba(0, 242, 255, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(192, 38, 211, 0.08) 0%, transparent 45%);
             background-attachment: fixed;
-            padding-bottom: 160px;
+            padding-bottom: 150px;
+            display: flex; flex-direction: column;
         }
 
         a { text-decoration: none; color: inherit; transition: 0.3s; }
 
-        /* --- Layout --- */
+        /* --- Full Height Container --- */
         .container-fluid-custom {
-            width: 100%; padding: 40px 4%; max-width: 1900px; margin: 0 auto;
+            width: 100%; max-width: 1920px; margin: 0 auto;
+            padding: 30px 4%;
+            flex-grow: 1;
+            display: flex; flex-direction: column; gap: 30px;
         }
 
-        /* --- Header --- */
+        /* --- Header Bigger --- */
         .page-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 50px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .page-title h1 {
             font-size: 3rem; font-weight: 900; margin: 0; color: #fff;
-            text-shadow: 0 0 25px rgba(255,255,255,0.15);
+            text-shadow: 0 0 30px rgba(255,255,255,0.1);
         }
-        .page-title p { color: var(--text-muted); font-size: 1.3rem; margin-top: 10px; }
+        .page-title p { color: var(--text-sec); font-size: 1.2rem; margin-top: 5px; font-weight: 400; }
+        
+        .info-pill {
+            background: rgba(255,255,255,0.03); border: var(--border-subtle);
+            padding: 12px 25px; border-radius: 18px;
+            display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
+            backdrop-filter: blur(10px); color: var(--text-sec);
+        }
 
-        /* --- Stats Cards --- */
+        /* --- Stats Cards (Bigger) --- */
         .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px; margin-bottom: 50px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;
         }
         .stat-card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px); border: var(--border-glass);
-            border-radius: var(--radius-lg); padding: 30px;
+            background: var(--bg-card); border: var(--border-subtle); border-radius: 24px;
+            padding: 30px 35px; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: space-between;
-            transition: 0.3s;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .stat-card:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.3); box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+        .stat-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.15); box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
         
-        .stat-info .val { font-size: 2.8rem; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 5px; }
-        .stat-info .lbl { font-size: 1.1rem; color: var(--text-muted); font-weight: 500; }
-        .stat-icon { font-size: 3.5rem; opacity: 0.9; }
+        .stat-info .val { font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 5px; }
+        .stat-info .lbl { font-size: 1.1rem; color: var(--text-sec); font-weight: 500; }
+        .stat-icon { font-size: 3rem; opacity: 0.9; }
         
         .c-rev { color: var(--neon-blue); filter: drop-shadow(0 0 10px rgba(0,243,255,0.3)); }
         .c-act { color: var(--neon-green); filter: drop-shadow(0 0 10px rgba(0,255,136,0.3)); }
-        .c-unp { color: var(--neon-amber); filter: drop-shadow(0 0 10px rgba(255,170,0,0.3)); }
-        .c-tot { color: var(--neon-purple); filter: drop-shadow(0 0 10px rgba(188,19,254,0.3)); }
+        .c-unp { color: var(--neon-gold); filter: drop-shadow(0 0 10px rgba(251,191,36,0.3)); }
+        .c-tot { color: var(--neon-purple); filter: drop-shadow(0 0 10px rgba(192,38,211,0.3)); }
 
-        /* --- Glass Panel --- */
+        /* --- Glass Panel (Spacious) --- */
         .glass-panel {
-            background: var(--bg-glass); backdrop-filter: blur(30px);
-            border: var(--border-glass); border-radius: var(--radius-lg);
-            padding: 30px; margin-bottom: 40px; box-shadow: var(--shadow-float);
+            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
+            padding: 35px;
+            flex-grow: 1; /* Key for filling space */
+            display: flex; flex-direction: column;
+            backdrop-filter: blur(20px); box-shadow: var(--shadow-card);
+            min-height: 500px;
         }
 
         /* --- Filters (High Readability) --- */
         .filters-row {
-            display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
-            padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;
+            padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 25px;
         }
-        .form-group { flex: 1; min-width: 200px; }
-        .form-group label { display: block; color: #fff; font-size: 1rem; margin-bottom: 10px; font-weight: 700; }
+        .form-group { flex: 1; min-width: 220px; }
+        .form-group label { display: block; color: var(--text-sec); font-size: 1.05rem; margin-bottom: 10px; font-weight: 600; }
         
         .input-readable {
             width: 100%; height: 55px;
-            background: #000000; border: 2px solid #444; color: #ffffff;
-            padding: 0 20px; border-radius: 14px; font-family: inherit; font-size: 1.1rem; font-weight: 500;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 0 20px; border-radius: 16px;
+            font-family: inherit; font-size: 1.1rem; font-weight: 500;
             transition: 0.3s;
         }
-        .input-readable:focus { border-color: var(--neon-blue); box-shadow: 0 0 20px rgba(0, 243, 255, 0.25); }
+        .input-readable:focus { border-color: var(--neon-blue); box-shadow: 0 0 20px rgba(0, 243, 255, 0.25); background: rgba(0,0,0,0.5); }
         select.input-readable { cursor: pointer; }
+        select.input-readable option { background: #111; color: #fff; font-size: 1.1rem; }
         
         .btn-filter {
-            height: 55px; padding: 0 40px; margin-top: 32px;
-            background: var(--neon-blue); color: #000; border: none; border-radius: 14px;
-            font-size: 1.2rem; font-weight: 800; cursor: pointer;
+            height: 55px; padding: 0 35px;
+            background: var(--neon-blue); color: #000; border: none; border-radius: 16px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer;
             transition: 0.3s; display: flex; align-items: center; gap: 10px;
         }
-        .btn-filter:hover { box-shadow: 0 0 30px var(--neon-blue); transform: translateY(-3px); }
+        .btn-filter:hover { box-shadow: 0 0 25px var(--neon-blue); transform: translateY(-3px); }
 
         /* --- Bulk Actions --- */
-        .actions-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px; }
+        .actions-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 25px; }
         
         .btn-act {
-            height: 50px; padding: 0 20px;
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 12px; color: #fff; font-size: 1rem; font-weight: 600;
-            cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            height: 50px; padding: 0 22px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; color: var(--text-sec); font-size: 1.05rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
             transition: 0.3s; text-decoration: none;
         }
-        .btn-act:hover { background: rgba(255,255,255,0.15); border-color: #fff; transform: translateY(-2px); }
+        .btn-act:hover { background: rgba(255,255,255,0.15); border-color: #fff; transform: translateY(-2px); color: #fff; }
         
-        .btn-green { color: var(--neon-green); border-color: rgba(10,255,136,0.4); }
-        .btn-green:hover { background: rgba(10,255,136,0.1); box-shadow: 0 0 15px var(--neon-green); }
+        .btn-green { color: var(--neon-green); border-color: rgba(0,255,163,0.4); }
+        .btn-green:hover { background: rgba(0,255,163,0.1); box-shadow: 0 0 20px rgba(0,255,163,0.3); }
         
-        .btn-red { color: var(--neon-red); border-color: rgba(255,7,58,0.4); }
-        .btn-red:hover { background: rgba(255,7,58,0.1); box-shadow: 0 0 15px var(--neon-red); }
+        .btn-red { color: var(--neon-red); border-color: rgba(255,42,109,0.4); }
+        .btn-red:hover { background: rgba(255,42,109,0.1); box-shadow: 0 0 20px rgba(255,42,109,0.3); }
         
-        .btn-amber { color: var(--neon-amber); border-color: rgba(255,183,0,0.4); }
-        .btn-amber:hover { background: rgba(255,183,0,0.1); box-shadow: 0 0 15px var(--neon-amber); }
+        .btn-blue { color: var(--neon-blue); border-color: rgba(0,243,255,0.4); }
+        .btn-blue:hover { background: rgba(0,243,255,0.1); box-shadow: 0 0 20px rgba(0,243,255,0.3); }
 
         /* --- Table --- */
-        .table-wrap { overflow-x: auto; border-radius: var(--radius-lg); }
-        .glass-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; font-size: 1.15rem; }
+        .table-container-flex {
+            flex-grow: 1;
+            overflow-y: auto; overflow-x: auto;
+            border-radius: 18px;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .glass-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 1.1rem; }
         .glass-table th {
-            text-align: right; padding: 20px; color: var(--text-muted);
-            font-weight: 700; border-bottom: 2px solid rgba(255,255,255,0.05);
+            text-align: right; padding: 22px 25px; color: var(--text-sec);
+            font-weight: 600; background: rgba(255,255,255,0.03);
+            position: sticky; top: 0; z-index: 10; backdrop-filter: blur(15px);
         }
-        .glass-table tbody tr { background: rgba(255,255,255,0.03); transition: 0.3s; }
-        .glass-table tbody tr:hover { background: rgba(255,255,255,0.08); transform: scale(1.005); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .glass-table tbody tr { transition: 0.15s; }
+        .glass-table tbody tr:hover { background: rgba(255,255,255,0.05); }
         .glass-table td {
-            padding: 25px 20px; color: #fff; vertical-align: middle;
-            border-top: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding: 22px 25px; color: #fff; vertical-align: middle;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-        .glass-table td:first-child { border-radius: 0 16px 16px 0; border-right: 1px solid rgba(255,255,255,0.04); }
-        .glass-table td:last-child { border-radius: 16px 0 0 16px; border-left: 1px solid rgba(255,255,255,0.04); }
 
         /* Status Badges */
-        .status-badge { padding: 8px 16px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
-        .status-active { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
-        .status-danger { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .status-badge { padding: 8px 16px; border-radius: 50px; font-size: 0.95rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .status-active { background: rgba(0,255,163,0.15); color: var(--neon-green); border: 1px solid rgba(0,255,163,0.3); }
+        .status-danger { background: rgba(255,42,109,0.15); color: var(--neon-red); border: 1px solid rgba(255,42,109,0.3); }
         .status-blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-        .status-purple { background: rgba(139,92,246,0.15); color: #c084fc; border: 1px solid rgba(139,92,246,0.3); }
+        .status-purple { background: rgba(192,38,211,0.15); color: var(--neon-purple); border: 1px solid rgba(192,38,211,0.3); }
         .status-orange { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
-        .status-unpaid { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-        .status-other { background: rgba(255,255,255,0.1); color: #ccc; }
+        .status-unpaid { background: rgba(251,191,36,0.15); color: var(--neon-gold); border: 1px solid rgba(251,191,36,0.3); }
+        .status-other { background: rgba(255,255,255,0.05); color: #ccc; border: 1px solid rgba(255,255,255,0.1); }
 
         /* Checkbox */
-        .custom-check { width: 24px; height: 24px; border: 2px solid #666; background: transparent; cursor: pointer; appearance: none; border-radius: 6px; position: relative; }
+        .custom-check { width: 24px; height: 24px; border: 2px solid #666; background: transparent; cursor: pointer; appearance: none; border-radius: 6px; position: relative; transition: 0.2s; }
         .custom-check:checked { background: var(--neon-blue); border-color: var(--neon-blue); }
-        .custom-check:checked::after { content: '✔'; position: absolute; color: #000; top: -1px; left: 4px; font-size: 16px; font-weight: 900; }
+        .custom-check:checked::after { content: '✔'; position: absolute; color: #000; top: -1px; left: 3px; font-size: 16px; font-weight: 800; }
 
-        /* --- Floating Dock (Centered) --- */
+        /* --- Floating Dock (Bigger) --- */
         .dock-container {
             position: fixed; bottom: 30px; left: 0; right: 0;
             display: flex; justify-content: center; z-index: 2000; pointer-events: none;
         }
         .dock {
-            pointer-events: auto; display: flex; align-items: center; gap: 20px;
-            background: var(--bg-dock); backdrop-filter: blur(35px);
-            border: 1px solid rgba(255,255,255,0.2); border-radius: 40px; padding: 15px 35px;
+            pointer-events: auto; display: flex; align-items: center; gap: 12px;
+            background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(35px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 30px; padding: 15px;
             box-shadow: 0 30px 80px rgba(0,0,0,0.9);
         }
         .dock-item {
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-            color: var(--text-muted); text-decoration: none; transition: 0.3s; position: relative; padding: 0 5px;
-        }
-        .dock-icon {
-            font-size: 2rem; transition: 0.3s;
-            width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
+            width: 60px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
             border-radius: 20px;
+            color: var(--text-sec); font-size: 1.6rem;
+            text-decoration: none; position: relative; background: transparent;
+            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5);
         }
-        .dock-label { 
-            font-size: 1rem; font-weight: 600; opacity: 0; position: absolute; 
-            bottom: -35px; transition: 0.3s; white-space: nowrap; 
-            background: #000; padding: 4px 10px; border-radius: 6px; border: 1px solid #333;
+        .dock-item:hover {
+            width: 75px; height: 75px; margin: 0 6px;
+            background: rgba(255,255,255,0.1); color: #fff;
+            transform: translateY(-12px);
         }
-        .dock-item:hover .dock-icon { transform: translateY(-20px) scale(1.2); background: rgba(255,255,255,0.15); color: #fff; }
-        .dock-item:hover .dock-label { opacity: 1; bottom: -45px; color: #fff; }
-        .dock-item.active .dock-icon { color: var(--neon-blue); background: rgba(0,243,255,0.15); box-shadow: 0 0 25px rgba(0,243,255,0.4); transform: translateY(-10px); }
-        .dock-item.active .dock-label { opacity: 1; bottom: -45px; color: var(--neon-blue); }
+        .dock-item.active {
+            color: var(--neon-blue); background: rgba(0, 242, 255, 0.1);
+        }
+        .dock-item::before {
+            content: attr(data-tooltip);
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.8);
+            background: rgba(0,0,0,0.95); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 8px 16px; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 600; white-space: nowrap;
+            opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; margin-bottom: 15px;
+        }
+        .dock-item:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0) scale(1); }
+        .dock-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); margin: 0 6px; }
 
-        /* --- Modals (Dark) --- */
-        .modal-content { background: #111; border: 1px solid var(--neon-blue); color: #fff; border-radius: 20px; }
-        .modal-header { border-bottom: 1px solid #333; padding: 20px; }
-        .modal-title { font-weight: 800; color: var(--neon-blue); }
-        .modal-body { padding: 30px; }
-        .close { color: #fff; opacity: 0.8; text-shadow: none; font-size: 2rem; }
+        /* --- Modals (Dark & Bigger) --- */
+        .modal-content {
+            background: var(--bg-modal);
+            backdrop-filter: blur(40px);
+            border: 1px solid var(--neon-blue);
+            border-radius: var(--radius-lg);
+            color: #fff;
+            box-shadow: 0 0 80px rgba(0,0,0,0.95);
+        }
+        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 30px; }
+        .modal-title { font-size: 1.8rem; font-weight: 800; color: var(--neon-blue); }
+        .modal-body { padding: 40px; }
+        .close { text-shadow: none; color: #fff; opacity: 0.8; font-size: 3rem; margin-top: -10px; font-weight: 300; }
+        
+        .btn-modal {
+            width: 100%; height: 65px; background: var(--neon-blue); color: #000;
+            border: none; border-radius: 16px; font-size: 1.4rem; font-weight: 800; cursor: pointer;
+            margin-top: 30px; transition: 0.3s;
+        }
+        .btn-modal:hover { box-shadow: 0 0 40px var(--neon-blue); transform: translateY(-3px); }
 
         @media (max-width: 768px) {
             .container-fluid-custom { padding: 30px 15px 160px 15px; }
-            .dock { width: 95%; justify-content: space-between; padding: 10px 20px; gap: 5px; }
-            .dock-icon { width: 45px; height: 45px; font-size: 1.5rem; }
+            .dock { width: 95%; overflow-x: auto; justify-content: flex-start; }
+            .dock-item { flex-shrink: 0; width: 50px; height: 50px; font-size: 1.4rem; }
             .filters-row { flex-direction: column; align-items: stretch; }
             .actions-row { flex-direction: column; align-items: stretch; }
             .btn-act { justify-content: center; }
+            .page-title h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
@@ -431,9 +484,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <p>
                     <i class="fa-solid fa-list-check" style="color: var(--neon-purple);"></i>
                     بررسی و مدیریت فاکتورها و سرویس‌ها
-                    <span style="opacity:0.3; margin:0 15px;">|</span>
-                    <?php echo $todayDate; ?>
                 </p>
+            </div>
+            <div class="info-pill">
+                <i class="fa-regular fa-calendar"></i>
+                <span><?php echo $todayDate; ?></span>
             </div>
         </header>
 
@@ -504,15 +559,15 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 </button>
                 
                 <?php if(!empty($_GET['q']) || !empty($_GET['status']) || !empty($_GET['from'])): ?>
-                    <a href="invoice.php" class="btn-act" style="margin-top: 32px; height: 60px;">
-                        <i class="fa-solid fa-rotate-right" style="font-size: 1.4rem;"></i>
+                    <a href="invoice.php" class="btn-act" style="margin-top: 32px; height: 55px; justify-content: center;">
+                        <i class="fa-solid fa-rotate-right" style="font-size: 1.3rem;"></i>
                     </a>
                 <?php endif; ?>
             </form>
 
             <!-- Bulk Actions -->
             <div class="actions-row">
-                <span id="selCount" style="color: var(--neon-blue); font-weight: 800; font-size: 1.3rem; margin-left: 20px;">0 انتخاب</span>
+                <span id="selCount" style="color: var(--neon-blue); font-weight: 800; font-size: 1.2rem; margin-left: 20px;">0 انتخاب</span>
                 
                 <button class="btn-act" id="selectAll"><i class="fa-solid fa-check-double"></i> انتخاب همه</button>
                 <button class="btn-act" id="deselectAll"><i class="fa-solid fa-minus"></i> لغو</button>
@@ -527,50 +582,48 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             </div>
 
             <!-- Table -->
-            <div style="margin-top: 40px;">
-                <?php if(empty($listinvoice)): ?>
-                    <div style="text-align: center; padding: 80px; color: var(--text-dim);">
-                        <i class="fa-solid fa-file-circle-xmark" style="font-size: 6rem; margin-bottom: 25px; opacity: 0.4;"></i>
-                        <h3 style="font-size: 2rem;">سفارشی یافت نشد</h3>
-                        <p style="font-size: 1.2rem;">لطفاً فیلترها را تغییر دهید.</p>
-                    </div>
-                <?php else: ?>
-                    <div class="table-wrap">
-                        <table class="glass-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 60px;"><i class="fa-solid fa-check"></i></th>
-                                    <th>آیدی کاربر</th>
-                                    <th>شناسه سفارش</th>
-                                    <th>نام کاربری</th>
-                                    <th>محصول</th>
-                                    <th>تاریخ</th>
-                                    <th>قیمت</th>
-                                    <th>وضعیت</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach($listinvoice as $row): 
-                                    $statusInfo = $statuses[$row['Status']] ?? ['label' => $row['Status'], 'class' => 'status-other'];
-                                    $time = is_numeric($row['time_sell']) ? jdate('Y/m/d H:i', $row['time_sell']) : $row['time_sell'];
-                                    $price = ($row['price_product'] == 0) ? 'رایگان' : number_format($row['price_product']);
-                                ?>
-                                <tr>
-                                    <td><input type="checkbox" name="ids[]" value="<?php echo $row['id_invoice']; ?>" class="custom-check inv-check"></td>
-                                    <td style="font-family: monospace; color: var(--neon-blue); letter-spacing: 1px; font-weight: 700;"><?php echo $row['id_user']; ?></td>
-                                    <td style="font-family: monospace; opacity: 0.8;"><?php echo $row['id_invoice']; ?></td>
-                                    <td style="font-weight: 800; color: #fff; font-size: 1.2rem;"><?php echo $row['username']; ?></td>
-                                    <td><?php echo $row['name_product']; ?></td>
-                                    <td style="font-size: 1.1rem;"><?php echo $time; ?></td>
-                                    <td style="color: var(--neon-amber); font-weight: 800; font-size: 1.2rem;"><?php echo $price; ?></td>
-                                    <td><span class="status-badge <?php echo $statusInfo['class']; ?>"><?php echo $statusInfo['label']; ?></span></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
+            <?php if(empty($listinvoice)): ?>
+                <div style="text-align: center; padding: 80px; color: var(--text-sec); flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                    <i class="fa-solid fa-file-circle-xmark" style="font-size: 5rem; margin-bottom: 25px; opacity: 0.3;"></i>
+                    <h3 style="font-size: 2rem;">سفارشی یافت نشد</h3>
+                    <p style="font-size: 1.2rem;">لطفاً فیلترها را تغییر دهید.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-container-flex">
+                    <table class="glass-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;"><i class="fa-solid fa-check"></i></th>
+                                <th>آیدی کاربر</th>
+                                <th>شناسه سفارش</th>
+                                <th>نام کاربری</th>
+                                <th>محصول</th>
+                                <th>تاریخ</th>
+                                <th>قیمت</th>
+                                <th>وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($listinvoice as $row): 
+                                $statusInfo = $statuses[$row['Status']] ?? ['label' => $row['Status'], 'class' => 'status-other'];
+                                $time = is_numeric($row['time_sell']) ? jdate('Y/m/d H:i', $row['time_sell']) : $row['time_sell'];
+                                $price = ($row['price_product'] == 0) ? 'رایگان' : number_format($row['price_product']);
+                            ?>
+                            <tr>
+                                <td><input type="checkbox" name="ids[]" value="<?php echo $row['id_invoice']; ?>" class="custom-check inv-check"></td>
+                                <td style="font-family: monospace; color: var(--neon-blue); letter-spacing: 1px; font-weight: 700;"><?php echo $row['id_user']; ?></td>
+                                <td style="font-family: monospace; opacity: 0.8;"><?php echo $row['id_invoice']; ?></td>
+                                <td style="font-weight: 800; color: #fff; font-size: 1.15rem;"><?php echo $row['username']; ?></td>
+                                <td><?php echo $row['name_product']; ?></td>
+                                <td style="font-size: 1.05rem;"><?php echo $time; ?></td>
+                                <td style="color: var(--neon-gold); font-weight: 800; font-size: 1.2rem;"><?php echo $price; ?></td>
+                                <td><span class="status-badge <?php echo $statusInfo['class']; ?>"><?php echo $statusInfo['label']; ?></span></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
             
         </div>
 
@@ -590,7 +643,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <form method="post" id="formBulkStatus">
                         <div id="hiddenIdsStatus"></div>
                         <div class="form-group">
-                            <label>وضعیت جدید را انتخاب کنید:</label>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.2rem;">وضعیت جدید را انتخاب کنید:</label>
                             <select name="bulk_status" class="input-readable">
                                 <option value="active">فعال</option>
                                 <option value="disablebyadmin">غیرفعال (توسط ادمین)</option>
@@ -617,14 +670,14 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <div id="hiddenIdsExtend"></div>
                         <input type="hidden" name="bulk_extend" value="1">
                         <div class="form-group">
-                            <label>حجم اضافه (گیگابایت):</label>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.2rem;">حجم اضافه (گیگابایت):</label>
                             <input type="number" name="volume_service" class="input-readable" placeholder="مثلا: 10">
                         </div>
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label>زمان اضافه (روز):</label>
+                        <div class="form-group" style="margin-top: 25px;">
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.2rem;">زمان اضافه (روز):</label>
                             <input type="number" name="time_service" class="input-readable" placeholder="مثلا: 30">
                         </div>
-                        <button type="button" onclick="submitBulk('formBulkExtend')" class="btn-modal" style="background: var(--neon-green);">تمدید سرویس‌ها</button>
+                        <button type="button" onclick="submitBulk('formBulkExtend')" class="btn-modal" style="background: var(--neon-green); color:#000;">تمدید سرویس‌ها</button>
                     </form>
                 </div>
             </div>
@@ -643,18 +696,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <form method="post" id="formBulkRemove">
                         <div id="hiddenIdsRemove"></div>
                         <div class="form-group">
-                            <label>نوع حذف:</label>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.2rem;">نوع حذف:</label>
                             <select name="bulk_remove_type" id="removeType" class="input-readable">
                                 <option value="one">حذف سرویس (بدون بازگشت وجه)</option>
                                 <option value="tow">حذف سرویس + بازگشت وجه به کیف پول</option>
                                 <option value="three">فقط حذف فاکتور (سرویس می‌ماند)</option>
                             </select>
                         </div>
-                        <div class="form-group" id="refundAmountGroup" style="display:none; margin-top: 15px;">
-                            <label>مبلغ بازگشتی (تومان):</label>
+                        <div class="form-group" id="refundAmountGroup" style="display:none; margin-top: 25px;">
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.2rem;">مبلغ بازگشتی (تومان):</label>
                             <input type="number" name="amount" class="input-readable" placeholder="مبلغ برای هر سفارش">
                         </div>
-                        <button type="button" onclick="submitBulk('formBulkRemove')" class="btn-modal" style="background: var(--neon-red);">تایید حذف</button>
+                        <button type="button" onclick="submitBulk('formBulkRemove')" class="btn-modal" style="background: var(--neon-red); color:#fff;">تایید حذف</button>
                     </form>
                 </div>
             </div>
@@ -680,15 +733,32 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-box-open"></i></div>
                 <span class="dock-label">محصولات</span>
             </a>
-            <a href="server_status.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <span class="dock-label">ادمین</span>
+            <a href="service.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-server"></i></div>
+                <span class="dock-label">سرویس‌ها</span>
+            </a>
+            <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.15);"></div>
+            <a href="cancelService.php" class="dock-item" data-tooltip="مسدودها" style="color: var(--neon-red);">
+                <div class="dock-icon"><i class="fa-solid fa-ban"></i></div>
+                <span class="dock-label">مسدود</span>
             </a>
             <a href="payment.php" class="dock-item">
                 <div class="dock-icon"><i class="fa-solid fa-credit-card"></i></div>
                 <span class="dock-label">مالی</span>
             </a>
-            <div style="width: 2px; height: 35px; background: rgba(255,255,255,0.15);"></div>
+            <a href="inbound.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-network-wired"></i></div>
+                <span class="dock-label">کانفیگ</span>
+            </a>
+            <a href="seeting_x_ui.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+                <span class="dock-label">پنل X-UI</span>
+            </a>
+            <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.15);"></div>
+            <a href="settings.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-gear"></i></div>
+                <span class="dock-label">تنظیمات</span>
+            </a>
             <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
                 <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div>
                 <span class="dock-label">خروج</span>
