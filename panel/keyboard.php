@@ -10,7 +10,7 @@ $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
 $query->execute();
 $result = $query->fetch(PDO::FETCH_ASSOC);
 
-// استعلام فاکتورها (طبق کد اصلی شما حفظ شد)
+// استعلام فاکتورها (جهت جلوگیری از خطا اگر در هدر استفاده می‌شود)
 $query = $pdo->prepare("SELECT * FROM invoice");
 $query->execute();
 $listinvoice = $query->fetchAll();
@@ -28,6 +28,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 if($method == "POST" && is_array($inputData)){
     $keyboardStruct = ['keyboard' => $inputData];
     update("setting", "keyboardmain", json_encode($keyboardStruct), null, null);
+    
     header('Content-Type: application/json');
     echo json_encode(['status' => 'success', 'timestamp' => time()]);
     exit;
@@ -35,7 +36,6 @@ if($method == "POST" && is_array($inputData)){
 
 // Reset Logic
 if(isset($_GET['action']) && $_GET['action'] == "reaset"){
-    // مقادیر پیش‌فرض استاندارد
     $defaultKeyboard = json_encode([
         "keyboard" => [
             [["text" => "text_sell"], ["text" => "text_extend"]],
@@ -99,10 +99,8 @@ try {
             --bg-main: #09090b;       /* Zinc 950 */
             --bg-panel: #18181b;      /* Zinc 900 */
             --bg-card: #27272a;       /* Zinc 800 */
-            --bg-element: #3f3f46;    /* Zinc 700 */
             --border: rgba(255, 255, 255, 0.08);
             --accent: #6366f1;        /* Indigo 500 */
-            --accent-glow: rgba(99, 102, 241, 0.3);
             --text-primary: #f4f4f5;
             --text-secondary: #a1a1aa;
             --danger: #ef4444;
@@ -121,10 +119,10 @@ try {
             background-size: 30px 30px;
         }
 
-        /* --- Custom Scrollbar --- */
+        /* --- Scrollbar --- */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--bg-element); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #52525b; }
 
         /* --- Header --- */
@@ -140,36 +138,26 @@ try {
             z-index: 50;
         }
 
-        .logo-area {
-            display: flex; align-items: center; gap: 12px;
-        }
-        .logo-icon {
-            width: 40px; height: 40px; border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent), #a855f7);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
         .action-btn {
             height: 40px; padding: 0 20px; border-radius: 10px;
             font-size: 13px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
             display: flex; align-items: center; gap: 8px; border: 1px solid var(--border);
             background: rgba(255, 255, 255, 0.03); color: var(--text-secondary);
         }
-        .action-btn:hover { background: rgba(255, 255, 255, 0.08); color: white; border-color: rgba(255, 255, 255, 0.2); }
+        .action-btn:hover { background: rgba(255, 255, 255, 0.08); color: white; }
         
         .btn-primary {
             background: var(--accent); color: white; border: none;
-            box-shadow: 0 4px 12px var(--accent-glow);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); background: #4f46e5; }
-        .btn-primary:disabled { background: var(--bg-element); color: var(--text-secondary); box-shadow: none; cursor: not-allowed; transform: none; }
+        .btn-primary:hover { transform: translateY(-2px); background: #4f46e5; }
+        .btn-primary:disabled { background: #3f3f46; color: var(--text-secondary); cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* --- Workspace Layout --- */
+        /* --- Workspace --- */
         .workspace { display: flex; flex: 1; overflow: hidden; }
 
-        /* --- Preview Pane (Left) --- */
+        /* --- Preview (Left) --- */
         .preview-pane {
             width: 460px;
             background: rgba(0, 0, 0, 0.2);
@@ -180,19 +168,12 @@ try {
         }
         
         .device-wrapper {
-            position: relative;
-            width: 360px; height: 720px;
-            background: #000;
-            border-radius: 50px;
-            box-shadow: 
-                0 0 0 12px #1f1f1f,
-                0 0 0 13px #333,
-                0 40px 80px -20px rgba(0,0,0,0.8);
-            overflow: hidden;
-            display: flex; flex-direction: column;
+            position: relative; width: 360px; height: 720px;
+            background: #000; border-radius: 50px;
+            box-shadow: 0 0 0 12px #1f1f1f, 0 40px 80px -20px rgba(0,0,0,0.8);
+            overflow: hidden; display: flex; flex-direction: column;
         }
 
-        /* Dynamic Island */
         .dynamic-island {
             position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
             width: 120px; height: 35px; background: #000; border-radius: 20px; z-index: 20;
@@ -216,130 +197,82 @@ try {
         }
 
         .tg-key {
-            background: #2c2c2e; /* Dark Gray Button */
-            color: #fff;
-            border-radius: 6px;
-            padding: 12px 5px;
-            font-size: 14px; text-align: center;
+            background: #2c2c2e; color: #fff; border-radius: 6px;
+            padding: 12px 5px; font-size: 13px; text-align: center;
             box-shadow: 0 1px 0 rgba(0,0,0,0.4);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             display: flex; align-items: center; justify-content: center;
             border-top: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.1s;
-        }
-        .tg-key:active { background: #3a3a3c; }
-
-        /* --- Editor Pane (Right) --- */
-        .editor-pane {
-            flex: 1; display: flex; flex-direction: column;
-            background: transparent; position: relative;
         }
 
-        .editor-content {
-            flex: 1; overflow-y: auto; padding: 40px 60px;
-        }
+        /* --- Editor (Right) --- */
+        .editor-pane { flex: 1; display: flex; flex-direction: column; background: transparent; }
+        .editor-content { flex: 1; overflow-y: auto; padding: 40px 60px; }
 
         .row-container {
             background: rgba(39, 39, 42, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            border: 1px solid var(--border); border-radius: 16px;
             padding: 16px; margin-bottom: 20px;
             display: flex; flex-wrap: wrap; gap: 12px;
-            position: relative;
-            transition: all 0.2s ease;
+            position: relative; transition: all 0.2s ease;
             backdrop-filter: blur(8px);
         }
         .row-container:hover {
-            border-color: rgba(255,255,255,0.15);
-            background: rgba(39, 39, 42, 0.9);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-color: rgba(255,255,255,0.15); background: rgba(39, 39, 42, 0.9);
+            transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .row-handle {
             position: absolute; left: -30px; top: 50%; transform: translateY(-50%);
-            color: var(--text-secondary); cursor: grab; padding: 10px;
-            opacity: 0; transition: 0.2s;
+            color: var(--text-secondary); cursor: grab; padding: 10px; opacity: 0; transition: 0.2s;
         }
         .row-container:hover .row-handle { opacity: 1; left: -35px; }
 
         .btn-card {
-            flex: 1; min-width: 140px;
-            background: #18181b;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 16px;
-            display: flex; flex-direction: column; gap: 4px;
-            position: relative; cursor: grab;
-            transition: all 0.2s;
+            flex: 1; min-width: 140px; background: #18181b;
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;
+            position: relative; cursor: grab; transition: all 0.2s;
         }
-        .btn-card:hover {
-            border-color: var(--accent);
-            background: #202023;
-        }
-        .btn-card::before {
-            content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px;
-            background: var(--accent); border-radius: 0 4px 4px 0;
-            opacity: 0; transition: 0.2s;
-        }
-        .btn-card:hover::before { opacity: 1; }
-
+        .btn-card:hover { border-color: var(--accent); background: #202023; }
+        
         .btn-code {
-            font-family: 'Fira Code', monospace; font-size: 13px; color: var(--accent);
-            direction: ltr; text-align: right; letter-spacing: -0.5px;
+            font-family: monospace; font-size: 13px; color: var(--accent);
+            direction: ltr; text-align: right;
         }
-        .btn-label {
-            font-size: 12px; color: var(--text-secondary);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .btn-label { font-size: 12px; color: var(--text-secondary); }
 
         .btn-controls {
-            position: absolute; top: 8px; left: 8px;
-            display: flex; gap: 6px; opacity: 0; transition: 0.2s;
+            position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; opacity: 0; transition: 0.2s;
         }
         .btn-card:hover .btn-controls { opacity: 1; }
         
         .mini-act {
-            width: 24px; height: 24px; border-radius: 6px;
-            background: rgba(255,255,255,0.1); color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; cursor: pointer; transition: 0.2s;
+            width: 24px; height: 24px; border-radius: 6px; background: rgba(255,255,255,0.1); color: white;
+            display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;
         }
         .mini-act:hover { background: var(--accent); }
         .mini-act.danger:hover { background: var(--danger); }
 
-        .add-placeholder {
-            width: 50px; border: 1px dashed var(--border); border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-secondary); cursor: pointer; transition: 0.2s;
-        }
-        .add-placeholder:hover { border-color: var(--accent); color: var(--accent); background: rgba(99, 102, 241, 0.1); }
-
         .floating-add {
-            margin-top: 20px; padding: 20px;
-            border: 2px dashed var(--border); border-radius: 16px;
+            margin-top: 20px; padding: 20px; border: 2px dashed var(--border); border-radius: 16px;
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            color: var(--text-secondary); font-weight: 600; cursor: pointer;
-            transition: all 0.2s;
+            color: var(--text-secondary); font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
-        .floating-add:hover {
-            border-color: var(--accent); color: white; background: rgba(99, 102, 241, 0.05);
-        }
+        .floating-add:hover { border-color: var(--accent); color: white; background: rgba(99, 102, 241, 0.05); }
 
-        @media (max-width: 1024px) {
-            .preview-pane { display: none; }
-            .editor-content { padding: 20px; }
-        }
+        @media (max-width: 1024px) { .preview-pane { display: none; } .editor-content { padding: 20px; } }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <header class="app-header">
-        <div class="logo-area">
-            <div class="logo-icon"><i class="fa-solid fa-robot text-white text-xl"></i></div>
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-keyboard text-white"></i>
+            </div>
             <div>
-                <h1 class="text-white font-bold text-lg tracking-tight">MirzaBot <span class="text-xs opacity-50 font-normal">Keyboard</span></h1>
+                <h1 class="text-white font-bold text-lg">MirzaBot <span class="text-xs opacity-50 font-normal">Keyboard</span></h1>
             </div>
         </div>
 
@@ -347,7 +280,7 @@ try {
             <a href="index.php" class="action-btn">
                 <i class="fa-solid fa-chevron-right text-xs"></i> بازگشت
             </a>
-            <a href="keyboard.php?action=reaset" onclick="return confirm('تنظیمات به حالت پیش‌فرض برگردد؟')" class="action-btn" style="color: var(--danger); border-color: rgba(239,68,68,0.3);">
+            <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟')" class="action-btn" style="color: var(--danger); border-color: rgba(239,68,68,0.3);">
                 <i class="fa-solid fa-rotate-right"></i> ریست
             </a>
             <button id="btn-save" onclick="saveKeyboard()" class="action-btn btn-primary" disabled>
@@ -360,12 +293,11 @@ try {
         
         <!-- Live Preview (Left) -->
         <div class="preview-pane">
-            <div class="text-[10px] text-gray-500 font-bold uppercase tracking-[4px] absolute top-8 left-8">Live Preview</div>
+            <div class="absolute top-8 left-8 text-[10px] text-gray-500 font-bold uppercase tracking-widest">Live Preview</div>
             
             <div class="device-wrapper animate__animated animate__fadeInUp">
                 <div class="dynamic-island"></div>
                 
-                <!-- Telegram UI Header -->
                 <div class="tg-ui-header">
                     <i class="fa-solid fa-arrow-right text-white opacity-70"></i>
                     <div class="flex-1">
@@ -375,14 +307,12 @@ try {
                     <i class="fa-solid fa-ellipsis-vertical text-white opacity-70"></i>
                 </div>
 
-                <!-- Chat Area -->
                 <div class="tg-ui-body">
-                    <div class="bg-[#2c2c2e] text-white text-[14px] px-4 py-3 rounded-2xl rounded-tl-sm ml-3 mb-4 max-w-[85%] animate__animated animate__fadeInLeft">
-                        سلام! منوی ربات بروزرسانی شد. 👇
+                    <div class="bg-[#2c2c2e] text-white text-[13px] px-4 py-3 rounded-2xl rounded-tl-sm ml-3 mb-4 max-w-[85%]">
+                        سلام! منوی ربات به شکل زیر است. 👇
                     </div>
                 </div>
 
-                <!-- Keyboard -->
                 <div id="preview-render" class="tg-keyboard-container flex flex-col justify-end"></div>
             </div>
         </div>
@@ -404,7 +334,7 @@ try {
 
     <!-- Application Logic -->
     <script>
-        // دیکشنری ترجمه برای نمایش در پیش‌نمایش
+        // دیکشنری ترجمه برای نمایش فارسی در پیش‌نمایش و کارت‌ها
         const translations = {
             'text_sell': '🛍 خرید سرویس',
             'text_extend': '🔄 تمدید سرویس',
@@ -418,7 +348,7 @@ try {
             'text_help': '📚 راهنما'
         };
 
-        // State
+        // State Initialization
         let keyboardData = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
         if (!Array.isArray(keyboardData)) keyboardData = [];
         let initialSnapshot = JSON.stringify(keyboardData);
@@ -472,7 +402,7 @@ try {
                         <div class="btn-label">${label}</div>
                         <div class="btn-controls">
                             <div class="mini-act" onclick="editKey(${rIdx}, ${bIndex})"><i class="fa-solid fa-pen"></i></div>
-                            <div class="mini-act danger" onclick="deleteKey(${rIndex}, ${bIndex})"><i class="fa-solid fa-times"></i></div>
+                            <div class="mini-act danger" onclick="deleteKey(${rIdx}, ${bIndex})"><i class="fa-solid fa-times"></i></div>
                         </div>
                     `;
                     rowDiv.appendChild(btnCard);
@@ -481,7 +411,7 @@ try {
                 // Add button to row
                 if(row.length < 8) {
                     const addPlace = document.createElement('div');
-                    addPlace.className = 'add-placeholder';
+                    addPlace.className = 'w-[50px] border border-dashed border-gray-700 rounded-xl flex items-center justify-center cursor-pointer hover:border-indigo-500 hover:text-indigo-500 transition text-gray-500';
                     addPlace.innerHTML = '<i class="fa-solid fa-plus"></i>';
                     addPlace.onclick = () => addKeyToRow(rIdx);
                     rowDiv.appendChild(addPlace);
@@ -506,12 +436,12 @@ try {
             previewEl.innerHTML = '';
             keyboardData.forEach(row => {
                 const rDiv = document.createElement('div');
-                rDiv.className = 'flex w-full gap-2 mb-2'; // Flex gap for perfect spacing
+                rDiv.className = 'flex w-full gap-2 mb-2';
                 
                 row.forEach(btn => {
                     const bDiv = document.createElement('div');
                     bDiv.className = 'tg-key flex-1 truncate';
-                    // Important: Show ONLY the Persian translation in Preview
+                    // Show translated text in preview
                     bDiv.innerText = translations[btn.text] || btn.text; 
                     rDiv.appendChild(bDiv);
                 });
@@ -568,7 +498,6 @@ try {
         function addRow() {
             keyboardData.push([{text: 'text_new'}]);
             render();
-            // Smooth scroll to bottom
             setTimeout(() => document.querySelector('.editor-content').scrollTo({ top: 9999, behavior: 'smooth' }), 50);
         }
 
@@ -614,7 +543,7 @@ try {
 
         function saveKeyboard() {
             const oldHtml = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> در حال پردازش...';
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
             saveBtn.disabled = true;
 
             fetch('keyboard.php', {
@@ -631,13 +560,13 @@ try {
                         toast: true, position: 'top-end', showConfirmButton: false, 
                         timer: 3000, background: '#18181b', color: '#fff'
                     });
-                    Toast.fire({icon: 'success', title: 'تغییرات با موفقیت ذخیره شد'});
+                    Toast.fire({icon: 'success', title: 'تغییرات ذخیره شد'});
                 }
             })
             .catch(() => {
                 saveBtn.innerHTML = oldHtml;
                 saveBtn.disabled = false;
-                SwalPro.fire({icon: 'error', title: 'خطا در ارتباط با سرور'});
+                SwalPro.fire({icon: 'error', title: 'خطا در ارتباط'});
             });
         }
 
