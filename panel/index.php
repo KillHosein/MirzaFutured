@@ -43,7 +43,6 @@ if ($isConnected) {
         }
     } catch (PDOException $e) {
         error_log("Security Auth Error: " . $e->getMessage());
-        // die("خطای امنیتی سیستم");
     }
 }
 
@@ -69,7 +68,6 @@ if (!empty($filterStatus)) {
     }
     $whereClauses[] = "status IN (" . implode(', ', $statusPlaceholders) . ")";
 } else {
-    // وضعیت‌های پیش‌فرض قابل نمایش
     $defaultStatuses = "'active', 'end_of_time', 'end_of_volume', 'sendedwarn', 'send_on_hold', 'unpaid'";
     $whereClauses[] = "status IN ($defaultStatuses)";
 }
@@ -105,7 +103,7 @@ if ($isConnected) {
         $stmt->execute($queryParams);
         $stats['orders_count'] = $stmt->fetchColumn();
 
-        // Chart 1: روند فروش (Aggregation)
+        // Chart 1: روند فروش
         if ($stats['orders_count'] > 0) {
             $stmt = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $whereSql AND status != 'unpaid' ORDER BY time_sell DESC");
             $stmt->execute($queryParams);
@@ -135,12 +133,7 @@ if ($isConnected) {
         $stmt->execute([':start' => $uStart, ':end' => $uEnd]);
         $rawUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // پر کردن روزهای خالی
-        $period = new DatePeriod(
-            new DateTime("@$uStart"),
-            new DateInterval('P1D'),
-            new DateTime("@$uEnd")
-        );
+        $period = new DatePeriod(new DateTime("@$uStart"), new DateInterval('P1D'), new DateTime("@$uEnd"));
         $userTrend = [];
         foreach ($period as $dt) {
             $userTrend[$dt->format('Y/m/d')] = 0;
@@ -158,23 +151,22 @@ if ($isConnected) {
     }
 }
 
-// آماده‌سازی داده‌ها برای ویو (View Models)
+// آماده‌سازی داده‌ها برای ویو
 $salesLabels = array_map(function($d) { return function_exists('jdate') ? jdate('Y/m/d', strtotime($d)) : $d; }, array_keys($chartData['sales']));
 $salesValues = array_values($chartData['sales']);
-
 $userLabels = array_map(function($d) { return function_exists('jdate') ? jdate('Y/m/d', strtotime($d)) : $d; }, array_keys($chartData['growth']));
 $userValues = array_values($chartData['growth']);
 
-// دیکشنری وضعیت‌ها و رنگ‌بندی سازمانی
+// دیکشنری وضعیت‌ها با رنگ‌های نئونی
 $statusConfig = [
-    'unpaid'       => ['label' => 'در انتظار پرداخت', 'color' => '#F59E0B'],
-    'active'       => ['label' => 'فعال و جاری',      'color' => '#10B981'],
-    'disabledn'    => ['label' => 'غیرفعال شده',      'color' => '#64748B'],
-    'end_of_time'  => ['label' => 'انقضای زمانی',     'color' => '#EF4444'],
-    'end_of_volume'=> ['label' => 'اتمام ترافیک',     'color' => '#3B82F6'],
-    'sendedwarn'   => ['label' => 'هشدار ارسال شده',  'color' => '#8B5CF6'],
-    'send_on_hold' => ['label' => 'در صف اتصال',      'color' => '#F97316'],
-    'removebyuser' => ['label' => 'لغو توسط کاربر',   'color' => '#475569']
+    'unpaid'       => ['label' => 'در انتظار پرداخت', 'color' => '#FFC107'], // Neon Yellow
+    'active'       => ['label' => 'فعال',             'color' => '#00E676'], // Neon Green
+    'disabledn'    => ['label' => 'غیرفعال',          'color' => '#B0BEC5'], // Grey
+    'end_of_time'  => ['label' => 'انقضای زمانی',     'color' => '#FF1744'], // Neon Red
+    'end_of_volume'=> ['label' => 'اتمام حجم',        'color' => '#2979FF'], // Neon Blue
+    'sendedwarn'   => ['label' => 'هشدار ارسال شده',  'color' => '#D500F9'], // Neon Purple
+    'send_on_hold' => ['label' => 'در صف اتصال',      'color' => '#FF9100'], // Neon Orange
+    'removebyuser' => ['label' => 'لغو توسط کاربر',   'color' => '#546E7A']
 ];
 
 $pieLabels = [];
@@ -185,10 +177,10 @@ foreach ($chartData['status'] as $row) {
     $st = $row['status'];
     $pieLabels[] = $statusConfig[$st]['label'] ?? $st;
     $pieValues[] = (int)$row['count'];
-    $pieColors[] = $statusConfig[$st]['color'] ?? '#94a3b8';
+    $pieColors[] = $statusConfig[$st]['color'] ?? '#ffffff';
 }
 
-// منطق خوش‌آمدگویی هوشمند
+// خوش‌آمدگویی
 $h = date('H');
 if ($h < 12) { $greet = "صبح بخیر"; $greetIcon = "fa-sun"; }
 elseif ($h < 18) { $greet = "روز خوش"; $greetIcon = "fa-cloud-sun"; }
@@ -201,7 +193,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مرکز کنترل عملیات | Admin Console</title>
+    <title>داشبورد مدیریت | نئون</title>
     
     <!-- Core Assets -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
@@ -211,489 +203,435 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            /* --- Enterprise Palette --- */
-            --bg-deep: #020617;        /* Slate 950 */
-            --bg-panel: #0f172a;       /* Slate 900 */
-            --bg-glass: rgba(15, 23, 42, 0.75);
+            /* --- Neon Cyberpunk Palette --- */
+            --bg-core: #050505;        /* تقریباً سیاه */
+            --bg-panel: #0a0a0a;       /* سیاه روشن‌تر */
+            --bg-card: rgba(20, 20, 20, 0.95);
             
-            --border-subtle: rgba(255, 255, 255, 0.06);
-            --border-highlight: rgba(255, 255, 255, 0.12);
+            --border-neon: rgba(255, 255, 255, 0.1);
             
-            --primary: #6366F1;        /* Indigo */
-            --primary-dark: #4F46E5;
-            --primary-glow: rgba(99, 102, 241, 0.4);
+            --neon-blue: #00F0FF;      /* Cyber Blue */
+            --neon-pink: #FF00FF;      /* Cyber Pink */
+            --neon-green: #00FF9D;     /* Cyber Green */
+            --neon-purple: #BD00FF;    /* Cyber Purple */
+            --neon-yellow: #FAFF00;    /* Cyber Yellow */
             
-            --accent-gold: #D4AF37;    /* Metallic Gold */
-            --accent-teal: #14B8A6;    /* Teal */
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
             
-            --text-primary: #F8FAFC;
-            --text-secondary: #94A3B8;
-            --text-tertiary: #64748B;
+            --glow-sm: 0 0 10px rgba(0, 240, 255, 0.3);
+            --glow-md: 0 0 20px rgba(189, 0, 255, 0.2);
+            --glow-strong: 0 0 25px rgba(0, 255, 157, 0.4);
             
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
-            
-            --radius-card: 20px;
-            --radius-btn: 12px;
-            
-            --sidebar-w-collapsed: 80px;
-            --sidebar-w-expanded: 280px;
-            --header-height: 80px;
+            --font-size-base: 16px; /* پایه فونت بزرگتر */
+            --sidebar-width: 280px; /* سایدبار عریض‌تر */
         }
 
         /* --- Global Reset --- */
         * { box-sizing: border-box; outline: none; }
         body {
-            background-color: var(--bg-deep);
-            color: var(--text-primary);
+            background-color: var(--bg-core);
+            color: var(--text-main);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
+            font-size: var(--font-size-base);
+            min-height: 100vh;
             overflow-x: hidden;
-            /* Sophisticated Gradient Background */
             background-image: 
-                radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 85% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 40%);
-            background-attachment: fixed;
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px; /* Grid Pattern */
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        h1, h2, h3, h4, h5 { font-weight: 800; letter-spacing: -0.5px; margin: 0; }
+
+        /* --- Layout --- */
+        .wrapper {
+            display: flex;
             min-height: 100vh;
         }
 
-        a { text-decoration: none; color: inherit; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* --- Sidebar Navigation (Intelligent) --- */
+        /* --- Sidebar --- */
         .sidebar {
-            position: fixed; top: 0; right: 0; height: 100vh;
-            width: var(--sidebar-w-collapsed);
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            border-left: 1px solid var(--border-subtle);
-            z-index: 1000;
+            width: var(--sidebar-width);
+            background: var(--bg-panel);
+            border-left: 2px solid #222;
             display: flex; flex-direction: column;
-            transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            overflow: hidden;
-            box-shadow: -5px 0 30px rgba(0,0,0,0.5);
-        }
-        .sidebar:hover { width: var(--sidebar-w-expanded); }
-
-        .brand-section {
-            height: var(--header-height);
-            display: flex; align-items: center; justify-content: flex-start;
-            padding: 0 24px; margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-subtle);
-            white-space: nowrap; overflow: hidden;
-        }
-        .brand-logo {
-            font-size: 1.8rem; color: var(--primary);
-            min-width: 32px; display: flex; justify-content: center;
-            filter: drop-shadow(0 0 8px var(--primary-glow));
-        }
-        .brand-name {
-            margin-right: 15px; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px;
-            opacity: 0; transform: translateX(10px); transition: 0.3s;
-        }
-        .sidebar:hover .brand-name { opacity: 1; transform: translateX(0); }
-
-        .nav-items { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item {
-            height: 50px; border-radius: var(--radius-btn);
-            display: flex; align-items: center; padding: 0 14px;
-            color: var(--text-secondary); cursor: pointer;
-            position: relative; overflow: hidden;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .nav-item.active {
-            background: linear-gradient(90deg, rgba(99, 102, 241, 0.15), transparent);
-            color: #fff;
-        }
-        .nav-item.active::before {
-            content: ''; position: absolute; right: 0; top: 10%; bottom: 10%;
-            width: 3px; background: var(--primary); border-radius: 4px;
+            position: fixed; top: 0; right: 0; bottom: 0;
+            z-index: 1000;
+            padding: 20px;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.8);
         }
         
-        .nav-icon { font-size: 1.25rem; min-width: 30px; display: flex; justify-content: center; }
-        .nav-label { margin-right: 15px; font-size: 0.95rem; font-weight: 500; white-space: nowrap; opacity: 0; transition: 0.2s; }
-        .sidebar:hover .nav-label { opacity: 1; transition-delay: 0.1s; }
-
-        .user-profile {
-            margin-top: auto; padding: 20px;
-            border-top: 1px solid var(--border-subtle);
-            display: flex; align-items: center;
-            background: rgba(0,0,0,0.2);
+        .brand {
+            font-size: 2rem;
+            color: var(--text-main);
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #333;
+            display: flex; align-items: center; gap: 15px;
         }
-        .user-avatar {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), #818CF8);
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: #fff; font-size: 1.1rem;
-        }
-        .user-info { margin-right: 12px; opacity: 0; transition: 0.3s; white-space: nowrap; }
-        .sidebar:hover .user-info { opacity: 1; }
-        .user-role { font-size: 0.75rem; color: var(--accent-gold); letter-spacing: 0.5px; }
-        .user-name { font-size: 0.9rem; font-weight: 700; color: #fff; }
+        .brand i { color: var(--neon-blue); }
 
-        /* --- Main Layout --- */
-        .main-wrapper {
-            margin-right: var(--sidebar-w-collapsed);
-            padding: 0 40px 40px 40px;
-            transition: margin-right 0.4s;
+        .nav-list { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 15px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            transition: 0.3s;
+            border: 1px solid transparent;
+        }
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            transform: translateX(-5px);
+        }
+        .nav-item.active {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--neon-blue);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+        }
+        .nav-item i { font-size: 1.4rem; width: 30px; text-align: center; }
+
+        .user-panel {
+            margin-top: auto;
+            background: #151515;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .avatar {
+            width: 50px; height: 50px; background: var(--neon-purple);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #fff; box-shadow: 0 0 10px var(--neon-purple);
+        }
+        .user-details div:first-child { font-weight: bold; font-size: 1.1rem; }
+        .user-details div:last-child { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-right: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 30px 40px;
         }
 
         /* --- Header --- */
-        .top-header {
-            height: var(--header-height);
-            display: flex; align-items: center; justify-content: space-between;
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 40px;
-            border-bottom: 1px solid var(--border-subtle);
         }
-        .welcome-msg h1 { font-size: 1.8rem; font-weight: 800; margin: 0; color: #fff; }
-        .welcome-msg p { margin: 5px 0 0; color: var(--text-secondary); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .title-area h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .title-area p { font-size: 1.2rem; color: var(--text-muted); display: flex; align-items: center; gap: 10px; }
         
-        .header-actions { display: flex; gap: 15px; }
-        .action-btn {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-secondary); cursor: pointer; transition: 0.3s;
-        }
-        .action-btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: var(--border-highlight); transform: translateY(-2px); }
-        .date-badge {
-            padding: 0 20px; width: auto; font-size: 0.9rem; font-weight: 500;
-            background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2);
-            color: #A5B4FC;
+        .date-box {
+            background: rgba(0, 255, 157, 0.1);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 10px 25px; border-radius: 50px;
+            font-size: 1.1rem; font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+            display: flex; align-items: center; gap: 10px;
         }
 
-        /* --- KPI Cards (Glass) --- */
-        .kpi-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px; margin-bottom: 40px;
+        /* --- KPI Grid --- */
+        .kpi-container {
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 25px; margin-bottom: 40px;
         }
         .kpi-card {
-            background: linear-gradient(160deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-card);
-            padding: 24px; position: relative; overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
+            background: var(--bg-card);
+            border: 1px solid #333;
+            padding: 30px; border-radius: 20px;
+            position: relative; overflow: hidden;
+            transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 180px;
         }
         .kpi-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--border-highlight);
-            box-shadow: var(--shadow-lg), 0 0 20px rgba(99, 102, 241, 0.1);
+            transform: translateY(-8px);
+            border-color: var(--kpi-color);
+            box-shadow: 0 0 25px var(--kpi-glow);
         }
+        /* Top border line */
         .kpi-card::before {
-            content: ''; position: absolute; top: 0; right: 0; width: 100%; height: 4px;
-            background: linear-gradient(90deg, var(--card-accent), transparent);
-            opacity: 0.7;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: var(--kpi-color);
+            box-shadow: 0 0 10px var(--kpi-color);
         }
 
-        .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
         .kpi-icon {
-            width: 48px; height: 48px; border-radius: 14px;
-            background: rgba(255,255,255,0.03);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; color: var(--card-accent);
+            font-size: 2.5rem; color: var(--kpi-color);
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 5px var(--kpi-color));
         }
-        .kpi-trend { font-size: 0.8rem; color: #10B981; display: flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 20px; }
+        .kpi-value { font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 5px; }
+        .kpi-label { font-size: 1.1rem; color: var(--text-muted); font-weight: 500; }
+
+        /* KPI Specifics */
+        .k-1 { --kpi-color: var(--neon-blue); --kpi-glow: rgba(0, 240, 255, 0.2); }
+        .k-2 { --kpi-color: var(--neon-green); --kpi-glow: rgba(0, 255, 157, 0.2); }
+        .k-3 { --kpi-color: var(--neon-pink); --kpi-glow: rgba(255, 0, 255, 0.2); }
+        .k-4 { --kpi-color: var(--neon-yellow); --kpi-glow: rgba(250, 255, 0, 0.2); }
+
+        /* --- Quick Actions (Big Tiles) --- */
+        .section-header { 
+            font-size: 1.5rem; color: #fff; margin-bottom: 25px; 
+            border-right: 4px solid var(--neon-purple); padding-right: 15px; 
+        }
+
+        .actions-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 25px; margin-bottom: 50px;
+        }
+        .action-tile {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 18px;
+            padding: 30px 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
+            transition: 0.4s; cursor: pointer;
+            text-align: center;
+        }
+        .action-tile:hover {
+            background: #1a1a1a;
+            border-color: var(--neon-blue);
+            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.1), 0 0 15px rgba(0, 240, 255, 0.2);
+            transform: scale(1.03);
+        }
+        .action-tile i { font-size: 2.5rem; color: var(--text-muted); transition: 0.3s; }
+        .action-tile span { font-size: 1.2rem; font-weight: 600; color: #fff; }
         
-        .kpi-value { font-size: 2.2rem; font-weight: 800; color: #fff; letter-spacing: -1px; margin-bottom: 5px; }
-        .kpi-label { font-size: 0.9rem; color: var(--text-secondary); }
+        .action-tile:hover i { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); transform: scale(1.1); }
+        .t-red:hover { border-color: var(--neon-pink); }
+        .t-red:hover i { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
 
-        /* KPI Colors */
-        .k-sales { --card-accent: #6366F1; }
-        .k-orders { --card-accent: #14B8A6; }
-        .k-users { --card-accent: #EC4899; }
-        .k-new { --card-accent: #F59E0B; }
+        /* --- Charts Area --- */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* 2/3 width vs 1/3 width */
+            gap: 25px;
+        }
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid #333;
+            border-radius: 20px;
+            padding: 30px;
+        }
+        .chart-title {
+            font-size: 1.3rem; margin-bottom: 25px; color: #fff;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .chart-title i { color: var(--neon-purple); }
 
-        /* --- Operations Grid (Quick Actions) --- */
-        .ops-section { margin-bottom: 40px; }
-        .section-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .section-title i { color: var(--accent-gold); }
-
-        .ops-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
+        /* --- Filter Bar (Integrated) --- */
+        .filter-bar {
+            display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px;
+            background: #0f0f0f; padding: 25px; border-radius: 20px; border: 1px solid #333;
+            margin-bottom: 40px; align-items: center;
         }
-        .op-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px; padding: 20px;
-            display: flex; align-items: center; gap: 15px;
-            transition: 0.3s; cursor: pointer; text-decoration: none;
+        .input-lg {
+            width: 100%; height: 55px; background: #000; border: 1px solid #444;
+            color: #fff; padding: 0 20px; font-size: 1.1rem; border-radius: 12px;
+            transition: 0.3s;
         }
-        .op-card:hover {
-            background: rgba(30, 41, 59, 0.8);
-            border-color: var(--primary);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            transform: translateY(-3px);
-        }
-        .op-icon {
-            width: 45px; height: 45px; border-radius: 12px;
-            background: rgba(99, 102, 241, 0.1);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; color: var(--primary); transition: 0.3s;
-        }
-        .op-card:hover .op-icon { background: var(--primary); color: #fff; }
+        .input-lg:focus { border-color: var(--neon-green); box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
         
-        .op-info { display: flex; flex-direction: column; }
-        .op-title { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
-        .op-desc { font-size: 0.8rem; color: var(--text-tertiary); margin-top: 2px; }
-
-        /* --- Filter Bar --- */
-        .filter-dock {
-            background: rgba(15, 23, 42, 0.4); border: 1px dashed var(--border-subtle);
-            border-radius: var(--radius-card); padding: 20px;
-            display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
-            margin-bottom: 40px;
+        .btn-neon {
+            height: 55px; padding: 0 40px; background: transparent;
+            border: 2px solid var(--neon-blue); color: var(--neon-blue);
+            font-size: 1.1rem; font-weight: bold; border-radius: 12px;
+            cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px;
         }
-        .input-glass {
-            flex: 1; min-width: 200px; height: 48px;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle);
-            border-radius: 12px; color: #fff; padding: 0 15px;
-            transition: 0.3s; font-family: inherit;
+        .btn-neon:hover {
+            background: var(--neon-blue); color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
         }
-        .input-glass:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); }
-        .btn-glass {
-            height: 48px; padding: 0 30px; border-radius: 12px; border: none;
-            background: var(--primary); color: #fff; font-weight: 600;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .btn-glass:hover { background: var(--primary-dark); transform: translateY(-2px); }
-
-        /* --- Charts Layout --- */
-        .charts-wrapper {
-            display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
-        }
-        .chart-panel {
-            background: var(--bg-glass); border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-card); padding: 25px;
-            display: flex; flex-direction: column;
-        }
-        .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .chart-label { font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
-
-        /* --- Animation --- */
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; } .d-3 { animation-delay: 0.3s; }
 
         /* --- Responsive --- */
-        @media (max-width: 1024px) {
-            .sidebar { width: 0; }
-            .sidebar.mobile-open { width: var(--sidebar-w-expanded); }
-            .main-wrapper { margin-right: 0; padding: 20px; }
-            .charts-wrapper { grid-template-columns: 1fr; }
-            .menu-toggle { display: flex; position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: var(--primary); border-radius: 50%; z-index: 1100; align-items: center; justify-content: center; color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        @media (max-width: 1400px) {
+            .kpi-container { grid-template-columns: repeat(2, 1fr); }
+            .charts-row { grid-template-columns: 1fr; }
         }
-        @media (min-width: 1025px) { .menu-toggle { display: none; } }
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(100%); width: 280px; }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-right: 0; width: 100%; padding: 20px; }
+            .mobile-toggle { display: block; position: fixed; bottom: 20px; left: 20px; z-index: 2000; width: 60px; height: 60px; background: var(--neon-purple); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: #fff; box-shadow: 0 0 20px var(--neon-purple); }
+            .filter-bar { grid-template-columns: 1fr; }
+        }
+        @media (min-width: 993px) { .mobile-toggle { display: none; } }
     </style>
 </head>
 <body>
 
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <div class="brand-section">
-            <div class="brand-logo"><i class="fa-solid fa-layer-group"></i></div>
-            <div class="brand-name">Admin Console</div>
+        <div class="brand">
+            <i class="fa-solid fa-bolt"></i>
+            <span>NEXUS</span>
         </div>
 
-        <nav class="nav-items">
+        <nav class="nav-list">
             <a href="index.php" class="nav-item active">
-                <div class="nav-icon"><i class="fa-solid fa-chart-line"></i></div>
-                <div class="nav-label">مرکز کنترل</div>
+                <i class="fa-solid fa-grid-2"></i> <span>داشبورد</span>
             </a>
             <a href="invoice.php" class="nav-item">
-                <div class="nav-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <div class="nav-label">مدیریت سفارشات</div>
+                <i class="fa-solid fa-receipt"></i> <span>سفارشات</span>
             </a>
             <a href="user.php" class="nav-item">
-                <div class="nav-icon"><i class="fa-solid fa-users-gear"></i></div>
-                <div class="nav-label">مشترکین</div>
+                <i class="fa-solid fa-users"></i> <span>کاربران</span>
             </a>
             <a href="product.php" class="nav-item">
-                <div class="nav-icon"><i class="fa-solid fa-box-archive"></i></div>
-                <div class="nav-label">کاتالوگ محصولات</div>
+                <i class="fa-solid fa-cube"></i> <span>محصولات</span>
             </a>
             <a href="server_status.php" class="nav-item">
-                <div class="nav-icon"><i class="fa-solid fa-server"></i></div>
-                <div class="nav-label">منابع و سرور</div>
+                <i class="fa-solid fa-server"></i> <span>سرور</span>
             </a>
-            <a href="support.php" class="nav-item">
-                <div class="nav-icon"><i class="fa-solid fa-headset"></i></div>
-                <div class="nav-label">پشتیبانی</div>
+            <a href="logout.php" class="nav-item" style="color: var(--neon-pink);">
+                <i class="fa-solid fa-power-off"></i> <span>خروج</span>
             </a>
         </nav>
 
-        <div class="user-profile">
-            <div class="user-avatar">A</div>
-            <div class="user-info">
-                <div class="user-name">مدیر ارشد</div>
-                <div class="user-role">Super Admin</div>
+        <div class="user-panel">
+            <div class="avatar">A</div>
+            <div class="user-details">
+                <div>Admin</div>
+                <div>Super User</div>
             </div>
-            <a href="logout.php" title="خروج" style="margin-right: auto; color: var(--text-tertiary); hover: color: #EF4444;"><i class="fa-solid fa-power-off"></i></a>
         </div>
     </aside>
 
-    <!-- Mobile Toggle -->
-    <div class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')">
+    <div class="mobile-toggle" onclick="document.getElementById('sidebar').classList.toggle('active')">
         <i class="fa-solid fa-bars"></i>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-wrapper">
+    <!-- Content -->
+    <div class="main-content">
         
         <!-- Header -->
-        <header class="top-header animate">
-            <div class="welcome-msg">
+        <header class="header">
+            <div class="title-area">
                 <h1><?php echo $greet; ?></h1>
                 <p>
-                    <i class="<?php echo $greetIcon; ?>" style="color: var(--accent-gold);"></i>
-                    سامانه نظارت بر عملکرد و فروش
+                    <i class="<?php echo $greetIcon; ?>"></i>
+                    وضعیت سیستم: <span style="color: var(--neon-green);">پایدار و آنلاین</span>
                 </p>
             </div>
-            <div class="header-actions">
-                <div class="action-btn date-badge">
-                    <i class="fa-regular fa-calendar-check" style="margin-left: 8px;"></i>
-                    <?php echo $todayDate; ?>
-                </div>
-                <div class="action-btn" title="اعلان‌ها"><i class="fa-regular fa-bell"></i></div>
-                <div class="action-btn" title="تنظیمات"><i class="fa-solid fa-gear"></i></div>
+            <div class="date-box">
+                <?php echo $todayDate; ?>
+                <i class="fa-regular fa-calendar-days"></i>
             </div>
         </header>
 
-        <!-- KPI Cards -->
-        <section class="kpi-grid animate d-1">
-            <!-- Sales -->
-            <div class="kpi-card k-sales">
-                <div class="kpi-header">
-                    <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
-                    <div class="kpi-trend"><i class="fa-solid fa-arrow-trend-up"></i> +12%</div>
+        <!-- KPI Grid -->
+        <section class="kpi-container">
+            <div class="kpi-card k-1">
+                <i class="fa-solid fa-wallet kpi-icon"></i>
+                <div>
+                    <div class="kpi-value"><?php echo number_format($stats['sales_volume']); ?></div>
+                    <div class="kpi-label">مجموع فروش (تومان)</div>
                 </div>
-                <div class="kpi-value"><?php echo number_format($stats['sales_volume']); ?></div>
-                <div class="kpi-label">درآمد کل دوره (تومان)</div>
             </div>
-
-            <!-- Orders -->
-            <div class="kpi-card k-orders">
-                <div class="kpi-header">
-                    <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
+            <div class="kpi-card k-2">
+                <i class="fa-solid fa-file-circle-check kpi-icon"></i>
+                <div>
+                    <div class="kpi-value"><?php echo number_format($stats['orders_count']); ?></div>
+                    <div class="kpi-label">سفارشات موفق</div>
                 </div>
-                <div class="kpi-value"><?php echo number_format($stats['orders_count']); ?></div>
-                <div class="kpi-label">سفارشات موفق</div>
             </div>
-
-            <!-- Users -->
-            <div class="kpi-card k-users">
-                <div class="kpi-header">
-                    <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-card k-3">
+                <i class="fa-solid fa-users-viewfinder kpi-icon"></i>
+                <div>
+                    <div class="kpi-value"><?php echo number_format($stats['total_users']); ?></div>
+                    <div class="kpi-label">مشترکین فعال</div>
                 </div>
-                <div class="kpi-value"><?php echo number_format($stats['total_users']); ?></div>
-                <div class="kpi-label">مشترکین فعال سیستم</div>
             </div>
-
-            <!-- New Users -->
-            <div class="kpi-card k-new">
-                <div class="kpi-header">
-                    <div class="kpi-icon"><i class="fa-solid fa-user-plus"></i></div>
-                    <div class="kpi-trend" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">امروز</div>
+            <div class="kpi-card k-4">
+                <i class="fa-solid fa-user-astronaut kpi-icon"></i>
+                <div>
+                    <div class="kpi-value"><?php echo number_format($stats['new_users_24h']); ?></div>
+                    <div class="kpi-label">ثبت‌نام امروز</div>
                 </div>
-                <div class="kpi-value"><?php echo number_format($stats['new_users_24h']); ?></div>
-                <div class="kpi-label">ورودی جدید</div>
             </div>
         </section>
 
-        <!-- Operations -->
-        <section class="ops-section animate d-2">
-            <div class="section-title"><i class="fa-solid fa-sliders"></i> عملیات اجرایی</div>
-            <div class="ops-grid">
-                <a href="invoice.php" class="op-card">
-                    <div class="op-icon"><i class="fa-solid fa-cart-shopping"></i></div>
-                    <div class="op-info">
-                        <span class="op-title">لیست سفارشات</span>
-                        <span class="op-desc">بررسی و مدیریت فاکتورها</span>
-                    </div>
-                </a>
-                <a href="user.php" class="op-card">
-                    <div class="op-icon"><i class="fa-solid fa-user-shield"></i></div>
-                    <div class="op-info">
-                        <span class="op-title">مدیریت کاربران</span>
-                        <span class="op-desc">کنترل دسترسی‌ها</span>
-                    </div>
-                </a>
-                <a href="inbound.php" class="op-card">
-                    <div class="op-icon"><i class="fa-solid fa-network-wired"></i></div>
-                    <div class="op-info">
-                        <span class="op-title">کانفیگ شبکه</span>
-                        <span class="op-desc">تنظیمات اتصال سرور</span>
-                    </div>
-                </a>
-                <a href="server_status.php" class="op-card">
-                    <div class="op-icon"><i class="fa-solid fa-microchip"></i></div>
-                    <div class="op-info">
-                        <span class="op-title">مانیتورینگ</span>
-                        <span class="op-desc">وضعیت منابع سخت‌افزاری</span>
-                    </div>
-                </a>
-                <a href="cancelService.php" class="op-card" style="border-color: rgba(239, 68, 68, 0.3);">
-                    <div class="op-icon" style="background: rgba(239, 68, 68, 0.1); color: #EF4444;"><i class="fa-solid fa-ban"></i></div>
-                    <div class="op-info">
-                        <span class="op-title">مسدودسازی</span>
-                        <span class="op-desc">قطع دسترسی سرویس</span>
-                    </div>
-                </a>
-            </div>
+        <!-- Quick Actions -->
+        <div class="section-header">عملیات سریع</div>
+        <section class="actions-grid">
+            <a href="invoice.php" class="action-tile">
+                <i class="fa-solid fa-list-check"></i>
+                <span>مدیریت فاکتورها</span>
+            </a>
+            <a href="user.php" class="action-tile">
+                <i class="fa-solid fa-user-group"></i>
+                <span>لیست کاربران</span>
+            </a>
+            <a href="inbound.php" class="action-tile">
+                <i class="fa-solid fa-network-wired"></i>
+                <span>تنظیمات شبکه</span>
+            </a>
+            <a href="payment.php" class="action-tile">
+                <i class="fa-solid fa-credit-card"></i>
+                <span>تراکنش‌ها</span>
+            </a>
+            <a href="server_status.php" class="action-tile">
+                <i class="fa-solid fa-memory"></i>
+                <span>مانیتورینگ</span>
+            </a>
+            <a href="cancelService.php" class="action-tile t-red">
+                <i class="fa-solid fa-ban"></i>
+                <span>مسدودسازی</span>
+            </a>
         </section>
 
-        <!-- Filters -->
-        <form method="get" class="filter-dock animate d-3">
-            <div style="flex: 2; position: relative;">
-                <input type="text" id="dateRange" class="input-glass" placeholder="انتخاب بازه زمانی..." readonly>
+        <!-- Filter Bar -->
+        <form method="get" class="filter-bar">
+            <div>
+                <input type="text" id="dateRange" class="input-lg" placeholder="انتخاب بازه زمانی..." readonly>
                 <input type="hidden" name="from" id="inputFrom" value="<?php echo htmlspecialchars($filterFrom ?? ''); ?>">
                 <input type="hidden" name="to" id="inputTo" value="<?php echo htmlspecialchars($filterTo ?? ''); ?>">
-                <i class="fa-regular fa-calendar" style="position: absolute; left: 15px; top: 14px; color: var(--text-tertiary);"></i>
             </div>
-            <div style="flex: 2;">
-                <select name="status[]" multiple class="input-glass">
+            <div>
+                <select name="status[]" multiple class="input-lg" style="padding-top:12px;">
                     <?php foreach($statusConfig as $k => $v): ?>
                         <option value="<?php echo $k; ?>" <?php echo in_array($k, $filterStatus) ? 'selected' : ''; ?>><?php echo $v['label']; ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="submit" class="btn-glass">
-                <i class="fa-solid fa-filter"></i>
-                اعمال فیلتر
+            <button type="submit" class="btn-neon">
+                <i class="fa-solid fa-filter"></i> فیلتر
             </button>
-            <?php if($filterFrom || !empty($filterStatus)): ?>
-                <a href="index.php" class="btn-glass" style="background: rgba(255,255,255,0.1); width: auto;">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </a>
-            <?php endif; ?>
         </form>
 
         <!-- Charts -->
-        <div class="charts-wrapper animate d-3">
-            <div class="chart-panel">
-                <div class="chart-head">
-                    <div class="chart-label"><i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> تحلیل جامع درآمد</div>
-                </div>
-                <div style="height: 320px;">
+        <div class="charts-row">
+            <!-- Main Chart -->
+            <div class="chart-card">
+                <div class="chart-title"><i class="fa-solid fa-chart-line"></i> نمودار فروش</div>
+                <div style="height: 400px; width: 100%;">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-                <div class="chart-panel" style="flex: 1;">
-                    <div class="chart-head">
-                        <div class="chart-label"><i class="fa-solid fa-chart-pie" style="color: var(--accent-gold);"></i> تفکیک وضعیت‌ها</div>
-                    </div>
-                    <div style="height: 180px; position: relative;">
+            <!-- Side Charts -->
+            <div style="display: flex; flex-direction: column; gap: 25px;">
+                <div class="chart-card" style="flex: 1;">
+                    <div class="chart-title"><i class="fa-solid fa-chart-pie"></i> وضعیت سرویس‌ها</div>
+                    <div style="height: 250px; position: relative;">
                         <canvas id="statusChart"></canvas>
                     </div>
                 </div>
-                <div class="chart-panel" style="flex: 1;">
-                    <div class="chart-head">
-                        <div class="chart-label"><i class="fa-solid fa-user-plus" style="color: var(--accent-teal);"></i> روند رشد کاربر</div>
-                    </div>
-                    <div style="height: 140px;">
+                <div class="chart-card" style="flex: 1;">
+                    <div class="chart-title"><i class="fa-solid fa-arrow-trend-up"></i> رشد کاربر</div>
+                    <div style="height: 180px;">
                         <canvas id="usersChart"></canvas>
                     </div>
                 </div>
@@ -710,76 +648,66 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
 
     <script>
-        // --- Date Picker Logic ---
         $(function(){
+            // Datepicker Logic (Same as before)
             var start = moment().subtract(13, 'days');
             var end = moment();
             var phpFrom = '<?php echo $filterFrom; ?>';
             var phpTo = '<?php echo $filterTo; ?>';
-            
             if(phpFrom && phpTo){ start = moment(phpFrom); end = moment(phpTo); }
-
-            $('#dateRange').daterangepicker({
-                startDate: start, endDate: end, opens: 'left',
-                locale: { format: 'YYYY/MM/DD', applyLabel: 'تایید', cancelLabel: 'لغو' }
-            }, function(s, e) {
+            $('#dateRange').daterangepicker({ startDate: start, endDate: end, opens: 'left', locale: { format: 'YYYY/MM/DD', applyLabel: 'تایید', cancelLabel: 'لغو' } }, function(s, e) {
                 $('#dateRange').val(s.format('YYYY/MM/DD') + '  -  ' + e.format('YYYY/MM/DD'));
                 $('#inputFrom').val(s.format('YYYY-MM-DD'));
                 $('#inputTo').val(e.format('YYYY-MM-DD'));
             });
-            
             if(phpFrom) $('#dateRange').val(start.format('YYYY/MM/DD') + '  -  ' + end.format('YYYY/MM/DD'));
         });
 
-        // --- Premium Chart Config ---
+        // --- Chart Config: Neon Style ---
         Chart.defaults.font.family = 'Vazirmatn';
-        Chart.defaults.color = '#94A3B8';
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
-        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(2, 6, 23, 0.95)';
-        Chart.defaults.plugins.tooltip.padding = 16;
-        Chart.defaults.plugins.tooltip.cornerRadius = 8;
-        Chart.defaults.plugins.tooltip.titleFont = { size: 14, weight: 'bold' };
-        Chart.defaults.plugins.tooltip.bodyFont = { size: 13 };
-        Chart.defaults.plugins.tooltip.displayColors = false;
-
-        // Data Injection
+        Chart.defaults.font.size = 14;
+        Chart.defaults.color = '#ccc';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+        
         const dataSales = { labels: <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>, values: <?php echo json_encode($salesValues); ?> };
         const dataPie = { labels: <?php echo json_encode($pieLabels, JSON_UNESCAPED_UNICODE); ?>, values: <?php echo json_encode($pieValues); ?>, colors: <?php echo json_encode($pieColors); ?> };
         const dataUsers = { labels: <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>, values: <?php echo json_encode($userValues); ?> };
 
-        // 1. Sales Chart (Executive Area)
+        // 1. Sales Chart (Neon Line)
         const ctxSales = document.getElementById('salesChart').getContext('2d');
         const gradSales = ctxSales.createLinearGradient(0, 0, 0, 400);
-        gradSales.addColorStop(0, '#6366F1');
-        gradSales.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
+        gradSales.addColorStop(0, '#00F0FF');
+        gradSales.addColorStop(1, 'rgba(0, 240, 255, 0.01)');
 
         new Chart(ctxSales, {
-            type: 'line', // Changed to line for smoother look
+            type: 'line',
             data: {
                 labels: dataSales.labels,
                 datasets: [{
                     label: 'فروش',
                     data: dataSales.values,
-                    borderColor: '#6366F1',
+                    borderColor: '#00F0FF',
                     backgroundColor: gradSales,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#00F0FF',
+                    pointRadius: 4,
+                    pointHoverRadius: 8,
                     fill: true,
-                    tension: 0.4,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    borderWidth: 2
+                    tension: 0.3
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { callback: v => v.toLocaleString() } },
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { callback: v => v.toLocaleString() } },
                     x: { grid: { display: false } }
                 }
             }
         });
 
-        // 2. Status Chart (Refined Doughnut)
+        // 2. Status Chart
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
@@ -787,31 +715,31 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 datasets: [{
                     data: dataPie.values,
                     backgroundColor: dataPie.colors,
-                    borderWidth: 0,
-                    hoverOffset: 12
+                    borderColor: '#000',
+                    borderWidth: 2,
+                    hoverOffset: 15
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                cutout: '80%',
+                cutout: '70%',
                 plugins: {
-                    legend: { position: 'right', labels: { boxWidth: 8, padding: 12, font: { size: 11 }, usePointStyle: true, color: '#94A3B8' } }
+                    legend: { position: 'right', labels: { boxWidth: 15, padding: 15, font: { size: 12 }, color: '#fff' } }
                 }
             }
         });
 
-        // 3. User Chart (Minimalist Bar)
-        const ctxUser = document.getElementById('usersChart').getContext('2d');
-        new Chart(ctxUser, {
+        // 3. User Chart
+        new Chart(document.getElementById('usersChart'), {
             type: 'bar',
             data: {
                 labels: dataUsers.labels,
                 datasets: [{
                     label: 'کاربر جدید',
                     data: dataUsers.values,
-                    backgroundColor: '#14B8A6',
-                    borderRadius: 4,
-                    barThickness: 10
+                    backgroundColor: '#BD00FF',
+                    borderRadius: 6,
+                    barThickness: 15
                 }]
             },
             options: {
