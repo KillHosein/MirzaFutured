@@ -433,56 +433,109 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <input type="text" id="prodQuickSearch" class="input-search" placeholder="جستجو در نام، کد یا قیمت...">
                 </div>
                 
-                <a href="#addproduct" data-toggle="modal" class="btn-act btn-primary-glow">
-                    <i class="fa-solid fa-plus-circle"></i> افزودن محصول جدید
-                </a>
-                
-                <a href="#moveradif" data-toggle="modal" class="btn-act">
-                    <i class="fa-solid fa-arrow-right-arrow-left"></i> جابجایی
-                </a>
-                
-                <a href="productedit.php" class="nav-box">
-  <i class="fa-solid fa-wallet"></i>
-  <span>ویرایش</span>
-</a>
+                <!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>Action Buttons</title>
 
-<style>
-  .nav-box {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
+  <!-- Font Awesome (اگر قبلاً لود نشده) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
-    width: 90px;
-    height: 70px;
+  <style>
+    body {
+      background: #0f1115;
+      font-family: system-ui, -apple-system, "Segoe UI", Arial;
+      padding: 30px;
+    }
 
-    background: linear-gradient(135deg, #6a7cff, #8f9bff);
-    color: #fff;
-    text-decoration: none;
+    /* کانتینر دکمه‌ها */
+    .actions {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
 
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(106,124,255,.35);
+    /* دکمه پایه */
+    .btn-act {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
 
-    transition: all .2s ease;
-  }
+      height: 56px;
+      padding: 0 26px;
 
-  .nav-box i {
-    font-size: 18px;
-  }
+      border-radius: 18px;
+      text-decoration: none;
 
-  .nav-box span {
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.2;
-    text-align: center;
-  }
+      font-size: 14px;
+      font-weight: 600;
 
-  .nav-box:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 22px rgba(106,124,255,.45);
-  }
-</style>
+      transition: all .25s ease;
+      white-space: nowrap;
+    }
+
+    .btn-act i {
+      font-size: 16px;
+    }
+
+    /* دکمه تیره */
+    .btn-dark {
+      background: #1f232a;
+      color: #cfd3da;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+
+    /* دکمه بنفش */
+    .btn-purple {
+      background: #7c88ff;
+      color: #fff;
+      box-shadow: 0 8px 22px rgba(124,136,255,.35);
+    }
+
+    /* دکمه فیروزه‌ای */
+    .btn-cyan {
+      background: #00f2ff;
+      color: #001b1e;
+      box-shadow: 0 8px 22px rgba(0,242,255,.35);
+    }
+
+    /* hover */
+    .btn-act:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(0,0,0,.35);
+    }
+
+    /* active */
+    .btn-act:active {
+      transform: translateY(-1px) scale(.98);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="actions">
+    <a href="#addproduct" data-toggle="modal" class="btn-act btn-cyan">
+      <i class="fa-solid fa-plus-circle"></i>
+      افزودن محصول جدید
+    </a>
+
+    <a href="#moveradif" data-toggle="modal" class="btn-act btn-dark">
+      <i class="fa-solid fa-arrow-right-arrow-left"></i>
+      جابجایی
+    </a>
+
+    <a href="productedit.php" class="btn-act btn-purple">
+      <i class="fa-solid fa-wallet"></i>
+      ویرایش محصولات
+    </a>
+  </div>
+
+</body>
+</html>
+
 
             </div>
 
