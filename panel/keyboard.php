@@ -1,40 +1,43 @@
 <?php
+/**
+ * Keyboard Editor - Self Contained Version
+ * No external JS files required.
+ */
+
 session_start();
+// تنظیم مسیرهای فایل‌های کانفیگ با توجه به ساختار پوشه‌ها
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../jdf.php';
 require_once __DIR__ . '/../function.php';
 
-// بررسی لاگین بودن ادمین
+// 1. بررسی لاگین بودن ادمین
 $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
 $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
 $query->execute();
 $result = $query->fetch(PDO::FETCH_ASSOC);
-
-// کوئری‌های جانبی (جهت اطمینان از عدم ارور در هدرهای احتمالی)
-$query = $pdo->prepare("SELECT * FROM invoice");
-$query->execute();
-$listinvoice = $query->fetchAll();
 
 if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
     exit;
 }
 
-// --- منطق ذخیره‌سازی ---
+// 2. مدیریت درخواست‌های ذخیره‌سازی (AJAX POST)
 $inputJSON = file_get_contents("php://input");
 $inputData = json_decode($inputJSON, true);
 $method = $_SERVER['REQUEST_METHOD'];
 
 if($method == "POST" && is_array($inputData)){
+    // ساختار استاندارد کیبورد تلگرام
     $keyboardStruct = ['keyboard' => $inputData];
-    update("setting", "keyboardmain", json_encode($keyboardStruct), null, null);
+    // ذخیره در دیتابیس
+    update("setting", "keyboardmain", json_encode($keyboardStruct, JSON_UNESCAPED_UNICODE), null, null);
     
     header('Content-Type: application/json');
     echo json_encode(['status' => 'success']);
     exit;
 }
 
-// --- منطق ریست ---
+// 3. مدیریت درخواست ریست (GET)
 if(isset($_GET['action']) && $_GET['action'] == "reaset"){
     $defaultKeyboard = json_encode([
         "keyboard" => [
@@ -51,7 +54,7 @@ if(isset($_GET['action']) && $_GET['action'] == "reaset"){
     exit;
 }
 
-// --- دریافت اطلاعات ---
+// 4. دریافت اطلاعات فعلی برای نمایش در ویرایشگر
 $currentKeyboardJSON = '[]';
 try {
     $stmt = $pdo->prepare("SELECT * FROM setting LIMIT 1");
@@ -63,7 +66,10 @@ try {
         if(isset($decoded['keyboard'])) {
             $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
-    } else {
+    }
+    
+    // اگر دیتابیس خالی بود یا فرمت اشتباه بود، مقدار پیش‌فرض را لود کن
+    if ($currentKeyboardJSON == '[]' || $currentKeyboardJSON == 'null') {
          $def = [
             "keyboard" => [
                 [["text" => "text_sell"], ["text" => "text_extend"]],
@@ -85,293 +91,260 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدیریت کیبورد | ربات میرزا</title>
+    <title>استودیو کیبورد | MirzaBot</title>
     
-    <!-- کتابخانه‌های ضروری -->
+    <!-- CDN Libraries (No local files needed) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
+        /* --- Studio Theme (Obsidian) --- */
         :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
-            --primary: #3b82f6;
-            --text-light: #f8fafc;
-            --border-col: #334155;
+            --bg-deep: #020617;       
+            --bg-panel: #0f172a;      
+            --bg-surface: #1e293b;    
+            --border-dim: #334155;    
+            --border-light: #475569;  
+            --accent-primary: #3b82f6; 
+            --accent-hover: #2563eb;   
+            --text-high: #f1f5f9;     
+            --text-med: #94a3b8;      
+            --danger: #ef4444;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
+            background-color: var(--bg-deep);
+            color: var(--text-high);
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            background-image: 
+                linear-gradient(var(--border-dim) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
-        /* هدر */
-        .top-nav {
+        /* --- Header --- */
+        .studio-header {
             height: 64px;
-            background: rgba(30, 41, 59, 0.95);
-            border-bottom: 1px solid var(--border-col);
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-dim);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 32px;
             z-index: 50;
         }
 
-        /* ناحیه اصلی */
-        .workspace-area {
-            display: flex;
-            flex: 1;
+        .action-button {
+            height: 36px; padding: 0 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; transition: 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-ghost { color: var(--text-med); background: transparent; border: 1px solid var(--border-dim); }
+        .btn-ghost:hover { background: var(--bg-surface); color: var(--text-high); }
+        .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+        .btn-danger:hover { background: rgba(239,68,68,0.1); }
+        .btn-solid { background: var(--accent-primary); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn-solid:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-solid:disabled { background: var(--bg-surface); color: var(--text-med); box-shadow: none; cursor: not-allowed; }
+
+        /* --- Layout --- */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            height: calc(100vh - 64px);
             overflow: hidden;
         }
 
-        /* پنل چپ: پیش‌نمایش */
+        /* --- Left: Preview --- */
         .preview-sidebar {
-            width: 420px;
-            background: #0b1120;
-            border-left: 1px solid var(--border-col);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-image: radial-gradient(#1e293b 1px, transparent 1px);
-            background-size: 24px 24px;
+            background: rgba(2, 6, 23, 0.6);
+            border-left: 1px solid var(--border-dim);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            position: relative;
         }
 
-        .mobile-shell {
-            width: 340px;
-            height: 680px;
+        .device-bezel {
+            width: 340px; height: 680px;
             background: #000;
-            border-radius: 45px;
-            box-shadow: 0 0 0 10px #1f2937, 0 25px 50px rgba(0,0,0,0.5);
+            border-radius: 48px;
+            box-shadow: 0 0 0 12px #1e1e1e, 0 40px 100px -20px rgba(0,0,0,0.8);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             position: relative;
+            transform: scale(0.9);
         }
-
-        .tg-head {
-            padding: 35px 15px 10px;
-            background: #17212b;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid #000;
+        
+        .tg-app-header {
+            background: #1c1c1e; padding: 45px 16px 12px;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid #000; color: white;
         }
-
-        .tg-body {
-            flex: 1;
-            background: #0e1621;
+        
+        .tg-chat-area {
+            flex: 1; background: #0e1621;
             background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%23182533' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding-bottom: 10px;
+            display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 8px;
         }
 
-        .tg-keys-container {
-            background: #17212b;
-            padding: 6px;
-            min-height: 200px;
+        .tg-keyboard-panel {
+            background: #1c1c1e; padding: 6px; min-height: 200px;
+            border-top: 1px solid #000;
         }
 
-        .tg-key {
-            background: #2b5278;
-            color: white;
-            border-radius: 6px;
-            padding: 10px 4px;
-            font-size: 13px;
-            text-align: center;
-            margin: 2px;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.3);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
+        .tg-btn {
+            background: #2b5278; color: #fff;
+            border-radius: 6px; margin: 2px;
+            padding: 10px 4px; font-size: 12px; text-align: center;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.5);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        /* پنل راست: ویرایشگر */
-        .editor-main {
-            flex: 1;
-            background: var(--bg-panel);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+        /* --- Right: Editor --- */
+        .editor-container {
+            display: flex; flex-direction: column;
+            background: transparent; position: relative;
         }
 
-        .editor-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 40px;
+        .editor-scroll-area {
+            flex: 1; overflow-y: auto; padding: 40px 60px;
         }
 
-        /* کارت‌های ویرایش */
-        .row-item {
-            background: rgba(51, 65, 85, 0.4);
-            border: 1px solid var(--border-col);
+        .row-wrapper {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
             border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            position: relative;
-            transition: all 0.2s;
+            padding: 12px; margin-bottom: 16px;
+            display: flex; flex-wrap: wrap; gap: 8px;
+            position: relative; transition: 0.2s;
         }
-        .row-item:hover {
-            border-color: #64748b;
-            background: rgba(51, 65, 85, 0.7);
+        .row-wrapper:hover { border-color: var(--border-light); background: #252f42; }
+
+        .handle-grip {
+            position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
+            color: var(--text-med); cursor: grab; padding: 6px;
         }
 
-        .row-drag {
-            position: absolute;
-            left: -28px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
-            cursor: grab;
-            padding: 8px;
-        }
-
-        .btn-edit {
-            flex: 1;
-            min-width: 130px;
-            background: #0f172a;
-            border: 1px solid var(--border-col);
+        .key-module {
+            flex: 1; min-width: 130px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
             border-radius: 8px;
-            padding: 12px;
-            position: relative;
-            cursor: grab;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            padding: 10px 14px;
+            position: relative; cursor: grab;
+            display: flex; flex-direction: column; gap: 4px;
+            transition: 0.2s;
         }
-        .btn-edit:hover { border-color: var(--primary); }
+        .key-module:hover { border-color: var(--accent-primary); background: #131c2e; }
 
-        .btn-code {
-            font-family: monospace;
-            font-size: 13px;
-            color: var(--primary);
-            text-align: right;
-            direction: ltr;
+        .key-var-name {
+            font-family: 'JetBrains Mono', monospace; font-size: 12px;
+            color: var(--accent-primary); text-align: right; direction: ltr;
         }
-        .btn-desc { font-size: 11px; color: #94a3b8; }
+        .key-translation { font-size: 11px; color: var(--text-med); }
 
-        .btn-actions {
-            position: absolute; top: 6px; left: 6px; display: flex; gap: 4px; opacity: 0; transition: 0.2s;
+        .module-actions {
+            position: absolute; top: 6px; left: 6px;
+            display: flex; gap: 4px; opacity: 0; transition: 0.2s;
         }
-        .btn-edit:hover .btn-actions { opacity: 1; }
+        .key-module:hover .module-actions { opacity: 1; }
 
-        .act-icon {
-            width: 22px; height: 22px; border-radius: 4px;
+        .icon-btn {
+            width: 20px; height: 20px; border-radius: 4px;
             background: rgba(255,255,255,0.1); color: white;
             display: flex; align-items: center; justify-content: center;
             font-size: 10px; cursor: pointer;
         }
-        .act-icon:hover { background: var(--primary); }
-        .act-icon.del:hover { background: #ef4444; }
+        .icon-btn:hover { background: var(--accent-primary); }
+        .icon-btn.del:hover { background: var(--danger); }
 
-        /* دکمه‌های کنترلی */
-        .btn-save-top {
-            background: var(--primary);
-            color: white;
-            padding: 8px 24px;
-            border-radius: 8px;
-            font-weight: bold;
-            display: flex; align-items: center; gap: 8px;
-            transition: all 0.2s;
-        }
-        .btn-save-top:hover { background: #2563eb; transform: translateY(-1px); }
-        .btn-save-top:disabled { background: #475569; opacity: 0.7; cursor: not-allowed; transform: none; }
-
-        .btn-add-row {
-            width: 100%;
-            padding: 15px;
-            border: 2px dashed var(--border-col);
-            border-radius: 12px;
-            color: #94a3b8;
-            font-weight: bold;
+        .fab-add {
+            width: 100%; padding: 18px; margin-top: 20px;
+            border: 2px dashed var(--border-dim); border-radius: 12px;
+            color: var(--text-med); font-weight: 600; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer;
             transition: 0.2s;
         }
-        .btn-add-row:hover { border-color: var(--primary); color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+        .fab-add:hover { border-color: var(--accent-primary); color: var(--accent-primary); background: rgba(59, 130, 246, 0.05); }
 
-        /* موبایل */
         @media (max-width: 1024px) {
+            .workspace-grid { grid-template-columns: 1fr; }
             .preview-sidebar { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- هدر -->
-    <header class="top-nav">
+    <!-- Header -->
+    <header class="studio-header">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                <i class="fa-solid fa-keyboard text-white text-sm"></i>
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-code"></i>
             </div>
-            <h1 class="text-lg font-bold">ویرایشگر کیبورد</h1>
+            <span class="text-white font-bold tracking-tight">MirzaBot Studio</span>
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="index.php" class="px-4 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 text-sm">
-                <i class="fa-solid fa-arrow-right ml-1"></i> بازگشت
+            <a href="index.php" class="action-button btn-ghost">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج
             </a>
-            <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟ همه چیز ریست می‌شود.')" class="px-3 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10">
+            <a href="keyboard.php?action=reaset" onclick="return confirm('تنظیمات ریست شود؟')" class="action-button btn-danger">
                 <i class="fa-solid fa-rotate-right"></i>
             </a>
-            <button onclick="saveKeyboard()" id="saveBtn" class="btn-save-top" disabled>
-                <i class="fa-regular fa-floppy-disk"></i>
-                <span>ذخیره تغییرات</span>
+            <button onclick="App.save()" id="btn-save" class="action-button btn-solid" disabled>
+                <i class="fa-regular fa-floppy-disk"></i> ذخیره تغییرات
             </button>
         </div>
     </header>
 
-    <!-- محیط کار -->
-    <div class="workspace-area">
+    <!-- Main Workspace -->
+    <div class="workspace-grid">
         
-        <!-- چپ: پیش‌نمایش -->
+        <!-- Preview Sidebar -->
         <div class="preview-sidebar">
-            <div class="mobile-shell animate__animated animate__fadeInLeft">
-                <div class="tg-head">
-                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">MB</div>
-                    <div class="flex-1">
-                        <div class="font-bold text-sm">Mirza Bot</div>
-                        <div class="text-xs text-blue-300">bot</div>
-                    </div>
+            <div class="absolute top-6 left-6 text-xs font-bold text-gray-500 uppercase tracking-widest">Live Preview</div>
+            
+            <div class="device-bezel animate__animated animate__fadeInLeft">
+                <div class="tg-app-header">
+                    <i class="fa-solid fa-arrow-right text-gray-400"></i>
+                    <div class="flex-1 text-sm font-bold text-white">Mirza Bot <span class="text-blue-400 font-normal text-xs">bot</span></div>
+                    <i class="fa-solid fa-ellipsis-vertical text-gray-400"></i>
                 </div>
-                
-                <div class="tg-body">
-                    <div class="bg-[#2b5278] text-white text-sm px-3 py-2 rounded-lg rounded-tl-none mx-3 mb-2 max-w-[85%]">
-                        منوی ربات به این صورت خواهد بود 👇
+
+                <div class="tg-chat-area">
+                    <div class="bg-[#2b5278] text-white text-xs px-3 py-2 rounded-xl rounded-tl-sm mx-4 mb-2 max-w-[85%] shadow">
+                        سلام! منوی ربات به صورت زیر است 👇
                     </div>
                 </div>
 
-                <div id="preview-container" class="tg-keys-container flex flex-col justify-end">
-                    <!-- دکمه‌ها اینجا ساخته می‌شوند -->
+                <div id="preview-render" class="tg-keyboard-panel flex flex-col justify-end">
+                    <!-- Buttons will render here -->
                 </div>
             </div>
         </div>
 
-        <!-- راست: ادیتور -->
-        <div class="editor-main">
-            <div class="editor-scroll">
-                <div id="editor-container" class="max-w-4xl mx-auto pb-8">
-                    <!-- سطرها اینجا ساخته می‌شوند -->
+        <!-- Editor Container -->
+        <div class="editor-container">
+            <div class="editor-scroll-area">
+                <div id="editor-render" class="max-w-4xl mx-auto pb-8">
+                    <!-- Rows will render here -->
                 </div>
                 
                 <div class="max-w-4xl mx-auto pb-24">
-                    <div onclick="addRow()" class="btn-add-row">
+                    <div onclick="App.addRow()" class="fab-add">
                         <i class="fa-solid fa-plus text-lg"></i>
                         افزودن سطر جدید
                     </div>
@@ -381,255 +354,265 @@ try {
 
     </div>
 
+    <!-- Logic -->
     <script>
-        // دیکشنری ترجمه
-        const translations = {
-            'text_sell': '🛍 خرید سرویس',
-            'text_extend': '🔄 تمدید سرویس',
-            'text_usertest': '🔥 تست رایگان',
-            'text_wheel_luck': '🎰 گردونه شانس',
-            'text_Purchased_services': '👤 سرویس‌های من',
-            'accountwallet': '💳 کیف پول',
-            'text_affiliates': '🤝 همکاری در فروش',
-            'text_Tariff_list': '📋 لیست تعرفه‌ها',
-            'text_support': '🎧 پشتیبانی',
-            'text_help': '📚 راهنما'
+        const App = {
+            data: {
+                // دریافت دیتای PHP به صورت امن
+                keyboard: <?php echo $currentKeyboardJSON ?: '[]'; ?>,
+                initialSnapshot: '',
+                // دیکشنری ترجمه
+                translations: {
+                    'text_sell': '🛍 خرید سرویس',
+                    'text_extend': '🔄 تمدید سرویس',
+                    'text_usertest': '🔥 تست رایگان',
+                    'text_wheel_luck': '🎰 گردونه شانس',
+                    'text_Purchased_services': '👤 سرویس‌های من',
+                    'accountwallet': '💳 کیف پول',
+                    'text_affiliates': '🤝 همکاری در فروش',
+                    'text_Tariff_list': '📋 لیست تعرفه‌ها',
+                    'text_support': '🎧 پشتیبانی',
+                    'text_help': '📚 راهنما'
+                }
+            },
+
+            dom: {
+                editor: document.getElementById('editor-render'),
+                preview: document.getElementById('preview-render'),
+                saveBtn: document.getElementById('btn-save')
+            },
+
+            init() {
+                if (!Array.isArray(this.data.keyboard)) this.data.keyboard = [];
+                this.data.initialSnapshot = JSON.stringify(this.data.keyboard);
+                
+                // Initialize SweetAlert Theme
+                this.swal = Swal.mixin({
+                    background: '#0f0b29',
+                    color: '#e2e8f0',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#ef4444',
+                    customClass: { popup: 'border border-slate-700 rounded-2xl' }
+                });
+
+                this.render();
+            },
+
+            render() {
+                this.renderEditor();
+                this.renderPreview();
+                this.checkChanges();
+            },
+
+            renderEditor() {
+                const { editor } = this.dom;
+                editor.innerHTML = '';
+
+                if (this.data.keyboard.length === 0) {
+                    editor.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-24 opacity-30 select-none text-slate-400">
+                            <i class="fa-solid fa-layer-group text-5xl mb-4"></i>
+                            <p>هیچ دکمه‌ای وجود ندارد</p>
+                        </div>`;
+                    return;
+                }
+
+                this.data.keyboard.forEach((row, rIdx) => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'row-wrapper animate__animated animate__fadeIn';
+                    
+                    // Drag Handle
+                    rowDiv.innerHTML += `<div class="handle-grip"><i class="fa-solid fa-grip-vertical"></i></div>`;
+
+                    row.forEach((btn, bIdx) => {
+                        const label = this.data.translations[btn.text] || 'دکمه سفارشی';
+                        const keyDiv = document.createElement('div');
+                        keyDiv.className = 'key-module';
+                        keyDiv.innerHTML = `
+                            <div class="key-var-name" title="${btn.text}">${btn.text}</div>
+                            <div class="key-translation">${label}</div>
+                            <div class="module-actions">
+                                <div class="icon-btn" onclick="App.editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
+                                <div class="icon-btn del" onclick="App.deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
+                            </div>
+                        `;
+                        rowDiv.appendChild(keyDiv);
+                    });
+
+                    // Add Button in Row
+                    if (row.length < 8) {
+                        const addBtn = document.createElement('div');
+                        addBtn.className = 'w-[40px] border border-dashed border-slate-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 hover:text-blue-500 text-slate-500 transition';
+                        addBtn.innerHTML = '<i class="fa-solid fa-plus text-xs"></i>';
+                        addBtn.onclick = () => this.addKeyToRow(rIdx);
+                        rowDiv.appendChild(addBtn);
+                    }
+
+                    // Delete Row
+                    if (row.length === 0) {
+                        const delRow = document.createElement('div');
+                        delRow.className = 'w-full text-center text-red-400 text-xs py-2 cursor-pointer border border-dashed border-red-500/30 rounded hover:bg-red-500/10';
+                        delRow.innerHTML = 'حذف سطر خالی';
+                        delRow.onclick = () => this.deleteRow(rIdx);
+                        rowDiv.appendChild(delRow);
+                    }
+
+                    editor.appendChild(rowDiv);
+                });
+
+                this.initSortable();
+            },
+
+            renderPreview() {
+                const { preview } = this.dom;
+                preview.innerHTML = '';
+                
+                this.data.keyboard.forEach(row => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'flex w-full gap-1 mb-1';
+                    
+                    row.forEach(btn => {
+                        const btnDiv = document.createElement('div');
+                        btnDiv.className = 'tg-btn flex-1 truncate';
+                        // نمایش ترجمه در پیش‌نمایش
+                        btnDiv.innerText = this.data.translations[btn.text] || btn.text; 
+                        rowDiv.appendChild(btnDiv);
+                    });
+                    
+                    if (row.length > 0) preview.appendChild(rowDiv);
+                });
+            },
+
+            initSortable() {
+                // Rows
+                new Sortable(this.dom.editor, {
+                    animation: 250, handle: '.handle-grip', ghostClass: 'opacity-40',
+                    onEnd: (evt) => {
+                        const item = this.data.keyboard.splice(evt.oldIndex, 1)[0];
+                        this.data.keyboard.splice(evt.newIndex, 0, item);
+                        this.render();
+                    }
+                });
+
+                // Keys
+                document.querySelectorAll('.row-wrapper').forEach(el => {
+                    new Sortable(el, {
+                        group: 'shared', animation: 200, draggable: '.key-module', ghostClass: 'opacity-40',
+                        onEnd: () => this.rebuildData()
+                    });
+                });
+            },
+
+            rebuildData() {
+                const newRows = [];
+                const domRows = this.dom.editor.querySelectorAll('.row-wrapper');
+                domRows.forEach(row => {
+                    const btns = [];
+                    row.querySelectorAll('.key-var-name').forEach(el => {
+                        btns.push({ text: el.innerText });
+                    });
+                    if (btns.length > 0 || row.querySelector('.fa-plus')) {
+                        newRows.push(btns);
+                    }
+                });
+                this.data.keyboard = newRows;
+                this.render();
+            },
+
+            checkChanges() {
+                const current = JSON.stringify(this.data.keyboard);
+                const isDirty = current !== this.data.initialSnapshot;
+                const { saveBtn } = this.dom;
+                
+                if (isDirty) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> ذخیره تغییرات';
+                    saveBtn.classList.add('animate-pulse');
+                } else {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fa-regular fa-floppy-disk"></i> ذخیره شد';
+                    saveBtn.classList.remove('animate-pulse');
+                }
+            },
+
+            addRow() {
+                this.data.keyboard.push([{text: 'text_new'}]);
+                this.render();
+                setTimeout(() => document.querySelector('.editor-scroll-area').scrollTop = 99999, 50);
+            },
+
+            deleteRow(idx) {
+                this.data.keyboard.splice(idx, 1);
+                this.render();
+            },
+
+            async addKeyToRow(rIdx) {
+                const { value: text } = await this.swal.fire({
+                    title: 'افزودن دکمه',
+                    input: 'text',
+                    inputValue: 'text_new',
+                    inputLabel: 'کد متغیر (مثال: text_sell)',
+                    showCancelButton: true,
+                    confirmButtonText: 'افزودن'
+                });
+                if (text) {
+                    this.data.keyboard[rIdx].push({text});
+                    this.render();
+                }
+            },
+
+            deleteKey(rIdx, bIdx) {
+                this.data.keyboard[rIdx].splice(bIdx, 1);
+                this.render();
+            },
+
+            async editKey(rIdx, bIdx) {
+                const current = this.data.keyboard[rIdx][bIdx].text;
+                const { value: text } = await this.swal.fire({
+                    title: 'ویرایش کد',
+                    input: 'text',
+                    inputValue: current,
+                    showCancelButton: true,
+                    confirmButtonText: 'تایید'
+                });
+                if (text) {
+                    this.data.keyboard[rIdx][bIdx].text = text;
+                    this.render();
+                }
+            },
+
+            save() {
+                const { saveBtn } = this.dom;
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ...';
+                saveBtn.disabled = true;
+
+                fetch('keyboard.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(this.data.keyboard)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.data.initialSnapshot = JSON.stringify(this.data.keyboard);
+                        this.checkChanges();
+                        const Toast = Swal.mixin({
+                            toast: true, position: 'top-end', showConfirmButton: false, 
+                            timer: 3000, background: '#0f0b29', color: '#fff'
+                        });
+                        Toast.fire({icon: 'success', title: 'ذخیره شد'});
+                    }
+                })
+                .catch(err => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                    this.swal.fire({icon: 'error', title: 'خطا در ارتباط'});
+                });
+            }
         };
 
-        // داده‌های اولیه
-        let keyboardRows = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
-        if (!Array.isArray(keyboardRows)) keyboardRows = [];
-        
-        // ذخیره وضعیت اولیه برای تشخیص تغییر
-        let initialSnapshot = JSON.stringify(keyboardRows);
-
-        const editorEl = document.getElementById('editor-container');
-        const previewEl = document.getElementById('preview-container');
-        const saveBtn = document.getElementById('saveBtn');
-
-        // SweetAlert
-        const SwalDark = Swal.mixin({
-            background: '#1e293b',
-            color: '#f8fafc',
-            confirmButtonColor: '#3b82f6',
-            cancelButtonColor: '#ef4444',
-        });
-
-        function render() {
-            renderEditor();
-            renderPreview();
-            checkDirty();
-        }
-
-        // --- ویرایشگر ---
-        function renderEditor() {
-            editorEl.innerHTML = '';
-            
-            if (keyboardRows.length === 0) {
-                editorEl.innerHTML = `
-                    <div class="text-center py-12 opacity-40">
-                        <i class="fa-solid fa-keyboard text-5xl mb-4"></i>
-                        <p>کیبورد خالی است</p>
-                    </div>`;
-            }
-
-            keyboardRows.forEach((row, rIdx) => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'row-item animate__animated animate__fadeIn';
-                
-                // هندل درگ
-                rowDiv.innerHTML += `<div class="row-drag"><i class="fa-solid fa-grip-vertical"></i></div>`;
-
-                row.forEach((btn, bIdx) => {
-                    const label = translations[btn.text] || 'دکمه سفارشی';
-                    const keyDiv = document.createElement('div');
-                    keyDiv.className = 'btn-edit';
-                    keyDiv.innerHTML = `
-                        <div class="btn-code" title="${btn.text}">${btn.text}</div>
-                        <div class="btn-desc">${label}</div>
-                        <div class="btn-actions">
-                            <div class="act-icon" onclick="editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
-                            <div class="act-icon del" onclick="deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
-                        </div>
-                    `;
-                    rowDiv.appendChild(keyDiv);
-                });
-
-                // دکمه افزودن آیتم
-                if (row.length < 8) {
-                    const addBtn = document.createElement('div');
-                    addBtn.className = 'w-[45px] border border-dashed border-slate-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-500 hover:text-blue-500 text-slate-500 transition';
-                    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-                    addBtn.onclick = () => addKeyToRow(rIdx);
-                    rowDiv.appendChild(addBtn);
-                }
-
-                // حذف سطر خالی
-                if (row.length === 0) {
-                    const delRow = document.createElement('div');
-                    delRow.className = 'w-full text-center text-red-400 text-xs py-2 cursor-pointer border border-dashed border-red-500/30 rounded hover:bg-red-500/10';
-                    delRow.innerText = 'حذف سطر خالی';
-                    delRow.onclick = () => deleteRow(rIdx);
-                    rowDiv.appendChild(delRow);
-                }
-
-                editorEl.appendChild(rowDiv);
-            });
-
-            initSortable();
-        }
-
-        // --- پیش‌نمایش ---
-        function renderPreview() {
-            previewEl.innerHTML = '';
-            keyboardRows.forEach(row => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'flex w-full gap-1 mb-1';
-                
-                row.forEach(btn => {
-                    const btnDiv = document.createElement('div');
-                    btnDiv.className = 'tg-key';
-                    // نمایش ترجمه در پیش‌نمایش
-                    btnDiv.innerText = translations[btn.text] || btn.text; 
-                    rowDiv.appendChild(btnDiv);
-                });
-                
-                if(row.length > 0) previewEl.appendChild(rowDiv);
-            });
-        }
-
-        // --- دراگ و دراپ ---
-        function initSortable() {
-            // سطرها
-            new Sortable(editorEl, {
-                animation: 200, handle: '.row-drag', ghostClass: 'opacity-50',
-                onEnd: (evt) => {
-                    const item = keyboardRows.splice(evt.oldIndex, 1)[0];
-                    keyboardRows.splice(evt.newIndex, 0, item);
-                    render();
-                }
-            });
-
-            // دکمه‌ها
-            document.querySelectorAll('.row-item').forEach(el => {
-                new Sortable(el, {
-                    group: 'shared', animation: 200, draggable: '.btn-edit', ghostClass: 'opacity-50',
-                    onEnd: () => rebuildData()
-                });
-            });
-        }
-
-        function rebuildData() {
-            const newRows = [];
-            const domRows = editorEl.querySelectorAll('.row-item');
-            
-            domRows.forEach(row => {
-                const btns = [];
-                row.querySelectorAll('.btn-code').forEach(el => {
-                    btns.push({ text: el.innerText });
-                });
-                // اگر سطر دارای دکمه یا دکمه افزودن است
-                if (btns.length > 0 || row.querySelector('.fa-plus')) {
-                    newRows.push(btns);
-                }
-            });
-            
-            keyboardRows = newRows;
-            render();
-        }
-
-        // --- اکشن‌ها ---
-        function checkDirty() {
-            const current = JSON.stringify(keyboardRows);
-            if (current !== initialSnapshot) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> ذخیره تغییرات';
-                saveBtn.classList.add('animate-pulse');
-            } else {
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<i class="fa-regular fa-floppy-disk"></i> ذخیره شد';
-                saveBtn.classList.remove('animate-pulse');
-            }
-        }
-
-        function addRow() {
-            keyboardRows.push([{text: 'text_new'}]);
-            render();
-            setTimeout(() => document.querySelector('.editor-scroll').scrollTop = 99999, 50);
-        }
-
-        function deleteRow(idx) {
-            keyboardRows.splice(idx, 1);
-            render();
-        }
-
-        async function addKeyToRow(rIdx) {
-            const { value: text } = await SwalDark.fire({
-                title: 'افزودن دکمه',
-                input: 'text',
-                inputValue: 'text_new',
-                inputLabel: 'نام متغیر (انگلیسی)',
-                showCancelButton: true,
-                confirmButtonText: 'افزودن'
-            });
-            if (text) {
-                keyboardRows[rIdx].push({text});
-                render();
-            }
-        }
-
-        function deleteKey(rIdx, bIdx) {
-            keyboardRows[rIdx].splice(bIdx, 1);
-            render();
-        }
-
-        async function editKey(rIdx, bIdx) {
-            const current = keyboardRows[rIdx][bIdx].text;
-            const { value: text } = await SwalDark.fire({
-                title: 'ویرایش کد دکمه',
-                input: 'text',
-                inputValue: current,
-                showCancelButton: true,
-                confirmButtonText: 'ذخیره'
-            });
-            if (text) {
-                keyboardRows[rIdx][bIdx].text = text;
-                render();
-            }
-        }
-
-        function saveKeyboard() {
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
-            saveBtn.disabled = true;
-
-            fetch('keyboard.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(keyboardRows)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    initialSnapshot = JSON.stringify(keyboardRows);
-                    checkDirty();
-                    const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, 
-                        timer: 3000, background: '#1e293b', color: '#fff'
-                    });
-                    Toast.fire({icon: 'success', title: 'ذخیره شد'});
-                }
-            })
-            .catch(err => {
-                saveBtn.innerHTML = originalText;
-                saveBtn.disabled = false;
-                SwalDark.fire({icon: 'error', title: 'خطا در ارتباط'});
-            });
-        }
-
-        // شروع
-        render();
-
+        App.init();
     </script>
 </body>
 </html>
