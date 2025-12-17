@@ -441,7 +441,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-arrow-right-arrow-left"></i> جابجایی
                 </a>
                 
-                <a href="payment.php" class="nav-box">
+                <a href="productedit.php" class="nav-box">
   <i class="fa-solid fa-wallet"></i>
   <span>ویرایش محصولات</span>
 </a>
@@ -454,8 +454,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     align-items: center;
     gap: 10px;
 
-    width: 180px;
-    height: 140px;
+    width: 90px;
+    height: 70px;
 
     background: linear-gradient(135deg, #6a7cff, #8f9bff);
     color: #fff;
@@ -468,7 +468,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
   }
 
   .nav-box i {
-    font-size: 36px;
+    font-size: 24px;
   }
 
   .nav-box span {
