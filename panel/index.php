@@ -169,27 +169,25 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            /* Palette: Void & Neon */
+            /* Palette: Deep Nebula */
             --bg-void: #050508;
-            --bg-surface: rgba(22, 22, 28, 0.65);
-            --bg-card: rgba(30, 30, 40, 0.4);
-            --bg-dock: rgba(10, 10, 15, 0.85);
+            --bg-surface: rgba(30, 30, 40, 0.55);
+            --bg-glass: rgba(255, 255, 255, 0.03);
             
             --neon-blue: #00f2ff;
-            --neon-purple: #d946ef;
-            --neon-teal: #2dd4bf;
-            --neon-amber: #f59e0b;
-            --neon-pink: #ec4899;
-            --neon-red: #ef4444;
+            --neon-purple: #bd00ff;
+            --neon-teal: #00ff9d;
+            --neon-amber: #ffae00;
+            --neon-red: #ff0055;
             
-            --text-main: #f8fafc;
+            --text-main: #ffffff;
             --text-dim: #94a3b8;
             
-            --border-glass: 1px solid rgba(255, 255, 255, 0.08);
-            --border-hover: 1px solid rgba(255, 255, 255, 0.2);
-            --radius-xl: 28px;
-            --radius-lg: 20px;
-            --shadow-float: 0 15px 40px -10px rgba(0, 0, 0, 0.7);
+            --border-glass: 1px solid rgba(255, 255, 255, 0.06);
+            --border-active: 1px solid rgba(255, 255, 255, 0.2);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --shadow-glow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         /* --- Base Setup --- */
@@ -197,252 +195,221 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         body {
             background-color: var(--bg-void);
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(217, 70, 239, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 242, 255, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 0% 0%, rgba(88, 28, 135, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(15, 118, 110, 0.15) 0%, transparent 50%);
             color: var(--text-main);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
-            padding-bottom: 140px; /* Space for large dock */
+            padding-bottom: 140px;
         }
 
         /* --- Animations --- */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.98) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .anim { animation: fadeInScale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+        .anim { animation: fadeSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
         .d-1 { animation-delay: 0.1s; } 
         .d-2 { animation-delay: 0.2s; } 
         .d-3 { animation-delay: 0.3s; }
 
-        /* --- Main Layout: Bento Grid Style --- */
         .dashboard-container {
-            width: 100%;
-            max-width: 1800px;
-            margin: 0 auto;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+            width: 100%; max-width: 1800px; margin: 0 auto;
+            padding: 30px; display: flex; flex-direction: column; gap: 30px;
         }
 
-        /* Header */
+        /* --- Header: Clean & Modern --- */
         .header-bar {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 10px 20px 10px;
         }
-        .welcome-text h1 { margin: 0; font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; background: linear-gradient(to right, #fff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .welcome-text p { margin: 5px 0 0; color: var(--text-dim); display: flex; align-items: center; gap: 10px; }
-        .live-badge { font-size: 0.75rem; background: rgba(0, 242, 255, 0.1); color: var(--neon-blue); padding: 2px 10px; border-radius: 20px; border: 1px solid rgba(0, 242, 255, 0.2); }
+        .welcome-text h1 {
+            margin: 0; font-size: 2.8rem; font-weight: 900; letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #fff 30%, #94a3b8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.1));
+        }
+        .welcome-text p { margin: 8px 0 0; color: var(--text-dim); display: flex; align-items: center; gap: 12px; font-size: 0.95rem; }
+        .live-badge { 
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            background: rgba(0, 242, 255, 0.08); color: var(--neon-blue);
+            padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(0, 242, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
+        }
 
-        /* User Profile Pill */
+        /* Profile Pill */
         .profile-pill {
             display: flex; align-items: center; gap: 15px;
-            background: var(--bg-card); padding: 8px 8px 8px 24px;
-            border-radius: 50px; border: var(--border-glass);
-            backdrop-filter: blur(10px);
-            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.03); padding: 8px 8px 8px 24px;
+            border-radius: 100px; border: var(--border-glass);
+            backdrop-filter: blur(12px); transition: 0.3s;
         }
-        .profile-pill:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
-        .p-info { text-align: left; line-height: 1.2; }
-        .p-name { font-weight: 700; color: #fff; font-size: 0.95rem; }
-        .p-role { font-size: 0.75rem; color: var(--neon-purple); }
-        .p-img { width: 44px; height: 44px; background: linear-gradient(135deg, #ddd, #fff); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-size: 1.2rem; }
+        .profile-pill:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); transform: scale(1.02); }
+        .p-info { text-align: left; }
+        .p-name { font-weight: 700; color: #fff; font-size: 1rem; }
+        .p-role { font-size: 0.75rem; color: var(--neon-purple); font-weight: 600; }
+        .p-img { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; color: #000; font-size: 1.2rem; }
 
-        /* --- Stats Row --- */
+        /* --- Stats Row: Glass Cards with Color Pop --- */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
         }
         .stat-box {
-            background: var(--bg-surface);
-            border: var(--border-glass);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            position: relative;
-            overflow: hidden;
+            background: linear-gradient(160deg, rgba(30,30,40,0.7) 0%, rgba(20,20,25,0.6) 100%);
+            border: var(--border-glass); border-radius: var(--radius-lg);
+            padding: 28px; position: relative; overflow: hidden;
             display: flex; flex-direction: column; justify-content: space-between;
-            min-height: 160px;
-            transition: 0.3s;
+            min-height: 180px; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .stat-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, rgba(255,255,255,0.05), transparent 60%); opacity: 0; transition: 0.3s; }
-        .stat-box:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); box-shadow: var(--shadow-float); }
-        .stat-box:hover::before { opacity: 1; }
+        .stat-box::before { /* Glow spot */
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, var(--glow-color) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.4s ease; mix-blend-mode: screen; pointer-events: none;
+        }
+        .stat-box:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.2); }
+        .stat-box:hover::before { opacity: 0.15; }
 
-        .sb-icon { font-size: 2rem; opacity: 0.8; margin-bottom: 15px; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(255,255,255,0.03); }
-        .sb-val { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1; }
-        .sb-lbl { color: var(--text-dim); font-size: 0.95rem; font-weight: 500; margin-top: 5px; }
+        .sb-icon { 
+            font-size: 2.2rem; width: 60px; height: 60px; 
+            display: flex; align-items: center; justify-content: center; 
+            border-radius: 18px; margin-bottom: 20px; transition: 0.3s;
+        }
+        .stat-box:hover .sb-icon { transform: scale(1.1) rotate(-5deg); background: rgba(255,255,255,0.1); }
         
-        /* Specific Colors */
-        .sb-blue .sb-icon { color: var(--neon-blue); background: rgba(0, 242, 255, 0.08); }
-        .sb-teal .sb-icon { color: var(--neon-teal); background: rgba(45, 212, 191, 0.08); }
-        .sb-purple .sb-icon { color: var(--neon-purple); background: rgba(217, 70, 239, 0.08); }
-        .sb-amber .sb-icon { color: var(--neon-amber); background: rgba(245, 158, 11, 0.08); }
+        .sb-val { font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -1px; }
+        .sb-lbl { color: var(--text-dim); font-size: 0.95rem; font-weight: 500; margin-top: 8px; }
 
-        /* --- Main Content Grid (Bento) --- */
+        /* Color Variations */
+        .sb-blue { --glow-color: var(--neon-blue); }
+        .sb-blue .sb-icon { color: var(--neon-blue); background: rgba(0, 242, 255, 0.05); }
+        .sb-blue:hover { box-shadow: 0 15px 40px -10px rgba(0, 242, 255, 0.2); }
+
+        .sb-teal { --glow-color: var(--neon-teal); }
+        .sb-teal .sb-icon { color: var(--neon-teal); background: rgba(0, 255, 157, 0.05); }
+        .sb-teal:hover { box-shadow: 0 15px 40px -10px rgba(0, 255, 157, 0.2); }
+
+        .sb-purple { --glow-color: var(--neon-purple); }
+        .sb-purple .sb-icon { color: var(--neon-purple); background: rgba(189, 0, 255, 0.05); }
+        .sb-purple:hover { box-shadow: 0 15px 40px -10px rgba(189, 0, 255, 0.2); }
+
+        .sb-amber { --glow-color: var(--neon-amber); }
+        .sb-amber .sb-icon { color: var(--neon-amber); background: rgba(255, 174, 0, 0.05); }
+        .sb-amber:hover { box-shadow: 0 15px 40px -10px rgba(255, 174, 0, 0.2); }
+
+        /* --- Bento Grid --- */
         .bento-grid {
-            display: grid;
-            grid-template-columns: 2.5fr 1fr; /* Main area vs Sidebar area */
-            gap: 20px;
-            min-height: 500px;
+            display: grid; grid-template-columns: 2.5fr 1fr; gap: 24px; min-height: 500px;
         }
-        
-        /* Left Column (Main Chart + Actions) */
-        .main-col { display: flex; flex-direction: column; gap: 20px; }
-        
-        .chart-panel {
+        .main-col { display: flex; flex-direction: column; gap: 24px; }
+        .side-col { display: flex; flex-direction: column; gap: 24px; }
+
+        /* Chart Panels */
+        .chart-panel, .mini-chart-card {
             background: var(--bg-surface);
-            border: var(--border-glass);
-            border-radius: var(--radius-xl);
-            padding: 25px;
-            position: relative;
-            flex-grow: 1;
-            min-height: 400px;
-            display: flex; flex-direction: column;
+            border: var(--border-glass); border-radius: var(--radius-xl);
+            padding: 30px; position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(20px);
         }
-        
-        /* Actions Grid (Full Width & Balanced) */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .sh-title { font-size: 1.2rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 12px; }
+        .sh-title i { filter: drop-shadow(0 0 8px currentColor); }
+
+        /* Action Buttons: The "Jewels" of the UI */
         .actions-strip {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4 columns for balance */
-            gap: 15px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
         }
         .action-btn {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 18px;
-            padding: 15px;
-            text-align: center;
-            text-decoration: none;
-            color: var(--text-dim);
+            position: relative; height: 120px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 24px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+            text-decoration: none; color: var(--text-dim); overflow: hidden;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-            height: 110px;
-            position: relative;
-            overflow: hidden;
         }
-        .action-btn::after {
+        .action-btn::before { /* Subtle pattern overlay */
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom right, rgba(255,255,255,0.05), transparent);
-            opacity: 0; transition: 0.3s;
+            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px; opacity: 0; transition: 0.3s;
         }
         .action-btn:hover {
-            background: rgba(255,255,255,0.06);
-            border-color: rgba(255,255,255,0.3);
-            transform: translateY(-4px);
-            color: #fff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transform: translateY(-5px); border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.5);
+            color: #fff; background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%);
         }
-        .action-btn:hover::after { opacity: 1; }
-        .action-btn i { font-size: 1.8rem; transition: 0.3s; margin-bottom: 2px; }
-        .action-btn:hover i { transform: scale(1.15); color: var(--neon-blue); }
+        .action-btn:hover::before { opacity: 0.3; }
         
-        .ab-red:hover { border-color: var(--neon-red); }
-        .ab-red:hover i { color: var(--neon-red); }
-
-        /* Right Column (Secondary Charts) */
-        .side-col { display: flex; flex-direction: column; gap: 20px; }
+        .action-btn i { font-size: 2rem; transition: 0.3s; z-index: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .action-btn:hover i { transform: scale(1.1); color: var(--neon-blue); filter: drop-shadow(0 0 10px var(--neon-blue)); }
         
-        .mini-chart-card {
-            background: var(--bg-surface);
-            border: var(--border-glass);
-            border-radius: var(--radius-xl);
-            padding: 20px;
-            flex: 1;
-            display: flex; flex-direction: column;
-            min-height: 250px;
-        }
+        /* Specific Button Colors */
+        .ab-red:hover { border-color: rgba(239, 68, 68, 0.4); }
+        .ab-red:hover i { color: var(--neon-red); filter: drop-shadow(0 0 10px var(--neon-red)); }
 
-        .section-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-        }
-        .sh-title { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-
-        /* --- Dock (MacOS Style) --- */
+        /* --- Dock --- */
         .dock-wrapper {
             position: fixed; bottom: 30px; left: 0; right: 0;
             display: flex; justify-content: center; pointer-events: none; z-index: 1000;
         }
         .glass-dock {
             pointer-events: auto;
-            background: rgba(18, 18, 24, 0.7);
-            backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.15);
-            padding: 10px 15px;
-            border-radius: 28px;
+            background: rgba(10, 10, 12, 0.75);
+            backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid rgba(255,255,255,0.12);
+            padding: 12px 18px; border-radius: 32px;
             display: flex; align-items: center; gap: 8px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
             transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .glass-dock:hover {
-            padding: 12px 20px;
-            gap: 12px;
-            background: rgba(25, 25, 32, 0.85);
-            border-color: rgba(255,255,255,0.25);
-        }
+        .glass-dock:hover { background: rgba(15, 15, 20, 0.9); border-color: rgba(255,255,255,0.2); }
+        
         .dock-link {
-            width: 50px; height: 50px;
+            width: 52px; height: 52px;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 18px;
-            color: var(--text-dim);
-            font-size: 1.4rem;
+            border-radius: 20px; color: var(--text-dim); font-size: 1.5rem;
             transition: all 0.25s cubic-bezier(0.25, 0.8, 0.5, 1);
-            text-decoration: none;
-            position: relative;
-            background: rgba(255,255,255,0.02);
+            text-decoration: none; position: relative;
+            background: transparent;
         }
         .dock-link:hover { 
-            background: rgba(255,255,255,0.15); 
-            color: #fff; 
-            transform: translateY(-8px) scale(1.15); 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 10;
+            background: rgba(255,255,255,0.1); color: #fff; 
+            transform: translateY(-10px) scale(1.1); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
         }
         .dock-link.active { 
-            background: rgba(255,255,255,0.1); 
-            color: #fff; 
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.1); color: #fff; 
             border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 0 15px rgba(255,255,255,0.05);
         }
-        
-        /* Tooltip */
-        .dock-link::after {
+        .dock-link::after { /* Tooltip */
             content: attr(data-title);
-            position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) scale(0.8);
-            background: rgba(0,0,0,0.85); color: #fff; padding: 5px 12px; border-radius: 8px;
-            font-size: 0.8rem; font-weight: 500; opacity: 0; visibility: hidden; 
-            transition: 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; white-space: nowrap;
-            border: 1px solid rgba(255,255,255,0.1);
+            position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) scale(0.9);
+            background: #000; color: #fff; padding: 6px 14px; border-radius: 12px;
+            font-size: 0.85rem; font-weight: 600; opacity: 0; visibility: hidden; 
+            transition: 0.2s; pointer-events: none; white-space: nowrap; border: 1px solid #333;
         }
-        .dock-link:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); bottom: 145%; }
+        .dock-link:hover::after { opacity: 1; visibility: visible; bottom: 150%; transform: translateX(-50%) scale(1); }
 
-        .dock-sep { width: 1px; height: 30px; background: rgba(255,255,255,0.15); margin: 0 4px; }
+        .dock-sep { width: 1px; height: 32px; background: rgba(255,255,255,0.1); margin: 0 6px; }
 
-        /* Responsive */
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .bento-grid { grid-template-columns: 1fr; }
             .side-col { flex-direction: row; }
             .actions-strip { grid-template-columns: repeat(4, 1fr); }
         }
-        @media (max-width: 992px) {
-             .actions-strip { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media (max-width: 992px) { .actions-strip { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) {
-            .dashboard-container { padding: 15px; gap: 15px; padding-bottom: 120px; }
+            .dashboard-container { padding: 20px; }
             .header-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
             .profile-pill { margin-left: auto; }
             .stats-grid { grid-template-columns: 1fr; }
             .side-col { flex-direction: column; }
-            .glass-dock { 
-                max-width: 92vw; overflow-x: auto; padding: 10px; justify-content: flex-start; 
-                border-radius: 20px; gap: 10px;
-            }
-            .dock-link { flex-shrink: 0; width: 45px; height: 45px; font-size: 1.2rem; }
-            .dock-link:hover { transform: none; } /* Disable float on mobile */
+            .glass-dock { max-width: 92vw; overflow-x: auto; justify-content: flex-start; padding: 10px; }
+            .dock-link { flex-shrink: 0; width: 48px; height: 48px; }
+            .dock-link:hover { transform: none; }
         }
     </style>
 </head>
@@ -450,21 +417,21 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <div class="dashboard-container">
         
-        <!-- 1. Header Section -->
+        <!-- 1. Header -->
         <header class="header-bar anim">
             <div class="welcome-text">
                 <h1><?php echo $greet; ?>، ادمین</h1>
                 <p>
-                    <span class="live-badge">Online</span>
-                    <span><?php echo $today; ?></span>
+                    <span class="live-badge">System Online</span>
+                    <span><i class="fa-regular fa-calendar"></i> <?php echo $today; ?></span>
                 </p>
             </div>
             <div class="profile-pill">
                 <div class="p-info">
-                    <div class="p-name">مدیر کل سیستم</div>
+                    <div class="p-name">مدیر سیستم</div>
                     <div class="p-role">Super Admin</div>
                 </div>
-                <div class="p-img"><i class="fa-solid fa-user"></i></div>
+                <div class="p-img"><i class="fa-solid fa-user-astronaut"></i></div>
             </div>
         </header>
 
@@ -500,26 +467,25 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             </div>
         </section>
 
-        <!-- 3. Main Bento Grid -->
+        <!-- 3. Bento Grid -->
         <section class="bento-grid anim d-2">
             
-            <!-- Left Column -->
             <div class="main-col">
-                <!-- Big Chart -->
+                <!-- Sales Chart -->
                 <div class="chart-panel">
                     <div class="section-header">
                         <div class="sh-title"><i class="fa-solid fa-chart-line" style="color: var(--neon-blue);"></i> گزارش فروش زنده</div>
-                        <select style="background: rgba(255,255,255,0.05); border: none; color: #fff; border-radius: 8px; padding: 5px 10px;">
+                        <select style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 12px; padding: 6px 12px; font-family: 'Vazirmatn';">
                             <option>۳۰ روز اخیر</option>
                         </select>
                     </div>
                     <div style="flex-grow: 1; min-height: 0;"><canvas id="salesChart"></canvas></div>
                 </div>
 
-                <!-- Action Strip (Expanded & Filled) -->
+                <!-- Action Tiles -->
                 <div class="actions-strip">
                     <a href="users.php" class="action-btn">
-                        <i class="fa-solid fa-users-gear"></i><span>مدیریت کاربران</span>
+                        <i class="fa-solid fa-users-gear"></i><span>کاربران</span>
                     </a>
                     <a href="invoice.php" class="action-btn">
                         <i class="fa-solid fa-file-invoice"></i><span>سفارشات</span>
@@ -545,22 +511,22 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 </div>
             </div>
 
-            <!-- Right Column -->
             <div class="side-col">
-                <!-- Pie Chart -->
+                <!-- Status Chart -->
                 <div class="mini-chart-card">
                     <div class="section-header">
                         <div class="sh-title"><i class="fa-solid fa-chart-pie" style="color: var(--neon-purple);"></i> وضعیت سرویس‌ها</div>
                     </div>
                     <div style="flex-grow: 1; position: relative; min-height: 200px;">
                         <canvas id="statusChart"></canvas>
-                        <div class="doughnut-center">
-                            <div class="dc-val" style="font-size: 1.5rem; font-weight: bold; color: #fff; text-align: center; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><?php echo $totalStatus; ?></div>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3);"><?php echo $totalStatus; ?></div>
+                            <div style="font-size: 0.8rem; color: var(--text-dim);">سرویس</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Bar Chart -->
+                <!-- Users Bar -->
                 <div class="mini-chart-card">
                     <div class="section-header">
                         <div class="sh-title"><i class="fa-solid fa-chart-column" style="color: var(--neon-teal);"></i> روند جذب کاربر</div>
@@ -573,7 +539,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     </div>
 
-    <!-- 4. Complete Glass Dock -->
+    <!-- 4. Dock -->
     <div class="dock-wrapper anim d-3">
         <nav class="glass-dock">
             <a href="index.php" class="dock-link active" data-title="داشبورد"><i class="fa-solid fa-house"></i></a>
@@ -597,19 +563,19 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Chart Config
+        // Modern Chart Config
         Chart.defaults.font.family = 'Vazirmatn'; 
         Chart.defaults.color = '#94a3b8'; 
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.03)';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
         
         const dSales = { labels: <?php echo json_encode($salesLabels); ?>, values: <?php echo json_encode($salesValues); ?> };
         const dPie = { labels: <?php echo json_encode($pieLabels); ?>, values: <?php echo json_encode($pieValues); ?> };
         const dUsers = { labels: <?php echo json_encode($userLabels); ?>, values: <?php echo json_encode($userValues); ?> };
 
-        // 1. Sales Chart (Area)
+        // 1. Sales Chart (Glow Line)
         const ctxS = document.getElementById('salesChart').getContext('2d');
         const gradS = ctxS.createLinearGradient(0, 0, 0, 400);
-        gradS.addColorStop(0, 'rgba(0, 242, 255, 0.2)');
+        gradS.addColorStop(0, 'rgba(0, 242, 255, 0.25)');
         gradS.addColorStop(1, 'rgba(0, 242, 255, 0)');
 
         new Chart(ctxS, {
@@ -621,9 +587,11 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     data: dSales.values,
                     borderColor: '#00f2ff',
                     backgroundColor: gradS,
-                    borderWidth: 2,
+                    borderWidth: 3,
                     pointRadius: 0,
-                    pointHoverRadius: 6,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#00f2ff',
                     fill: true,
                     tension: 0.4
                 }]
@@ -631,16 +599,16 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', titleFont: {size: 14}, bodyFont: {size: 14}, padding: 10, cornerRadius: 8, displayColors: false } },
                 scales: {
-                    x: { grid: { display: false }, ticks: { display: false } }, // Minimal look
-                    y: { grid: { color: 'rgba(255,255,255,0.02)' } }
+                    x: { grid: { display: false }, ticks: { display: false } },
+                    y: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false } }
                 },
                 interaction: { mode: 'index', intersect: false }
             }
         });
 
-        // 2. Status Chart (Doughnut)
+        // 2. Status Chart (Neon Doughnut)
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
@@ -649,18 +617,19 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     data: dPie.values,
                     backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#d946ef', '#f97316', '#334155'],
                     borderWidth: 0,
-                    hoverOffset: 10
+                    hoverOffset: 15,
+                    borderRadius: 5
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: { legend: { display: false } } // Hide legend to save space, rely on tooltips
+                cutout: '80%',
+                plugins: { legend: { display: false } }
             }
         });
 
-        // 3. Users Chart (Bar)
+        // 3. Users Chart (Rounded Bar)
         new Chart(document.getElementById('usersChart'), {
             type: 'bar',
             data: {
@@ -668,8 +637,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 datasets: [{
                     label: 'کاربر جدید',
                     data: dUsers.values,
-                    backgroundColor: '#2dd4bf',
-                    borderRadius: 4
+                    backgroundColor: '#00ff9d',
+                    borderRadius: 6,
+                    barThickness: 10
                 }]
             },
             options: {
