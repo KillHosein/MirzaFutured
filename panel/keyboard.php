@@ -93,336 +93,350 @@ try {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
-        /* --- Studio Theme Variables --- */
+        /* --- Next-Gen Theme Variables --- */
         :root {
-            --bg-body: #020617;       /* Slate 950 */
-            --bg-panel: #0f172a;      /* Slate 900 */
-            --bg-surface: #1e293b;    /* Slate 800 */
-            --border-dim: #334155;    /* Slate 700 */
-            --border-light: #475569;  /* Slate 600 */
+            --bg-deep: #030014;
+            --bg-surface: #0f0b29;
+            --bg-card: rgba(30, 27, 75, 0.4);
+            --border-color: rgba(124, 58, 237, 0.15);
+            --border-highlight: rgba(124, 58, 237, 0.5);
             
-            --accent-primary: #3b82f6; /* Blue 500 */
-            --accent-hover: #2563eb;   /* Blue 600 */
-            --accent-glow: rgba(59, 130, 246, 0.15);
+            --primary: #8b5cf6; /* Violet */
+            --primary-glow: rgba(139, 92, 246, 0.5);
+            --secondary: #ec4899; /* Pink */
             
-            --text-high: #f1f5f9;     /* Slate 100 */
-            --text-med: #94a3b8;      /* Slate 400 */
-            --text-low: #64748b;      /* Slate 500 */
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
             
-            --danger: #ef4444;
-            --success: #10b981;
+            --glass: rgba(15, 11, 41, 0.7);
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-high);
+            background-color: var(--bg-deep);
+            color: var(--text-main);
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            /* Grid Pattern */
+            /* Cyberpunk Grid Background */
             background-image: 
-                linear-gradient(var(--border-dim) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
-            background-size: 40px 40px;
-            background-position: center top;
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(88, 28, 135, 0.15), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* --- Scrollbar Styling --- */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--text-med); }
+        ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.6); }
 
         /* --- Header --- */
-        .studio-header {
-            height: 64px;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-dim);
+        .cyber-header {
+            height: 70px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 32px;
+            padding: 0 40px;
             z-index: 50;
+            position: relative;
         }
 
-        .brand-pill {
-            display: flex; align-items: center; gap: 12px;
-            padding: 6px 12px;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 99px;
+        .brand-logo {
+            display: flex; align-items: center; gap: 14px;
         }
-        .brand-icon {
-            color: var(--accent-primary);
-            font-size: 14px;
+        .logo-box {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 25px var(--primary-glow);
+            position: relative;
         }
-        .brand-text {
-            font-size: 13px; font-weight: 700; color: var(--text-high); letter-spacing: -0.02em;
+        .logo-box::after {
+            content: ''; position: absolute; inset: 1px; background: #000; border-radius: 11px; z-index: 1; opacity: 0.2;
+        }
+        .logo-box i { position: relative; z-index: 2; color: white; font-size: 18px; }
+        
+        .brand-text h1 {
+            font-size: 18px; font-weight: 800; letter-spacing: -0.5px;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        .action-button {
-            height: 36px; padding: 0 16px; border-radius: 8px;
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+
+        .btn-glass {
+            height: 40px; padding: 0 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
             font-size: 13px; font-weight: 500;
             display: flex; align-items: center; gap: 8px;
-            cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
-        .btn-ghost {
-            color: var(--text-med);
-            background: transparent;
+        .btn-glass:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white; transform: translateY(-1px);
         }
-        .btn-ghost:hover {
-            background: var(--bg-surface);
-            color: var(--text-high);
+        
+        .btn-neon {
+            height: 40px; padding: 0 24px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white; border: none;
+            font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 0 20px var(--primary-glow);
+            transition: all 0.3s ease;
+            cursor: pointer; position: relative; overflow: hidden;
         }
-        .btn-danger-ghost {
-            color: var(--danger);
-            background: rgba(239, 68, 68, 0.05);
-            border-color: rgba(239, 68, 68, 0.1);
+        .btn-neon::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
         }
-        .btn-danger-ghost:hover {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.2);
+        .btn-neon:hover {
+            box-shadow: 0 0 30px var(--primary-glow); transform: translateY(-1px);
         }
-        .btn-solid {
-            background: var(--accent-primary);
-            color: white;
-            box-shadow: 0 4px 12px var(--accent-glow);
-        }
-        .btn-solid:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px var(--accent-glow);
-        }
-        .btn-solid:disabled {
-            background: var(--bg-surface);
-            color: var(--text-low);
-            box-shadow: none; cursor: not-allowed; transform: none;
-        }
+        .btn-neon:hover::before { left: 100%; }
+        .btn-neon:disabled { background: #333; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
 
-        /* --- Workspace Layout --- */
-        .workspace-grid {
+        /* --- Workspace --- */
+        .workspace {
             display: grid;
-            grid-template-columns: 420px 1fr;
-            height: calc(100vh - 64px);
+            grid-template-columns: 480px 1fr;
+            height: calc(100vh - 70px);
             overflow: hidden;
+            position: relative; z-index: 10;
         }
 
-        /* --- Left: Preview --- */
-        .preview-sidebar {
-            background: rgba(2, 6, 23, 0.6);
-            border-left: 1px solid var(--border-dim);
-            position: relative;
+        /* --- Preview (Left) --- */
+        .preview-zone {
+            background: rgba(3, 0, 20, 0.4);
+            border-left: 1px solid var(--border-color);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            backdrop-filter: blur(10px);
+            position: relative;
+            backdrop-filter: blur(5px);
         }
 
-        .preview-label {
-            position: absolute; top: 24px; left: 24px;
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 2px; color: var(--text-low);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .status-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); }
-
-        .device-bezel {
-            width: 340px; height: 680px;
+        .phone-frame {
+            width: 380px; height: 760px;
             background: #000;
-            border-radius: 48px;
+            border-radius: 55px;
             box-shadow: 
-                0 0 0 12px #1e1e1e,
-                0 0 0 13px #333,
-                0 40px 100px -20px rgba(0,0,0,0.8);
+                0 0 0 6px #333, /* Bezel */
+                0 0 0 9px #1a1a1a, /* Frame */
+                0 20px 60px -10px rgba(0,0,0,0.8);
             overflow: hidden;
             display: flex; flex-direction: column;
             position: relative;
-            transform: scale(0.95);
+            transform: scale(0.85);
+            border: 1px solid #333;
         }
         
-        .device-glare {
-            position: absolute; top: 0; left: 0; right: 0; height: 200px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 40%);
-            z-index: 30; pointer-events: none; border-radius: 48px 48px 0 0;
-        }
-
-        .notch {
+        .island {
             position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-            width: 100px; height: 30px; background: #000; border-radius: 20px; z-index: 20;
+            width: 126px; height: 37px; background: #000; border-radius: 20px; z-index: 20;
+            transition: all 0.3s ease;
         }
 
-        .tg-app-header {
-            background: #1c1c1e;
-            padding: 45px 16px 12px;
-            display: flex; align-items: center; gap: 10px;
-            border-bottom: 1px solid #000; z-index: 10;
+        .tg-header {
+            background: #1c1c1e; padding: 50px 20px 15px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #2c2c2e; z-index: 10;
         }
         
-        .tg-chat-area {
+        .tg-body {
             flex: 1; background: #000;
+            /* Authentic Dark Pattern */
             background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%231c1c1e' fill-opacity='0.6' fill-rule='evenodd'/%3E%3C/svg%3E");
-            display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 8px;
+            display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 10px;
         }
 
-        .tg-bubble {
-            background: #2b5278; color: white; padding: 8px 12px;
-            border-radius: 12px; border-top-left-radius: 4px;
-            max-width: 80%; margin: 0 12px 10px; font-size: 13px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.3); line-height: 1.5;
+        .tg-message {
+            background: linear-gradient(135deg, #2b5278, #244263);
+            color: white; padding: 10px 14px;
+            border-radius: 18px; border-top-left-radius: 4px;
+            max-width: 85%; margin: 0 15px 12px; font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        .tg-keyboard-panel {
-            background: #1c1c1e; padding: 6px; min-height: 200px;
-            border-top: 1px solid #000;
+        .tg-kb-wrapper {
+            background: #1c1c1e; padding: 6px; min-height: 240px;
+            border-top: 1px solid #2c2c2e;
         }
 
-        .tg-btn {
-            background: linear-gradient(180deg, #333335 0%, #29292b 100%);
-            color: #fff; border-radius: 6px; margin: 2px;
-            padding: 10px 4px; font-size: 12px; text-align: center;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.5);
+        .tg-btn-render {
+            background: linear-gradient(180deg, #3a3a3c 0%, #2c2c2e 100%);
+            color: #fff; border-radius: 8px; margin: 3px;
+            padding: 12px 4px; font-size: 13px; text-align: center;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.4);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             display: flex; align-items: center; justify-content: center;
             border-top: 1px solid rgba(255,255,255,0.08);
         }
 
-        /* --- Right: Editor --- */
-        .editor-container {
+        /* --- Editor (Right) --- */
+        .editor-zone {
             display: flex; flex-direction: column;
             position: relative; background: transparent;
         }
 
-        .editor-scroll-area {
-            flex: 1; overflow-y: auto; padding: 40px 60px;
+        .editor-scroll {
+            flex: 1; overflow-y: auto; padding: 40px 80px;
         }
 
-        .row-wrapper {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-dim);
+        .row-module {
+            background: rgba(15, 11, 41, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px; margin-bottom: 20px;
+            display: flex; flex-wrap: wrap; gap: 12px;
+            position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+        .row-module:hover {
+            border-color: var(--border-highlight);
+            background: rgba(15, 11, 41, 0.7);
+            box-shadow: 0 10px 40px -10px rgba(124, 58, 237, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .drag-indicator {
+            position: absolute; left: -32px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); cursor: grab; padding: 8px;
+            opacity: 0; transition: 0.2s; font-size: 18px;
+        }
+        .row-module:hover .drag-indicator { opacity: 1; left: -36px; }
+
+        .key-unit {
+            flex: 1; min-width: 140px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 12px; margin-bottom: 16px;
-            display: flex; flex-wrap: wrap; gap: 8px;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-        .row-wrapper:hover {
-            border-color: var(--border-light);
-            background: #252f42; /* Slightly lighter on hover */
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-        }
-
-        .handle-grip {
-            position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
-            color: var(--text-low); cursor: grab; padding: 6px;
-            opacity: 0; transition: 0.2s;
-        }
-        .row-wrapper:hover .handle-grip { opacity: 1; left: -28px; }
-
-        .key-module {
-            flex: 1; min-width: 130px;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-dim);
-            border-radius: 8px;
-            padding: 10px 14px;
+            padding: 14px;
             position: relative; cursor: grab;
-            display: flex; flex-direction: column; gap: 4px;
+            display: flex; flex-direction: column; gap: 6px;
             transition: all 0.2s;
         }
-        .key-module:hover {
-            border-color: var(--accent-primary);
-            background: #131c2e;
+        .key-unit:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
         }
-        .key-module:active { transform: scale(0.98); }
+        .key-unit:active { transform: scale(0.98); }
 
-        .key-var-name {
-            font-family: 'Fira Code', monospace; font-size: 12px;
-            color: var(--accent-primary); text-align: right; direction: ltr;
+        .key-code {
+            font-family: 'JetBrains Mono', monospace; font-size: 12px;
+            color: var(--primary); text-align: right; direction: ltr;
+            letter-spacing: -0.5px;
         }
-        .key-translation {
-            font-size: 11px; color: var(--text-med);
+        .key-name {
+            font-size: 12px; color: var(--text-muted);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 500;
         }
 
-        .module-actions {
-            position: absolute; top: 6px; left: 6px;
-            display: flex; gap: 4px; opacity: 0; transition: 0.2s;
+        .unit-actions {
+            position: absolute; top: 8px; left: 8px;
+            display: flex; gap: 6px; opacity: 0; transition: 0.2s;
         }
-        .key-module:hover .module-actions { opacity: 1; }
+        .key-unit:hover .unit-actions { opacity: 1; }
 
-        .icon-btn {
-            width: 20px; height: 20px; border-radius: 4px;
-            background: rgba(255,255,255,0.05); color: var(--text-high);
+        .action-dot {
+            width: 24px; height: 24px; border-radius: 8px;
+            background: rgba(255,255,255,0.05); color: var(--text-main);
             display: flex; align-items: center; justify-content: center;
-            font-size: 10px; cursor: pointer; backdrop-filter: blur(4px);
+            font-size: 11px; cursor: pointer; backdrop-filter: blur(4px);
+            transition: 0.2s;
         }
-        .icon-btn:hover { background: var(--accent-primary); color: white; }
-        .icon-btn.del:hover { background: var(--danger); }
+        .action-dot:hover { background: var(--primary); color: white; }
+        .action-dot.del:hover { background: #ef4444; }
 
-        /* Add Button in Row */
-        .add-in-row {
-            width: 40px; border: 1px dashed var(--border-light);
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            color: var(--text-low); cursor: pointer; transition: 0.2s;
+        /* Add Button */
+        .add-unit {
+            width: 45px; border: 1px dashed var(--text-muted);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); cursor: pointer; transition: 0.2s; opacity: 0.5;
         }
-        .add-in-row:hover {
-            border-color: var(--accent-primary); color: var(--accent-primary);
-            background: rgba(59, 130, 246, 0.05);
+        .add-unit:hover {
+            border-color: var(--primary); color: var(--primary); opacity: 1; background: rgba(139, 92, 246, 0.1);
         }
 
-        /* Delete Row Button */
-        .delete-row-bar {
-            width: 100%; text-align: center; font-size: 11px; color: var(--danger);
-            padding: 6px; border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 6px;
-            cursor: pointer; transition: 0.2s; background: rgba(239, 68, 68, 0.02);
-        }
-        .delete-row-bar:hover { background: rgba(239, 68, 68, 0.1); }
-
-        /* Floating Add Row */
-        .fab-add {
-            width: 100%; padding: 18px; margin-top: 20px;
-            border: 2px dashed var(--border-dim); border-radius: 12px;
-            color: var(--text-med); font-weight: 600; font-size: 14px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+        /* Main Add Button */
+        .add-row-fab {
+            width: 100%; padding: 20px; margin-top: 30px;
+            border: 2px dashed var(--border-color); border-radius: 16px;
+            color: var(--text-muted); font-weight: 600; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
             cursor: pointer; transition: 0.2s;
         }
-        .fab-add:hover {
-            border-color: var(--accent-primary); color: var(--accent-primary);
-            background: rgba(59, 130, 246, 0.05); transform: translateY(-2px);
+        .add-row-fab:hover {
+            border-color: var(--primary); color: var(--primary);
+            background: rgba(139, 92, 246, 0.05); transform: translateY(-2px);
         }
 
+        /* Delete Row Strip */
+        .delete-strip {
+            width: 100%; text-align: center; font-size: 11px; color: #ef4444;
+            padding: 8px; border-radius: 8px; margin-top: 8px;
+            cursor: pointer; transition: 0.2s; opacity: 0; height: 0; overflow: hidden;
+        }
+        .row-module:hover .delete-strip { opacity: 0.6; height: auto; margin-top: 8px; }
+        .delete-strip:hover { opacity: 1; background: rgba(239, 68, 68, 0.1); }
+
         @media (max-width: 1024px) {
-            .workspace-grid { grid-template-columns: 1fr; }
-            .preview-sidebar { display: none; }
-            .editor-scroll-area { padding: 20px; }
+            .workspace { grid-template-columns: 1fr; }
+            .preview-zone { display: none; }
+            .editor-scroll { padding: 30px; }
         }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <header class="studio-header">
-        <div class="brand-pill">
-            <i class="fa-solid fa-code brand-icon"></i>
-            <span class="brand-text">MirzaBot Studio</span>
+    <header class="cyber-header">
+        <div class="brand-logo">
+            <div class="logo-box">
+                <i class="fa-solid fa-code"></i>
+            </div>
+            <div class="brand-text">
+                <h1>MirzaBot <span style="font-weight: 300; opacity: 0.7;">Studio</span></h1>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <a href="index.php" class="action-button btn-ghost">
+        <div class="header-actions">
+            <a href="index.php" class="btn-glass">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                <span class="hidden sm:inline">خروج</span>
+                <span class="hidden sm:block">خروج</span>
             </a>
-            <a href="keyboard.php?action=reaset" onclick="return confirm('آیا از بازنشانی کامل تنظیمات اطمینان دارید؟')" class="action-button btn-danger-ghost">
+            <a href="keyboard.php?action=reaset" onclick="return confirm('آیا از بازنشانی کامل تنظیمات اطمینان دارید؟')" class="btn-glass" style="color: #f87171; border-color: rgba(248, 113, 113, 0.2);">
                 <i class="fa-solid fa-rotate-right"></i>
             </a>
-            <div class="w-px h-6 bg-slate-700 mx-1"></div>
-            <button onclick="saveKeyboard()" id="btn-save" class="action-button btn-solid" disabled>
+            <button onclick="saveKeyboard()" id="btn-save" class="btn-neon" disabled>
                 <i class="fa-regular fa-floppy-disk"></i>
                 <span>ذخیره تغییرات</span>
             </button>
@@ -430,20 +444,14 @@ try {
     </header>
 
     <!-- Workspace -->
-    <div class="workspace-grid">
+    <div class="workspace">
         
-        <!-- Preview Sidebar -->
-        <div class="preview-sidebar">
-            <div class="preview-label">
-                <div class="status-dot"></div>
-                Live Preview
-            </div>
-            
-            <div class="device-bezel animate__animated animate__fadeInLeft">
-                <div class="device-glare"></div>
-                <div class="notch"></div>
+        <!-- Left: Preview -->
+        <div class="preview-zone">
+            <div class="phone-frame animate__animated animate__fadeInLeft">
+                <div class="island"></div>
                 
-                <div class="tg-app-header">
+                <div class="tg-header">
                     <i class="fa-solid fa-arrow-right text-gray-400"></i>
                     <div class="flex-1">
                         <div class="text-white font-bold text-sm">Mirza Bot</div>
@@ -452,27 +460,27 @@ try {
                     <i class="fa-solid fa-ellipsis-vertical text-gray-400"></i>
                 </div>
 
-                <div class="tg-chat-area">
-                    <div class="tg-bubble">
-                        تغییرات شما به صورت زنده اینجا اعمال می‌شود. 👇
+                <div class="tg-body">
+                    <div class="tg-message">
+                        منوی ربات به صورت زنده در حال ویرایش است. 👇
                     </div>
                 </div>
 
-                <div id="preview-render" class="tg-keyboard-panel flex flex-col justify-end">
-                    <!-- Buttons will render here -->
+                <div id="preview-render" class="tg-kb-wrapper flex flex-col justify-end">
+                    <!-- Buttons Render Here -->
                 </div>
             </div>
         </div>
 
-        <!-- Editor Container -->
-        <div class="editor-container">
-            <div class="editor-scroll-area">
-                <div id="editor-render" class="max-w-4xl mx-auto pb-8">
-                    <!-- Rows will render here -->
+        <!-- Right: Editor -->
+        <div class="editor-zone">
+            <div class="editor-scroll">
+                <div id="editor-render" class="max-w-5xl mx-auto pb-8">
+                    <!-- Rows Render Here -->
                 </div>
                 
-                <div class="max-w-4xl mx-auto pb-24">
-                    <div onclick="addRow()" class="fab-add">
+                <div class="max-w-5xl mx-auto pb-24">
+                    <div onclick="addRow()" class="add-row-fab">
                         <i class="fa-solid fa-plus text-lg"></i>
                         افزودن سطر جدید
                     </div>
@@ -484,7 +492,7 @@ try {
 
     <!-- Application Logic -->
     <script>
-        // دیکشنری هوشمند: تبدیل کدهای فنی به متن فارسی برای نمایش
+        // دیکشنری هوشمند برای ترجمه کدهای فنی
         const translations = {
             'text_sell': '🛍 خرید سرویس',
             'text_extend': '🔄 تمدید سرویس',
@@ -502,20 +510,20 @@ try {
         let keyboardData = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
         if (!Array.isArray(keyboardData)) keyboardData = [];
         
-        let initialSnapshot = JSON.stringify(keyboardData); // برای تشخیص تغییرات
+        let initialSnapshot = JSON.stringify(keyboardData);
 
         // DOM Elements
         const editorEl = document.getElementById('editor-render');
         const previewEl = document.getElementById('preview-render');
         const saveBtn = document.getElementById('btn-save');
 
-        // Config SweetAlert
+        // Config SweetAlert Pro
         const SwalPro = Swal.mixin({
-            background: '#0f172a',
-            color: '#f1f5f9',
-            confirmButtonColor: '#3b82f6',
+            background: '#0f0b29',
+            color: '#e2e8f0',
+            confirmButtonColor: '#8b5cf6',
             cancelButtonColor: '#ef4444',
-            customClass: { popup: 'border border-slate-700 rounded-2xl' }
+            customClass: { popup: 'border border-[#7c3aed] border-opacity-20 rounded-2xl' }
         });
 
         // --- Core Functions ---
@@ -526,56 +534,58 @@ try {
             checkChanges();
         }
 
-        // رندر ویرایشگر
         function renderEditor() {
             editorEl.innerHTML = '';
             
             if (keyboardData.length === 0) {
                 editorEl.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-24 opacity-25 select-none text-slate-400">
-                        <i class="fa-solid fa-layer-group text-6xl mb-4"></i>
-                        <p class="text-lg font-light">هیچ دکمه‌ای وجود ندارد</p>
+                    <div class="flex flex-col items-center justify-center py-32 opacity-20 select-none text-white">
+                        <i class="fa-solid fa-layer-group text-7xl mb-6"></i>
+                        <p class="text-xl font-light tracking-wide">هیچ دکمه‌ای وجود ندارد</p>
                     </div>`;
             }
 
             keyboardData.forEach((row, rIdx) => {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'row-wrapper animate__animated animate__fadeIn';
+                rowDiv.className = 'row-module animate__animated animate__fadeIn';
                 
-                // هندل درگ
-                rowDiv.innerHTML += `<div class="handle-grip"><i class="fa-solid fa-grip-vertical text-lg"></i></div>`;
+                // Drag Indicator
+                rowDiv.innerHTML += `<div class="drag-indicator"><i class="fa-solid fa-grip-vertical"></i></div>`;
 
                 row.forEach((btn, bIdx) => {
                     const label = translations[btn.text] || 'دکمه سفارشی';
                     const keyDiv = document.createElement('div');
-                    keyDiv.className = 'key-module';
+                    keyDiv.className = 'key-unit';
                     keyDiv.innerHTML = `
-                        <div class="key-var-name" title="${btn.text}">${btn.text}</div>
-                        <div class="key-translation">${label}</div>
-                        <div class="module-actions">
-                            <div class="icon-btn" onclick="editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
-                            <div class="icon-btn del" onclick="deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
+                        <div class="key-code" title="${btn.text}">${btn.text}</div>
+                        <div class="key-name">${label}</div>
+                        <div class="unit-actions">
+                            <div class="action-dot" onclick="editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
+                            <div class="action-dot del" onclick="deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
                         </div>
                     `;
                     rowDiv.appendChild(keyDiv);
                 });
 
-                // دکمه افزودن (+) داخل سطر
+                // Add Button inside Row
                 if (row.length < 8) {
                     const addBtn = document.createElement('div');
-                    addBtn.className = 'add-in-row';
+                    addBtn.className = 'add-unit';
                     addBtn.innerHTML = '<i class="fa-solid fa-plus text-xs"></i>';
                     addBtn.onclick = () => addKeyToRow(rIdx);
                     rowDiv.appendChild(addBtn);
                 }
 
-                // دکمه حذف سطر خالی
+                // Delete Row Strip
                 if (row.length === 0) {
-                    const delRow = document.createElement('div');
-                    delRow.className = 'delete-row-bar';
-                    delRow.innerHTML = '<i class="fa-solid fa-trash-can ml-1"></i> حذف سطر خالی';
-                    delRow.onclick = () => deleteRow(rIdx);
-                    rowDiv.appendChild(delRow);
+                    const delStrip = document.createElement('div');
+                    delStrip.className = 'w-full text-center text-red-400 text-xs py-2 cursor-pointer hover:bg-red-500/10 rounded border border-dashed border-red-500/20';
+                    delStrip.innerHTML = 'حذف سطر خالی';
+                    delStrip.onclick = () => deleteRow(rIdx);
+                    rowDiv.appendChild(delStrip);
+                } else {
+                    // Hidden delete option for populated rows (optional UX)
+                    // For now, simpler is better.
                 }
 
                 editorEl.appendChild(rowDiv);
@@ -584,7 +594,6 @@ try {
             initSortable();
         }
 
-        // رندر پیش‌نمایش
         function renderPreview() {
             previewEl.innerHTML = '';
             keyboardData.forEach(row => {
@@ -593,8 +602,7 @@ try {
                 
                 row.forEach(btn => {
                     const btnDiv = document.createElement('div');
-                    btnDiv.className = 'tg-btn flex-1 truncate';
-                    // نمایش ترجمه فارسی در پیش‌نمایش
+                    btnDiv.className = 'tg-btn-render flex-1 truncate';
                     btnDiv.innerText = translations[btn.text] || btn.text; 
                     rowDiv.appendChild(btnDiv);
                 });
@@ -603,11 +611,10 @@ try {
             });
         }
 
-        // فعال‌سازی Drag & Drop
         function initSortable() {
-            // جابجایی سطرها
+            // Rows
             new Sortable(editorEl, {
-                animation: 200, handle: '.handle-grip', ghostClass: 'opacity-40',
+                animation: 250, handle: '.drag-indicator', ghostClass: 'opacity-40',
                 onEnd: (evt) => {
                     const item = keyboardData.splice(evt.oldIndex, 1)[0];
                     keyboardData.splice(evt.newIndex, 0, item);
@@ -615,25 +622,23 @@ try {
                 }
             });
 
-            // جابجایی دکمه‌ها
-            document.querySelectorAll('.row-wrapper').forEach(el => {
+            // Keys
+            document.querySelectorAll('.row-module').forEach(el => {
                 new Sortable(el, {
-                    group: 'shared', animation: 200, draggable: '.key-module', ghostClass: 'opacity-40',
+                    group: 'shared', animation: 200, draggable: '.key-unit', ghostClass: 'opacity-40',
                     onEnd: () => rebuildData() 
                 });
             });
         }
 
-        // بازسازی دیتا از روی DOM
         function rebuildData() {
             const newData = [];
-            const rows = editorEl.querySelectorAll('.row-wrapper');
+            const rows = editorEl.querySelectorAll('.row-module');
             rows.forEach(row => {
                 const btns = [];
-                row.querySelectorAll('.key-var-name').forEach(el => {
+                row.querySelectorAll('.key-code').forEach(el => {
                     btns.push({ text: el.innerText });
                 });
-                // اگر سطر دارای دکمه یا دکمه افزودن است
                 if (btns.length > 0 || row.querySelector('.fa-plus')) {
                     newData.push(btns);
                 }
@@ -642,7 +647,7 @@ try {
             render();
         }
 
-        // --- اکشن‌ها ---
+        // --- Logic ---
 
         function checkChanges() {
             const current = JSON.stringify(keyboardData);
@@ -660,7 +665,7 @@ try {
         function addRow() {
             keyboardData.push([{text: 'text_new'}]);
             render();
-            setTimeout(() => document.querySelector('.editor-scroll-area').scrollTop = 9999, 50);
+            setTimeout(() => document.querySelector('.editor-scroll').scrollTo({ top: 9999, behavior: 'smooth' }), 50);
         }
 
         function deleteRow(idx) {
@@ -675,7 +680,7 @@ try {
                 inputValue: 'text_new',
                 inputLabel: 'کد متغیر (انگلیسی)',
                 showCancelButton: true,
-                confirmButtonText: 'تایید'
+                confirmButtonText: 'افزودن'
             });
             if (text) {
                 keyboardData[rIdx].push({text});
@@ -720,7 +725,7 @@ try {
                     checkChanges();
                     const Toast = Swal.mixin({
                         toast: true, position: 'top-end', showConfirmButton: false, 
-                        timer: 3000, background: '#0f172a', color: '#fff'
+                        timer: 3000, background: '#0f0b29', color: '#fff'
                     });
                     Toast.fire({icon: 'success', title: 'با موفقیت ذخیره شد'});
                 }
@@ -731,7 +736,7 @@ try {
             });
         }
 
-        // شروع
+        // Start
         render();
 
     </script>
