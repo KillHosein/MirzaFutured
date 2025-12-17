@@ -635,15 +635,19 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-box-open"></i></div>
                 <span class="dock-label">محصولات</span>
             </a>
-            <a href="server_status.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <span class="dock-label">ادمین</span>
+            <a href="service.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-server"></i></div>
+                <span class="dock-label">سرویس‌ها</span>
+            </a>
+            <div class="dock-divider"></div>
+            <a href="cancelService.php" class="dock-item" style="color: var(--neon-red);">
+                <div class="dock-icon"><i class="fa-solid fa-ban"></i></div>
+                <span class="dock-label">مسدود</span>
             </a>
             <a href="payment.php" class="dock-item">
                 <div class="dock-icon"><i class="fa-solid fa-credit-card"></i></div>
                 <span class="dock-label">مالی</span>
             </a>
-            <div class="dock-divider"></div>
             <a href="inbound.php" class="dock-item">
                 <div class="dock-icon"><i class="fa-solid fa-network-wired"></i></div>
                 <span class="dock-label">کانفیگ</span>
