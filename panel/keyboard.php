@@ -21,11 +21,9 @@ $inputData = json_decode($inputJSON, true);
 $method = $_SERVER['REQUEST_METHOD'];
 
 if($method == "POST" && !empty($inputData)){
-    // اگر داده‌ها آرایه‌ای از سطرها باشند (فرمت استاندارد کیبورد تلگرام)
     $keyboardStructure = ['keyboard' => $inputData];
     update("setting", "keyboardmain", json_encode($keyboardStructure), null, null);
     
-    // ارسال پاسخ موفقیت به JS
     header('Content-Type: application/json');
     echo json_encode(['status' => 'success', 'message' => 'کیبورد با موفقیت ذخیره شد']);
     exit;
@@ -39,14 +37,10 @@ if(isset($_GET['action']) && $_GET['action'] == "reaset"){
     exit;
 }
 
-// تلاش برای دریافت کیبورد فعلی از دیتابیس برای نمایش در ویرایشگر
-// فرضیه: در جدول setting ستونی به نام keyboardmain یا مشابه وجود دارد که update آن را پر می‌کند
+// دریافت کیبورد فعلی
 $currentKeyboardJSON = '[]';
 try {
-    // با توجه به تابع update شما، سعی می‌کنیم مقدار را بخوانیم
-    // اگر تابع get_option یا مشابه دارید بهتر است از آن استفاده کنید. 
-    // اینجا یک کوئری عمومی می‌زنیم
-    $stmt = $pdo->prepare("SELECT * FROM setting LIMIT 1"); // معمولاً تنظیمات در یک سطر یا با کلید مشخص هستند
+    $stmt = $pdo->prepare("SELECT * FROM setting LIMIT 1");
     $stmt->execute();
     $settings = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -56,12 +50,10 @@ try {
             $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
     } else {
-         // استفاده از مقدار پیش‌فرض اگر دیتابیس خالی بود
          $def = json_decode('{"keyboard":[[{"text":"text_sell"},{"text":"text_extend"}],[{"text":"text_usertest"},{"text":"text_wheel_luck"}],[{"text":"text_Purchased_services"},{"text":"accountwallet"}],[{"text":"text_affiliates"},{"text":"text_Tariff_list"}],[{"text":"text_support"},{"text":"text_help"}]]}', true);
          $currentKeyboardJSON = json_encode($def['keyboard']);
     }
 } catch (Exception $e) {
-    // در صورت خطا، یک آرایه خالی یا پیش‌فرض
     $currentKeyboardJSON = '[]'; 
 }
 ?>
@@ -71,115 +63,165 @@ try {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>مدیریت چیدمان کیبورد | ربات میرزا</title>
-    <!-- Tailwind CSS -->
+    <title>مدیریت کیبورد | ربات میرزا</title>
+    <!-- Tailwind CSS (برای چیدمان) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Persian Font (Vazirmatn) -->
+    <!-- Font (Using Vazir as Yekan replacement for online preview) -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-    <!-- SweetAlert2 for nice alerts -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
+        /* استایل‌های تم اختصاصی */
+        @font-face {
+            font-family: 'yekan';
+            src: url('fonts/Vazir.eot'); /* مسیر فرضی */
+            /* استفاده از فونت آنلاین اگر لوکال نبود */
+            font-family: 'Vazirmatn'; 
+        }
+
         body {
-            font-family: 'Vazirmatn', sans-serif;
-            background-color: #f3f4f6;
+            font-family: 'Vazirmatn', 'yekan', sans-serif;
+            background-color: #f0f0f0;
         }
-        .keyboard-btn {
-            transition: all 0.2s;
+
+        /* دکمه‌های اصلی پنل قدیمی */
+        .btnback {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #3d3d3d;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+            border: none;
+            transition: background 0.3s;
         }
-        .keyboard-btn:hover {
-            transform: translateY(-2px);
+        .btnback:hover {
+            background-color: #555;
         }
-        /* Telegram Button Style Mockup */
+
+        .btndefult {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #fff;
+            border: 2px solid #3d3d3d;
+            color: #3d3d3d;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btndefult:hover {
+            background-color: #3d3d3d;
+            color: #fff;
+        }
+
+        /* استایل تلگرام */
+        .telegram-header {
+            background-color: #517da2; /* رنگ هدر تلگرام */
+            color: white;
+        }
+        
         .telegram-btn {
             background-color: #fff;
             color: #000;
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            min-height: 48px;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            min-height: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
             position: relative;
             cursor: pointer;
-            border: 2px solid transparent;
+            border: 1px solid #ddd;
         }
         .telegram-btn:hover {
-            border-color: #3b82f6;
+            background-color: #f5f5f5;
         }
+        
         .delete-btn {
             position: absolute;
-            top: -8px;
-            left: -8px;
-            background: #ef4444;
+            top: -5px;
+            left: -5px;
+            background: #d32f2f;
             color: white;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 12px;
             opacity: 0;
             transition: opacity 0.2s;
+            z-index: 10;
         }
         .telegram-btn:hover .delete-btn {
             opacity: 1;
         }
+
+        /* دکمه ذخیره شناور */
+        .save-float-btn {
+            background-color: #3d3d3d;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .save-float-btn:hover {
+            background-color: #222;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-20">
+<body class="pb-20">
 
-    <!-- Navbar -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-4">
-                    <h1 class="text-xl font-bold text-gray-800">چیدمان کیبورد ربات</h1>
-                </div>
-                <div class="flex gap-2">
-                    <a href="index.php" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm transition">بازگشت</a>
-                    <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟ تمام تغییرات حذف می‌شود.')" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg text-sm transition">بازگشت به پیش‌فرض</a>
-                </div>
+    <!-- Header / Nav Actions -->
+    <div class="bg-white shadow-sm p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-lg font-bold text-gray-700">مدیریت کیبورد</h1>
+            <div class="flex gap-3">
+                <a href="index.php" class="btnback">بازگشت به پنل</a>
+                <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟')" class="btndefult">پیش‌فرض</a>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="max-w-md mx-auto mt-10 px-4">
+    <div class="max-w-md mx-auto mt-6 px-2">
         
-        <!-- Preview Area (Mobile Simulator) -->
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200" style="min-height: 600px; display: flex; flex-direction: column;">
+        <!-- Preview Container -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-300" style="min-height: 550px; display: flex; flex-direction: column;">
             <!-- Header -->
-            <div class="bg-indigo-600 p-4 text-white flex items-center justify-between">
+            <div class="telegram-header p-3 flex items-center justify-between">
                 <span>Mirza Bot</span>
-                <span class="text-xs opacity-75">bot</span>
+                <span class="text-xs opacity-80">bot</span>
             </div>
             
-            <!-- Chat Area (Placeholder) -->
-            <div class="flex-1 bg-[#87aadd] p-4 opacity-50 flex items-center justify-center">
-                <p class="text-white text-sm text-center">فضای چت<br>(پیش‌نمایش کیبورد در پایین)</p>
+            <!-- Chat Area -->
+            <div class="flex-1 bg-[#d7e3ec] p-4 flex items-center justify-center bg-opacity-60" style="background-image: url('https://web.telegram.org/img/bg_patter.png'); background-size: contain;">
+                <p class="text-gray-500 text-sm bg-white/50 px-3 py-1 rounded-full">پیش‌نمایش کیبورد</p>
             </div>
 
             <!-- Keyboard Area -->
             <div class="bg-[#f0f2f5] p-2 border-t border-gray-300">
-                <div id="keyboard-container" class="space-y-2">
-                    <!-- Rows will be injected here -->
+                <div id="keyboard-container" class="space-y-2 mb-2">
+                    <!-- Rows injected via JS -->
                 </div>
 
                 <!-- Add Row Button -->
-                <button onclick="addRow()" class="w-full mt-3 py-2 border-2 border-dashed border-gray-400 text-gray-500 rounded-lg hover:bg-gray-100 hover:border-gray-500 transition flex items-center justify-center gap-2 text-sm font-medium">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    افزودن سطر جدید
+                <button onclick="addRow()" class="w-full py-2 border border-dashed border-gray-400 text-gray-500 rounded hover:bg-gray-100 transition text-sm">
+                    + افزودن سطر جدید
                 </button>
             </div>
         </div>
 
-        <!-- Save Button -->
-        <div class="fixed bottom-6 left-0 right-0 px-4 flex justify-center">
-            <button onclick="saveKeyboard()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform hover:scale-105 transition flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                ذخیره تغییرات
+        <!-- Save Button Footer -->
+        <div class="fixed bottom-6 left-0 right-0 px-4 flex justify-center z-40">
+            <button onclick="saveKeyboard()" class="save-float-btn py-3 px-12 text-lg flex items-center gap-2">
+                <span>ذخیره تغییرات</span>
             </button>
         </div>
 
@@ -187,10 +229,8 @@ try {
 
     <!-- Script -->
     <script>
-        // Load initial data from PHP
         let keyboardRows = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
 
-        // Ensure structure is correct
         if (!Array.isArray(keyboardRows)) {
             keyboardRows = [];
         }
@@ -202,34 +242,30 @@ try {
             
             keyboardRows.forEach((row, rowIndex) => {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'flex gap-2 w-full';
+                rowDiv.className = 'flex gap-1 w-full'; // gap reduced for tighter look
                 
-                // Add buttons in this row
                 row.forEach((btn, btnIndex) => {
                     const btnEl = document.createElement('div');
                     btnEl.className = 'telegram-btn flex-1';
                     btnEl.innerHTML = `
-                        <span onclick="editButton(${rowIndex}, ${btnIndex})">${btn.text}</span>
+                        <span onclick="editButton(${rowIndex}, ${btnIndex})" class="w-full text-center truncate px-1">${btn.text}</span>
                         <div class="delete-btn" onclick="deleteButton(${rowIndex}, ${btnIndex})">×</div>
                     `;
                     rowDiv.appendChild(btnEl);
                 });
 
-                // "Add Button" placeholder for this row
-                if (row.length < 8) { // Max 8 buttons per row limit for safety
+                if (row.length < 8) {
                     const addBtn = document.createElement('button');
-                    addBtn.className = 'w-8 flex items-center justify-center text-gray-400 hover:text-indigo-600 text-xl font-bold';
+                    addBtn.className = 'w-8 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded flex items-center justify-center font-bold text-lg ml-1';
                     addBtn.innerHTML = '+';
                     addBtn.onclick = () => addButton(rowIndex);
-                    addBtn.title = "افزودن دکمه به این سطر";
                     rowDiv.appendChild(addBtn);
                 }
 
-                // Row Delete Action (if needed, simplified here to just clearing if empty)
                 if (row.length === 0) {
                      const emptyMsg = document.createElement('div');
-                     emptyMsg.className = 'text-xs text-gray-400 w-full text-center py-2 cursor-pointer hover:text-red-500';
-                     emptyMsg.innerText = 'حذف سطر خالی';
+                     emptyMsg.className = 'text-xs text-red-400 w-full text-center py-1 cursor-pointer';
+                     emptyMsg.innerText = '[حذف سطر خالی]';
                      emptyMsg.onclick = () => deleteRow(rowIndex);
                      rowDiv.appendChild(emptyMsg);
                 }
@@ -239,7 +275,7 @@ try {
         }
 
         function addRow() {
-            keyboardRows.push([{text: 'دکمه جدید'}]);
+            keyboardRows.push([{text: 'دکمه'}]);
             render();
         }
 
@@ -250,13 +286,13 @@ try {
 
         async function addButton(rowIndex) {
             const { value: text } = await Swal.fire({
-                title: 'نام دکمه جدید',
+                title: 'نام دکمه',
                 input: 'text',
-                inputLabel: 'متن دکمه را وارد کنید',
                 inputValue: 'دکمه جدید',
-                showCancelButton: true,
-                confirmButtonText: 'افزودن',
-                cancelButtonText: 'لغو'
+                confirmButtonColor: '#3d3d3d',
+                confirmButtonText: 'تایید',
+                cancelButtonText: 'لغو',
+                showCancelButton: true
             });
 
             if (text) {
@@ -267,9 +303,6 @@ try {
 
         function deleteButton(rowIndex, btnIndex) {
             keyboardRows[rowIndex].splice(btnIndex, 1);
-            if(keyboardRows[rowIndex].length === 0) {
-                // Optional: Auto remove empty row? Let's keep it manual or show 'empty row' msg
-            }
             render();
         }
 
@@ -277,12 +310,13 @@ try {
             const currentText = keyboardRows[rowIndex][btnIndex].text;
             
             const { value: text } = await Swal.fire({
-                title: 'ویرایش نام دکمه',
+                title: 'ویرایش نام',
                 input: 'text',
                 inputValue: currentText,
-                showCancelButton: true,
+                confirmButtonColor: '#3d3d3d',
                 confirmButtonText: 'ذخیره',
-                cancelButtonText: 'لغو'
+                cancelButtonText: 'لغو',
+                showCancelButton: true
             });
 
             if (text) {
@@ -292,14 +326,11 @@ try {
         }
 
         function saveKeyboard() {
-            // Filter out empty rows just in case
             const cleanData = keyboardRows.filter(row => row.length > 0);
 
             fetch('keyboard.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(cleanData)
             })
             .then(response => response.json())
@@ -307,30 +338,21 @@ try {
                 if(data.status === 'success') {
                     Swal.fire({
                         icon: 'success',
-                        title: 'عالی!',
-                        text: 'تغییرات کیبورد با موفقیت ذخیره شد.',
-                        timer: 2000,
+                        title: 'ذخیره شد',
+                        confirmButtonColor: '#3d3d3d',
+                        timer: 1500,
                         showConfirmButton: false
                     });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'خطا',
-                        text: 'مشکلی در ذخیره پیش آمد.'
-                    });
+                    Swal.fire({icon: 'error', title: 'خطا'});
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'خطا',
-                    text: 'ارتباط با سرور برقرار نشد.'
-                });
+                Swal.fire({icon: 'error', title: 'خطا در ارتباط'});
             });
         }
 
-        // Initial Render
         render();
     </script>
 </body>
