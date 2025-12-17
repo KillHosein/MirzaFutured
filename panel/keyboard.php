@@ -1,62 +1,44 @@
 <?php
 /**
- * Keyboard Editor - Ultimate Pro Version
- * Self Contained - No external local JS required.
+ * Keyboard Editor - Self Contained Version
+ * No external JS files required.
  */
 
 session_start();
-
-// 1. Load Configurations
+// تنظیم مسیرهای فایل‌های کانفیگ با توجه به ساختار پوشه‌ها
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../jdf.php';
 require_once __DIR__ . '/../function.php';
 
-// 2. Authentication Check
-if (!isset($_SESSION["user"])) {
+// 1. بررسی لاگین بودن ادمین
+$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+$query->execute();
+$result = $query->fetch(PDO::FETCH_ASSOC);
+
+if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
     exit;
 }
 
-try {
-    $authStmt = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $authStmt->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-    $authStmt->execute();
-    $adminRow = $authStmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$adminRow) {
-        header('Location: login.php');
-        exit;
-    }
-} catch (Exception $e) {
-    die("Database Error: " . $e->getMessage());
-}
-
-// Keep invoice query to prevent header errors if used globally
-try {
-    $invoiceStmt = $pdo->prepare("SELECT * FROM invoice");
-    $invoiceStmt->execute();
-    $listinvoice = $invoiceStmt->fetchAll();
-} catch (Exception $e) { /* Ignore */ }
-
-
-// 3. API Handler (Save Logic)
+// 2. مدیریت درخواست‌های ذخیره‌سازی (AJAX POST)
+$inputJSON = file_get_contents("php://input");
+$inputData = json_decode($inputJSON, true);
 $method = $_SERVER['REQUEST_METHOD'];
-if ($method === 'POST') {
-    $inputJSON = file_get_contents("php://input");
-    $inputData = json_decode($inputJSON, true);
 
-    if (is_array($inputData)) {
-        $keyboardStruct = ['keyboard' => $inputData];
-        update("setting", "keyboardmain", json_encode($keyboardStruct, JSON_UNESCAPED_UNICODE), null, null);
-        
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'success', 'ts' => time()]);
-        exit;
-    }
+if($method == "POST" && is_array($inputData)){
+    // ساختار استاندارد کیبورد تلگرام
+    $keyboardStruct = ['keyboard' => $inputData];
+    // ذخیره در دیتابیس
+    update("setting", "keyboardmain", json_encode($keyboardStruct, JSON_UNESCAPED_UNICODE), null, null);
+    
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'success']);
+    exit;
 }
 
-// 4. Reset Logic
-if (isset($_GET['action']) && $_GET['action'] === 'reaset') {
+// 3. مدیریت درخواست ریست (GET)
+if(isset($_GET['action']) && $_GET['action'] == "reaset"){
     $defaultKeyboard = json_encode([
         "keyboard" => [
             [["text" => "text_sell"], ["text" => "text_extend"]],
@@ -72,21 +54,21 @@ if (isset($_GET['action']) && $_GET['action'] === 'reaset') {
     exit;
 }
 
-// 5. Fetch Current Data
+// 4. دریافت اطلاعات فعلی برای نمایش در ویرایشگر
 $currentKeyboardJSON = '[]';
 try {
-    $stmt = $pdo->prepare("SELECT keyboardmain FROM setting LIMIT 1");
+    $stmt = $pdo->prepare("SELECT * FROM setting LIMIT 1");
     $stmt->execute();
     $settings = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($settings && !empty($settings['keyboardmain'])) {
+    if($settings && isset($settings['keyboardmain'])) {
         $decoded = json_decode($settings['keyboardmain'], true);
-        if (isset($decoded['keyboard'])) {
+        if(isset($decoded['keyboard'])) {
             $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
     }
     
-    // Fallback if DB is empty
+    // اگر دیتابیس خالی بود یا فرمت اشتباه بود، مقدار پیش‌فرض را لود کن
     if ($currentKeyboardJSON == '[]' || $currentKeyboardJSON == 'null') {
          $def = [
             "keyboard" => [
@@ -109,68 +91,52 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استودیو طراحی کیبورد | MirzaBot</title>
+    <title>استودیو کیبورد | MirzaBot</title>
     
-    <!-- Libraries -->
+    <!-- CDN Libraries (No local files needed) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Fonts & Icons -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
-        /* --- DESIGN SYSTEM: LUMINOUS DARK --- */
+        /* --- Studio Theme (Obsidian) --- */
         :root {
-            /* Backgrounds */
-            --bg-void: #030014;
-            --bg-panel: #0b0b1e;
-            --bg-surface: #13132b;
-            --glass-surface: rgba(19, 19, 43, 0.6);
-            
-            /* Borders */
-            --border-dim: rgba(255, 255, 255, 0.05);
-            --border-light: rgba(255, 255, 255, 0.1);
-            
-            /* Accents */
-            --primary: #6366f1; /* Indigo */
-            --primary-glow: rgba(99, 102, 241, 0.4);
-            --secondary: #a855f7; /* Purple */
+            --bg-deep: #020617;       
+            --bg-panel: #0f172a;      
+            --bg-surface: #1e293b;    
+            --border-dim: #334155;    
+            --border-light: #475569;  
+            --accent-primary: #3b82f6; 
+            --accent-hover: #2563eb;   
+            --text-high: #f1f5f9;     
+            --text-med: #94a3b8;      
             --danger: #ef4444;
-            
-            /* Text */
-            --txt-main: #f8fafc;
-            --txt-muted: #94a3b8;
-            
-            /* Effects */
-            --blur: blur(24px);
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-void);
-            color: var(--txt-main);
+            background-color: var(--bg-deep);
+            color: var(--text-high);
             height: 100vh;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            /* Enhanced Background */
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
+                linear-gradient(var(--border-dim) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
-        /* --- UI COMPONENTS --- */
-
-        /* 1. Header */
-        .glass-header {
-            height: 70px;
-            background: rgba(3, 0, 20, 0.7);
-            backdrop-filter: var(--blur);
-            border-bottom: 1px solid var(--border-light);
+        /* --- Header --- */
+        .studio-header {
+            height: 64px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-dim);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -178,250 +144,209 @@ try {
             z-index: 50;
         }
 
-        .brand-badge {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 6px 14px;
-            border-radius: 12px;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .brand-icon { color: #818cf8; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5)); }
-
-        .btn-modern {
-            height: 38px; padding: 0 18px; border-radius: 10px;
-            font-size: 13px; font-weight: 500; cursor: pointer;
-            display: flex; align-items: center; gap: 8px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .action-button {
+            height: 36px; padding: 0 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; transition: 0.2s;
             border: 1px solid transparent;
         }
-        .btn-ghost { color: var(--txt-muted); background: transparent; border-color: var(--border-dim); }
-        .btn-ghost:hover { background: rgba(255,255,255,0.05); color: white; border-color: var(--border-light); }
-        
-        .btn-danger { color: #f87171; background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
+        .btn-ghost { color: var(--text-med); background: transparent; border: 1px solid var(--border-dim); }
+        .btn-ghost:hover { background: var(--bg-surface); color: var(--text-high); }
+        .btn-danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+        .btn-danger:hover { background: rgba(239,68,68,0.1); }
+        .btn-solid { background: var(--accent-primary); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn-solid:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-solid:disabled { background: var(--bg-surface); color: var(--text-med); box-shadow: none; cursor: not-allowed; }
 
-        .btn-glow {
-            background: var(--primary); color: white; border: none;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
-            position: relative; overflow: hidden;
-        }
-        .btn-glow::after {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
-            transform: translateX(-100%); transition: 0.5s;
-        }
-        .btn-glow:hover { transform: translateY(-1px); box-shadow: 0 0 25px rgba(99, 102, 241, 0.5); }
-        .btn-glow:hover::after { transform: translateX(100%); }
-        .btn-glow:disabled { background: #1e1e24; color: #52525b; box-shadow: none; cursor: not-allowed; }
-
-        /* 2. Workspace */
-        .workspace { display: flex; flex: 1; overflow: hidden; position: relative; }
-        
-        /* Grid Pattern Overlay */
-        .workspace::before {
-            content: ''; position: absolute; inset: 0;
-            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 40px 40px; pointer-events: none; z-index: 0; opacity: 0.5;
+        /* --- Layout --- */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            height: calc(100vh - 64px);
+            overflow: hidden;
         }
 
-        /* 3. Preview Panel */
+        /* --- Left: Preview --- */
         .preview-sidebar {
-            width: 440px;
-            background: rgba(5, 5, 10, 0.5);
-            border-left: 1px solid var(--border-light);
+            background: rgba(2, 6, 23, 0.6);
+            border-left: 1px solid var(--border-dim);
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            position: relative; z-index: 10;
-            backdrop-filter: blur(10px);
+            position: relative;
         }
 
-        .phone-mockup {
-            width: 350px; height: 700px;
+        .device-bezel {
+            width: 340px; height: 680px;
             background: #000;
             border-radius: 48px;
-            border: 6px solid #1f1f1f;
-            box-shadow: 0 0 0 2px #333, 0 30px 80px rgba(0,0,0,0.8);
+            box-shadow: 0 0 0 12px #1e1e1e, 0 40px 100px -20px rgba(0,0,0,0.8);
             overflow: hidden;
             display: flex; flex-direction: column;
             position: relative;
+            transform: scale(0.9);
         }
         
-        .notch {
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            width: 90px; height: 26px; background: #000; border-radius: 14px; z-index: 20;
+        .tg-app-header {
+            background: #1c1c1e; padding: 45px 16px 12px;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid #000; color: white;
         }
-
-        .tg-header {
-            padding: 40px 16px 12px; background: #1c1c1e;
-            border-bottom: 1px solid #000; display: flex; align-items: center; gap: 10px; color: white;
-        }
-        .tg-body {
-            flex: 1; background: #0f0f0f;
-            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%231a1a1a' fill-opacity='0.5' fill-rule='evenodd'/%3E%3C/svg%3E");
+        
+        .tg-chat-area {
+            flex: 1; background: #0e1621;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%23182533' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
             display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 8px;
         }
-        .tg-bubble {
-            background: #2b5278; color: white; padding: 8px 12px;
-            border-radius: 14px; border-top-left-radius: 4px;
-            max-width: 85%; margin: 0 12px 10px; font-size: 13px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .tg-keys-area {
+
+        .tg-keyboard-panel {
             background: #1c1c1e; padding: 6px; min-height: 200px;
             border-top: 1px solid #000;
         }
-        .tg-key {
-            background: #2b5278; color: white; border-radius: 6px;
-            padding: 10px 4px; margin: 2px; text-align: center; font-size: 12px;
+
+        .tg-btn {
+            background: #2b5278; color: #fff;
+            border-radius: 6px; margin: 2px;
+            padding: 10px 4px; font-size: 12px; text-align: center;
             box-shadow: 0 1px 0 rgba(0,0,0,0.5);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* 4. Editor Panel */
+        /* --- Right: Editor --- */
         .editor-container {
-            flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10;
+            display: flex; flex-direction: column;
+            background: transparent; position: relative;
         }
-        .editor-content { flex: 1; overflow-y: auto; padding: 40px 60px; }
 
-        /* Row Card */
-        .row-card {
-            background: var(--glass-surface);
-            border: 1px solid var(--border-light);
-            border-radius: 16px; padding: 14px; margin-bottom: 20px;
-            display: flex; flex-wrap: wrap; gap: 10px;
-            position: relative; transition: all 0.2s;
-            backdrop-filter: blur(10px);
+        .editor-scroll-area {
+            flex: 1; overflow-y: auto; padding: 40px 60px;
         }
-        .row-card:hover {
-            border-color: rgba(99, 102, 241, 0.4);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            background: rgba(19, 19, 43, 0.8);
+
+        .row-wrapper {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            padding: 12px; margin-bottom: 16px;
+            display: flex; flex-wrap: wrap; gap: 8px;
+            position: relative; transition: 0.2s;
         }
+        .row-wrapper:hover { border-color: var(--border-light); background: #252f42; }
 
         .handle-grip {
-            position: absolute; left: -28px; top: 50%; transform: translateY(-50%);
-            color: var(--txt-muted); cursor: grab; padding: 6px; opacity: 0.5; font-size: 18px;
+            position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
+            color: var(--text-med); cursor: grab; padding: 6px;
         }
-        .row-card:hover .handle-grip { opacity: 1; color: white; }
 
-        /* Key Unit */
-        .key-unit {
-            flex: 1; min-width: 140px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-light);
-            border-radius: 10px; padding: 12px;
+        .key-module {
+            flex: 1; min-width: 130px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            padding: 10px 14px;
             position: relative; cursor: grab;
             display: flex; flex-direction: column; gap: 4px;
-            transition: all 0.2s;
+            transition: 0.2s;
         }
-        .key-unit:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: var(--primary);
-            box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.05);
-        }
+        .key-module:hover { border-color: var(--accent-primary); background: #131c2e; }
 
-        .key-code {
+        .key-var-name {
             font-family: 'JetBrains Mono', monospace; font-size: 12px;
-            color: #a5b4fc; text-align: right; direction: ltr; font-weight: 500;
+            color: var(--accent-primary); text-align: right; direction: ltr;
         }
-        .key-label { font-size: 11px; color: var(--txt-muted); }
+        .key-translation { font-size: 11px; color: var(--text-med); }
 
-        .key-actions {
-            position: absolute; top: 6px; left: 6px; display: flex; gap: 4px; opacity: 0; transition: 0.2s;
+        .module-actions {
+            position: absolute; top: 6px; left: 6px;
+            display: flex; gap: 4px; opacity: 0; transition: 0.2s;
         }
-        .key-unit:hover .key-actions { opacity: 1; }
+        .key-module:hover .module-actions { opacity: 1; }
 
         .icon-btn {
-            width: 22px; height: 22px; border-radius: 6px;
-            background: rgba(0,0,0,0.3); color: white;
+            width: 20px; height: 20px; border-radius: 4px;
+            background: rgba(255,255,255,0.1); color: white;
             display: flex; align-items: center; justify-content: center;
-            font-size: 10px; cursor: pointer; backdrop-filter: blur(4px);
+            font-size: 10px; cursor: pointer;
         }
-        .icon-btn:hover { background: var(--primary); }
+        .icon-btn:hover { background: var(--accent-primary); }
         .icon-btn.del:hover { background: var(--danger); }
 
-        /* Add Button */
-        .add-placeholder {
-            width: 100%; padding: 18px; margin-top: 24px;
-            border: 2px dashed var(--border-light); border-radius: 16px;
-            color: var(--txt-muted); font-weight: 600; font-size: 14px;
+        .fab-add {
+            width: 100%; padding: 18px; margin-top: 20px;
+            border: 2px dashed var(--border-dim); border-radius: 12px;
+            color: var(--text-med); font-weight: 600; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            cursor: pointer; transition: 0.2s;
+            transition: 0.2s;
         }
-        .add-placeholder:hover {
-            border-color: var(--primary); color: var(--primary);
-            background: rgba(99, 102, 241, 0.08);
+        .fab-add:hover { border-color: var(--accent-primary); color: var(--accent-primary); background: rgba(59, 130, 246, 0.05); }
+
+        @media (max-width: 1024px) {
+            .workspace-grid { grid-template-columns: 1fr; }
+            .preview-sidebar { display: none; }
         }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-        @media (max-width: 1024px) { .preview-sidebar { display: none; } }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <header class="glass-header">
-        <div class="brand-badge">
-            <i class="fa-solid fa-layer-group brand-icon"></i>
-            <span class="text-white font-bold text-sm tracking-wide">MIRZABOT <span class="font-light text-indigo-300">STUDIO</span></span>
+    <header class="studio-header">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-code text-white text-xs"></i>
+            </div>
+            <h1 class="font-bold text-sm text-white tracking-wide">MIRZABOT STUDIO</h1>
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="index.php" class="btn-modern btn-ghost">
+            <a href="index.php" class="action-button btn-ghost">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 <span class="hidden sm:block">خروج</span>
             </a>
-            <a href="keyboard.php?action=reaset" onclick="return confirm('تنظیمات ریست شود؟')" class="btn-modern btn-danger">
+            <a href="keyboard.php?action=reaset" onclick="return confirm('تنظیمات به حالت اولیه بازگردد؟')" class="action-button btn-danger">
                 <i class="fa-solid fa-rotate-right"></i>
             </a>
-            <div class="w-px h-6 bg-white/10 mx-1"></div>
-            <button onclick="App.save()" id="btn-save" class="btn-modern btn-glow" disabled>
+            <button onclick="App.save()" id="btn-save" class="action-button btn-solid" disabled>
                 <i class="fa-solid fa-floppy-disk"></i>
                 <span>ذخیره تغییرات</span>
             </button>
         </div>
     </header>
 
-    <!-- Workspace -->
-    <div class="workspace">
+    <!-- Main Workspace -->
+    <div class="workspace-grid">
         
-        <!-- Preview Panel -->
+        <!-- Preview (Left) -->
         <div class="preview-sidebar">
-            <div class="absolute top-6 left-6 text-[10px] font-bold text-indigo-400 uppercase tracking-widest opacity-80">REALTIME PREVIEW</div>
+            <div class="absolute top-6 left-6 text-[10px] font-bold text-gray-500 uppercase tracking-widest">LIVE PREVIEW</div>
             
-            <div class="phone-mockup animate__animated animate__fadeInLeft">
-                <div class="notch"></div>
-                <div class="tg-header">
+            <div class="device-bezel animate__animated animate__fadeInLeft">
+                <div class="tg-app-header">
                     <i class="fa-solid fa-arrow-right text-gray-400"></i>
                     <div class="flex-1 font-bold text-sm text-white">Mirza Bot <span class="text-xs text-blue-400 font-normal">bot</span></div>
                     <i class="fa-solid fa-ellipsis-vertical text-gray-400"></i>
                 </div>
-                <div class="tg-body">
-                    <div class="tg-bubble">
+
+                <div class="tg-chat-area">
+                    <div class="bg-[#2b5278] text-white text-xs px-3 py-2 rounded-xl rounded-tl-sm mx-4 mb-2 max-w-[85%] shadow">
                         پیش‌نمایش زنده منوی ربات 👇
                     </div>
                 </div>
-                <div id="preview-render" class="tg-keys-area flex flex-col justify-end">
-                    <!-- JS Renders Keys -->
+
+                <div id="preview-render" class="tg-keyboard-panel flex flex-col justify-end">
+                    <!-- Buttons will render here -->
                 </div>
             </div>
         </div>
 
-        <!-- Editor Panel -->
+        <!-- Editor (Right) -->
         <div class="editor-container">
-            <div class="editor-content">
+            <div class="editor-scroll-area">
                 <div id="editor-render" class="max-w-4xl mx-auto pb-8">
-                    <!-- JS Renders Rows -->
+                    <!-- Rows will render here -->
                 </div>
                 
                 <div class="max-w-4xl mx-auto pb-24">
-                    <div onclick="App.addRow()" class="add-placeholder">
+                    <div onclick="App.addRow()" class="fab-add">
                         <i class="fa-solid fa-plus text-lg"></i>
                         افزودن سطر جدید
                     </div>
@@ -435,9 +360,10 @@ try {
     <script>
         const App = {
             data: {
+                // دریافت دیتای PHP به صورت امن
                 keyboard: <?php echo $currentKeyboardJSON ?: '[]'; ?>,
                 initialSnapshot: '',
-                // ترجمه کدهای فنی برای نمایش
+                // دیکشنری ترجمه
                 labels: {
                     'text_sell': '🛍 خرید سرویس',
                     'text_extend': '🔄 تمدید سرویس',
@@ -462,7 +388,7 @@ try {
                 if (!Array.isArray(this.data.keyboard)) this.data.keyboard = [];
                 this.data.initialSnapshot = JSON.stringify(this.data.keyboard);
                 
-                // SweetAlert Theme
+                // Initialize SweetAlert Theme
                 this.swal = Swal.mixin({
                     background: '#0b0b1e',
                     color: '#e2e8f0',
@@ -495,17 +421,17 @@ try {
 
                 this.data.keyboard.forEach((row, rIdx) => {
                     const rowEl = document.createElement('div');
-                    rowEl.className = 'row-card animate__animated animate__fadeIn';
+                    rowEl.className = 'row-wrapper animate__animated animate__fadeIn';
                     rowEl.innerHTML = `<div class="handle-grip"><i class="fa-solid fa-grip-vertical"></i></div>`;
 
                     row.forEach((btn, bIdx) => {
                         const label = this.data.labels[btn.text] || 'دکمه سفارشی';
                         const keyEl = document.createElement('div');
-                        keyEl.className = 'key-unit';
+                        keyEl.className = 'key-module';
                         keyEl.innerHTML = `
-                            <div class="key-code" title="${btn.text}">${btn.text}</div>
-                            <div class="key-label">${label}</div>
-                            <div class="key-actions">
+                            <div class="key-var-name" title="${btn.text}">${btn.text}</div>
+                            <div class="key-translation">${label}</div>
+                            <div class="module-actions">
                                 <div class="icon-btn" onclick="App.editKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
                                 <div class="icon-btn del" onclick="App.deleteKey(${rIdx}, ${bIdx})"><i class="fa-solid fa-xmark"></i></div>
                             </div>
@@ -547,8 +473,8 @@ try {
                     
                     row.forEach(btn => {
                         const btnDiv = document.createElement('div');
-                        btnDiv.className = 'tg-key flex-1 truncate';
-                        // Show Persian Label
+                        btnDiv.className = 'tg-btn flex-1 truncate';
+                        // نمایش ترجمه در پیش‌نمایش
                         btnDiv.innerText = this.data.labels[btn.text] || btn.text; 
                         rowDiv.appendChild(btnDiv);
                     });
@@ -567,9 +493,9 @@ try {
                     }
                 });
 
-                document.querySelectorAll('.row-card').forEach(el => {
+                document.querySelectorAll('.row-wrapper').forEach(el => {
                     new Sortable(el, {
-                        group: 'shared', animation: 200, draggable: '.key-unit', ghostClass: 'opacity-40',
+                        group: 'shared', animation: 200, draggable: '.key-module', ghostClass: 'opacity-40',
                         onEnd: () => this.rebuildData()
                     });
                 });
@@ -577,9 +503,9 @@ try {
 
             rebuildData() {
                 const newRows = [];
-                this.dom.editor.querySelectorAll('.row-card').forEach(row => {
+                this.dom.editor.querySelectorAll('.row-wrapper').forEach(row => {
                     const btns = [];
-                    row.querySelectorAll('.key-code').forEach(el => btns.push({ text: el.innerText }));
+                    row.querySelectorAll('.key-var-name').forEach(el => btns.push({ text: el.innerText }));
                     if (btns.length > 0 || row.querySelector('.fa-plus')) newRows.push(btns);
                 });
                 this.data.keyboard = newRows;
@@ -605,7 +531,7 @@ try {
             addRow() {
                 this.data.keyboard.push([{text: 'text_new'}]);
                 this.render();
-                setTimeout(() => document.querySelector('.editor-content').scrollTop = 99999, 50);
+                setTimeout(() => document.querySelector('.editor-scroll-area').scrollTop = 99999, 50);
             },
 
             deleteRow(idx) {
