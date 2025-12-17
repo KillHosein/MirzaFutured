@@ -223,6 +223,9 @@ try {
             width: 120px; height: 26px; background: #21262d;
             border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; z-index: 10;
         }
+        .device-status-bar {
+            position: absolute; top: 5px; width: 100%; display: flex; justify-content: space-between; padding: 0 25px; font-size: 11px; font-weight: bold; color: #fff; z-index: 11; opacity: 0.8;
+        }
 
         .tg-header {
             background: #17212b;
@@ -238,15 +241,25 @@ try {
         }
 
         .tg-keyboard-area {
-            background: #17212b; padding: 6px; min-height: 220px;
+            background: #1c1c1d; /* Slightly darker than header */
+            padding: 10px; 
+            min-height: 240px;
+            border-top: 1px solid #000;
         }
 
         .tg-btn {
-            background: #2b5278; color: white;
-            border-radius: 5px; margin: 3px;
-            padding: 10px 4px; font-size: 13px; text-align: center;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+            background: linear-gradient(180deg, #353f4d 0%, #2b333d 100%); /* Telegram Button Gradient */
+            color: white;
+            border-radius: 8px;
+            /* margin removed, using flex gap */
+            padding: 12px 6px;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: 0 2px 0 #15191f;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
         }
 
         /* --- Editor Pane (Right) --- */
@@ -383,6 +396,15 @@ try {
             
             <div class="device-frame animate__animated animate__fadeInLeft">
                 <div class="device-notch"></div>
+                <div class="device-status-bar">
+                    <span>9:41</span>
+                    <div class="flex gap-1">
+                        <i class="fa-solid fa-signal"></i>
+                        <i class="fa-solid fa-wifi"></i>
+                        <i class="fa-solid fa-battery-full"></i>
+                    </div>
+                </div>
+
                 <div class="tg-header">
                     <i class="fa-solid fa-arrow-right text-gray-500"></i>
                     <div class="flex-1">
@@ -522,13 +544,16 @@ try {
             previewContainer.innerHTML = '';
             keyboardData.forEach(row => {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'flex w-full';
+                rowDiv.className = 'flex w-full gap-2 mb-2'; // Use flex gap for consistent spacing
                 row.forEach(btn => {
                     const btnDiv = document.createElement('div');
                     btnDiv.className = 'tg-btn flex-1 truncate';
-                    // در پیش‌نمایش هم نام فنی را می‌گذاریم تا دقیق باشد، یا می‌توانید ترجمه را بگذارید
-                    // طبق درخواست شما، متن دکمه (نام متغیر) مهم است
-                    btnDiv.innerText = btn.text; 
+                    
+                    // Logic: Show translated Persian text if available, otherwise show the key itself.
+                    // This creates the "Only Persian words" look in preview.
+                    const label = translations[btn.text] || btn.text;
+                    
+                    btnDiv.innerText = label; 
                     rowDiv.appendChild(btnDiv);
                 });
                 if(row.length > 0) previewContainer.appendChild(rowDiv);

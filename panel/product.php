@@ -441,10 +441,48 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-arrow-right-arrow-left"></i> جابجایی
                 </a>
                 
-                <a href="payment.php" class="nav-tile">
-                        <i class="fa-solid fa-wallet nt-icon"></i>
-                        <span class="nt-label">امور مالی</span>
-                    </a>
+                <a href="payment.php" class="nav-box">
+  <i class="fa-solid fa-wallet"></i>
+  <span>ویرایش محصولات</span>
+</a>
+
+<style>
+  .nav-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    width: 180px;
+    height: 140px;
+
+    background: linear-gradient(135deg, #6a7cff, #8f9bff);
+    color: #fff;
+    text-decoration: none;
+
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(106,124,255,.35);
+
+    transition: all .25s ease;
+  }
+
+  .nav-box i {
+    font-size: 36px;
+  }
+
+  .nav-box span {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .nav-box:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 35px rgba(106,124,255,.45);
+    background: linear-gradient(135deg, #5a6cff, #7f8cff);
+  }
+</style>
+
             </div>
 
             <!-- Bulk Selection Toolbar -->
