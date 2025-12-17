@@ -564,7 +564,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     </a>
                     <a href="inbound.php" class="nav-tile">
                         <i class="fa-solid fa-network-wired nt-icon"></i>
-                        <span class="nt-label">کانفیگ‌ها</span>
+                        <span class="nt-label">1</span>
                     </a>
                     <a href="seeting_x_ui.php" class="nav-tile">
                         <i class="fa-solid fa-tower-broadcast nt-icon"></i>
