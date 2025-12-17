@@ -216,75 +216,77 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         }
         
         .input-glass {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 12px 20px; border-radius: 12px; height: 50px;
-            font-family: inherit; font-size: 1rem; flex: 1; min-width: 200px;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: #fff; padding: 12px 20px; border-radius: 12px; height: 55px;
+            font-family: inherit; font-size: 1.1rem; flex: 1; min-width: 220px;
             transition: 0.3s;
         }
-        .input-glass:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(34, 211, 238, 0.2); }
+        .input-glass::placeholder { color: rgba(255,255,255,0.5); }
+        .input-glass:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(34, 211, 238, 0.2); background: rgba(0,0,0,0.4); }
         
         .btn-neon {
             background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue);
-            padding: 0 30px; height: 50px; border-radius: 12px; font-weight: 700; cursor: pointer;
+            padding: 0 35px; height: 55px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 1.1rem;
             transition: 0.3s; display: flex; align-items: center; gap: 10px;
         }
         .btn-neon:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
         
         .btn-glass-action {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text-dim); height: 45px; padding: 0 20px; border-radius: 12px;
-            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s; text-decoration: none; font-size: 0.9rem;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-highlight); height: 50px; padding: 0 25px; border-radius: 12px;
+            display: inline-flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.3s; 
+            text-decoration: none; font-size: 1rem; font-weight: 500;
         }
-        .btn-glass-action:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.3); }
+        .btn-glass-action:hover { background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.4); }
         
         .bulk-actions {
             display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
-            border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px;
         }
 
         /* --- Table Styling --- */
         .table-responsive { overflow-x: auto; }
         .custom-table {
-            width: 100%; border-collapse: separate; border-spacing: 0 10px;
-            font-size: 1.1rem;
+            width: 100%; border-collapse: separate; border-spacing: 0 15px;
+            font-size: 1.15rem; /* Large text for readability */
         }
         .custom-table thead th {
-            color: var(--text-dim); font-weight: 600; padding: 15px 20px;
+            color: var(--text-dim); font-weight: 700; padding: 15px 25px;
             text-align: right; border-bottom: 2px solid rgba(255,255,255,0.05);
-            font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;
+            font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;
         }
         .custom-table tbody tr {
-            background: rgba(255,255,255,0.02); transition: 0.3s;
+            background: rgba(255,255,255,0.03); transition: 0.3s;
         }
         .custom-table tbody tr:hover {
-            background: rgba(255,255,255,0.06); transform: scale(1.005);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.08); transform: scale(1.005);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
         .custom-table td {
-            padding: 20px; color: #fff; vertical-align: middle;
+            padding: 25px; color: #fff; vertical-align: middle;
             border-top: 1px solid rgba(255,255,255,0.02);
             border-bottom: 1px solid rgba(255,255,255,0.02);
         }
-        .custom-table td:first-child { border-radius: 0 16px 16px 0; border-right: 1px solid rgba(255,255,255,0.02); }
-        .custom-table td:last-child { border-radius: 16px 0 0 16px; border-left: 1px solid rgba(255,255,255,0.02); }
+        .custom-table td:first-child { border-radius: 0 20px 20px 0; border-right: 1px solid rgba(255,255,255,0.02); }
+        .custom-table td:last-child { border-radius: 20px 0 0 20px; border-left: 1px solid rgba(255,255,255,0.02); }
 
         /* Badges */
         .badge-status {
-            padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;
-            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 30px; font-size: 1rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 8px;
         }
-        .st-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .st-block { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .st-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); box-shadow: 0 0 10px rgba(16, 185, 129, 0.1); }
+        .st-block { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 0 10px rgba(239, 68, 68, 0.1); }
         .st-other { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
 
         /* Checkbox Custom */
         input[type="checkbox"] {
-            appearance: none; width: 20px; height: 20px;
-            border: 2px solid var(--text-dim); border-radius: 6px; background: transparent; cursor: pointer; position: relative;
+            appearance: none; width: 24px; height: 24px;
+            border: 2px solid var(--text-dim); border-radius: 8px; background: transparent; cursor: pointer; position: relative;
         }
         input[type="checkbox"]:checked { background: var(--neon-blue); border-color: var(--neon-blue); }
         input[type="checkbox"]:checked::after {
-            content: '✔'; position: absolute; color: #000; font-size: 14px; top: -2px; left: 3px; font-weight: bold;
+            content: '✔'; position: absolute; color: #000; font-size: 16px; top: -1px; left: 4px; font-weight: bold;
         }
 
         /* --- Floating Dock --- */
@@ -314,7 +316,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .dock-item.active { color: var(--neon-blue); background: rgba(34, 211, 238, 0.15); box-shadow: 0 0 20px rgba(34, 211, 238, 0.2); }
         .dock-tooltip {
             position: absolute; top: -50px; left: 50%; transform: translateX(-50%) scale(0.8);
-            background: #000; color: #fff; padding: 5px 12px; border-radius: 8px; opacity: 0; pointer-events: none; transition: 0.2s; font-size: 0.9rem;
+            background: #000; color: #fff; padding: 5px 12px; border-radius: 8px; opacity: 0; pointer-events: none; transition: 0.2s; font-size: 0.9rem; white-space: nowrap; font-weight: bold;
         }
         .dock-item:hover .dock-tooltip { opacity: 1; transform: translateX(-50%) scale(1); top: -65px; }
 
@@ -403,7 +405,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="bulk-actions">
                     <button class="btn-glass-action" id="usersSelectVisible"><i class="fa-solid fa-check-double"></i> انتخاب همه صفحه</button>
                     <button class="btn-glass-action" id="usersClearSelection"><i class="fa-solid fa-minus"></i> لغو انتخاب</button>
-                    <span id="usersSelCount" style="color: var(--neon-blue); font-weight: bold; margin: 0 10px;">0 انتخاب</span>
+                    <span id="usersSelCount" style="color: var(--neon-blue); font-weight: bold; margin: 0 10px; font-size: 1.1rem;">0 انتخاب</span>
                     
                     <div style="flex:1;"></div> <!-- Spacer -->
                     
@@ -416,11 +418,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 
                 <!-- Additional Bulk Actions (Hidden by default or expandable, simplified here) -->
                 <div class="bulk-actions" style="border-top: none; padding-top: 0;">
-                    <input type="number" id="usersAmount" class="input-glass" placeholder="مبلغ (تومان)" style="max-width: 150px; height: 40px;">
+                    <input type="number" id="usersAmount" class="input-glass" placeholder="مبلغ (تومان)" style="max-width: 180px; height: 50px;">
                     <button class="btn-glass-action" id="usersAddBalance"><i class="fa-solid fa-plus"></i> شارژ</button>
                     <button class="btn-glass-action" id="usersLowBalance"><i class="fa-solid fa-minus"></i> کسر</button>
                     
-                    <input type="text" id="usersMessage" class="input-glass" placeholder="پیام گروهی..." style="max-width: 250px; height: 40px;">
+                    <input type="text" id="usersMessage" class="input-glass" placeholder="پیام گروهی..." style="max-width: 300px; height: 50px;">
                     <button class="btn-glass-action" id="usersSendMsg"><i class="fa-solid fa-paper-plane"></i> ارسال</button>
                 </div>
             </div>
@@ -428,16 +430,16 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <!-- Data Table -->
             <?php if(!$totalUsers): ?>
                 <div style="text-align: center; padding: 50px; color: var(--text-dim);">
-                    <i class="fa-solid fa-folder-open" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                    <i class="fa-solid fa-folder-open" style="font-size: 5rem; margin-bottom: 25px; opacity: 0.5;"></i>
                     <h3>کاربری یافت نشد</h3>
-                    <p>فیلترها را تغییر دهید یا جستجو را پاک کنید.</p>
+                    <p style="font-size: 1.2rem;">فیلترها را تغییر دهید یا جستجو را پاک کنید.</p>
                 </div>
             <?php else: ?>
                 <div class="table-responsive">
                     <table class="custom-table" id="sample_1">
                         <thead>
                             <tr>
-                                <th style="width: 40px;"><i class="fa-solid fa-check"></i></th>
+                                <th style="width: 50px;"><i class="fa-solid fa-check"></i></th>
                                 <th>آیدی</th>
                                 <th>کاربر</th>
                                 <th>تلفن</th>
@@ -456,14 +458,14 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                             ?>
                             <tr>
                                 <td><input type="checkbox" class="checkboxes" value="1"></td>
-                                <td style="font-family: monospace; color: var(--neon-blue);"><?php echo $list['id']; ?></td>
-                                <td style="font-weight: bold;"><?php echo htmlspecialchars($list['username']); ?></td>
-                                <td><?php echo $phone; ?></td>
-                                <td style="color: var(--neon-amber); font-weight: bold;"><?php echo number_format($list['Balance']); ?></td>
-                                <td><?php echo number_format($list['affiliatescount']); ?></td>
+                                <td style="font-family: monospace; font-size: 1.2rem; color: var(--neon-blue); letter-spacing: 1px;"><?php echo $list['id']; ?></td>
+                                <td style="font-weight: 800; font-size: 1.2rem;"><?php echo htmlspecialchars($list['username']); ?></td>
+                                <td style="font-size: 1.1rem;"><?php echo $phone; ?></td>
+                                <td style="color: var(--neon-amber); font-weight: 800; font-size: 1.2rem;"><?php echo number_format($list['Balance']); ?></td>
+                                <td style="font-size: 1.2rem; font-weight: bold;"><?php echo number_format($list['affiliatescount']); ?></td>
                                 <td><span class="badge-status <?php echo $statusClass; ?>"><?php echo $statusLabel; ?></span></td>
                                 <td>
-                                    <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-glass-action" style="height: 35px; font-size: 0.8rem;">
+                                    <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-glass-action" style="height: 40px; font-size: 0.9rem; padding: 0 15px;">
                                         <i class="fa-solid fa-pen-to-square"></i> مدیریت
                                     </a>
                                 </td>
