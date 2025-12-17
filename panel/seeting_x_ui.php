@@ -1,8 +1,26 @@
 <?php
+// --- Logic & Config ---
 session_start();
-require_once '../config.php'; 
+// تنظیمات گزارش خطا
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+require_once '../config.php';
+// فراخوانی کتابخانه تاریخ شمسی
+if (file_exists('../jdf.php')) require_once '../jdf.php';
+
+// Authentication
+$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+$query->execute();
+$result = $query->fetch(PDO::FETCH_ASSOC);
+
+if( !isset($_SESSION["user"]) || !$result ){ header('Location: login.php'); exit; }
+
+// --- Update Function ---
 function update($table, $field, $newValue, $whereField = null, $whereValue = null) {
-    global $pdo,$user;
+    global $pdo, $user;
 
     if ($whereField !== null) {
         $stmt = $pdo->prepare("SELECT $field FROM $table WHERE $whereField = ? FOR UPDATE");
@@ -14,255 +32,441 @@ function update($table, $field, $newValue, $whereField = null, $whereValue = nul
         $stmt = $pdo->prepare("UPDATE $table SET $field = ?");
         $stmt->execute([$newValue]);
     }
-    $date = date("Y-m-d");
-    $logss = "{$table}_{$field}_{$newValue}_{$whereField}_{$whereValue}_{$user['step']}_$date";
-    if($field != "message_count" || $field != "last_message_time"){
-        file_put_contents('log.txt',"\n".$logss,FILE_APPEND);
-    }
+    // Log is disabled for cleaner performance in this context, or can be re-enabled
+    // $date = date("Y-m-d");
+    // $logss = "{$table}_{$field}_{$newValue}_{$whereField}_{$whereValue}_{$user['step']}_$date";
+    // if($field != "message_count" || $field != "last_message_time"){
+    //     file_put_contents('log.txt',"\n".$logss,FILE_APPEND);
+    // }
 }
 
-    $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-    $query->execute();
-    $result = $query->fetch(PDO::FETCH_ASSOC);
-    $query = $pdo->prepare("SELECT * FROM x_ui");
-    $query->execute();
-    $resultpanel = $query->fetchAll();
-if( !isset($_SESSION["user"]) || !$result ){
-    header('Location: login.php');
-    return;
+// --- Fetch X-UI Panels ---
+$query = $pdo->prepare("SELECT * FROM x_ui");
+$query->execute();
+$resultpanel = $query->fetchAll();
+
+// --- Action Handler ---
+if(isset($_GET['action']) && $_GET['action'] == "save"){
+    update("x_ui", "setting", $_POST['settings'], "codepanel", $_POST['namepanel']);
+    header('Location: seeting_x_ui.php');
+    exit;
 }
-    if($_GET['action'] == "save"){
-        update("x_ui", "setting", $_POST['settings'], "codepanel", $_POST['namepanel']);
-        header('Location: seeting_x_ui.php');
-    }
-$namepanel = htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8');
+
+$namepanel = isset($_POST['namepanel']) ? htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8') : '';
+$todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-  <head>
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="Mosaddek">
-    <meta name="keyword" content="FlatLab, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
-    <link rel="shortcut icon" href="img/favicon.html">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <title>پنل مدیریت ربات میرزا</title>
-
-    <!-- Bootstrap core CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تنظیمات X-UI</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-reset.css" rel="stylesheet">
-    <!--external css-->
-    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
-    <link href="assets/jquery-easy-pie-chart/jquery.easy-pie-chart.css" rel="stylesheet" type="text/css" media="screen"/>
-    <link rel="stylesheet" href="css/owl.carousel.css" type="text/css">
-    <!-- Custom styles for this template -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/style-responsive.css" rel="stylesheet" />
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 tooltipss and media queries -->
-    <!--[if lt IE 9]>
-      <script src="js/html5shiv.js"></script>
-      <script src="js/respond.min.js"></script>
-    <![endif]-->
-  </head>
+    <style>
+        :root {
+            /* Theme Core */
+            --bg-body: #050509;
+            --bg-card: rgba(23, 23, 30, 0.75);
+            --bg-card-hover: rgba(35, 35, 45, 0.9);
+            --bg-glass: rgba(20, 20, 25, 0.85);
+            --bg-dock: rgba(10, 10, 15, 0.95);
+            
+            /* Neons */
+            --neon-blue: #00f2ff;
+            --neon-purple: #c026d3;
+            --neon-green: #00ffa3;
+            --neon-red: #ff2a6d;
+            --neon-cyan: #22d3ee;
+            
+            /* Text */
+            --text-pri: #ffffff;
+            --text-sec: #94a3b8;
+            
+            /* Borders */
+            --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
+            --border-highlight: 1px solid rgba(255, 255, 255, 0.2);
+            --shadow-card: 0 15px 50px rgba(0,0,0,0.6);
+            
+            --radius-main: 28px;
+            --radius-lg: 24px;
+        }
 
-  <body>
+        /* --- Global Reset --- */
+        * { box-sizing: border-box; outline: none; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
-  <section id="container" class="">
-  <?php include("header.php");
-?>
-        <!--main content start-->
-        <section id="main-content">
-            <section class="wrapper content-template">
-                <!-- page start-->
-                <div class="row">
-                    <aside class="col-lg-12">
-                    <?php
-                        if($_GET['action'] != "change"){?>
-                            <section class="panel">
-                            <div class="panel-body bio-graph-info">
-                                <h1>در این صفحه می توانید تعیین کنید  چه تنظیمات برای کانفیگ ساخته شود در پنل x-ui</h1>
-                                <form class="form-horizontal" role="form" method = "POST" action = "seeting_x_ui.php?action=change">
-                                    <div class="form-group">
-                                        <label class="col-lg-2 control-label">نام پنل</label>
-                                        <div class="col-lg-7">
-                                            <select required style ="padding:0;" name = "namepanel" class="form-control input-sm m-bot15">
-                                                  <option value="">انتخاب نشده</option>
-                                                <?php
-                                                if(count($resultpanel)>=0){
-                                                foreach($resultpanel as $panel){
-                                                $query = $pdo->prepare("SELECT * FROM marzban_panel WHERE code_panel=:code_panel");
-                                                $query->bindParam("code_panel", $panel['codepanel'], PDO::PARAM_STR);
-                                                $query->execute();
-                                                $namepanel = $query->fetch(PDO::FETCH_ASSOC);
-                                                echo "<option value = \"{$panel['codepanel']}\">{$namepanel['name_panel']}</option>";
-                                                }
-                                                }
-                                                ?>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    </div>
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-pri);
+            font-family: 'Vazirmatn', sans-serif;
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(192, 38, 211, 0.08) 0%, transparent 45%);
+            background-attachment: fixed;
+            padding-bottom: 150px;
+            display: flex; flex-direction: column;
+        }
 
-                                    <div class="form-group">
-                                            <button type="submit" class="btn btn-success">تغییر تنظیمات</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </section>
-                        <?php
-                        }
-                        ?>
-                        <?php
-                        if($_GET['action'] == "change"){?>
-                        <section class="panel">
-                            <div class="panel-body bio-graph-info">
-                                <h1>در این صفحه می توانید تعیین کنید  چه تنظیمات برای کانفیگ ساخته شود در پنل x-ui</h1>
-                                <label class="col-lg-2 control-label">تنظیمات آماده</label>
-                                <select style = 'width:400px; margin-bottom:10px' id="mySelect" onchange="updateTextarea()">
-                                    <option value="">انتخاب کنید...</option>
-                                    <option value="tcp_http">tcp + http</option>
-                                    <option value="ws_tls">ws + tls</option>
-                                    <option value="گزینه ۳">گزینه ۳</option>
-</select>
-                                <form class="form-horizontal" role="form" method = "POST" action = "seeting_x_ui.php?action=save">
-                                    <div class="form-group">
-                                        <label class="col-lg-2 control-label">تنظیمات</label>
-                                        <div class="col-lg-10">
-                                            <textarea id="settings" style = "direction:ltr;" name="settings" id="setting" class="form-control" cols="50" rows="25"><?php
-                                                $query = $pdo->prepare("SELECT * FROM x_ui WHERE codepanel=:codepanel");
-                                                $query->bindParam("codepanel", $namepanel, PDO::PARAM_STR);
-                                                $query->execute();
-                                                $getsetting = $query->fetch(PDO::FETCH_ASSOC);
-                                                $data = json_decode($getsetting['setting']);
-                                                echo json_encode($data, JSON_PRETTY_PRINT);
-                                                ?>
-                                           </textarea>
-                                           <input name = "namepanel" type= "hidden" value = "<?php echo $namepanel?>">
-                                        </div>
-                                    </div>
-                                    </div>
+        /* --- Full Height Container --- */
+        .container-fluid-custom {
+            width: 100%; padding: 30px 4%; max-width: 1400px; margin: 0 auto;
+            flex-grow: 1;
+            display: flex; flex-direction: column; gap: 30px;
+        }
 
-                                    <div class="form-group">
-                                        <div class="col-lg-offset-2 col-lg-10">
-                                            <button type="submit" class="btn btn-success">ذخیره</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </section>
-                        <?php
-                        }
-                        ?>
-                    </aside>
+        /* --- Header Bigger --- */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .page-title h1 {
+            font-size: 3rem; font-weight: 900; margin: 0; color: #fff;
+            text-shadow: 0 0 30px rgba(255,255,255,0.1);
+        }
+        .page-title p { color: var(--text-sec); font-size: 1.2rem; margin-top: 5px; font-weight: 400; }
+        
+        .info-pill {
+            background: rgba(255,255,255,0.03); border: var(--border-subtle);
+            padding: 12px 25px; border-radius: 18px;
+            display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
+            backdrop-filter: blur(10px); color: var(--text-sec);
+        }
+
+        /* --- Glass Panel --- */
+        .glass-panel {
+            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
+            padding: 40px;
+            flex-grow: 1;
+            display: flex; flex-direction: column;
+            backdrop-filter: blur(20px); box-shadow: var(--shadow-card);
+            min-height: 500px;
+        }
+
+        /* --- Inputs & Editors --- */
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; color: var(--text-sec); font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
+        
+        .input-readable {
+            width: 100%; height: 60px;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 0 20px; border-radius: 16px;
+            font-family: inherit; font-size: 1.2rem; transition: 0.3s;
+        }
+        .input-readable:focus { background: rgba(0,0,0,0.5); border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(34, 211, 238, 0.2); }
+        select.input-readable { cursor: pointer; }
+        select.input-readable option { background: #111; color: #fff; }
+
+        .json-editor {
+            width: 100%; min-height: 500px;
+            background: #0d0d10; border: 1px solid rgba(255,255,255,0.1);
+            color: #a6accd; padding: 20px; border-radius: 16px;
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 1rem;
+            line-height: 1.6; resize: vertical; transition: 0.3s;
+            direction: ltr; text-align: left;
+        }
+        .json-editor:focus { border-color: var(--neon-purple); outline: none; box-shadow: 0 0 20px rgba(192, 38, 211, 0.2); }
+
+        .btn-act {
+            height: 60px; padding: 0 30px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; color: var(--text-sec); font-size: 1.2rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 12px;
+            transition: 0.3s; text-decoration: none; justify-content: center;
+        }
+        .btn-act:hover { background: rgba(255,255,255,0.15); border-color: #fff; transform: translateY(-3px); color: #fff; }
+        
+        .btn-primary-glow { background: var(--neon-cyan); color: #000; border: none; font-weight: 800; }
+        .btn-primary-glow:hover { background: #fff; box-shadow: 0 0 30px var(--neon-cyan); color: #000; }
+        
+        .btn-green-glow { background: var(--neon-green); color: #000; border: none; font-weight: 800; }
+        .btn-green-glow:hover { background: #fff; box-shadow: 0 0 30px var(--neon-green); color: #000; }
+
+        /* --- Step Layout --- */
+        .step-container {
+            max-width: 600px; margin: 0 auto; text-align: center; padding: 40px 0;
+        }
+        .step-icon { font-size: 6rem; color: var(--neon-cyan); margin-bottom: 30px; opacity: 0.9; filter: drop-shadow(0 0 20px rgba(34,211,238,0.3)); }
+
+        /* --- Floating Dock (Bigger & Labels Top) --- */
+        .dock-container {
+            position: fixed; bottom: 30px; left: 0; right: 0;
+            display: flex; justify-content: center; z-index: 2000; pointer-events: none;
+        }
+        .dock {
+            pointer-events: auto; display: flex; align-items: center; gap: 12px;
+            background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(35px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 30px; padding: 15px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+            max-width: 95vw; overflow-x: auto; scrollbar-width: none; /* Hide scrollbar */
+        }
+        .dock::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+        
+        .dock-item {
+            width: 60px; height: 60px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 20px;
+            color: var(--text-sec); font-size: 1.6rem;
+            text-decoration: none; position: relative; background: transparent;
+            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5);
+        }
+        .dock-item:hover {
+            width: 75px; height: 75px; margin: 0 6px;
+            background: rgba(255,255,255,0.1); color: #fff;
+            transform: translateY(-12px);
+        }
+        .dock-item.active {
+            color: var(--neon-blue); background: rgba(0, 242, 255, 0.1);
+        }
+        
+        /* Unified Dock Labels (Labels Top) */
+        .dock-label { 
+            font-size: 0.9rem; font-weight: 600; opacity: 0; position: absolute; 
+            bottom: 100%; /* Shows ABOVE */
+            transition: 0.3s; white-space: nowrap; 
+            background: rgba(0,0,0,0.9); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; pointer-events: none; margin-bottom: 15px;
+        }
+        .dock-item:hover .dock-label { opacity: 1; bottom: 100%; transform: translateY(-5px); }
+        .dock-item.active .dock-label { opacity: 1; bottom: 100%; color: var(--neon-blue); }
+
+        .dock-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); margin: 0 6px; flex-shrink: 0; }
+
+        @media (max-width: 768px) {
+            .container-fluid-custom { padding: 30px 15px 160px 15px; }
+            .dock { width: 95%; justify-content: flex-start; }
+            .dock-item { width: 50px; height: 50px; font-size: 1.4rem; }
+            .page-title h1 { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid-custom">
+        
+        <!-- Header -->
+        <header class="page-header anim">
+            <div class="page-title">
+                <h1>تنظیمات X-UI</h1>
+                <p>
+                    <i class="fa-solid fa-sliders" style="color: var(--neon-cyan);"></i>
+                    پیکربندی و مدیریت تنظیمات کانفیگ‌ها
+                </p>
+            </div>
+            <div class="info-pill">
+                <i class="fa-regular fa-calendar"></i>
+                <span><?php echo $todayDate; ?></span>
+            </div>
+        </header>
+
+        <!-- Main Panel -->
+        <div class="glass-panel anim d-1">
+            
+            <?php if(!isset($_GET['action']) || $_GET['action'] != 'change'): ?>
+                <!-- Step 1: Select Panel -->
+                <div class="step-container">
+                    <i class="fa-solid fa-server step-icon"></i>
+                    <h2 style="margin-bottom: 10px; font-weight: 800; font-size: 2rem;">انتخاب پنل</h2>
+                    <p style="color: var(--text-sec); margin-bottom: 40px; font-size: 1.1rem;">
+                        لطفاً پنل مورد نظر برای ویرایش تنظیمات JSON را انتخاب کنید.
+                    </p>
+                    
+                    <form method="POST" action="seeting_x_ui.php?action=change">
+                        <div class="form-group">
+                            <select name="namepanel" class="input-readable" required>
+                                <option value="">پنل را انتخاب کنید...</option>
+                                <?php
+                                if(count($resultpanel) > 0){
+                                    foreach($resultpanel as $panel){
+                                        $query = $pdo->prepare("SELECT * FROM marzban_panel WHERE code_panel=:code_panel");
+                                        $query->bindParam("code_panel", $panel['codepanel'], PDO::PARAM_STR);
+                                        $query->execute();
+                                        $pName = $query->fetch(PDO::FETCH_ASSOC);
+                                        echo "<option value=\"{$panel['codepanel']}\">{$pName['name_panel']}</option>";
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-act btn-primary-glow" style="width: 100%; margin-top: 20px;">
+                            مرحله بعد <i class="fa-solid fa-arrow-left" style="margin-right: 10px;"></i>
+                        </button>
+                    </form>
                 </div>
 
-                <!-- page end-->
-            </section>
-        </section>
-        <!--main content end-->
-    </section>
+            <?php else: ?>
+                <!-- Step 2: Edit Settings -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+                    <h3 style="margin:0; font-weight: 800; font-size: 1.8rem; color: var(--neon-cyan);">
+                        <i class="fa-solid fa-code" style="margin-left: 10px;"></i> ویرایش کانفیگ JSON
+                    </h3>
+                    <a href="seeting_x_ui.php" class="btn-act" style="height: 45px; padding: 0 20px; font-size: 1rem;">
+                        <i class="fa-solid fa-rotate-right"></i> بازگشت
+                    </a>
+                </div>
 
-    <!-- js placed at the end of the document so the pages load faster -->
+                <div class="form-group">
+                    <label>قالب‌های آماده (اختیاری)</label>
+                    <select id="mySelect" onchange="updateTextarea()" class="input-readable">
+                        <option value="">یک قالب انتخاب کنید...</option>
+                        <option value="tcp_http">TCP + HTTP</option>
+                        <option value="ws_tls">WS + TLS</option>
+                    </select>
+                </div>
+
+                <form method="POST" action="seeting_x_ui.php?action=save">
+                    <div class="form-group">
+                        <label>ویرایشگر تنظیمات</label>
+                        <textarea id="settings" name="settings" class="json-editor"><?php
+                            $query = $pdo->prepare("SELECT * FROM x_ui WHERE codepanel=:codepanel");
+                            $query->bindParam("codepanel", $namepanel, PDO::PARAM_STR);
+                            $query->execute();
+                            $getsetting = $query->fetch(PDO::FETCH_ASSOC);
+                            if($getsetting && $getsetting['setting']) {
+                                $data = json_decode($getsetting['setting']);
+                                echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                            }
+                        ?></textarea>
+                        <input name="namepanel" type="hidden" value="<?php echo $namepanel?>">
+                    </div>
+                    
+                    <button type="submit" class="btn-act btn-green-glow" style="width: 100%; margin-top: 10px;">
+                        <i class="fa-solid fa-floppy-disk"></i> ذخیره تنظیمات
+                    </button>
+                </form>
+            <?php endif; ?>
+            
+        </div>
+
+    </div>
+
+    <!-- Floating Dock -->
+    <div class="dock-container anim d-3">
+        <div class="dock">
+            <a href="index.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-house-chimney"></i></div>
+                <span class="dock-label">داشبورد</span>
+            </a>
+            <a href="invoice.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <span class="dock-label">سفارشات</span>
+            </a>
+            <a href="users.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-users"></i></div>
+                <span class="dock-label">کاربران</span>
+            </a>
+            <a href="product.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-box-open"></i></div>
+                <span class="dock-label">محصولات</span>
+            </a>
+            <a href="service.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-server"></i></div>
+                <span class="dock-label">سرویس‌ها</span>
+            </a>
+            <div class="dock-divider"></div>
+            <a href="cancelService.php" class="dock-item" style="color: var(--neon-red);">
+                <div class="dock-icon"><i class="fa-solid fa-ban"></i></div>
+                <span class="dock-label">مسدود</span>
+            </a>
+            <a href="payment.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-credit-card"></i></div>
+                <span class="dock-label">مالی</span>
+            </a>
+            <a href="inbound.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-network-wired"></i></div>
+                <span class="dock-label">کانفیگ</span>
+            </a>
+            <a href="seeting_x_ui.php" class="dock-item active">
+                <div class="dock-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+                <span class="dock-label">پنل X-UI</span>
+            </a>
+            <div class="dock-divider"></div>
+            <a href="settings.php" class="dock-item">
+                <div class="dock-icon"><i class="fa-solid fa-gear"></i></div>
+                <span class="dock-label">تنظیمات</span>
+            </a>
+            <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
+                <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div>
+                <span class="dock-label">خروج</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery.scrollTo.min.js"></script>
-    <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
-    <script src="assets/jquery-knob/js/jquery.knob.js"></script>
-
-    <!--common script for all pages-->
-    <script src="js/common-scripts.js"></script>
-</select>
-
-<script>
-  function updateTextarea() {
-    var selectElement = document.getElementById("mySelect");
-    var textareaElement = document.getElementById("settings");
-    var selectedOption = selectElement.options[selectElement.selectedIndex].value;
-    if (selectedOption === "tcp_http") {
-        selectedOption = `{
-  "network": "tcp",
-  "security": "none",
-  "externalProxy": [],
-  "tcpSettings": {
-    "acceptProxyProtocol": false,
-    "header": {
-      "type": "http",
-      "request": {
-        "version": "1.1",
-        "method": "GET",
-        "path": [
-          "/"
-        ],
-        "headers": {
-          "host": [
-            "zula.ir"
-          ]
+    
+    <script>
+        function updateTextarea() {
+            var selectElement = document.getElementById("mySelect");
+            var textareaElement = document.getElementById("settings");
+            var selectedOption = selectElement.options[selectElement.selectedIndex].value;
+            
+            if (selectedOption === "tcp_http") {
+                textareaElement.value = JSON.stringify({
+                    "network": "tcp",
+                    "security": "none",
+                    "externalProxy": [],
+                    "tcpSettings": {
+                        "acceptProxyProtocol": false,
+                        "header": {
+                            "type": "http",
+                            "request": {
+                                "version": "1.1",
+                                "method": "GET",
+                                "path": ["/"],
+                                "headers": { "host": ["zula.ir"] }
+                            },
+                            "response": {
+                                "version": "1.1",
+                                "status": "200",
+                                "reason": "OK",
+                                "headers": {}
+                            }
+                        }
+                    }
+                }, null, 2);
+            } else if (selectedOption === "ws_tls") {
+                textareaElement.value = JSON.stringify({
+                    "network": "ws",
+                    "security": "tls",
+                    "externalProxy": [],
+                    "tlsSettings": {
+                        "serverName": "sni.com",
+                        "minVersion": "1.2",
+                        "maxVersion": "1.3",
+                        "cipherSuites": "",
+                        "rejectUnknownSni": true,
+                        "certificates": [{
+                            "certificateFile": "",
+                            "keyFile": "",
+                            "ocspStapling": 3600
+                        }],
+                        "alpn": ["h2", "http/1.1"],
+                        "settings": {
+                            "allowInsecure": true,
+                            "fingerprint": ""
+                        }
+                    },
+                    "wsSettings": {
+                        "acceptProxyProtocol": false,
+                        "path": "/",
+                        "headers": {}
+                    }
+                }, null, 2);
+            }
         }
-      },
-      "response": {
-        "version": "1.1",
-        "status": "200",
-        "reason": "OK",
-        "headers": {}
-      }
-    }
-  }
-}`;
-    } else if (selectedOption === "") {
-        selectedOption = `{
-  "network": "ws",
-  "security": "none",
-  "externalProxy": [],
-  "wsSettings": {
-    "acceptProxyProtocol": false,
-    "path": "/",
-    "host": "",
-    "headers": {}
-  }
-}`;
-    } else if (selectedOption === "ws_tls") {
-        selectedOption = `{
-  "network": "ws",
-  "security": "tls",
-  "externalProxy": [],
-  "tlsSettings": {
-    "serverName": "sni.com",
-    "minVersion": "1.2",
-    "maxVersion": "1.3",
-    "cipherSuites": "",
-    "rejectUnknownSni": true,
-    "certificates": [
-      {
-        "certificateFile": "",
-        "keyFile": "",
-        "ocspStapling": 3600
-      }
-    ],
-    "alpn": [
-      "h2",
-      "http/1.1"
-    ],
-    "settings": {
-      "allowInsecure": true,
-      "fingerprint": ""
-    }
-  },
-  "wsSettings": {
-    "acceptProxyProtocol": false,
-    "path": "/",
-    "headers": {}
-  }
-}`;
-}   
-
-    textareaElement.value = selectedOption;
-  }
-</script>
+    </script>
 
 </body>
 </html>
