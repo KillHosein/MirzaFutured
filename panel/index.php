@@ -204,7 +204,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             margin: 0; padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
-            padding-bottom: 120px;
+            padding-bottom: 140px; /* Space for large dock */
         }
 
         /* --- Animations --- */
@@ -304,10 +304,10 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             display: flex; flex-direction: column;
         }
         
-        /* Actions Grid (Tight & Clean) */
+        /* Actions Grid (Full Width & Balanced) */
         .actions-strip {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            grid-template-columns: repeat(4, 1fr); /* 4 columns for balance */
             gap: 15px;
         }
         .action-btn {
@@ -318,19 +318,28 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             text-align: center;
             text-decoration: none;
             color: var(--text-dim);
-            transition: 0.3s;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-            height: 100px;
+            height: 110px;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-btn::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom right, rgba(255,255,255,0.05), transparent);
+            opacity: 0; transition: 0.3s;
         }
         .action-btn:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: var(--neon-blue);
-            transform: translateY(-3px);
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-4px);
             color: #fff;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
-        .action-btn i { font-size: 1.5rem; transition: 0.3s; }
-        .action-btn:hover i { transform: scale(1.2); color: var(--neon-blue); }
+        .action-btn:hover::after { opacity: 1; }
+        .action-btn i { font-size: 1.8rem; transition: 0.3s; margin-bottom: 2px; }
+        .action-btn:hover i { transform: scale(1.15); color: var(--neon-blue); }
+        
         .ab-red:hover { border-color: var(--neon-red); }
         .ab-red:hover i { color: var(--neon-red); }
 
@@ -352,58 +361,88 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         }
         .sh-title { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
 
-        /* --- Dock --- */
+        /* --- Dock (MacOS Style) --- */
         .dock-wrapper {
-            position: fixed; bottom: 20px; left: 0; right: 0;
-            display: flex; justify-content: center; pointer-events: none; z-index: 100;
+            position: fixed; bottom: 30px; left: 0; right: 0;
+            display: flex; justify-content: center; pointer-events: none; z-index: 1000;
         }
         .glass-dock {
             pointer-events: auto;
-            background: rgba(15, 15, 20, 0.6);
+            background: rgba(18, 18, 24, 0.7);
             backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 8px;
-            border-radius: 24px;
-            display: flex; gap: 6px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            transition: 0.3s;
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px 15px;
+            border-radius: 28px;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+            transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .glass-dock:hover { background: rgba(15, 15, 20, 0.8); transform: translateY(-5px); }
+        .glass-dock:hover {
+            padding: 12px 20px;
+            gap: 12px;
+            background: rgba(25, 25, 32, 0.85);
+            border-color: rgba(255,255,255,0.25);
+        }
         .dock-link {
-            width: 45px; height: 45px;
+            width: 50px; height: 50px;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 16px;
+            border-radius: 18px;
             color: var(--text-dim);
-            font-size: 1.2rem;
-            transition: 0.2s;
+            font-size: 1.4rem;
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.5, 1);
             text-decoration: none;
             position: relative;
+            background: rgba(255,255,255,0.02);
         }
-        .dock-link:hover { background: rgba(255,255,255,0.1); color: #fff; transform: scale(1.1); }
-        .dock-link.active { background: rgba(255,255,255,0.15); color: #fff; }
+        .dock-link:hover { 
+            background: rgba(255,255,255,0.15); 
+            color: #fff; 
+            transform: translateY(-8px) scale(1.15); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        .dock-link.active { 
+            background: rgba(255,255,255,0.1); 
+            color: #fff; 
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Tooltip */
         .dock-link::after {
             content: attr(data-title);
-            position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
-            background: #000; color: #fff; padding: 4px 10px; border-radius: 6px;
-            font-size: 0.75rem; opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; white-space: nowrap;
+            position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) scale(0.8);
+            background: rgba(0,0,0,0.85); color: #fff; padding: 5px 12px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 500; opacity: 0; visibility: hidden; 
+            transition: 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.1);
         }
-        .dock-link:hover::after { opacity: 1; visibility: visible; bottom: 130%; }
+        .dock-link:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); bottom: 145%; }
+
+        .dock-sep { width: 1px; height: 30px; background: rgba(255,255,255,0.15); margin: 0 4px; }
 
         /* Responsive */
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .bento-grid { grid-template-columns: 1fr; }
             .side-col { flex-direction: row; }
+            .actions-strip { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 992px) {
+             .actions-strip { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 768px) {
-            .dashboard-container { padding: 15px; gap: 15px; }
+            .dashboard-container { padding: 15px; gap: 15px; padding-bottom: 120px; }
             .header-bar { flex-direction: column; align-items: flex-start; gap: 15px; }
             .profile-pill { margin-left: auto; }
             .stats-grid { grid-template-columns: 1fr; }
             .side-col { flex-direction: column; }
-            .actions-strip { grid-template-columns: repeat(3, 1fr); }
-            .glass-dock { max-width: 90vw; overflow-x: auto; padding: 10px; justify-content: flex-start; }
-            .dock-link { flex-shrink: 0; }
+            .glass-dock { 
+                max-width: 92vw; overflow-x: auto; padding: 10px; justify-content: flex-start; 
+                border-radius: 20px; gap: 10px;
+            }
+            .dock-link { flex-shrink: 0; width: 45px; height: 45px; font-size: 1.2rem; }
+            .dock-link:hover { transform: none; } /* Disable float on mobile */
         }
     </style>
 </head>
@@ -429,7 +468,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             </div>
         </header>
 
-        <!-- 2. Stats Row (No Empty Space) -->
+        <!-- 2. Stats Row -->
         <section class="stats-grid anim d-1">
             <div class="stat-box sb-blue">
                 <div class="sb-icon"><i class="fa-solid fa-sack-dollar"></i></div>
@@ -477,10 +516,10 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <div style="flex-grow: 1; min-height: 0;"><canvas id="salesChart"></canvas></div>
                 </div>
 
-                <!-- Action Strip (Compact Grid) -->
+                <!-- Action Strip (Expanded & Filled) -->
                 <div class="actions-strip">
                     <a href="users.php" class="action-btn">
-                        <i class="fa-solid fa-users-gear"></i><span>کاربران</span>
+                        <i class="fa-solid fa-users-gear"></i><span>مدیریت کاربران</span>
                     </a>
                     <a href="invoice.php" class="action-btn">
                         <i class="fa-solid fa-file-invoice"></i><span>سفارشات</span>
@@ -491,11 +530,17 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <a href="service.php" class="action-btn">
                         <i class="fa-solid fa-server"></i><span>سرویس‌ها</span>
                     </a>
+                    <a href="payment.php" class="action-btn">
+                        <i class="fa-solid fa-wallet"></i><span>امور مالی</span>
+                    </a>
                     <a href="inbound.php" class="action-btn">
-                        <i class="fa-solid fa-network-wired"></i><span>کانفیگ</span>
+                        <i class="fa-solid fa-network-wired"></i><span>کانفیگ‌ها</span>
+                    </a>
+                    <a href="seeting_x_ui.php" class="action-btn">
+                        <i class="fa-solid fa-tower-broadcast"></i><span>پنل X-UI</span>
                     </a>
                     <a href="cancelService.php" class="action-btn ab-red">
-                        <i class="fa-solid fa-ban"></i><span>مسدود</span>
+                        <i class="fa-solid fa-ban"></i><span>مسدودها</span>
                     </a>
                 </div>
             </div>
@@ -528,19 +573,21 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     </div>
 
-    <!-- 4. Glass Dock -->
+    <!-- 4. Complete Glass Dock -->
     <div class="dock-wrapper anim d-3">
         <nav class="glass-dock">
             <a href="index.php" class="dock-link active" data-title="داشبورد"><i class="fa-solid fa-house"></i></a>
+            <div class="dock-sep"></div>
             <a href="users.php" class="dock-link" data-title="کاربران"><i class="fa-solid fa-users"></i></a>
             <a href="invoice.php" class="dock-link" data-title="سفارشات"><i class="fa-solid fa-file-contract"></i></a>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 5px;"></div>
             <a href="product.php" class="dock-link" data-title="محصولات"><i class="fa-solid fa-box"></i></a>
             <a href="service.php" class="dock-link" data-title="سرویس‌ها"><i class="fa-solid fa-server"></i></a>
+            <div class="dock-sep"></div>
+            <a href="cancelService.php" class="dock-link" data-title="مسدودسازی" style="color: var(--neon-red);"><i class="fa-solid fa-ban"></i></a>
             <a href="payment.php" class="dock-link" data-title="مالی"><i class="fa-solid fa-wallet"></i></a>
             <a href="inbound.php" class="dock-link" data-title="کانفیگ"><i class="fa-solid fa-network-wired"></i></a>
             <a href="seeting_x_ui.php" class="dock-link" data-title="پنل X-UI"><i class="fa-solid fa-tower-broadcast"></i></a>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 5px;"></div>
+            <div class="dock-sep"></div>
             <a href="settings.php" class="dock-link" data-title="تنظیمات"><i class="fa-solid fa-gear"></i></a>
             <a href="logout.php" class="dock-link" style="color: var(--neon-red);" data-title="خروج"><i class="fa-solid fa-power-off"></i></a>
         </nav>
