@@ -1,7 +1,7 @@
 <?php
 /**
- * Keyboard Editor - Aurora Pro Edition (Refined)
- * Fixed UX issues, Improved Drag & Drop, Better Responsive Design
+ * Keyboard Editor - Aurora Pro Edition (Refined Layout)
+ * Wider Stash, Better Spacing, Cleaner UI
  */
 
 session_start();
@@ -108,7 +108,7 @@ try {
         :root {
             --bg-deep: #020617;
             --bg-glass: rgba(15, 23, 42, 0.7);
-            --border-glass: rgba(255, 255, 255, 0.06);
+            --border-glass: rgba(255, 255, 255, 0.08);
             --primary: #6366f1;
             --primary-glow: rgba(99, 102, 241, 0.25);
             --danger: #ef4444;
@@ -126,8 +126,8 @@ try {
         .ambient-glow {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08), transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08), transparent 40%);
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.1), transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.1), transparent 50%);
             pointer-events: none;
         }
         
@@ -135,7 +135,8 @@ try {
         .app-layout {
             display: grid; 
             /* Right (Preview) | Center (Editor) | Left (Stash) */
-            grid-template-columns: 360px 1fr 280px; 
+            /* Increased Stash width to 340px, Preview to 340px to balance */
+            grid-template-columns: 340px 1fr 340px; 
             height: calc(100vh - 70px);
         }
 
@@ -154,132 +155,142 @@ try {
             overflow-y: auto; padding: 40px;
         }
         .panel-stash { 
-            background: rgba(30, 41, 59, 0.2); 
+            background: rgba(30, 41, 59, 0.25); 
             border-right: 1px solid var(--border-glass);
             backdrop-filter: blur(20px);
-            padding: 24px;
+            padding: 30px; /* Increased padding */
         }
 
         /* --- Drag & Drop Elements --- */
         .row-wrapper {
             background: rgba(30, 41, 59, 0.4);
             border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 12px; margin-bottom: 16px;
-            min-height: 80px; /* Important for empty dropzones */
-            display: flex; flex-wrap: wrap; gap: 8px;
+            border-radius: 20px;
+            padding: 16px; /* Increased padding */
+            margin-bottom: 24px; /* Increased margin */
+            min-height: 90px;
+            display: flex; flex-wrap: wrap; gap: 12px; /* Increased gap */
             position: relative; transition: all 0.2s;
         }
         .row-wrapper:hover {
-            border-color: rgba(99, 102, 241, 0.3);
-            background: rgba(30, 41, 59, 0.6);
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(30, 41, 59, 0.7);
+            box-shadow: 0 15px 40px -10px rgba(0,0,0,0.4);
         }
         
         .drag-handle {
-            position: absolute; left: -28px; top: 50%; transform: translateY(-50%);
-            padding: 8px; cursor: grab; color: #64748b; opacity: 0; transition: 0.2s;
+            position: absolute; left: -32px; top: 50%; transform: translateY(-50%);
+            padding: 8px; cursor: grab; color: #64748b; opacity: 0; transition: 0.2s; font-size: 1.2rem;
         }
-        .row-wrapper:hover .drag-handle { opacity: 1; }
+        .row-wrapper:hover .drag-handle { opacity: 0.6; }
+        .drag-handle:hover { opacity: 1 !important; color: white; }
 
         .key-btn {
-            flex: 1; min-width: 140px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 10px; padding: 10px 14px;
+            flex: 1 0 130px; /* Allow grow, min width 130 */
+            background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 14px 16px;
             cursor: grab; position: relative; overflow: hidden;
             transition: all 0.2s;
+            display: flex; flex-direction: column; justify-content: center;
         }
         .key-btn:hover {
             border-color: var(--primary);
-            box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
+            transform: translateY(-2px);
         }
+        .key-btn:active { transform: scale(0.98); }
         
-        .key-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #818cf8; opacity: 0.8; }
-        .key-label { font-size: 13px; font-weight: 500; color: #e2e8f0; margin-top: 2px; }
+        .key-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a5b4fc; opacity: 0.9; margin-bottom: 4px; }
+        .key-label { font-size: 14px; font-weight: 500; color: #f1f5f9; }
 
         .btn-actions {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+            position: absolute; inset: 0;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
             opacity: 0; transition: 0.2s;
         }
         .key-btn:hover .btn-actions { opacity: 1; }
 
         .action-circle {
-            width: 28px; height: 28px; border-radius: 8px;
+            width: 32px; height: 32px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 12px; color: white;
-            transform: scale(0.8); transition: 0.2s;
+            cursor: pointer; font-size: 13px; color: white;
+            transition: 0.2s;
         }
         .action-circle:hover { transform: scale(1.1); }
-        .act-edit { background: #3b82f6; }
-        .act-del { background: #ef4444; }
+        .act-edit { background: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .act-del { background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
 
         /* --- Stash Area --- */
         .stash-container {
             flex: 1; overflow-y: auto; 
             border: 2px dashed rgba(255,255,255,0.1);
-            border-radius: 14px; padding: 12px;
-            background: rgba(0,0,0,0.1); margin-top: 20px;
-            display: flex; flex-direction: column; gap: 8px;
+            border-radius: 18px; padding: 16px;
+            background: rgba(0,0,0,0.15); margin-top: 24px;
+            display: flex; flex-direction: column; gap: 10px;
+            transition: 0.2s;
         }
+        .stash-container:hover { border-color: rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); }
+        
         .stash-item {
             background: #1e293b; border: 1px solid #334155;
-            border-radius: 8px; padding: 10px; cursor: grab;
+            border-radius: 12px; padding: 12px 16px; cursor: grab;
+            display: flex; justify-content: space-between; align-items: center;
         }
+        .stash-item:hover { border-color: #64748b; }
 
         /* --- Phone Preview --- */
         .mockup {
-            width: 320px; height: 680px;
-            background: #000; border-radius: 45px;
-            box-shadow: 0 0 0 8px #1e1e1e, 0 30px 60px rgba(0,0,0,0.5);
+            width: 320px; height: 700px;
+            background: #000; border-radius: 50px;
+            box-shadow: 0 0 0 8px #1e1e1e, 0 30px 60px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; overflow: hidden; position: relative;
         }
         .dynamic-island {
-            width: 100px; height: 26px; background: #000;
-            border-radius: 100px; position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 110px; height: 30px; background: #000;
+            border-radius: 20px; position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
             z-index: 20;
         }
         .tg-header {
-            background: #212121; padding: 40px 16px 10px; color: white;
+            background: #212121; padding: 48px 16px 12px; color: white;
             display: flex; align-items: center; border-bottom: 1px solid #111;
         }
         .tg-body {
             flex: 1; background: #0f0f0f; 
             background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 16px 16px;
-            display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 10px;
+            background-size: 20px 20px;
+            display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 12px;
         }
         .tg-kb-area {
-            background: #1c1c1e; padding: 6px; min-height: 200px;
+            background: #1c1c1e; padding: 6px; min-height: 220px;
             border-top: 1px solid #000;
         }
-        /* Telegram Button Style */
         .tg-btn {
             background: #2c2c2e; color: white;
-            border-radius: 6px; padding: 10px 4px; margin: 3px;
+            border-radius: 6px; padding: 12px 4px; margin: 3px;
             font-size: 13px; text-align: center; flex: 1;
             box-shadow: 0 1px 0 rgba(0,0,0,0.5);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         /* --- Scrollbars --- */
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
         /* --- Responsive --- */
-        @media (max-width: 1280px) {
-            .app-layout { grid-template-columns: 0 1fr 260px; }
-            .panel-preview { display: none; } /* Hide Preview on Tablet */
+        @media (max-width: 1400px) {
+            .app-layout { grid-template-columns: 0 1fr 320px; }
+            .panel-preview { display: none; }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .app-layout { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
             .panel-stash { 
-                height: 200px; border-right: none; border-top: 1px solid var(--border-glass); 
-                order: 2;
+                height: 250px; border-right: none; border-top: 1px solid var(--border-glass); 
+                order: 2; width: 100%;
             }
             .panel-editor { order: 1; padding: 20px; }
         }
@@ -292,26 +303,27 @@ try {
     <!-- Header -->
     <header class="h-[70px] bg-[#0f172a]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-8 z-50">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                <i class="fa-solid fa-keyboard text-indigo-400"></i>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-white/10 shadow-lg shadow-indigo-500/10">
+                <i class="fa-solid fa-layer-group text-indigo-400"></i>
             </div>
             <div>
                 <h1 class="font-bold text-white text-lg tracking-tight">Keyboard Studio</h1>
+                <span class="text-[10px] text-indigo-300 uppercase tracking-widest opacity-60">Professional</span>
             </div>
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="index.php" class="h-9 px-4 rounded-lg bg-white/5 hover:bg-white/10 flex items-center gap-2 text-sm text-slate-400 transition">
+            <a href="index.php" class="h-10 px-4 rounded-xl bg-white/5 hover:bg-white/10 flex items-center gap-2 text-sm text-slate-300 transition">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 <span class="hidden sm:inline">خروج</span>
             </a>
-            <a href="keyboard.php?action=reset" onclick="return confirm('همه تغییرات از بین می‌روند. ادامه می‌دهید؟')" class="h-9 w-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-400 transition">
+            <a href="keyboard.php?action=reset" onclick="return confirm('همه تغییرات از بین می‌روند. ادامه می‌دهید؟')" class="h-10 w-10 rounded-xl bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-400 transition" title="بازنشانی">
                 <i class="fa-solid fa-rotate-left"></i>
             </a>
-            <div class="w-px h-6 bg-white/10 mx-1"></div>
-            <button onclick="App.save()" id="btn-save" class="h-9 px-5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <div class="w-px h-6 bg-white/10 mx-2"></div>
+            <button onclick="App.save()" id="btn-save" class="h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition disabled:opacity-50 disabled:cursor-not-allowed">
                 <i class="fa-regular fa-floppy-disk"></i>
-                <span>ذخیره</span>
+                <span>ذخیره تغییرات</span>
             </button>
         </div>
     </header>
@@ -319,15 +331,14 @@ try {
     <!-- Main Layout -->
     <div class="app-layout">
         
-        <!-- RIGHT: Preview (Desktop Only) -->
+        <!-- RIGHT: Preview -->
         <div class="panel panel-preview">
-            <div class="mb-5 flex items-center gap-2 text-[10px] font-bold text-indigo-300 uppercase tracking-widest bg-indigo-500/5 px-3 py-1 rounded-full border border-indigo-500/10">
+            <div class="mb-6 flex items-center gap-2 text-[10px] font-bold text-indigo-300 uppercase tracking-widest bg-indigo-500/5 px-4 py-1.5 rounded-full border border-indigo-500/10">
                 <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse"></span> Live Preview
             </div>
             
             <div class="mockup">
                 <div class="dynamic-island"></div>
-                <!-- Telegram Header -->
                 <div class="tg-header">
                     <i class="fa-solid fa-arrow-right text-gray-400 ml-2"></i>
                     <div class="flex-1 mr-2">
@@ -336,45 +347,52 @@ try {
                     </div>
                     <i class="fa-solid fa-ellipsis-vertical text-gray-400"></i>
                 </div>
-                <!-- Telegram Body -->
                 <div class="tg-body">
-                    <div class="bg-[#2b5278] text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] shadow-md mr-auto ml-3 mb-2">
+                    <div class="bg-[#2b5278] text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] shadow-md mr-auto ml-4 mb-2">
                         کیبورد شما به این صورت نمایش داده می‌شود 👇
                     </div>
                 </div>
-                <!-- Keyboard (Force LTR for correct Telegram Layout) -->
                 <div id="preview-render" class="tg-kb-area flex flex-col justify-end" dir="ltr"></div>
             </div>
         </div>
 
         <!-- CENTER: Editor -->
         <div class="panel panel-editor custom-scrollbar">
-            <div class="max-w-4xl mx-auto pb-32">
-                <div class="flex justify-between items-end mb-6">
+            <div class="max-w-4xl mx-auto pb-40">
+                <div class="flex justify-between items-end mb-8">
                     <div>
-                        <h2 class="text-xl font-bold text-white mb-1">چیدمان دکمه‌ها</h2>
-                        <p class="text-xs text-slate-400">دکمه‌ها را مرتب کنید یا به انبار منتقل کنید</p>
+                        <h2 class="text-2xl font-bold text-white mb-2">چیدمان دکمه‌ها</h2>
+                        <p class="text-sm text-slate-400">سطرها را مدیریت کنید و دکمه‌ها را مرتب نمایید</p>
                     </div>
-                    <button onclick="App.addRow()" class="h-9 px-4 rounded-lg border border-dashed border-indigo-500/30 text-indigo-300 text-xs hover:bg-indigo-500/10 transition">
-                        <i class="fa-solid fa-plus ml-1"></i> سطر جدید
+                    <button onclick="App.addRow()" class="h-10 px-5 rounded-xl border border-dashed border-indigo-500/30 text-indigo-300 text-xs font-bold hover:bg-indigo-500/10 hover:border-indigo-500/50 transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus text-sm"></i> سطر جدید
                     </button>
                 </div>
 
-                <div id="editor-render" class="flex flex-col gap-4"></div>
+                <div id="editor-render" class="flex flex-col gap-6"></div>
+                
+                <div class="mt-12 py-12 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center text-slate-600">
+                   <i class="fa-solid fa-arrow-up mb-2"></i>
+                   <span class="text-sm">انتهای لیست کیبورد</span>
+                </div>
             </div>
         </div>
 
         <!-- LEFT: Stash -->
         <div class="panel panel-stash">
-            <div class="flex items-center gap-3 mb-4 text-slate-200">
-                <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-indigo-400">
-                    <i class="fa-solid fa-box-archive"></i>
+            <div class="flex items-center gap-3 mb-6 text-slate-200">
+                <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 border border-slate-700">
+                    <i class="fa-solid fa-box-archive text-lg"></i>
                 </div>
-                <h3 class="font-bold text-sm">انبار دکمه‌ها</h3>
+                <div>
+                    <h3 class="font-bold text-base">انبار دکمه‌ها</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">فضای ذخیره موقت</p>
+                </div>
             </div>
             
-            <p class="text-[11px] text-slate-500 mb-2 leading-5">
-                دکمه‌هایی که موقتاً لازم ندارید را اینجا نگه دارید.
+            <p class="text-xs text-slate-400/80 mb-2 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">
+                <i class="fa-regular fa-lightbulb ml-1 text-yellow-500/70"></i>
+                دکمه‌هایی که موقتاً لازم ندارید را اینجا رها کنید تا بعداً استفاده کنید.
             </p>
             
             <div id="stash-render" class="stash-container custom-scrollbar"></div>
@@ -423,7 +441,7 @@ try {
                 this.swal = Swal.mixin({
                     background: '#1e293b', color: '#f8fafc',
                     confirmButtonColor: '#6366f1', cancelButtonColor: '#ef4444',
-                    customClass: { popup: 'rounded-xl border border-white/10' }
+                    customClass: { popup: 'rounded-2xl border border-white/10' }
                 });
 
                 this.render();
@@ -442,9 +460,10 @@ try {
 
                 if (this.data.keyboard.length === 0) {
                     editor.innerHTML = `
-                        <div class="flex flex-col items-center justify-center py-20 opacity-30 text-indigo-300">
-                            <i class="fa-solid fa-layer-group text-5xl mb-4"></i>
-                            <p>هیچ سطری وجود ندارد</p>
+                        <div class="flex flex-col items-center justify-center py-24 opacity-40 text-indigo-300 border-2 border-dashed border-indigo-500/20 rounded-3xl">
+                            <i class="fa-solid fa-layer-group text-6xl mb-6"></i>
+                            <p class="text-lg">هنوز سطری اضافه نکرده‌اید</p>
+                            <button onclick="App.addRow()" class="mt-4 text-sm text-indigo-400 hover:underline">ایجاد اولین سطر</button>
                         </div>`;
                     return;
                 }
@@ -454,7 +473,7 @@ try {
                     rowEl.className = 'row-wrapper group';
                     rowEl.dataset.rowIdx = rIdx;
                     
-                    // Drag Handle for Row
+                    // Drag Handle
                     rowEl.innerHTML = `<i class="fa-solid fa-grip-vertical drag-handle row-handle"></i>`;
 
                     // Render Keys in Row
@@ -462,15 +481,11 @@ try {
                         rowEl.appendChild(this.createKeyElement(btn, rIdx, bIdx, 'main'));
                     });
 
-                    // Controls for Row
-                    const controls = document.createElement('div');
-                    controls.className = 'flex items-center gap-2 ml-auto pl-2 border-l border-white/5';
-                    
-                    // Add Button Logic (Max 8)
+                    // Add Button Logic
                     if (row.length < 8) {
                         const addBtn = document.createElement('div');
-                        addBtn.className = 'w-8 h-8 rounded-lg border border-dashed border-slate-500 flex items-center justify-center text-slate-500 hover:text-indigo-400 hover:border-indigo-400 cursor-pointer transition';
-                        addBtn.innerHTML = '<i class="fa-solid fa-plus text-xs"></i>';
+                        addBtn.className = 'w-10 h-auto min-h-[50px] rounded-xl border-2 border-dashed border-slate-600 flex items-center justify-center text-slate-500 hover:text-indigo-400 hover:border-indigo-400 hover:bg-indigo-400/5 cursor-pointer transition opacity-60 hover:opacity-100';
+                        addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
                         addBtn.onclick = () => this.addKeyToRow(rIdx);
                         rowEl.appendChild(addBtn);
                     }
@@ -478,8 +493,8 @@ try {
                     // Delete Row Logic
                     if (row.length === 0) {
                         const delBtn = document.createElement('div');
-                        delBtn.className = 'w-full text-center text-xs text-red-400 py-3 cursor-pointer border border-dashed border-red-500/20 rounded bg-red-500/5 hover:bg-red-500/10 transition';
-                        delBtn.innerHTML = 'حذف سطر خالی';
+                        delBtn.className = 'w-full text-center text-xs text-red-400 py-3 cursor-pointer border border-dashed border-red-500/20 rounded-xl bg-red-500/5 hover:bg-red-500/10 transition';
+                        delBtn.innerHTML = '<i class="fa-solid fa-trash-can ml-1"></i> حذف سطر خالی';
                         delBtn.onclick = () => this.deleteRow(rIdx);
                         rowEl.appendChild(delBtn);
                     }
@@ -489,7 +504,7 @@ try {
 
                 // Init Sortable for Rows
                 new Sortable(editor, {
-                    animation: 200, handle: '.row-handle', ghostClass: 'opacity-50',
+                    animation: 250, handle: '.row-handle', ghostClass: 'opacity-50',
                     onEnd: (evt) => {
                         const item = this.data.keyboard.splice(evt.oldIndex, 1)[0];
                         this.data.keyboard.splice(evt.newIndex, 0, item);
@@ -501,7 +516,7 @@ try {
                 document.querySelectorAll('.row-wrapper').forEach(el => {
                     new Sortable(el, {
                         group: 'shared-keys', // Connects with Stash
-                        animation: 150, draggable: '.key-btn', ghostClass: 'opacity-50',
+                        animation: 150, draggable: '.key-btn', ghostClass: 'opacity-40',
                         onEnd: () => this.rebuildData()
                     });
                 });
@@ -512,7 +527,11 @@ try {
                 stash.innerHTML = '';
                 
                 if (this.data.stash.length === 0) {
-                    stash.innerHTML = `<div class="text-center py-8 opacity-20 text-xs text-white">خالی</div>`;
+                    stash.innerHTML = `
+                        <div class="text-center py-12 opacity-30 text-xs text-slate-400 flex flex-col items-center">
+                            <i class="fa-regular fa-folder-open text-2xl mb-2"></i>
+                            انبار خالی است
+                        </div>`;
                 }
 
                 this.data.stash.forEach((btn, idx) => {
@@ -528,19 +547,43 @@ try {
             createKeyElement(btn, rIdx, bIdx, type) {
                 const label = this.data.labels[btn.text] || 'دکمه سفارشی';
                 const el = document.createElement('div');
-                // Different styling for Stash vs Editor can be applied here
-                el.className = type === 'stash' ? 'stash-item key-btn' : 'key-btn';
-                el.dataset.text = btn.text; // Important for rebuilding
                 
-                el.innerHTML = `
-                    <div class="key-code">${btn.text.substring(0, 12)}${btn.text.length>12?'...':''}</div>
-                    <div class="key-label truncate">${label}</div>
-                    
-                    <div class="btn-actions">
-                        <div class="action-circle act-edit" onclick="App.editKey('${type}', ${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
-                        <div class="action-circle act-del" onclick="App.deleteKey('${type}', ${rIdx}, ${bIdx})"><i class="fa-solid fa-trash"></i></div>
-                    </div>
-                `;
+                if (type === 'stash') {
+                    // Stash Item Style
+                    el.className = 'stash-item';
+                    el.dataset.text = btn.text;
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-indigo-400 text-xs font-mono border border-slate-700">
+                                <i class="fa-solid fa-code"></i>
+                            </div>
+                            <div class="flex flex-col overflow-hidden">
+                                <span class="text-xs text-slate-200 truncate font-medium">${label}</span>
+                                <span class="text-[10px] text-slate-500 truncate font-mono">${btn.text}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-1 opacity-0 hover:opacity-100 transition-opacity">
+                            <button onclick="App.editKey('${type}', ${rIdx}, ${bIdx})" class="w-6 h-6 rounded bg-blue-500 hover:bg-blue-400 flex items-center justify-center text-[10px] text-white"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="App.deleteKey('${type}', ${rIdx}, ${bIdx})" class="w-6 h-6 rounded bg-red-500 hover:bg-red-400 flex items-center justify-center text-[10px] text-white"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                    // Add hover effect for showing buttons in stash
+                    el.onmouseenter = () => el.querySelector('.flex.gap-1').classList.remove('opacity-0');
+                    el.onmouseleave = () => el.querySelector('.flex.gap-1').classList.add('opacity-0');
+                } else {
+                    // Editor Item Style
+                    el.className = 'key-btn';
+                    el.dataset.text = btn.text;
+                    el.innerHTML = `
+                        <div class="key-code">${btn.text.substring(0, 14)}${btn.text.length>14?'..':''}</div>
+                        <div class="key-label truncate">${label}</div>
+                        
+                        <div class="btn-actions">
+                            <div class="action-circle act-edit" onclick="App.editKey('${type}', ${rIdx}, ${bIdx})"><i class="fa-solid fa-pen"></i></div>
+                            <div class="action-circle act-del" onclick="App.deleteKey('${type}', ${rIdx}, ${bIdx})"><i class="fa-solid fa-trash"></i></div>
+                        </div>
+                    `;
+                }
                 return el;
             },
 
@@ -568,8 +611,11 @@ try {
                 const newRows = [];
                 this.dom.editor.querySelectorAll('.row-wrapper').forEach(rowEl => {
                     const btns = [];
-                    rowEl.querySelectorAll('.key-btn').forEach(btnEl => {
-                        btns.push({ text: btnEl.dataset.text });
+                    // Select both key-btn (editor) and stash-item (if dropped from stash)
+                    const items = rowEl.querySelectorAll('[data-text]');
+                    items.forEach(item => {
+                         // Only add if it's a direct child (handle nested sortables if any, though unlikely here)
+                         btns.push({ text: item.dataset.text });
                     });
                     newRows.push(btns);
                 });
@@ -577,8 +623,9 @@ try {
 
                 // 2. Rebuild Stash
                 const newStash = [];
-                this.dom.stash.querySelectorAll('.key-btn').forEach(btnEl => {
-                    newStash.push({ text: btnEl.dataset.text });
+                const stashItems = this.dom.stash.querySelectorAll('[data-text]');
+                stashItems.forEach(item => {
+                    newStash.push({ text: item.dataset.text });
                 });
                 this.data.stash = newStash;
 
