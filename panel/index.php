@@ -169,25 +169,25 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            /* Palette: Void & Neon */
-            --bg-void: #050508;
-            --bg-glass: rgba(22, 22, 28, 0.5);
-            --bg-dock: rgba(12, 12, 18, 0.85);
+            /* Palette: Void & Neon (Midnight Theme Preserved) */
+            --bg-void: #020204; /* Darker void */
+            --bg-surface: rgba(18, 18, 24, 0.65);
+            --bg-dock: rgba(10, 10, 14, 0.9);
             
-            /* Enhanced Neons */
+            /* Enhanced Neons - Saturation Boosted */
             --neon-blue: #00f2ff;
-            --neon-purple: #bd00ff;
-            --neon-teal: #00ffc8;
-            --neon-amber: #ffae00;
-            --neon-pink: #ff0055;
-            --neon-red: #ff3333;
+            --neon-purple: #d946ef;
+            --neon-teal: #14b8a6;
+            --neon-amber: #f59e0b;
+            --neon-pink: #ec4899;
+            --neon-red: #ef4444;
             
             --text-main: #ffffff;
             --text-dim: #94a3b8;
             
             --border-glass: 1px solid rgba(255, 255, 255, 0.08);
-            --shadow-float: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            --radius-lg: 32px;
+            --shadow-float: 0 30px 60px -15px rgba(0, 0, 0, 0.9);
+            --radius-lg: 36px;
         }
 
         /* --- Base & Background --- */
@@ -201,238 +201,240 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             overflow-x: hidden;
             padding-bottom: 180px;
             position: relative;
+            font-weight: 500;
         }
 
-        /* Ambient Orbs (Background Animation) */
+        /* Ambient Orbs - More intense */
         .ambient-orb {
             position: fixed;
             border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.15;
+            filter: blur(120px);
+            opacity: 0.18;
             z-index: -1;
-            animation: orbFloat 20s infinite alternate ease-in-out;
+            animation: orbFloat 25s infinite alternate ease-in-out;
         }
-        .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--neon-purple); animation-delay: 0s; }
-        .orb-2 { bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: var(--neon-blue); animation-delay: -5s; }
-        .orb-3 { top: 40%; left: 40%; width: 30vw; height: 30vw; background: var(--neon-teal); opacity: 0.08; animation-delay: -10s; }
+        .orb-1 { top: -15%; left: -10%; width: 60vw; height: 60vw; background: var(--neon-purple); animation-delay: 0s; }
+        .orb-2 { bottom: -15%; right: -10%; width: 70vw; height: 70vw; background: var(--neon-blue); animation-delay: -5s; }
+        .orb-3 { top: 30%; left: 40%; width: 40vw; height: 40vw; background: var(--neon-teal); opacity: 0.1; animation-delay: -10s; }
 
         @keyframes orbFloat {
             0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(30px, 50px) scale(1.1); }
+            100% { transform: translate(40px, 60px) scale(1.15); }
         }
 
         /* --- Animations --- */
         @keyframes staggerUp {
-            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            from { opacity: 0; transform: translateY(50px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .anim { opacity: 0; animation: staggerUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .anim { opacity: 0; animation: staggerUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; } .d-3 { animation-delay: 0.3s; } .d-4 { animation-delay: 0.4s; }
 
         @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 242, 255, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(0, 242, 255, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0); }
         }
 
         /* --- Layout --- */
         .container-fluid-custom {
             width: 100%;
-            max-width: 1920px;
+            max-width: 2100px; /* Wider container */
             margin: 0 auto;
-            padding: 60px 4%;
+            padding: 60px 3%; /* Less side padding to fill space */
         }
 
         /* --- Header --- */
         .header-top {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 80px; padding-bottom: 40px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 60px; padding-bottom: 40px;
+            border-bottom: 2px solid rgba(255,255,255,0.04);
             position: relative;
         }
         .header-top::after {
-            content: ''; position: absolute; bottom: -1px; left: 0; width: 150px; height: 3px;
+            content: ''; position: absolute; bottom: -2px; left: 0; width: 200px; height: 4px;
             background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple), transparent);
             border-radius: 10px;
         }
         .header-title h1 {
-            font-size: 5rem; font-weight: 900; color: #fff; margin: 0; line-height: 1.1;
-            letter-spacing: -2px;
-            background: linear-gradient(135deg, #fff 30%, #94a3b8 100%);
+            font-size: 5.5rem; font-weight: 900; color: #fff; margin: 0; line-height: 1;
+            letter-spacing: -3px;
+            background: linear-gradient(135deg, #fff 40%, #94a3b8 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .header-title p {
-            color: var(--text-dim); margin-top: 15px; font-size: 1.4rem; font-weight: 300;
-            display: flex; align-items: center; gap: 20px;
+            color: var(--text-dim); margin-top: 15px; font-size: 1.6rem; font-weight: 400;
+            display: flex; align-items: center; gap: 25px;
         }
         
         .status-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(0, 242, 255, 0.08); border: 1px solid rgba(0, 242, 255, 0.2);
-            padding: 5px 15px; border-radius: 20px; color: var(--neon-blue); font-weight: bold; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 10px;
+            background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 8px 20px; border-radius: 30px; color: var(--neon-blue); font-weight: 800; font-size: 1rem;
         }
-        .status-dot { width: 8px; height: 8px; background: var(--neon-blue); border-radius: 50%; animation: pulseGlow 2s infinite; }
+        .status-dot { width: 10px; height: 10px; background: var(--neon-blue); border-radius: 50%; animation: pulseGlow 2s infinite; }
 
         .user-pill {
             background: rgba(255,255,255,0.03); border: var(--border-glass);
-            padding: 12px 12px 12px 30px; border-radius: 100px;
-            display: flex; align-items: center; gap: 15px;
-            backdrop-filter: blur(20px); transition: 0.3s;
+            padding: 15px 15px 15px 35px; border-radius: 100px;
+            display: flex; align-items: center; gap: 20px;
+            backdrop-filter: blur(25px); transition: 0.3s;
         }
-        .user-pill:hover { background: rgba(255,255,255,0.07); transform: scale(1.02); }
+        .user-pill:hover { background: rgba(255,255,255,0.08); transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .user-info { text-align: left; }
-        .user-name { display: block; font-size: 1.2rem; font-weight: 800; color: #fff; }
-        .user-role { display: block; font-size: 0.9rem; color: var(--text-dim); }
+        .user-name { display: block; font-size: 1.4rem; font-weight: 800; color: #fff; }
+        .user-role { display: block; font-size: 1rem; color: var(--text-dim); font-weight: 400; }
         .user-avatar {
-            width: 55px; height: 55px; border-radius: 50%;
+            width: 65px; height: 65px; border-radius: 50%;
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; color: #000; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            font-size: 1.8rem; color: #000; box-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
         }
 
-        /* --- Stats Grid (Enhanced) --- */
+        /* --- Stats Grid (Massive) --- */
         .stats-deck {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* Wider cards */
             gap: 40px; margin-bottom: 80px;
         }
         .stat-card {
-            background: linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
-            backdrop-filter: blur(20px); border: var(--border-glass);
-            border-radius: var(--radius-lg); padding: 40px;
-            display: flex; flex-direction: column; min-height: 260px;
+            background: linear-gradient(170deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-lg); padding: 45px;
+            display: flex; flex-direction: column; min-height: 280px;
             position: relative; overflow: hidden; transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
         }
-        /* Shine Effect */
-        .stat-card::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-            transform: skewX(-20deg); transition: 0s; pointer-events: none;
-        }
-        .stat-card:hover::after { left: 200%; transition: 0.8s; }
         .stat-card:hover {
-            transform: translateY(-15px);
+            transform: translateY(-15px) scale(1.02);
             border-color: var(--glow-c);
-            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6), 0 0 30px rgba(var(--rgb-c), 0.2);
+            background: linear-gradient(170deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            box-shadow: 0 30px 70px -10px rgba(0,0,0,0.8), 0 0 40px rgba(var(--rgb-c), 0.15);
         }
 
-        .stat-top { display: flex; justify-content: space-between; margin-bottom: 25px; }
-        .stat-icon { font-size: 3rem; color: rgba(255,255,255,0.15); transition: 0.4s; }
-        .stat-card:hover .stat-icon { color: var(--glow-c); transform: scale(1.1) rotate(-10deg); filter: drop-shadow(0 0 10px var(--glow-c)); }
+        .stat-top { display: flex; justify-content: space-between; margin-bottom: 30px; align-items: center; }
+        .stat-icon { font-size: 3.5rem; color: rgba(255,255,255,0.1); transition: 0.5s; }
+        .stat-card:hover .stat-icon { color: var(--glow-c); transform: scale(1.15) rotate(-8deg); filter: drop-shadow(0 0 20px var(--glow-c)); }
         
-        .stat-val { font-size: 4.2rem; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -2px; margin-top: auto; }
-        .stat-lbl { font-size: 1.3rem; color: var(--text-dim); margin-top: 5px; font-weight: 500; }
+        .stat-val { 
+            font-size: 5rem; font-weight: 900; color: #fff; line-height: 0.9; letter-spacing: -3px; margin-top: auto; 
+            text-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .stat-lbl { font-size: 1.5rem; color: var(--text-dim); margin-top: 10px; font-weight: 600; }
         
-        /* Decorative Progress Bar inside card */
-        .stat-prog { width: 100%; height: 4px; background: rgba(255,255,255,0.05); margin-top: 25px; border-radius: 4px; overflow: hidden; }
-        .stat-fill { height: 100%; background: var(--glow-c); width: 0; animation: fillBar 1.5s ease-out forwards; border-radius: 4px; box-shadow: 0 0 10px var(--glow-c); }
-        @keyframes fillBar { to { width: 65%; } } /* Random width for aesthetics */
+        .stat-prog { width: 100%; height: 6px; background: rgba(255,255,255,0.05); margin-top: 30px; border-radius: 10px; overflow: hidden; }
+        .stat-fill { height: 100%; background: var(--glow-c); width: 0; animation: fillBar 1.5s ease-out forwards; border-radius: 10px; box-shadow: 0 0 15px var(--glow-c); }
+        @keyframes fillBar { to { width: 65%; } }
 
         .s-blue { --glow-c: var(--neon-blue); --rgb-c: 0, 242, 255; }
-        .s-teal { --glow-c: var(--neon-teal); --rgb-c: 0, 255, 200; }
-        .s-purple { --glow-c: var(--neon-purple); --rgb-c: 189, 0, 255; }
-        .s-amber { --glow-c: var(--neon-amber); --rgb-c: 255, 174, 0; }
+        .s-teal { --glow-c: var(--neon-teal); --rgb-c: 20, 184, 166; }
+        .s-purple { --glow-c: var(--neon-purple); --rgb-c: 217, 70, 239; }
+        .s-amber { --glow-c: var(--neon-amber); --rgb-c: 245, 158, 11; }
 
-        /* --- Quick Actions (Bigger & Bolder) --- */
-        .section-title { font-size: 2.5rem; font-weight: 900; color: #fff; margin-bottom: 50px; display: flex; align-items: center; gap: 20px; }
-        .section-title::after { content: ''; height: 4px; flex-grow: 1; background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent); border-radius: 2px; max-width: 300px; }
+        /* --- Quick Actions (Giant & Full) --- */
+        .section-title { font-size: 3rem; font-weight: 900; color: #fff; margin-bottom: 60px; display: flex; align-items: center; gap: 25px; }
+        .section-title::after { content: ''; height: 4px; flex-grow: 1; background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent); border-radius: 2px; }
 
         .action-deck {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 30px; margin-bottom: 80px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Much wider tiles */
+            gap: 35px; margin-bottom: 100px;
         }
         .action-tile {
             background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05); border-radius: 28px;
-            padding: 35px 20px; text-align: center;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
-            transition: 0.4s; cursor: pointer; height: 220px; /* Taller */
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 32px;
+            padding: 40px 25px; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 25px;
+            transition: 0.4s cubic-bezier(0.3, 0.7, 0.2, 1); cursor: pointer; 
+            height: 280px; /* Taller tiles */
             position: relative; overflow: hidden; text-decoration: none;
         }
         .action-tile:hover {
-            background: rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.05);
             border-color: var(--neon-blue);
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            transform: translateY(-12px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
         }
-        .tile-icon { font-size: 4rem; color: var(--text-dim); transition: 0.4s; }
-        .action-tile:hover .tile-icon { color: #fff; transform: scale(1.2); filter: drop-shadow(0 0 20px var(--neon-blue)); }
-        .tile-text { font-size: 1.4rem; font-weight: 700; color: #fff; transition: 0.3s; }
-        .tile-sub { font-size: 0.9rem; color: var(--text-dim); opacity: 0; transform: translateY(10px); transition: 0.3s; }
+        .tile-icon { font-size: 4.5rem; color: var(--text-dim); transition: 0.4s; }
+        .action-tile:hover .tile-icon { color: #fff; transform: scale(1.25); filter: drop-shadow(0 0 30px var(--neon-blue)); }
+        .tile-text { font-size: 1.8rem; font-weight: 800; color: #fff; transition: 0.3s; }
+        .tile-sub { font-size: 1.1rem; color: var(--text-dim); opacity: 0; transform: translateY(15px); transition: 0.3s; font-weight: 500; }
         .action-tile:hover .tile-sub { opacity: 1; transform: translateY(0); }
 
-        .tile-danger:hover { border-color: var(--neon-red); }
-        .tile-danger:hover .tile-icon { filter: drop-shadow(0 0 20px var(--neon-red)); }
+        .tile-danger:hover { border-color: var(--neon-red); background: rgba(239, 68, 68, 0.05); }
+        .tile-danger:hover .tile-icon { filter: drop-shadow(0 0 30px var(--neon-red)); }
 
-        /* --- Charts (Expanded) --- */
+        /* --- Charts (Professional) --- */
         .charts-grid {
-            display: grid; grid-template-columns: 2.2fr 1fr; gap: 40px; margin-bottom: 60px;
+            display: grid; grid-template-columns: 2.2fr 1fr; gap: 40px; margin-bottom: 80px;
         }
         .chart-box {
-            background: rgba(20, 20, 25, 0.6);
-            backdrop-filter: blur(20px); border: var(--border-glass);
-            border-radius: var(--radius-lg); padding: 40px;
+            background: rgba(15, 15, 20, 0.7);
+            backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--radius-lg); padding: 50px;
             position: relative; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
         }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .chart-title { font-size: 1.8rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 15px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .chart-title { font-size: 2rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 20px; }
         
-        /* Center text for doughnut */
+        /* Doughnut Center */
         .doughnut-center {
-            position: absolute; top: 56%; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%);
             text-align: center; pointer-events: none;
         }
-        .dc-val { font-size: 2.5rem; font-weight: 900; color: #fff; line-height: 1; }
-        .dc-lbl { font-size: 1rem; color: var(--text-dim); }
+        .dc-val { font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -2px; }
+        .dc-lbl { font-size: 1.2rem; color: var(--text-dim); font-weight: 600; margin-top: 5px; }
 
-        /* --- Floating Dock (Redesigned) --- */
+        /* --- Floating Dock (Sleek) --- */
         .dock-container {
-            position: fixed; bottom: 30px; left: 0; right: 0;
+            position: fixed; bottom: 40px; left: 0; right: 0;
             display: flex; justify-content: center; z-index: 2000; pointer-events: none;
             padding: 0 20px;
         }
         .dock {
             pointer-events: auto;
             display: flex; align-items: flex-end;
-            gap: 12px;
+            gap: 15px;
             background: var(--bg-dock);
-            backdrop-filter: blur(30px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 32px; padding: 15px 25px;
-            box-shadow: 0 30px 70px rgba(0,0,0,0.8);
+            backdrop-filter: blur(40px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-top: 1px solid rgba(255,255,255,0.2);
+            border-radius: 36px; padding: 18px 30px;
+            box-shadow: 0 40px 90px rgba(0,0,0,0.9);
             transition: 0.4s; overflow-x: auto; scrollbar-width: none;
         }
         .dock::-webkit-scrollbar { display: none; }
         
         .dock-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 75px; height: 75px; flex-shrink: 0;
-            color: var(--text-dim); text-decoration: none; border-radius: 20px;
+            width: 80px; height: 80px; flex-shrink: 0;
+            color: var(--text-dim); text-decoration: none; border-radius: 22px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .dock-item i { font-size: 1.8rem; margin-bottom: 5px; transition: 0.3s; }
-        .dock-label { font-size: 0.75rem; font-weight: 600; opacity: 0.7; }
+        .dock-item i { font-size: 2rem; margin-bottom: 6px; transition: 0.3s; }
+        .dock-label { font-size: 0.85rem; font-weight: 700; opacity: 0.6; }
         
         .dock-item:hover {
-            width: 90px; background: rgba(255,255,255,0.08); transform: translateY(-10px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            width: 95px; background: rgba(255,255,255,0.08); transform: translateY(-15px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
         }
         .dock-item:hover i { color: #fff; transform: scale(1.2); }
         .dock-item:hover .dock-label { color: #fff; opacity: 1; }
         
-        .dock-item.active { background: rgba(0, 242, 255, 0.15); border: 1px solid rgba(0, 242, 255, 0.2); }
-        .dock-item.active i { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+        .dock-item.active { background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.25); }
+        .dock-item.active i { color: var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue); }
         .dock-item.active .dock-label { color: var(--neon-blue); opacity: 1; }
 
-        .dock-danger:hover i { color: var(--neon-red); text-shadow: 0 0 10px var(--neon-red); }
+        .dock-danger:hover i { color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
         .dock-danger:hover .dock-label { color: var(--neon-red); }
 
-        @media (max-width: 1400px) { .charts-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1600px) { .charts-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
-            .header-title h1 { font-size: 3.5rem; }
+            .container-fluid-custom { padding: 40px 5%; }
+            .header-title h1 { font-size: 4rem; }
             .stats-deck { grid-template-columns: 1fr; }
-            .dock { padding: 10px 15px; gap: 8px; justify-content: flex-start; }
-            .dock-item { width: 65px; height: 65px; }
+            .action-deck { grid-template-columns: 1fr 1fr; } /* Stack slightly on mobile */
+            .dock { padding: 12px 20px; gap: 8px; justify-content: flex-start; }
+            .dock-item { width: 70px; height: 70px; }
         }
     </style>
 </head>
@@ -450,15 +452,15 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <div class="header-title">
                 <h1><?php echo $greet; ?>، ادمین</h1>
                 <p>
-                    <span class="status-badge"><span class="status-dot"></span>سیستم آنلاین</span>
-                    <span style="opacity: 0.3;">|</span>
-                    <i class="fa-regular fa-calendar"></i> <?php echo $today; ?>
+                    <span class="status-badge"><span class="status-dot"></span>سیستم آنلاین و پایدار</span>
+                    <span style="opacity: 0.2;">|</span>
+                    <i class="fa-regular fa-calendar-check"></i> <?php echo $today; ?>
                 </p>
             </div>
             <div class="user-pill">
                 <div class="user-info">
                     <span class="user-name">مدیر ارشد</span>
-                    <span class="user-role">دسترسی کامل</span>
+                    <span class="user-role">دسترسی کامل (Root)</span>
                 </div>
                 <div class="user-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
             </div>
@@ -480,7 +482,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-file-invoice-dollar stat-icon"></i>
                 </div>
                 <div class="stat-val"><?php echo number_format($stats['orders']); ?></div>
-                <div class="stat-prog"><div class="stat-fill" style="width: 80%; animation-duration: 1.8s;"></div></div>
+                <div class="stat-prog"><div class="stat-fill" style="width: 80%; animation-duration: 1.8s; background: var(--neon-teal);"></div></div>
             </div>
             <div class="stat-card s-purple">
                 <div class="stat-top">
@@ -488,7 +490,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-users-rays stat-icon"></i>
                 </div>
                 <div class="stat-val"><?php echo number_format($stats['users']); ?></div>
-                <div class="stat-prog"><div class="stat-fill" style="width: 45%; animation-duration: 2s;"></div></div>
+                <div class="stat-prog"><div class="stat-fill" style="width: 45%; animation-duration: 2s; background: var(--neon-purple);"></div></div>
             </div>
             <div class="stat-card s-amber">
                 <div class="stat-top">
@@ -496,7 +498,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-user-plus stat-icon"></i>
                 </div>
                 <div class="stat-val"><?php echo number_format($stats['new_users']); ?></div>
-                <div class="stat-prog"><div class="stat-fill" style="width: 30%; animation-duration: 1.2s;"></div></div>
+                <div class="stat-prog"><div class="stat-fill" style="width: 30%; animation-duration: 1.2s; background: var(--neon-amber);"></div></div>
             </div>
         </section>
 
@@ -538,14 +540,6 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <div class="tile-sub">تنظیمات هسته</div>
                 </div>
             </a>
-            <a href="cancelService.php" class="action-tile tile-danger">
-                <i class="fa-solid fa-ban tile-icon" style="color: var(--neon-pink);"></i>
-                <div>
-                    <div class="tile-text" style="color: var(--neon-pink);">مسدودی‌ها</div>
-                    <div class="tile-sub">مدیریت لیست سیاه</div>
-                </div>
-            </a>
-            <!-- Added more generic tiles if needed to fill space, using existing links -->
             <a href="metrics.php" class="action-tile">
                 <i class="fa-solid fa-chart-simple tile-icon"></i>
                 <div>
@@ -560,6 +554,13 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <div class="tile-sub">پیکربندی سامانه</div>
                 </div>
             </a>
+            <a href="cancelService.php" class="action-tile tile-danger">
+                <i class="fa-solid fa-ban tile-icon" style="color: var(--neon-pink);"></i>
+                <div>
+                    <div class="tile-text" style="color: var(--neon-pink);">مسدودی‌ها</div>
+                    <div class="tile-sub">مدیریت لیست سیاه</div>
+                </div>
+            </a>
         </section>
 
         <!-- Charts Grid -->
@@ -567,15 +568,15 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <div class="chart-box" style="flex: 2;">
                 <div class="chart-header">
                     <div class="chart-title"><i class="fa-solid fa-chart-area" style="color: var(--neon-blue);"></i> نمودار فروش ۳۰ روزه</div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 10px; font-size: 0.9rem;">زنده</div>
+                    <div style="background: rgba(0, 242, 255, 0.1); color: var(--neon-blue); padding: 8px 20px; border-radius: 12px; font-size: 1rem; border: 1px solid rgba(0, 242, 255, 0.2); font-weight: bold;">زنده</div>
                 </div>
-                <div style="height: 500px; width: 100%;"><canvas id="salesChart"></canvas></div>
+                <div style="height: 550px; width: 100%;"><canvas id="salesChart"></canvas></div>
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 40px; flex: 1;">
                 <div class="chart-box" style="flex: 1;">
                     <div class="chart-header"><div class="chart-title"><i class="fa-solid fa-chart-pie" style="color: var(--neon-purple);"></i> وضعیت سرویس‌ها</div></div>
-                    <div style="height: 300px; position: relative;">
+                    <div style="height: 350px; position: relative;">
                         <canvas id="statusChart"></canvas>
                         <div class="doughnut-center">
                             <div class="dc-val"><?php echo $totalStatus; ?></div>
@@ -585,7 +586,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 </div>
                 <div class="chart-box" style="flex: 1;">
                     <div class="chart-header"><div class="chart-title"><i class="fa-solid fa-arrow-trend-up" style="color: var(--neon-teal);"></i> جذب کاربر</div></div>
-                    <div style="height: 250px;"><canvas id="usersChart"></canvas></div>
+                    <div style="height: 300px;"><canvas id="usersChart"></canvas></div>
                 </div>
             </div>
         </section>
@@ -634,7 +635,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <a href="cancelService.php" class="dock-item dock-danger">
                 <i class="fa-solid fa-ban"></i><span class="dock-label">مسدودی</span>
             </a>
-            <div style="width: 1px; height: 50px; background: rgba(255,255,255,0.1); margin: 0 5px;"></div>
+            <div style="width: 1px; height: 50px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
             <a href="logout.php" class="dock-item dock-danger">
                 <i class="fa-solid fa-power-off"></i><span class="dock-label">خروج</span>
             </a>
@@ -646,19 +647,20 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         Chart.defaults.font.family = 'Vazirmatn'; 
-        Chart.defaults.font.size = 16; 
+        Chart.defaults.font.size = 18; /* Bigger Fonts in Charts */
         Chart.defaults.font.weight = '600'; 
         Chart.defaults.color = '#94a3b8'; 
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.03)';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
         
-        // Tooltip Design
-        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(10, 10, 15, 0.95)';
+        // Professional Tooltip
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 15, 20, 0.95)';
         Chart.defaults.plugins.tooltip.titleColor = '#fff';
-        Chart.defaults.plugins.tooltip.padding = 20;
-        Chart.defaults.plugins.tooltip.cornerRadius = 16;
-        Chart.defaults.plugins.tooltip.titleFont = { size: 18, weight: 800 };
-        Chart.defaults.plugins.tooltip.bodyFont = { size: 15 };
-        Chart.defaults.plugins.tooltip.displayColors = false;
+        Chart.defaults.plugins.tooltip.padding = 24;
+        Chart.defaults.plugins.tooltip.cornerRadius = 20;
+        Chart.defaults.plugins.tooltip.titleFont = { size: 20, weight: 800 };
+        Chart.defaults.plugins.tooltip.bodyFont = { size: 16 };
+        Chart.defaults.plugins.tooltip.displayColors = true;
+        Chart.defaults.plugins.tooltip.boxWidth = 10;
         Chart.defaults.plugins.tooltip.borderWidth = 1;
         Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,0.1)';
 
@@ -669,7 +671,8 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         // Sales Chart
         const ctxS = document.getElementById('salesChart').getContext('2d');
         const gradS = ctxS.createLinearGradient(0, 0, 0, 600); 
-        gradS.addColorStop(0, 'rgba(0, 242, 255, 0.5)'); 
+        gradS.addColorStop(0, 'rgba(0, 242, 255, 0.4)'); 
+        gradS.addColorStop(0.5, 'rgba(0, 242, 255, 0.05)'); 
         gradS.addColorStop(1, 'rgba(0, 242, 255, 0)');
         
         new Chart(ctxS, { 
@@ -681,14 +684,14 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     data: dSales.values, 
                     borderColor: '#00f2ff', 
                     backgroundColor: gradS, 
-                    borderWidth: 4, 
+                    borderWidth: 5, 
                     pointRadius: 0, 
-                    pointHoverRadius: 10, 
-                    pointBackgroundColor: '#fff', 
-                    pointHoverBackgroundColor: '#00f2ff',
-                    pointBorderWidth: 0,
+                    pointHoverRadius: 12, 
+                    pointBackgroundColor: '#000', 
+                    pointBorderColor: '#00f2ff',
+                    pointBorderWidth: 4,
                     fill: true, 
-                    tension: 0.5 
+                    tension: 0.45 
                 }] 
             }, 
             options: { 
@@ -696,8 +699,13 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 maintainAspectRatio: false, 
                 plugins: { legend: { display: false } }, 
                 scales: { 
-                    x: { grid: { display: false }, ticks: { padding: 10 } }, 
-                    y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(255,255,255,0.02)' }, ticks: { padding: 20 } } 
+                    x: { grid: { display: false }, ticks: { padding: 15, color: '#64748b' } }, 
+                    y: { 
+                        beginAtZero: true, 
+                        border: { display: false, dash: [5, 5] }, 
+                        grid: { color: 'rgba(255,255,255,0.03)', borderDash: [5, 5] }, 
+                        ticks: { padding: 20, color: '#64748b' } 
+                    } 
                 },
                 interaction: { mode: 'index', intersect: false }
             } 
@@ -710,18 +718,19 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 labels: dPie.labels, 
                 datasets: [{ 
                     data: dPie.values, 
-                    backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#bd00ff', '#f97316', '#334155'], 
-                    borderWidth: 0, 
-                    hoverOffset: 20,
-                    borderRadius: 5
+                    backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#d946ef', '#f97316', '#334155'], 
+                    borderWidth: 2, 
+                    borderColor: 'rgba(15, 15, 20, 0.8)',
+                    hoverOffset: 30,
+                    borderRadius: 8
                 }] 
             }, 
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                cutout: '80%', 
+                cutout: '82%', 
                 plugins: { 
-                    legend: { position: 'right', labels: { boxWidth: 15, color: '#fff', font: {size: 14, weight: 500}, usePointStyle: true, padding: 20 } } 
+                    legend: { position: 'right', labels: { boxWidth: 18, color: '#fff', font: {size: 15, weight: 600}, usePointStyle: true, padding: 25 } } 
                 },
                 layout: { padding: 20 }
             } 
@@ -729,9 +738,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         // User Chart (Bar)
         const ctxU = document.getElementById('usersChart').getContext('2d');
-        const gradU = ctxU.createLinearGradient(0, 0, 0, 300); 
-        gradU.addColorStop(0, '#00ffc8'); 
-        gradU.addColorStop(1, 'rgba(0, 255, 200, 0.1)');
+        const gradU = ctxU.createLinearGradient(0, 0, 0, 400); 
+        gradU.addColorStop(0, '#14b8a6'); 
+        gradU.addColorStop(1, 'rgba(20, 184, 166, 0.1)');
         
         new Chart(ctxU, { 
             type: 'bar', 
@@ -741,8 +750,8 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     label: 'کاربر جدید', 
                     data: dUsers.values, 
                     backgroundColor: gradU, 
-                    borderRadius: 8, 
-                    barThickness: 25,
+                    borderRadius: 12, 
+                    barThickness: 35,
                     hoverBackgroundColor: '#fff'
                 }] 
             }, 
