@@ -468,7 +468,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
   }
 
   .nav-box i {
-    font-size: 24px;
+    font-size: 12px;
   }
 
   .nav-box span {
