@@ -64,50 +64,51 @@ try {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>مدیریت کیبورد | ربات میرزا</title>
-    <!-- Tailwind CSS (برای چیدمان) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font (Using Vazir as Yekan replacement for online preview) -->
+    <!-- SortableJS for Drag and Drop -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- Font -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* استایل‌های تم اختصاصی */
         @font-face {
             font-family: 'yekan';
-            src: url('fonts/Vazir.eot'); /* مسیر فرضی */
-            /* استفاده از فونت آنلاین اگر لوکال نبود */
+            src: url('fonts/Vazir.eot'); 
             font-family: 'Vazirmatn'; 
         }
 
         body {
             font-family: 'Vazirmatn', 'yekan', sans-serif;
-            background-color: #f0f0f0;
+            background-color: #121212; /* Midnight Background */
+            color: #e0e0e0;
         }
 
-        /* دکمه‌های اصلی پنل قدیمی */
+        /* دکمه‌های ناوبری */
         .btnback {
             display: inline-block;
             padding: 8px 15px;
-            background-color: #3d3d3d;
+            background-color: #2c2c2c;
             color: #fff;
             border-radius: 6px;
             font-size: 13px;
             font-weight: bold;
             text-decoration: none;
-            border: none;
+            border: 1px solid #444;
             transition: background 0.3s;
         }
         .btnback:hover {
-            background-color: #555;
+            background-color: #444;
         }
 
         .btndefult {
             display: inline-block;
             padding: 8px 15px;
-            background-color: #fff;
-            border: 2px solid #3d3d3d;
-            color: #3d3d3d;
+            background-color: #1a1a1a;
+            border: 1px solid #d32f2f;
+            color: #d32f2f;
             border-radius: 6px;
             font-size: 13px;
             font-weight: bold;
@@ -115,39 +116,57 @@ try {
             transition: all 0.3s;
         }
         .btndefult:hover {
-            background-color: #3d3d3d;
+            background-color: #d32f2f;
             color: #fff;
         }
 
-        /* استایل تلگرام */
+        /* کانتینر چت */
+        .chat-container {
+            background-color: #1e1e2e; /* Dark Card */
+            border: 1px solid #333;
+        }
+
         .telegram-header {
-            background-color: #517da2; /* رنگ هدر تلگرام */
+            background-color: #232e3c; /* Darker Telegram Header */
             color: white;
+            border-bottom: 1px solid #333;
         }
         
+        /* دکمه‌های کیبورد */
         .telegram-btn {
-            background-color: #fff;
-            color: #000;
+            background-color: #2b2b2b; /* Dark Button */
+            color: #fff;
             border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
             min-height: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 13px;
             position: relative;
-            cursor: pointer;
-            border: 1px solid #ddd;
+            cursor: move; /* نشانگر قابلیت جابجایی */
+            border: 1px solid #3d3d3d;
+            user-select: none;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
-        .telegram-btn:hover {
-            background-color: #f5f5f5;
+        .telegram-btn:active {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
         }
         
+        /* حالت در حال درگ */
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #4a4a4a;
+        }
+        .sortable-drag {
+            cursor: grabbing;
+        }
+
         .delete-btn {
             position: absolute;
-            top: -5px;
-            left: -5px;
-            background: #d32f2f;
+            top: -6px;
+            left: -6px;
+            background: #ef5350;
             color: white;
             border-radius: 50%;
             width: 18px;
@@ -155,72 +174,105 @@ try {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 10px;
             opacity: 0;
             transition: opacity 0.2s;
             z-index: 10;
+            cursor: pointer;
         }
         .telegram-btn:hover .delete-btn {
             opacity: 1;
         }
 
-        /* دکمه ذخیره شناور */
+        /* دکمه‌های کنترلی */
+        .control-btn {
+            background-color: #2b2b2b;
+            border: 1px dashed #555;
+            color: #888;
+        }
+        .control-btn:hover {
+            background-color: #333;
+            color: #bbb;
+        }
+
         .save-float-btn {
-            background-color: #3d3d3d;
+            background-color: #4caf50;
             color: white;
             border-radius: 6px;
             font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border: none;
+            transition: transform 0.2s;
         }
         .save-float-btn:hover {
-            background-color: #222;
+            background-color: #43a047;
+            transform: translateY(-2px);
+        }
+        
+        /* بک‌گراند چت تلگرام تیره */
+        .chat-bg {
+            background-color: #0f0f0f;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%231a1a1a' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
         }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-24">
 
-    <!-- Header / Nav Actions -->
-    <div class="bg-white shadow-sm p-4 sticky top-0 z-50">
+    <!-- Header -->
+    <div class="bg-[#1e1e2e] shadow-md p-4 sticky top-0 z-50 border-b border-[#333]">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold text-gray-700">مدیریت کیبورد</h1>
+            <h1 class="text-lg font-bold text-gray-200">مدیریت کیبورد (Midnight)</h1>
             <div class="flex gap-3">
-                <a href="index.php" class="btnback">بازگشت به پنل</a>
-                <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟')" class="btndefult">پیش‌فرض</a>
+                <a href="index.php" class="btnback">بازگشت</a>
+                <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟')" class="btndefult">ریست</a>
             </div>
         </div>
     </div>
 
-    <div class="max-w-md mx-auto mt-6 px-2">
+    <div class="max-w-md mx-auto mt-8 px-2">
         
+        <div class="text-center mb-4">
+            <p class="text-xs text-gray-400">نکته: برای جابجایی دکمه‌ها، آن‌ها را بکشید و رها کنید.</p>
+        </div>
+
         <!-- Preview Container -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-300" style="min-height: 550px; display: flex; flex-direction: column;">
-            <!-- Header -->
+        <div class="chat-container rounded-lg shadow-xl overflow-hidden" style="min-height: 550px; display: flex; flex-direction: column;">
+            <!-- Telegram Header -->
             <div class="telegram-header p-3 flex items-center justify-between">
-                <span>Mirza Bot</span>
-                <span class="text-xs opacity-80">bot</span>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-xs">bot</div>
+                    <div>
+                        <div class="text-sm font-bold">Mirza Bot</div>
+                        <div class="text-xs text-blue-300">bot</div>
+                    </div>
+                </div>
+                <div class="text-gray-400">⋮</div>
             </div>
             
             <!-- Chat Area -->
-            <div class="flex-1 bg-[#d7e3ec] p-4 flex items-center justify-center bg-opacity-60" style="background-image: url('https://web.telegram.org/img/bg_patter.png'); background-size: contain;">
-                <p class="text-gray-500 text-sm bg-white/50 px-3 py-1 rounded-full">پیش‌نمایش کیبورد</p>
+            <div class="flex-1 chat-bg p-4 flex items-center justify-center">
+                <div class="bg-[#2b2b2b] text-white px-4 py-2 rounded-lg text-sm shadow-sm border border-[#3d3d3d]">
+                    فضای چت (کیبورد در پایین)
+                </div>
             </div>
 
             <!-- Keyboard Area -->
-            <div class="bg-[#f0f2f5] p-2 border-t border-gray-300">
-                <div id="keyboard-container" class="space-y-2 mb-2">
+            <div class="bg-[#161616] p-2 border-t border-[#333]">
+                <div id="keyboard-container" class="space-y-1 mb-2">
                     <!-- Rows injected via JS -->
                 </div>
 
                 <!-- Add Row Button -->
-                <button onclick="addRow()" class="w-full py-2 border border-dashed border-gray-400 text-gray-500 rounded hover:bg-gray-100 transition text-sm">
-                    + افزودن سطر جدید
+                <button onclick="addRow()" class="w-full py-2 control-btn rounded transition text-sm flex items-center justify-center gap-2 mt-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    افزودن سطر جدید
                 </button>
             </div>
         </div>
 
         <!-- Save Button Footer -->
-        <div class="fixed bottom-6 left-0 right-0 px-4 flex justify-center z-40">
-            <button onclick="saveKeyboard()" class="save-float-btn py-3 px-12 text-lg flex items-center gap-2">
+        <div class="fixed bottom-8 left-0 right-0 px-4 flex justify-center z-40 pointer-events-none">
+            <button onclick="saveKeyboard()" class="save-float-btn py-3 px-12 text-lg flex items-center gap-2 pointer-events-auto cursor-pointer">
                 <span>ذخیره تغییرات</span>
             </button>
         </div>
@@ -229,131 +281,226 @@ try {
 
     <!-- Script -->
     <script>
-        let keyboardRows = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
-
-        if (!Array.isArray(keyboardRows)) {
-            keyboardRows = [];
-        }
+        // Initial Data
+        let initialData = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
+        if (!Array.isArray(initialData)) initialData = [];
 
         const container = document.getElementById('keyboard-container');
 
-        function render() {
+        // Render Function
+        function render(data) {
             container.innerHTML = '';
             
-            keyboardRows.forEach((row, rowIndex) => {
+            data.forEach((row, rowIndex) => {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'flex gap-1 w-full'; // gap reduced for tighter look
+                rowDiv.className = 'keyboard-row flex gap-1 w-full min-h-[42px]'; 
+                rowDiv.dataset.rowIndex = rowIndex; // For tracking
                 
-                row.forEach((btn, btnIndex) => {
-                    const btnEl = document.createElement('div');
-                    btnEl.className = 'telegram-btn flex-1';
-                    btnEl.innerHTML = `
-                        <span onclick="editButton(${rowIndex}, ${btnIndex})" class="w-full text-center truncate px-1">${btn.text}</span>
-                        <div class="delete-btn" onclick="deleteButton(${rowIndex}, ${btnIndex})">×</div>
-                    `;
+                row.forEach((btn) => {
+                    const btnEl = createButtonElement(btn.text);
                     rowDiv.appendChild(btnEl);
                 });
 
+                // Add Button (Placeholder style)
                 if (row.length < 8) {
                     const addBtn = document.createElement('button');
-                    addBtn.className = 'w-8 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded flex items-center justify-center font-bold text-lg ml-1';
+                    addBtn.className = 'w-8 bg-[#2b2b2b] hover:bg-[#3d3d3d] text-gray-500 hover:text-white rounded flex items-center justify-center font-bold text-lg ml-1 border border-[#3d3d3d] transition-colors';
                     addBtn.innerHTML = '+';
-                    addBtn.onclick = () => addButton(rowIndex);
+                    addBtn.onclick = (e) => {
+                        // Find the row element again to get current children count correctly
+                        addButtonToRow(rowDiv);
+                    };
+                    // Mark as non-sortable
+                    addBtn.classList.add('ignore-elements');
                     rowDiv.appendChild(addBtn);
                 }
 
-                if (row.length === 0) {
+                // Row Delete (if emptyish - only has + button)
+                if (rowDiv.children.length <= 1) { // 1 because of addBtn
                      const emptyMsg = document.createElement('div');
-                     emptyMsg.className = 'text-xs text-red-400 w-full text-center py-1 cursor-pointer';
-                     emptyMsg.innerText = '[حذف سطر خالی]';
-                     emptyMsg.onclick = () => deleteRow(rowIndex);
-                     rowDiv.appendChild(emptyMsg);
+                     emptyMsg.className = 'text-xs text-red-400 w-full text-center py-2 cursor-pointer flex items-center justify-center border border-dashed border-red-900/50 rounded';
+                     emptyMsg.innerText = 'حذف سطر';
+                     emptyMsg.onclick = () => rowDiv.remove();
+                     rowDiv.prepend(emptyMsg);
                 }
 
                 container.appendChild(rowDiv);
             });
+
+            initSortable();
         }
 
+        function createButtonElement(text) {
+            const btnEl = document.createElement('div');
+            btnEl.className = 'telegram-btn flex-1 relative group';
+            btnEl.dataset.text = text; // Store text in dataset
+            btnEl.innerHTML = `
+                <span class="w-full text-center truncate px-1 pointer-events-none">${text}</span>
+                <div class="delete-btn" onclick="this.parentElement.remove()">×</div>
+                <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded pointer-events-none"></div>
+            `;
+            // Edit on click
+            btnEl.addEventListener('click', (e) => {
+                if(e.target.classList.contains('delete-btn')) return;
+                editButtonText(btnEl);
+            });
+            return btnEl;
+        }
+
+        // Initialize SortableJS
+        function initSortable() {
+            // Sort Rows
+            new Sortable(container, {
+                animation: 150,
+                handle: '.keyboard-row', // Drag by row area (empty parts)
+                filter: '.ignore-elements',
+                ghostClass: 'sortable-ghost',
+                fallbackOnBody: true,
+                swapThreshold: 0.65
+            });
+
+            // Sort Buttons inside Rows
+            const rows = document.querySelectorAll('.keyboard-row');
+            rows.forEach(row => {
+                new Sortable(row, {
+                    group: 'shared', // Allow dragging between rows
+                    animation: 150,
+                    filter: '.ignore-elements, .text-xs', // Don't drag the + button or delete text
+                    draggable: '.telegram-btn',
+                    ghostClass: 'sortable-ghost',
+                    fallbackOnBody: true,
+                    swapThreshold: 0.65
+                });
+            });
+        }
+
+        // Helper Functions
         function addRow() {
-            keyboardRows.push([{text: 'دکمه'}]);
-            render();
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'keyboard-row flex gap-1 w-full min-h-[42px]';
+            
+            // Add initial button
+            rowDiv.appendChild(createButtonElement('دکمه جدید'));
+            
+            // Add (+) button
+            const addBtn = document.createElement('button');
+            addBtn.className = 'w-8 bg-[#2b2b2b] hover:bg-[#3d3d3d] text-gray-500 hover:text-white rounded flex items-center justify-center font-bold text-lg ml-1 border border-[#3d3d3d] transition-colors ignore-elements';
+            addBtn.innerHTML = '+';
+            addBtn.onclick = () => addButtonToRow(rowDiv);
+            rowDiv.appendChild(addBtn);
+
+            container.appendChild(rowDiv);
+            initSortable(); // Re-init for new row
         }
 
-        function deleteRow(index) {
-            keyboardRows.splice(index, 1);
-            render();
-        }
-
-        async function addButton(rowIndex) {
+        async function addButtonToRow(rowElement) {
             const { value: text } = await Swal.fire({
                 title: 'نام دکمه',
                 input: 'text',
                 inputValue: 'دکمه جدید',
-                confirmButtonColor: '#3d3d3d',
-                confirmButtonText: 'تایید',
+                background: '#1e1e2e',
+                color: '#fff',
+                confirmButtonColor: '#4caf50',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'افزودن',
                 cancelButtonText: 'لغو',
                 showCancelButton: true
             });
 
             if (text) {
-                keyboardRows[rowIndex].push({text: text});
-                render();
+                // Insert before the last element (which is the + button)
+                const newBtn = createButtonElement(text);
+                rowElement.insertBefore(newBtn, rowElement.lastElementChild);
             }
         }
 
-        function deleteButton(rowIndex, btnIndex) {
-            keyboardRows[rowIndex].splice(btnIndex, 1);
-            render();
-        }
-
-        async function editButton(rowIndex, btnIndex) {
-            const currentText = keyboardRows[rowIndex][btnIndex].text;
+        async function editButtonText(btnElement) {
+            const currentText = btnElement.querySelector('span').innerText;
             
             const { value: text } = await Swal.fire({
                 title: 'ویرایش نام',
                 input: 'text',
                 inputValue: currentText,
-                confirmButtonColor: '#3d3d3d',
+                background: '#1e1e2e',
+                color: '#fff',
+                confirmButtonColor: '#4caf50',
+                cancelButtonColor: '#d33',
                 confirmButtonText: 'ذخیره',
                 cancelButtonText: 'لغو',
                 showCancelButton: true
             });
 
             if (text) {
-                keyboardRows[rowIndex][btnIndex].text = text;
-                render();
+                btnElement.querySelector('span').innerText = text;
+                btnElement.dataset.text = text;
             }
         }
 
         function saveKeyboard() {
-            const cleanData = keyboardRows.filter(row => row.length > 0);
+            // Scrape the DOM to build the JSON
+            const newKeyboardData = [];
+            
+            const rows = container.querySelectorAll('.keyboard-row');
+            rows.forEach(row => {
+                const rowData = [];
+                const buttons = row.querySelectorAll('.telegram-btn');
+                buttons.forEach(btn => {
+                    const text = btn.querySelector('span').innerText;
+                    rowData.push({ text: text });
+                });
+                
+                if (rowData.length > 0) {
+                    newKeyboardData.push(rowData);
+                }
+            });
 
+            // Send to server
             fetch('keyboard.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(cleanData)
+                body: JSON.stringify(newKeyboardData)
             })
             .then(response => response.json())
             .then(data => {
                 if(data.status === 'success') {
-                    Swal.fire({
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        background: '#1e1e2e',
+                        color: '#fff'
+                    });
+                    Toast.fire({
                         icon: 'success',
-                        title: 'ذخیره شد',
-                        confirmButtonColor: '#3d3d3d',
-                        timer: 1500,
-                        showConfirmButton: false
+                        title: 'کیبورد ذخیره شد'
                     });
                 } else {
-                    Swal.fire({icon: 'error', title: 'خطا'});
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'خطا',
+                        text: 'مشکلی پیش آمد',
+                        background: '#1e1e2e',
+                        color: '#fff'
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire({icon: 'error', title: 'خطا در ارتباط'});
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطا',
+                    text: 'ارتباط برقرار نشد',
+                    background: '#1e1e2e',
+                    color: '#fff'
+                });
             });
         }
 
-        render();
+        // Start
+        render(initialData);
+
     </script>
 </body>
 </html>
