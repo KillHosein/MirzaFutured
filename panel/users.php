@@ -82,338 +82,359 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدیریت کاربران | پنل حرفه‌ای</title>
+    <title>مدیریت کاربران | نسخه الترا پلاس</title>
     
     <!-- Fonts & Icons -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    
-    <!-- Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     
     <style>
         :root {
-            /* Palette: Midnight Neon */
-            --bg-body: #020204;
-            --bg-glass: rgba(20, 20, 25, 0.85); /* تیره‌تر برای خوانایی بیشتر */
-            --bg-dock: rgba(10, 10, 10, 0.95);
+            /* Theme Core: Deep Void & Electric Accents */
+            --bg-body: #050509;
+            --bg-card: rgba(23, 23, 30, 0.65);
+            --bg-card-hover: rgba(35, 35, 45, 0.8);
             
-            --neon-blue: #00f3ff;
-            --neon-purple: #bc13fe;
-            --neon-green: #00ff88;
-            --neon-red: #ff004c;
-            --neon-amber: #ffb700;
+            /* Neons */
+            --neon-blue: #00f2ff;
+            --neon-purple: #c026d3;
+            --neon-green: #00ffa3;
+            --neon-red: #ff2a6d;
+            --neon-gold: #fbbf24;
             
-            --text-main: #ffffff;
-            --text-muted: #b0b0b0;
+            /* Text */
+            --text-pri: #ffffff;
+            --text-sec: #94a3b8;
             
-            --border-glass: 1px solid rgba(255, 255, 255, 0.12);
-            --shadow-float: 0 15px 50px rgba(0,0,0,0.9);
+            /* Borders & Shadows */
+            --border-subtle: 1px solid rgba(255, 255, 255, 0.05);
+            --border-highlight: 1px solid rgba(255, 255, 255, 0.15);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
             
-            --radius-lg: 24px;
-            --radius-md: 16px;
+            --radius-main: 24px;
         }
 
-        /* --- Global Reset --- */
+        /* --- Base & Scrollbar --- */
         * { box-sizing: border-box; outline: none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
         body {
             background-color: var(--bg-body);
-            color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(192, 38, 211, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(0, 242, 255, 0.08) 0%, transparent 45%);
+            color: var(--text-pri);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
             min-height: 100vh;
+            padding-bottom: 140px;
             overflow-x: hidden;
-            /* پس‌زمینه کهکشانی تاریک */
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(0, 243, 255, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 90% 90%, rgba(188, 19, 254, 0.04) 0%, transparent 40%);
-            background-attachment: fixed;
-            padding-bottom: 160px; /* فضای بیشتر برای داک */
         }
 
-        a { text-decoration: none; color: inherit; transition: 0.3s; }
-
-        /* --- Animations --- */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.98) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .anim { animation: fadeInScale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
-        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; } .d-3 { animation-delay: 0.3s; }
-
-        /* --- Layout --- */
-        .container-fluid-custom {
-            width: 100%; padding: 40px 4%; max-width: 1900px; margin: 0 auto;
+        /* --- Container --- */
+        .dashboard-container {
+            width: 100%; max-width: 1920px; margin: 0 auto;
+            padding: 35px 5%; 
+            display: flex; flex-direction: column; gap: 35px;
         }
 
-        /* --- Header --- */
-        .page-header {
+        /* --- 1. Header Enhanced --- */
+        .header-section {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 50px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 25px;
+            padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.03);
+            position: relative;
         }
-        .page-title h1 {
-            font-size: 3.5rem; font-weight: 900; margin: 0; color: #fff;
-            text-shadow: 0 0 25px rgba(255,255,255,0.15); letter-spacing: -1px;
+        .header-titles { display: flex; flex-direction: column; gap: 5px; }
+        .ht-sup {
+            font-size: 0.9rem; color: var(--neon-blue); font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase; display: flex; align-items: center; gap: 8px;
         }
-        .page-title p {
-            color: var(--text-muted); font-size: 1.3rem; margin-top: 10px; font-weight: 400;
+        .ht-sup::before { content: ''; width: 20px; height: 2px; background: var(--neon-blue); border-radius: 2px; }
+        .ht-main {
+            font-size: 3rem; font-weight: 900; margin: 0; line-height: 1.1;
+            background: linear-gradient(to right, #ffffff 40%, #94a3b8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
+        .ht-sub { color: var(--text-sec); font-size: 1.1rem; font-weight: 300; margin-top: 5px; }
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .info-pill {
+            background: rgba(255,255,255,0.03); border: var(--border-subtle);
+            padding: 10px 20px; border-radius: 16px;
+            display: flex; align-items: center; gap: 10px;
+            backdrop-filter: blur(10px); transition: 0.3s;
+        }
+        .info-pill:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
 
-        /* --- Stats Cards --- */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px; margin-bottom: 50px;
+        /* --- 2. Stats Grid (Holo Cards) --- */
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;
         }
-        .stat-card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px); border: var(--border-glass);
-            border-radius: var(--radius-lg); padding: 30px;
+        .holo-card {
+            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
+            padding: 25px; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: space-between;
-            transition: 0.3s;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .stat-card:hover { 
-            transform: translateY(-8px); 
-            border-color: rgba(255,255,255,0.3); 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6); 
+        .holo-card::after {
+            content: ''; position: absolute; inset: 0; border-radius: var(--radius-main);
+            padding: 1px; background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; pointer-events: none;
         }
-        
-        .stat-info .val { font-size: 3rem; font-weight: 800; color: #fff; line-height: 1; }
-        .stat-info .lbl { font-size: 1.2rem; color: var(--text-muted); margin-top: 8px; font-weight: 500; }
-        .stat-icon { font-size: 3.5rem; opacity: 0.9; }
-        
-        .c-users { color: var(--neon-blue); filter: drop-shadow(0 0 10px rgba(0,243,255,0.3)); }
-        .c-active { color: var(--neon-green); filter: drop-shadow(0 0 10px rgba(0,255,136,0.3)); }
-        .c-block { color: var(--neon-red); filter: drop-shadow(0 0 10px rgba(255,0,76,0.3)); }
+        .holo-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: var(--bg-card-hover);
+            box-shadow: 0 15px 40px -10px rgba(0,0,0,0.6);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .hc-info { z-index: 2; }
+        .hc-val { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 5px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .hc-lbl { color: var(--text-sec); font-size: 0.9rem; font-weight: 500; }
+        .hc-icon-box {
+            width: 60px; height: 60px; border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; z-index: 2;
+            background: rgba(255,255,255,0.03);
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
+            backdrop-filter: blur(5px); transition: 0.4s;
+        }
+        .holo-card:hover .hc-icon-box { transform: rotate(-10deg) scale(1.1); }
+        .hc-glow {
+            position: absolute; width: 150px; height: 150px; border-radius: 50%;
+            filter: blur(60px); opacity: 0.15; top: -50px; right: -50px; transition: 0.4s;
+        }
+        .holo-card:hover .hc-glow { opacity: 0.3; }
 
-        /* --- Control Panel (Filters & Actions) --- */
-        .control-panel {
-            background: var(--bg-glass);
-            backdrop-filter: blur(30px);
-            border: var(--border-glass);
-            border-radius: var(--radius-lg);
-            padding: 30px; margin-bottom: 40px;
-            box-shadow: var(--shadow-float);
+        .hc-blue .hc-icon-box { color: var(--neon-blue); border: 1px solid rgba(0, 242, 255, 0.2); }
+        .hc-blue .hc-glow { background: var(--neon-blue); }
+        .hc-green .hc-icon-box { color: var(--neon-green); border: 1px solid rgba(0, 255, 163, 0.2); }
+        .hc-green .hc-glow { background: var(--neon-green); }
+        .hc-red .hc-icon-box { color: var(--neon-red); border: 1px solid rgba(255, 42, 109, 0.2); }
+        .hc-red .hc-glow { background: var(--neon-red); }
+
+        /* --- 3. Glass Panel & Filters --- */
+        .glass-panel {
+            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
+            padding: 30px; display: flex; flex-direction: column;
+            backdrop-filter: blur(20px); box-shadow: var(--shadow-card);
         }
 
-        /* Filters Styling (IMPROVED READABILITY) */
         .filters-row {
-            display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
-            padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 30px;
+            display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end;
+            padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;
         }
-        
-        .form-group { flex: 1; min-width: 250px; }
-        .form-group label {
-            display: block; color: #fff; font-size: 1rem; margin-bottom: 10px; font-weight: 700;
-        }
+        .form-group { flex: 1; min-width: 200px; }
+        .form-group label { display: block; color: var(--text-sec); font-size: 0.9rem; margin-bottom: 8px; font-weight: 600; }
         
         .input-readable {
-            width: 100%; height: 60px; /* باکس بزرگتر */
-            background: #000000; /* پس‌زمینه کاملا مشکی */
-            border: 2px solid #444;
-            color: #ffffff; /* متن سفید خالص */
-            padding: 0 20px; border-radius: 14px;
-            font-family: inherit; font-size: 1.2rem; font-weight: 500;
-            transition: 0.3s;
+            width: 100%; height: 50px;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 0 15px; border-radius: 14px;
+            font-family: inherit; font-size: 1rem; transition: 0.3s;
         }
         .input-readable:focus {
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.25);
+            background: rgba(0,0,0,0.5); border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
         }
-        .input-readable::placeholder { color: #888; font-size: 1.1rem; }
-        select.input-readable { cursor: pointer; }
-        
+        select.input-readable option { background: #111; color: #fff; }
+
         .btn-filter {
-            height: 60px; padding: 0 45px; margin-top: 32px;
+            height: 50px; padding: 0 30px;
             background: var(--neon-blue); color: #000;
             border: none; border-radius: 14px;
-            font-size: 1.3rem; font-weight: 800; cursor: pointer;
+            font-size: 1rem; font-weight: 700; cursor: pointer;
             transition: 0.3s; display: flex; align-items: center; gap: 10px;
         }
-        .btn-filter:hover { box-shadow: 0 0 30px var(--neon-blue); transform: translateY(-3px); }
+        .btn-filter:hover { box-shadow: 0 0 20px var(--neon-blue); transform: translateY(-2px); }
 
-        /* Action Buttons */
+        /* Actions Toolbar */
         .actions-row {
-            display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 25px;
         }
         .btn-act {
-            height: 55px; padding: 0 30px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 14px; color: #fff;
-            font-size: 1.1rem; font-weight: 600; cursor: pointer;
-            display: inline-flex; align-items: center; gap: 10px;
+            height: 45px; padding: 0 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; color: var(--text-sec);
+            font-size: 0.95rem; font-weight: 500; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
             transition: 0.3s; text-decoration: none;
         }
-        .btn-act:hover { background: rgba(255,255,255,0.15); border-color: #fff; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn-act:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: #fff; transform: translateY(-2px); }
         
-        .btn-red { color: var(--neon-red); border-color: rgba(255, 7, 58, 0.4); }
-        .btn-red:hover { background: rgba(255, 7, 58, 0.15); box-shadow: 0 0 20px var(--neon-red); color: #fff; border-color: var(--neon-red); }
+        .btn-red { color: var(--neon-red); border-color: rgba(255, 42, 109, 0.3); }
+        .btn-red:hover { background: rgba(255, 42, 109, 0.1); box-shadow: 0 0 15px rgba(255, 42, 109, 0.2); border-color: var(--neon-red); }
         
-        .btn-green { color: var(--neon-green); border-color: rgba(10, 255, 104, 0.4); }
-        .btn-green:hover { background: rgba(10, 255, 104, 0.15); box-shadow: 0 0 20px var(--neon-green); color: #fff; border-color: var(--neon-green); }
+        .btn-green { color: var(--neon-green); border-color: rgba(0, 255, 163, 0.3); }
+        .btn-green:hover { background: rgba(0, 255, 163, 0.1); box-shadow: 0 0 15px rgba(0, 255, 163, 0.2); border-color: var(--neon-green); }
 
-        /* --- Table Styling (Big & Clear) --- */
-        .table-wrap { overflow-x: auto; border-radius: var(--radius-lg); }
+        /* Table */
+        .table-wrap { overflow-x: auto; }
         .glass-table {
-            width: 100%; border-collapse: separate; border-spacing: 0 15px;
-            font-size: 1.3rem; /* فونت بسیار درشت */
+            width: 100%; border-collapse: separate; border-spacing: 0 8px; font-size: 1rem;
         }
         .glass-table th {
-            text-align: right; padding: 20px 25px;
-            color: var(--text-muted); font-size: 1.1rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
+            text-align: right; padding: 15px 20px;
+            color: var(--text-sec); font-size: 0.85rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
         .glass-table tbody tr {
-            background: rgba(255,255,255,0.03);
-            transition: 0.3s;
+            background: rgba(255,255,255,0.02); transition: 0.2s;
         }
         .glass-table tbody tr:hover {
-            background: rgba(255,255,255,0.08);
-            transform: scale(1.005);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.06); transform: scale(1.002);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         .glass-table td {
-            padding: 30px 25px; color: #fff; vertical-align: middle;
-            border-top: 1px solid rgba(255,255,255,0.04);
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding: 20px; color: #fff; vertical-align: middle;
+            border-top: 1px solid rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
         }
-        .glass-table td:first-child { border-radius: 0 20px 20px 0; border-right: 1px solid rgba(255,255,255,0.04); }
-        .glass-table td:last-child { border-radius: 20px 0 0 20px; border-left: 1px solid rgba(255,255,255,0.04); }
+        .glass-table td:first-child { border-radius: 0 16px 16px 0; border-right: 1px solid rgba(255,255,255,0.03); }
+        .glass-table td:last-child { border-radius: 16px 0 0 16px; border-left: 1px solid rgba(255,255,255,0.03); }
 
-        /* Badges */
+        /* Badges & Checkbox */
         .badge {
-            padding: 10px 20px; border-radius: 50px; font-size: 1.1rem; font-weight: 700;
-            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 14px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
         }
-        .badge.active { background: rgba(10, 255, 104, 0.15); color: var(--neon-green); border: 1px solid rgba(10, 255, 104, 0.3); }
-        .badge.block { background: rgba(255, 7, 58, 0.15); color: var(--neon-red); border: 1px solid rgba(255, 7, 58, 0.3); }
-        .badge.other { background: rgba(255, 255, 255, 0.1); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .badge.active { background: rgba(0, 255, 163, 0.1); color: var(--neon-green); border: 1px solid rgba(0, 255, 163, 0.2); }
+        .badge.block { background: rgba(255, 42, 109, 0.1); color: var(--neon-red); border: 1px solid rgba(255, 42, 109, 0.2); }
+        .badge.other { background: rgba(255, 255, 255, 0.05); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.1); }
 
-        /* Checkbox */
         .custom-check {
-            width: 28px; height: 28px; border: 2px solid #666; background: transparent; cursor: pointer;
-            appearance: none; border-radius: 8px; position: relative; transition: 0.2s;
+            width: 20px; height: 20px; border: 2px solid #555; background: transparent; cursor: pointer;
+            appearance: none; border-radius: 6px; position: relative; transition: 0.2s;
         }
         .custom-check:checked { background: var(--neon-blue); border-color: var(--neon-blue); }
         .custom-check:checked::after {
-            content: '✔'; position: absolute; color: #000; top: 0px; left: 5px; font-size: 18px; font-weight: 900;
+            content: '✔'; position: absolute; color: #000; top: -2px; left: 3px; font-size: 14px; font-weight: 800;
         }
 
-        /* --- Floating Dock (FIXED CENTER) --- */
+        /* --- Super Dock --- */
         .dock-container {
-            position: fixed;
-            bottom: 30px;
-            left: 0; 
-            right: 0;
-            display: flex;
-            justify-content: center;
-            z-index: 2000;
-            pointer-events: none; /* اجازه کلیک در اطراف داک */
+            position: fixed; bottom: 30px; left: 0; right: 0;
+            display: flex; justify-content: center; pointer-events: none; z-index: 9999;
         }
-        .dock {
-            pointer-events: auto; /* فعال کردن کلیک روی خود داک */
-            display: flex; align-items: center; gap: 20px;
-            background: var(--bg-dock);
-            backdrop-filter: blur(35px);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 40px; padding: 15px 35px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        .super-dock {
+            pointer-events: auto;
+            background: rgba(15, 15, 20, 0.85);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            padding: 12px; border-radius: 28px;
+            display: flex; align-items: center; gap: 8px;
+            transition: 0.3s;
         }
         .dock-item {
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-            color: var(--text-muted); text-decoration: none;
-            transition: 0.3s; position: relative; padding: 0 5px;
+            width: 54px; height: 54px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 18px;
+            color: var(--text-sec); font-size: 1.5rem;
+            text-decoration: none; position: relative;
+            background: transparent;
+            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5);
+            border: 1px solid transparent;
         }
-        .dock-icon {
-            font-size: 2rem; transition: 0.3s;
-            width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
-            border-radius: 20px;
+        .dock-item:hover {
+            width: 65px; height: 65px; margin: 0 5px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border-color: rgba(255,255,255,0.3);
+            color: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            transform: translateY(-15px);
         }
-        .dock-label { 
-            font-size: 1rem; font-weight: 600; opacity: 0; position: absolute; 
-            bottom: -35px; transition: 0.3s; white-space: nowrap; 
-            background: #000; padding: 4px 10px; border-radius: 6px; border: 1px solid #333;
+        .dock-item.active {
+            color: var(--neon-blue);
+            background: rgba(0, 242, 255, 0.1);
+            border-color: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.15);
         }
-        
-        .dock-item:hover .dock-icon {
-            transform: translateY(-20px) scale(1.2);
-            background: rgba(255,255,255,0.15);
-            color: #fff; box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+        .dock-item::before {
+            content: attr(data-tooltip);
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.8);
+            background: rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 6px 14px; border-radius: 10px;
+            font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+            opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; margin-bottom: 15px;
         }
-        .dock-item:hover .dock-label { opacity: 1; bottom: -45px; color: #fff; }
-        
-        .dock-item.active .dock-icon {
-            color: var(--neon-blue); background: rgba(0, 243, 255, 0.15);
-            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4); transform: translateY(-10px);
-        }
-        .dock-item.active .dock-label { opacity: 1; bottom: -45px; color: var(--neon-blue); }
+        .dock-item:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0) scale(1); }
+        .dock-divider { width: 1px; height: 35px; background: rgba(255,255,255,0.1); margin: 0 5px; }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .filters-row { flex-direction: column; align-items: stretch; }
-            .btn-filter { margin-top: 10px; }
-        }
         @media (max-width: 768px) {
-            .container-fluid-custom { padding: 30px 15px 160px 15px; }
-            .glass-table { font-size: 1.1rem; }
-            .dock { padding: 12px 20px; gap: 10px; width: 95%; justify-content: space-between; border-radius: 25px; }
-            .dock-icon { font-size: 1.6rem; width: 45px; height: 45px; }
-            .stat-val { font-size: 2.8rem; }
+            .dashboard-container { padding: 20px; }
+            .header-section { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .super-dock { max-width: 95vw; overflow-x: auto; justify-content: flex-start; padding: 10px; border-radius: 20px; }
+            .dock-item { flex-shrink: 0; width: 48px; height: 48px; }
+            .dock-item:hover { width: 48px; height: 48px; margin: 0; transform: translateY(-5px); }
+            .ht-main { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container-fluid-custom">
+    <div class="dashboard-container">
         
-        <!-- Header -->
-        <header class="page-header anim">
-            <div class="page-title">
-                <h1>مدیریت کاربران</h1>
-                <p>
+        <!-- 1. Cinematic Header -->
+        <header class="header-section">
+            <div class="header-titles">
+                <div class="ht-sup">پنل مدیریت</div>
+                <h1 class="ht-main">مدیریت کاربران</h1>
+                <div class="ht-sub">
                     <i class="fa-solid fa-users-gear" style="color: var(--neon-purple);"></i>
                     لیست کامل مشترکین و ابزارهای مدیریتی
-                    <span style="opacity:0.3; margin:0 15px;">|</span>
-                    <?php echo $todayDate; ?>
-                </p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div class="info-pill">
+                    <i class="fa-regular fa-calendar" style="color: var(--text-sec);"></i>
+                    <span style="font-weight: 500;"><?php echo $todayDate; ?></span>
+                </div>
             </div>
         </header>
 
-        <!-- Stats -->
-        <div class="stats-grid anim d-1">
-            <div class="stat-card">
-                <div class="stat-info">
-                    <div class="val"><?php echo number_format($totalUsers); ?></div>
-                    <div class="lbl">کل کاربران</div>
+        <!-- 2. Stats Row (Holo Cards) -->
+        <section class="stats-row">
+            <div class="holo-card hc-blue">
+                <div class="hc-glow"></div>
+                <div class="hc-info">
+                    <div class="hc-val"><?php echo number_format($totalUsers); ?></div>
+                    <div class="hc-lbl">کل کاربران</div>
                 </div>
-                <i class="fa-solid fa-users stat-icon c-users"></i>
+                <div class="hc-icon-box"><i class="fa-solid fa-users"></i></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <div class="val"><?php echo number_format($activeUsers); ?></div>
-                    <div class="lbl">کاربران فعال</div>
+            <div class="holo-card hc-green">
+                <div class="hc-glow"></div>
+                <div class="hc-info">
+                    <div class="hc-val"><?php echo number_format($activeUsers); ?></div>
+                    <div class="hc-lbl">کاربران فعال</div>
                 </div>
-                <i class="fa-solid fa-user-check stat-icon c-active"></i>
+                <div class="hc-icon-box"><i class="fa-solid fa-user-check"></i></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <div class="val"><?php echo number_format($blockedUsers); ?></div>
-                    <div class="lbl">کاربران مسدود</div>
+            <div class="holo-card hc-red">
+                <div class="hc-glow"></div>
+                <div class="hc-info">
+                    <div class="hc-val"><?php echo number_format($blockedUsers); ?></div>
+                    <div class="hc-lbl">کاربران مسدود</div>
                 </div>
-                <i class="fa-solid fa-user-lock stat-icon c-block"></i>
+                <div class="hc-icon-box"><i class="fa-solid fa-user-lock"></i></div>
             </div>
-        </div>
+        </section>
 
-        <!-- Main Glass Panel -->
-        <div class="glass-panel anim d-2">
+        <!-- 3. Main Glass Panel -->
+        <div class="glass-panel">
             
-            <!-- Filter Section (High Readability) -->
+            <!-- Filter Section -->
             <form method="get" class="filters-row">
                 <div class="form-group">
                     <label>جستجو در کاربران</label>
-                    <input type="text" name="q" class="input-readable" placeholder="نام، آیدی عددی یا شماره تلفن..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+                    <input type="text" name="q" class="input-readable" placeholder="نام، آیدی عددی یا شماره..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
                 </div>
-                
                 <div class="form-group">
                     <label>وضعیت حساب</label>
                     <select name="status" class="input-readable">
@@ -422,7 +443,6 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <option value="block" <?php echo (isset($_GET['status']) && $_GET['status']==='block')?'selected':''; ?>>مسدود</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
                     <label>سطح کاربری</label>
                     <select name="agent" class="input-readable">
@@ -432,57 +452,51 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <option value="n2" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n2')?'selected':''; ?>>نماینده ارشد</option>
                     </select>
                 </div>
-                
-                <button type="submit" class="btn-filter">
-                    <i class="fa-solid fa-search"></i> جستجو
-                </button>
-                
+                <div style="padding-bottom: 2px;">
+                    <button type="submit" class="btn-filter"><i class="fa-solid fa-search"></i> جستجو</button>
+                </div>
                 <?php if(!empty($_GET['q']) || !empty($_GET['status']) || !empty($_GET['agent'])): ?>
-                    <a href="users.php" class="btn-act" style="margin-top: 32px; height: 60px;" title="پاک کردن فیلترها">
-                        <i class="fa-solid fa-rotate-right" style="font-size: 1.4rem;"></i>
-                    </a>
+                    <div style="padding-bottom: 2px;">
+                        <a href="users.php" class="btn-act" style="height: 50px; justify-content: center;"><i class="fa-solid fa-rotate-right"></i></a>
+                    </div>
                 <?php endif; ?>
             </form>
 
             <!-- Actions Toolbar -->
             <div class="actions-row">
-                <span id="usersSelCount" style="color: var(--neon-blue); font-weight: 800; font-size: 1.3rem; margin-left: 20px;">0 انتخاب</span>
+                <span id="usersSelCount" style="color: var(--neon-blue); font-weight: 800; font-size: 1.1rem; margin-left: 15px;">0 انتخاب</span>
                 
                 <button class="btn-act" id="usersSelectVisible"><i class="fa-solid fa-check-double"></i> انتخاب همه</button>
                 <button class="btn-act" id="usersClearSelection"><i class="fa-solid fa-minus"></i> لغو</button>
-                
                 <div style="flex:1"></div>
-                
                 <button class="btn-act" id="usersCopy"><i class="fa-solid fa-copy"></i> کپی ID</button>
                 <button class="btn-act btn-green" id="usersUnblockSel"><i class="fa-solid fa-unlock"></i> فعال‌سازی</button>
                 <button class="btn-act btn-red" id="usersBlockSel"><i class="fa-solid fa-ban"></i> مسدودسازی</button>
-                
-                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> خروجی اکسل</a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> اکسل</a>
             </div>
-            
-            <div class="actions-row" style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
-                <input type="number" id="usersAmount" class="input-readable" placeholder="مبلغ (تومان)" style="max-width: 220px; height: 55px; font-size: 1.1rem;">
+
+            <div class="actions-row" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                <input type="number" id="usersAmount" class="input-readable" placeholder="مبلغ (تومان)" style="max-width: 180px; height: 45px;">
                 <button class="btn-act" id="usersAddBalance"><i class="fa-solid fa-plus"></i> شارژ</button>
                 <button class="btn-act" id="usersLowBalance"><i class="fa-solid fa-minus"></i> کسر</button>
-                
-                <input type="text" id="usersMessage" class="input-readable" placeholder="متن پیام گروهی..." style="max-width: 350px; height: 55px; font-size: 1.1rem;">
-                <button class="btn-act" id="usersSendMsg"><i class="fa-solid fa-paper-plane"></i> ارسال پیام</button>
+                <div style="width: 1px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 10px;"></div>
+                <input type="text" id="usersMessage" class="input-readable" placeholder="متن پیام گروهی..." style="max-width: 300px; height: 45px; flex-grow: 1;">
+                <button class="btn-act" id="usersSendMsg"><i class="fa-solid fa-paper-plane"></i> ارسال</button>
             </div>
 
             <!-- Table -->
-            <div style="margin-top: 40px;">
+            <div style="margin-top: 20px;">
                 <?php if(!$totalUsers): ?>
-                    <div style="text-align: center; padding: 80px; color: var(--text-dim);">
-                        <i class="fa-solid fa-magnifying-glass" style="font-size: 6rem; margin-bottom: 25px; opacity: 0.4;"></i>
-                        <h3 style="font-size: 2rem;">کاربری با این مشخصات یافت نشد</h3>
-                        <p style="font-size: 1.2rem;">لطفاً فیلترها را تغییر دهید.</p>
+                    <div style="text-align: center; padding: 60px; color: var(--text-sec);">
+                        <i class="fa-solid fa-magnifying-glass" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                        <h3>کاربری یافت نشد</h3>
                     </div>
                 <?php else: ?>
                     <div class="table-wrap">
                         <table class="glass-table" id="sample_1">
                             <thead>
                                 <tr>
-                                    <th style="width: 60px;"><i class="fa-solid fa-check"></i></th>
+                                    <th style="width: 50px;"></th>
                                     <th>آیدی عددی</th>
                                     <th>نام کاربری</th>
                                     <th>شماره تماس</th>
@@ -497,18 +511,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                                     $s = strtolower($list['User_Status']);
                                     $statusLabel = ($s === 'active') ? 'فعال' : (($s === 'block') ? 'مسدود' : $list['User_Status']);
                                     $statusClass = ($s === 'active') ? 'active' : (($s === 'block') ? 'block' : 'other');
-                                    $phone = ($list['number'] == "none") ? '<span style="opacity:0.3; font-size: 0.9rem;">---</span>' : $list['number'];
+                                    $phone = ($list['number'] == "none") ? '<span style="opacity:0.3;">---</span>' : $list['number'];
                                 ?>
                                 <tr>
                                     <td><input type="checkbox" class="checkboxes custom-check" value="1"></td>
-                                    <td style="font-family: monospace; color: var(--neon-blue); letter-spacing: 1.5px; font-weight: 700;"><?php echo $list['id']; ?></td>
-                                    <td style="font-weight: 800; color: #fff; font-size: 1.25rem;"><?php echo htmlspecialchars($list['username']); ?></td>
-                                    <td style="font-size: 1.2rem;"><?php echo $phone; ?></td>
-                                    <td style="color: var(--neon-amber); font-weight: 800; font-size: 1.25rem;"><?php echo number_format($list['Balance']); ?></td>
-                                    <td style="font-weight: bold; font-size: 1.2rem;"><?php echo number_format($list['affiliatescount']); ?></td>
+                                    <td style="font-family: monospace; color: var(--neon-blue); letter-spacing: 1px; font-weight: 600;"><?php echo $list['id']; ?></td>
+                                    <td style="font-weight: 700; color: #fff; font-size: 1.1rem;"><?php echo htmlspecialchars($list['username']); ?></td>
+                                    <td><?php echo $phone; ?></td>
+                                    <td style="color: var(--neon-gold); font-weight: 700;"><?php echo number_format($list['Balance']); ?></td>
+                                    <td><?php echo number_format($list['affiliatescount']); ?></td>
                                     <td><span class="badge <?php echo $statusClass; ?>"><?php echo $statusLabel; ?></span></td>
                                     <td>
-                                        <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-act" style="height: 45px; font-size: 1rem; background: rgba(255,255,255,0.08);">
+                                        <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-act" style="height: 38px; font-size: 0.85rem; padding: 0 15px;">
                                             <i class="fa-solid fa-gear"></i> مدیریت
                                         </a>
                                     </td>
@@ -519,46 +533,32 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     </div>
                 <?php endif; ?>
             </div>
-            
-        </div>
 
-    </div>
-
-    <!-- Floating Dock (Fixed Center) -->
-    <div class="dock-container anim d-3">
-        <div class="dock">
-            <a href="index.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-house-chimney"></i></div>
-                <span class="dock-label">داشبورد</span>
-            </a>
-            <a href="invoice.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-file-invoice"></i></div>
-                <span class="dock-label">سفارشات</span>
-            </a>
-            <a href="user.php" class="dock-item active">
-                <div class="dock-icon"><i class="fa-solid fa-users"></i></div>
-                <span class="dock-label">کاربران</span>
-            </a>
-            <a href="product.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-box-open"></i></div>
-                <span class="dock-label">محصولات</span>
-            </a>
-            <a href="server_status.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <span class="dock-label">ادمین</span>
-            </a>
-            <div style="width: 2px; height: 35px; background: rgba(255,255,255,0.15);"></div>
-            <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
-                <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div>
-                <span class="dock-label">خروج</span>
-            </a>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- 4. Super Dock -->
+    <div class="dock-container">
+        <nav class="super-dock">
+            <a href="index.php" class="dock-item" data-tooltip="داشبورد"><i class="fa-solid fa-house"></i></a>
+            <div class="dock-divider"></div>
+            <a href="users.php" class="dock-item active" data-tooltip="کاربران"><i class="fa-solid fa-users"></i></a>
+            <a href="invoice.php" class="dock-item" data-tooltip="سفارشات"><i class="fa-solid fa-file-contract"></i></a>
+            <a href="product.php" class="dock-item" data-tooltip="محصولات"><i class="fa-solid fa-box"></i></a>
+            <a href="service.php" class="dock-item" data-tooltip="سرویس‌ها"><i class="fa-solid fa-server"></i></a>
+            <div class="dock-divider"></div>
+            <a href="cancelService.php" class="dock-item" data-tooltip="لیست مسدود" style="color: var(--neon-red);"><i class="fa-solid fa-ban"></i></a>
+            <a href="payment.php" class="dock-item" data-tooltip="امور مالی"><i class="fa-solid fa-wallet"></i></a>
+            <a href="inbound.php" class="dock-item" data-tooltip="کانفیگ سرور"><i class="fa-solid fa-network-wired"></i></a>
+            <a href="seeting_x_ui.php" class="dock-item" data-tooltip="پنل X-UI"><i class="fa-solid fa-tower-broadcast"></i></a>
+            <div class="dock-divider"></div>
+            <a href="settings.php" class="dock-item" data-tooltip="تنظیمات"><i class="fa-solid fa-gear"></i></a>
+            <a href="logout.php" class="dock-item" data-tooltip="خروج" style="color: var(--neon-red);"><i class="fa-solid fa-power-off"></i></a>
+        </nav>
+    </div>
+
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    
     <script>
       (function(){
         // Notification
