@@ -1,25 +1,22 @@
 <?php
-// --- خطایابی و گزارش‌دهی PHP (برای پیدا کردن علت خطای 500) ---
+// --- خطایابی و گزارش‌دهی PHP ---
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
 
-// فرض می‌کنیم این فایل‌ها در دسترس هستند و حاوی توابع مورد نیازند
-// اگر فایل‌ها در مسیر دیگری هستند، آدرس‌ها را اصلاح کنید
+// فراخوانی فایل‌های مورد نیاز
 if (file_exists('../config.php')) require_once '../config.php';
 if (file_exists('../jdf.php')) require_once '../jdf.php';
 
-// --- بررسی حیاتی: اطمینان از تعریف متغیر اتصال به دیتابیس ---
-// اگر config.php لود نشده باشد یا pdo تعریف نشده باشد، اینجا متوقف می‌شویم تا از خطا جلوگیری کنیم
+// --- بررسی اتصال دیتابیس ---
 if (!isset($pdo) || !($pdo instanceof PDO)) {
-    // برای نمایش دمو در محیط‌هایی که دیتابیس ندارند، ممکن است نیاز به هندل کردن خطا باشد
-    // در محیط واقعی این بخش else را حذف کنید یا مدیریت کنید.
+    // در محیط واقعی اگر دیتابیس وصل نباشد، اینجا مدیریت خطا صورت می‌گیرد
 }
 
-// --- Logic Section ---
-// مقادیر پیش‌فرض برای متغیرها جهت جلوگیری از خطا در نمایش دمو
+// --- بخش منطق (Logic) ---
+// تنظیم مقادیر پیش‌فرض
 $datefirstday = time() - 86400;
 $fromDate = isset($_GET['from']) ? $_GET['from'] : null;
 $toDate = isset($_GET['to']) ? $_GET['to'] : null;
@@ -27,18 +24,16 @@ $selectedStatuses = isset($_GET['status']) ? $_GET['status'] : [];
 
 if(!is_array($selectedStatuses) && !empty($selectedStatuses)) $selectedStatuses = [$selectedStatuses];
 
-// 1. Authentication Check (اگر دیتابیس متصل باشد)
+// 1. بررسی احراز هویت
 if (isset($pdo) && $pdo instanceof PDO) {
     try {
         if( !isset($_SESSION["user"]) ){
             header('Location: login.php');
             exit;
         }
-        
         $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
         $query->execute(['username' => $_SESSION["user"]]); 
         $result = $query->fetch(PDO::FETCH_ASSOC);
-        
         if(!$result ){
             header('Location: login.php');
             exit;
@@ -48,7 +43,7 @@ if (isset($pdo) && $pdo instanceof PDO) {
     }
 }
 
-// 2. Filter Logic for Invoices
+// 2. منطق فیلترها
 $invoiceWhere = ["name_product != 'سرویس تست'"];
 $invoiceParams = [];
 
@@ -75,7 +70,7 @@ if(!empty($selectedStatuses)){
 
 $invoiceWhereSql = implode(' AND ', $invoiceWhere);
 
-// 3. Sales and User Counts
+// 3. دریافت آمار و ارقام
 $total_sales = 0;
 $resultcount = 0;
 $resultcountday = 0;
@@ -86,28 +81,28 @@ $regRows = [];
 
 if (isset($pdo) && $pdo instanceof PDO) {
     try {
-        // Total Sales Amount
+        // مجموع فروش
         $query = $pdo->prepare("SELECT SUM(price_product) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'");
         $query->execute($invoiceParams);
         $subinvoice = $query->fetch(PDO::FETCH_ASSOC);
         $total_sales = $subinvoice['SUM(price_product)'] ?? 0;
 
-        // Total User Counts
+        // تعداد کل کاربران
         $query = $pdo->prepare("SELECT COUNT(*) FROM user");
         $query->execute();
         $resultcount = $query->fetchColumn();
 
-        // New Users Today
+        // کاربران جدید امروز
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :time_register AND register != 'none'");
         $stmt->execute([':time_register' => $datefirstday]); 
         $resultcountday = $stmt->fetchColumn();
 
-        // Sales Count
+        // تعداد فروش
         $query = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid'");
         $query->execute($invoiceParams);
         $resultcontsell = $query->fetchColumn();
 
-        // Chart Data: Sales
+        // داده‌های نمودار فروش
         if($resultcontsell > 0){
             $query = $pdo->prepare("SELECT time_sell, price_product FROM invoice WHERE $invoiceWhereSql AND status != 'unpaid' ORDER BY time_sell DESC;");
             $query->execute($invoiceParams);
@@ -126,12 +121,12 @@ if (isset($pdo) && $pdo instanceof PDO) {
             ksort($grouped_data);
         }
 
-        // Chart Data: Status
+        // داده‌های نمودار وضعیت
         $stmt = $pdo->prepare("SELECT status, COUNT(*) AS cnt FROM invoice WHERE $invoiceWhereSql GROUP BY status");
         $stmt->execute($invoiceParams);
         $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Chart Data: New Users
+        // داده‌های نمودار کاربران جدید
         $userStart = ($fromDate && strtotime($fromDate)) ? strtotime(date('Y/m/d', strtotime($fromDate))) : (strtotime(date('Y/m/d')) - (13 * 86400));
         $userEnd = ($toDate && strtotime($toDate)) ? strtotime(date('Y/m/d', strtotime($toDate))) : strtotime(date('Y/m/d'));
         
@@ -140,13 +135,13 @@ if (isset($pdo) && $pdo instanceof PDO) {
         $regRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     } catch (PDOException $e) {
-        // die("Database Error: " . $e->getMessage());
+        // die("Database Error");
     }
 }
 
 $formatted_total_sales = number_format($total_sales);
 
-// Data Formatting for Charts
+// فرمت‌دهی داده‌ها برای نمودار
 $salesLabels = [];
 $salesAmount = [];
 if (!empty($grouped_data)) {
@@ -164,16 +159,16 @@ $statusMapFa = [
     'send_on_hold' => 'در انتظار اتصال',
     'removebyuser' => 'حذف شده'
 ];
-// پالت رنگی جدید و مدرن (Vibrant & Neon)
+// پالت رنگی نئونی (Cyberpunk Palette)
 $colorMap = [
-    'unpaid' => '#F59E0B',      // Amber Glow
-    'active' => '#10B981',      // Emerald Neon
-    'disabledn' => '#64748B',   // Cool Slate
-    'end_of_time' => '#EF4444', // Red Alert
-    'end_of_volume' => '#3B82F6', // Electric Blue
-    'sendedwarn' => '#8B5CF6',  // Violet Beam
-    'send_on_hold' => '#F97316', // Orange Flame
-    'removebyuser' => '#334155' // Dark Slate
+    'unpaid' => '#F59E0B',      // Amber
+    'active' => '#00E676',      // Neon Green
+    'disabledn' => '#94A3B8',   // Slate
+    'end_of_time' => '#FF1744', // Neon Red
+    'end_of_volume' => '#2979FF', // Electric Blue
+    'sendedwarn' => '#D500F9',  // Neon Purple
+    'send_on_hold' => '#FF9100', // Deep Orange
+    'removebyuser' => '#37474F'  // Dark Grey
 ];
 
 $statusLabels = [];
@@ -212,11 +207,11 @@ foreach($regRows as $row){
     }
 }
 
-// Time Greeting
+// پیام خوش‌آمدگویی
 $hour = date('H');
-if ($hour < 12) { $greeting = "صبح بخیر"; $greetIcon = "fa-sun"; $greetColor = "#FCD34D"; }
-elseif ($hour < 17) { $greeting = "ظهر بخیر"; $greetIcon = "fa-cloud-sun"; $greetColor = "#F97316"; }
-else { $greeting = "عصر بخیر"; $greetIcon = "fa-moon"; $greetColor = "#818CF8"; }
+if ($hour < 12) { $greeting = "صبح‌بخیر"; $greetIcon = "fa-sun"; $greetColor = "#FFD600"; }
+elseif ($hour < 17) { $greeting = "ظهر‌بخیر"; $greetIcon = "fa-cloud-sun"; $greetColor = "#FF6D00"; }
+else { $greeting = "عصر‌بخیر"; $greetIcon = "fa-moon"; $greetColor = "#651FFF"; }
 
 $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 ?>
@@ -239,423 +234,485 @@ $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            --bg-body: #0B0F19;       /* Deepest Slate */
-            --bg-nav: rgba(15, 23, 42, 0.7);
-            --bg-card: rgba(30, 41, 59, 0.4);
-            --bg-card-hover: rgba(51, 65, 85, 0.5);
+            /* Theme Colors: Deep Space & Neon */
+            --bg-body: #050509;       /* Blackish Blue */
+            --bg-glass: rgba(20, 20, 30, 0.6); /* Translucent dark */
+            --bg-card: rgba(255, 255, 255, 0.03); /* Ultra subtle white tint */
+            --bg-card-hover: rgba(255, 255, 255, 0.07);
             
+            /* Accents */
             --primary: #6366F1;       /* Indigo */
-            --primary-light: #818CF8;
-            --secondary: #EC4899;     /* Pink */
-            --accent: #06B6D4;        /* Cyan */
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --accent-cyan: #00E5FF;
+            --accent-pink: #F50057;
+            --accent-gold: #FFD600;
             
-            --text-main: #F1F5F9;
+            --text-main: #FFFFFF;
             --text-muted: #94A3B8;
             
-            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            /* Borders & Shadows */
+            --border-glass: 1px solid rgba(255, 255, 255, 0.08);
+            --border-active: 1px solid rgba(99, 102, 241, 0.5);
+            --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
             
-            --radius-sm: 12px;
-            --radius-md: 16px;
             --radius-lg: 24px;
+            --radius-md: 16px;
         }
 
-        /* --- Global Reset & Body --- */
+        /* --- Base Setup --- */
         * { box-sizing: border-box; outline: none; }
+        
         body {
             background-color: var(--bg-body);
             color: var(--text-main);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
             overflow-x: hidden;
-            /* Dynamic Aurora Background */
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 10%, rgba(236, 72, 153, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 90%, rgba(139, 92, 246, 0.12) 0%, transparent 45%);
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 15%, rgba(245, 0, 87, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(0, 229, 255, 0.06) 0%, transparent 50%);
             background-attachment: fixed;
+            min-height: 100vh;
         }
 
-        /* --- Animations --- */
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.96) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .animate-in { animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 
-        /* --- Navigation (Floating Island) --- */
-        .nav-container {
-            position: fixed; top: 20px; left: 0; right: 0;
-            z-index: 1000; padding: 0 20px;
-            display: flex; justify-content: center;
+        /* --- Navigation (Floating Dock) --- */
+        .nav-dock-container {
+            position: fixed; bottom: 30px; left: 0; right: 0;
+            z-index: 1000; display: flex; justify-content: center;
+            pointer-events: none; /* Let clicks pass through around the dock */
         }
-        .navbar-island {
-            background: var(--bg-nav);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: var(--glass-border);
-            border-radius: 50px;
-            padding: 10px 30px;
-            display: flex; align-items: center; justify-content: space-between;
-            width: 100%; max-width: 1200px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        .nav-brand {
-            font-size: 1.2rem; font-weight: 800; color: #fff;
-            display: flex; align-items: center; gap: 12px;
-        }
-        .nav-brand i { color: var(--accent); filter: drop-shadow(0 0 8px var(--accent)); }
         
-        .nav-menu { display: flex; gap: 8px; }
-        .nav-link {
-            color: var(--text-muted); text-decoration: none;
-            padding: 10px 18px; border-radius: 30px;
-            font-size: 0.9rem; font-weight: 500;
-            transition: all 0.3s ease;
-            display: flex; align-items: center; gap: 8px;
+        .nav-dock {
+            background: rgba(15, 20, 30, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: var(--border-glass);
+            padding: 10px 20px;
+            border-radius: 24px;
+            display: flex; gap: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            pointer-events: auto;
+            transform: translateY(0); transition: 0.3s;
         }
-        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
-        .nav-link.active {
-            background: rgba(99, 102, 241, 0.15);
-            color: var(--primary-light);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
-        }
-        .nav-link.logout { margin-right: 15px; }
-        .nav-link.logout:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-
-        /* --- Main Layout --- */
-        .wrapper {
-            max-width: 1200px; margin: 0 auto;
-            padding: 120px 20px 50px 20px;
-        }
-
-        /* --- Hero Header --- */
-        .dashboard-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 40px; padding: 0 10px;
-        }
-        .welcome h1 { 
-            margin: 0; font-size: 2.2rem; font-weight: 900; 
-            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .welcome p { margin: 8px 0 0; color: var(--text-muted); font-size: 1rem; }
-        .date-display {
-            background: rgba(255,255,255,0.03); border: var(--glass-border);
-            padding: 10px 20px; border-radius: var(--radius-md);
-            display: flex; align-items: center; gap: 10px;
-            color: var(--text-main); font-weight: 500;
-        }
-
-        /* --- Quick Actions (App Icons) --- */
-        .quick-actions-title {
-            font-size: 1.1rem; font-weight: 700; color: var(--text-main);
-            margin-bottom: 20px; padding-right: 10px; display: flex; align-items: center; gap: 10px;
-        }
-        .quick-actions-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 20px; margin-bottom: 40px;
-        }
-        .app-icon {
-            display: flex; flex-direction: column; align-items: center; gap: 12px;
-            text-decoration: none; color: var(--text-muted);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        
+        .dock-item {
             position: relative;
-        }
-        .icon-box {
-            width: 65px; height: 65px; border-radius: 20px;
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-            border: var(--glass-border);
+            color: var(--text-muted);
+            width: 50px; height: 50px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            border-radius: 16px;
+            text-decoration: none;
+            font-size: 1.3rem;
+            transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1.2);
         }
-        .app-icon span { font-size: 0.85rem; font-weight: 500; transition: color 0.3s; text-align: center; }
         
-        .app-icon:hover .icon-box {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.4), 0 0 10px rgba(255,255,255,0.05);
-            border-color: rgba(255,255,255,0.2);
+        .dock-item:hover, .dock-item.active {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-8px) scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
-        .app-icon:hover span { color: #fff; }
         
-        /* Specific Icon Colors */
-        .i-orders { color: #60A5FA; }  /* Blue */
-        .i-users { color: #F472B6; }   /* Pink */
-        .i-products { color: #A78BFA; } /* Purple */
-        .i-server { color: #34D399; }  /* Green */
-        .i-danger { color: #F87171; }  /* Red */
+        .dock-item.active { background: var(--primary); box-shadow: 0 5px 20px var(--primary-glow); }
 
-        /* --- Stats Cards (Glass Panels) --- */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 25px; margin-bottom: 40px;
+        .dock-tooltip {
+            position: absolute; top: -40px; left: 50%; transform: translateX(-50%) scale(0.8);
+            background: rgba(0,0,0,0.8); padding: 5px 12px; border-radius: 8px;
+            font-size: 0.75rem; color: #fff; opacity: 0; transition: 0.2s; pointer-events: none;
+            white-space: nowrap;
         }
-        .stat-card {
+        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateX(-50%) scale(1); top: -45px; }
+
+        /* --- Layout --- */
+        .main-wrapper {
+            max-width: 1400px; margin: 0 auto;
+            padding: 40px 25px 120px 25px; /* Bottom padding for dock */
+        }
+
+        /* --- Header Section --- */
+        .header-hero {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 50px; flex-wrap: wrap; gap: 20px;
+        }
+        .greeting-box h1 {
+            font-size: 2.5rem; font-weight: 900; margin: 0;
+            background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+        .greeting-sub { color: var(--text-muted); font-size: 1rem; margin-top: 5px; display: flex; align-items: center; gap: 8px; }
+        
+        .date-pill {
+            background: rgba(255,255,255,0.05); border: var(--border-glass);
+            padding: 8px 16px; border-radius: 50px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.9rem; color: var(--text-main);
+        }
+
+        /* --- Quick Actions (Tiles) --- */
+        .section-title { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; opacity: 0.9; }
+        
+        .tiles-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 20px; margin-bottom: 50px;
+        }
+        
+        .action-tile {
             background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: var(--glass-border);
-            border-radius: var(--radius-lg);
-            padding: 25px;
+            border: var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 20px 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
+            text-decoration: none; color: var(--text-muted);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             position: relative; overflow: hidden;
-            transition: transform 0.3s;
-        }
-        .stat-card:hover { transform: translateY(-5px); background: var(--bg-card-hover); }
-        .stat-card::after {
-            content: ''; position: absolute; top: 0; right: 0; width: 6px; height: 100%;
-            background: currentColor; opacity: 0.8;
         }
         
-        .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-        .stat-icon { font-size: 2rem; opacity: 0.8; }
-        .stat-info h3 { margin: 0; font-size: 2rem; font-weight: 800; color: #fff; }
-        .stat-info span { font-size: 0.9rem; color: var(--text-muted); display: block; margin-top: 5px; }
+        .action-tile::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+            opacity: 0; transition: 0.3s;
+        }
+        
+        .tile-icon {
+            font-size: 2rem; transition: 0.3s;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+        .tile-label { font-size: 0.9rem; font-weight: 500; transition: 0.3s; }
+        
+        .action-tile:hover {
+            transform: translateY(-5px);
+            background: var(--bg-card-hover);
+            border-color: rgba(255,255,255,0.2);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .action-tile:hover::before { opacity: 1; }
+        .action-tile:hover .tile-icon { transform: scale(1.15); }
+        
+        /* Custom Colors for Tiles */
+        .t-blue:hover .tile-icon { color: #2979FF; filter: drop-shadow(0 0 10px rgba(41, 121, 255, 0.6)); }
+        .t-pink:hover .tile-icon { color: #F50057; filter: drop-shadow(0 0 10px rgba(245, 0, 87, 0.6)); }
+        .t-cyan:hover .tile-icon { color: #00E5FF; filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.6)); }
+        .t-gold:hover .tile-icon { color: #FFD600; filter: drop-shadow(0 0 10px rgba(255, 214, 0, 0.6)); }
+        .t-red:hover .tile-icon { color: #FF1744; filter: drop-shadow(0 0 10px rgba(255, 23, 68, 0.6)); }
 
-        /* --- Filter Bar --- */
-        .filter-section {
-            background: rgba(15, 23, 42, 0.6);
+        /* --- Stats Cards --- */
+        .stats-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px; margin-bottom: 50px;
+        }
+        
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            position: relative; overflow: hidden;
+            transition: 0.3s;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 160px;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(255,255,255,0.15);
+            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-card);
+        }
+        
+        .stat-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .stat-icon-wrapper {
+            width: 50px; height: 50px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .stat-badge {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;
+            font-weight: 700; letter-spacing: 0.5px;
+        }
+        
+        .stat-value-big { font-size: 2.2rem; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 5px; }
+        .stat-label-sub { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Specific Card Styles */
+        .card-indigo .stat-icon-wrapper { background: rgba(99, 102, 241, 0.15); color: #818CF8; }
+        .card-indigo:hover { box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15); border-top: 1px solid rgba(99, 102, 241, 0.3); }
+        
+        .card-green .stat-icon-wrapper { background: rgba(0, 230, 118, 0.15); color: #69F0AE; }
+        .card-green:hover { box-shadow: 0 10px 30px rgba(0, 230, 118, 0.15); border-top: 1px solid rgba(0, 230, 118, 0.3); }
+        
+        .card-pink .stat-icon-wrapper { background: rgba(245, 0, 87, 0.15); color: #FF4081; }
+        .card-pink:hover { box-shadow: 0 10px 30px rgba(245, 0, 87, 0.15); border-top: 1px solid rgba(245, 0, 87, 0.3); }
+        
+        .card-cyan .stat-icon-wrapper { background: rgba(0, 229, 255, 0.15); color: #18FFFF; }
+        .card-cyan:hover { box-shadow: 0 10px 30px rgba(0, 229, 255, 0.15); border-top: 1px solid rgba(0, 229, 255, 0.3); }
+
+        /* --- Filter Section --- */
+        .filter-panel {
+            background: rgba(255,255,255,0.02);
             border: 1px dashed rgba(255,255,255,0.1);
             border-radius: var(--radius-md);
-            padding: 15px 20px;
-            display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
-            margin-bottom: 30px;
+            padding: 20px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+            margin-bottom: 40px;
         }
-        .modern-input {
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 12px 16px; border-radius: 12px;
-            flex: 1; min-width: 200px;
-            transition: 0.3s;
-        }
-        .modern-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
         
-        .btn-apply {
-            background: var(--primary); color: #fff; border: none;
-            padding: 12px 24px; border-radius: 12px; font-weight: 600;
-            cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        .input-group-glass {
+            position: relative; flex: 1; min-width: 220px;
+        }
+        .input-glass {
+            width: 100%; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 14px 20px; border-radius: 12px;
+            font-family: inherit; transition: 0.3s;
+        }
+        .input-glass:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+        
+        .btn-filter-submit {
+            background: var(--primary); color: white; border: none;
+            padding: 14px 30px; border-radius: 12px; font-weight: 700;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); cursor: pointer;
             transition: 0.3s;
         }
-        .btn-apply:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5); }
+        .btn-filter-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6); }
 
-        /* --- Charts --- */
-        .chart-container {
+        /* --- Charts Grid --- */
+        .charts-wrapper {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 30px;
+        }
+        
+        .chart-box {
             background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: var(--glass-border);
+            border: var(--border-glass);
             border-radius: var(--radius-lg);
             padding: 25px;
-            margin-bottom: 25px;
         }
-        .chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .chart-head h4 { margin: 0; font-size: 1.1rem; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
-        
-        .grid-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-        @media (max-width: 1000px) { .grid-charts { grid-template-columns: 1fr; } }
+        .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .chart-head h3 { margin: 0; font-size: 1.1rem; color: #fff; font-weight: 600; }
 
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            .nav-container { top: auto; bottom: 20px; padding: 0 15px; }
-            .navbar-island { border-radius: 20px; padding: 10px 15px; }
-            .nav-text { display: none; }
-            .nav-brand { display: none; }
-            .nav-menu { width: 100%; justify-content: space-around; }
-            .nav-link { padding: 10px; border-radius: 14px; font-size: 1.2rem; }
-            
-            .wrapper { padding-top: 30px; padding-bottom: 100px; }
-            .dashboard-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .quick-actions-grid { grid-template-columns: repeat(3, 1fr); }
-            .filter-section { flex-direction: column; align-items: stretch; }
+        /* --- Animations --- */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        @media (max-width: 400px) {
-            .quick-actions-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-            .icon-box { width: 55px; height: 55px; font-size: 1.4rem; }
+        .anim { opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .d-1 { animation-delay: 0.1s; }
+        .d-2 { animation-delay: 0.2s; }
+        .d-3 { animation-delay: 0.3s; }
+        .d-4 { animation-delay: 0.4s; }
+
+        /* --- Responsive --- */
+        @media (max-width: 1024px) {
+            .charts-wrapper { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .nav-dock-container { top: auto; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-top: var(--border-glass); padding: 10px; }
+            .nav-dock { background: transparent; border: none; box-shadow: none; width: 100%; justify-content: space-around; padding: 0; border-radius: 0; }
+            .dock-tooltip { display: none; }
+            .main-wrapper { padding-bottom: 90px; }
+            .header-hero { flex-direction: column; align-items: flex-start; }
+            .tiles-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .filter-panel { flex-direction: column; align-items: stretch; }
+        }
+        @media (max-width: 480px) {
+            .tiles-grid { grid-template-columns: repeat(3, 1fr); }
+            .stat-value-big { font-size: 1.8rem; }
+            .dock-item { font-size: 1.1rem; width: 40px; height: 40px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Floating Navigation -->
-    <div class="nav-container animate-in">
-        <nav class="navbar-island">
-            <div class="nav-brand">
-                <i class="fa-solid fa-cube"></i>
-                <span>Admin Panel</span>
-            </div>
-            <div class="nav-menu">
-                <a href="index.php" class="nav-link active"><i class="fa-solid fa-house"></i> <span class="nav-text">خانه</span></a>
-                <a href="invoice.php" class="nav-link"><i class="fa-solid fa-layer-group"></i> <span class="nav-text">سفارشات</span></a>
-                <a href="user.php" class="nav-link"><i class="fa-solid fa-users"></i> <span class="nav-text">کاربران</span></a>
-                <a href="logout.php" class="nav-link logout"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
-            </div>
-        </nav>
-    </div>
-
-    <div class="wrapper">
+    <!-- Main Content -->
+    <div class="main-wrapper">
         
-        <!-- Welcome Header -->
-        <header class="dashboard-header animate-in delay-1">
-            <div class="welcome">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <i class="<?php echo $greetIcon; ?>" style="color: <?php echo $greetColor; ?>; font-size: 1.4rem;"></i>
-                    <span style="color: var(--text-muted); font-size: 0.95rem;"><?php echo $greeting; ?></span>
+        <!-- Header -->
+        <header class="header-hero anim">
+            <div class="greeting-box">
+                <div class="greeting-sub">
+                    <i class="<?php echo $greetIcon; ?>" style="color: <?php echo $greetColor; ?>;"></i>
+                    <?php echo $greeting; ?>
                 </div>
                 <h1>داشبورد مدیریت</h1>
             </div>
-            <div class="date-display">
-                <i class="fa-regular fa-calendar-check" style="color: var(--accent);"></i>
+            <div class="date-pill">
+                <i class="fa-regular fa-calendar" style="color: var(--accent-cyan);"></i>
                 <span><?php echo $currentDate; ?></span>
             </div>
         </header>
 
-        <!-- Quick Apps Grid -->
-        <div class="animate-in delay-2">
-            <div class="quick-actions-title">
-                <i class="fa-solid fa-grip" style="color: var(--text-muted);"></i>
-                دسترسی سریع
-            </div>
-            <div class="quick-actions-grid">
-                <a href="invoice.php" class="app-icon">
-                    <div class="icon-box i-orders"><i class="fa-solid fa-basket-shopping"></i></div>
-                    <span>سفارشات</span>
+        <!-- Quick Actions Grid -->
+        <div class="anim d-1">
+            <div class="section-title"><i class="fa-solid fa-layer-group" style="color: var(--accent-cyan);"></i> دسترسی سریع</div>
+            <div class="tiles-grid">
+                <a href="invoice.php" class="action-tile t-blue">
+                    <i class="fa-solid fa-cart-shopping tile-icon"></i>
+                    <span class="tile-label">سفارشات</span>
                 </a>
-                <a href="user.php" class="app-icon">
-                    <div class="icon-box i-users"><i class="fa-solid fa-user-group"></i></div>
-                    <span>کاربران</span>
+                <a href="user.php" class="action-tile t-pink">
+                    <i class="fa-solid fa-users tile-icon"></i>
+                    <span class="tile-label">کاربران</span>
                 </a>
-                <a href="product.php" class="app-icon">
-                    <div class="icon-box i-products"><i class="fa-solid fa-box-open"></i></div>
-                    <span>محصولات</span>
+                <a href="product.php" class="action-tile t-cyan">
+                    <i class="fa-solid fa-box-open tile-icon"></i>
+                    <span class="tile-label">محصولات</span>
                 </a>
-                <a href="inbound.php" class="app-icon">
-                    <div class="icon-box i-server"><i class="fa-solid fa-server"></i></div>
-                    <span>کانفیگ</span>
+                <a href="inbound.php" class="action-tile t-gold">
+                    <i class="fa-solid fa-server tile-icon"></i>
+                    <span class="tile-label">کانفیگ</span>
                 </a>
-                <a href="payment.php" class="app-icon">
-                    <div class="icon-box" style="color: #FCD34D;"><i class="fa-solid fa-credit-card"></i></div>
-                    <span>مالی</span>
+                <a href="payment.php" class="action-tile t-blue">
+                    <i class="fa-solid fa-credit-card tile-icon"></i>
+                    <span class="tile-label">مالی</span>
                 </a>
-                <a href="server_status.php" class="app-icon">
-                    <div class="icon-box" style="color: #fff;"><i class="fa-solid fa-microchip"></i></div>
-                    <span>سرور</span>
+                <a href="server_status.php" class="action-tile t-pink">
+                    <i class="fa-solid fa-microchip tile-icon"></i>
+                    <span class="tile-label">سرور</span>
                 </a>
-                <a href="cancelService.php" class="app-icon">
-                    <div class="icon-box i-danger"><i class="fa-solid fa-ban"></i></div>
-                    <span>مسدودی</span>
+                <a href="cancelService.php" class="action-tile t-red">
+                    <i class="fa-solid fa-ban tile-icon"></i>
+                    <span class="tile-label">مسدودی</span>
                 </a>
             </div>
         </div>
 
-        <!-- Filter Bar -->
-        <form method="get" class="filter-section animate-in delay-2">
-            <div style="flex: 2; position: relative;">
-                <input type="text" id="dateRange" class="modern-input" placeholder="انتخاب تاریخ..." readonly style="padding-right: 40px; cursor: pointer;">
+        <!-- Filter -->
+        <form method="get" class="filter-panel anim d-2">
+            <div class="input-group-glass">
+                <i class="fa-regular fa-calendar-alt" style="position: absolute; right: 15px; top: 16px; color: var(--text-muted);"></i>
+                <input type="text" id="dateRange" class="input-glass" placeholder="انتخاب تاریخ..." readonly style="padding-right: 45px;">
                 <input type="hidden" name="from" id="inputFrom" value="<?php echo htmlspecialchars($fromDate ?? ''); ?>">
                 <input type="hidden" name="to" id="inputTo" value="<?php echo htmlspecialchars($toDate ?? ''); ?>">
-                <i class="fa-solid fa-calendar-day" style="position: absolute; right: 15px; top: 14px; color: var(--text-muted); pointer-events: none;"></i>
             </div>
-            
-            <div style="flex: 2;">
-                <select name="status[]" multiple class="modern-input" style="height: 48px; padding-top: 8px;">
+            <div class="input-group-glass">
+                <select name="status[]" multiple class="input-glass" style="height: 50px;">
                     <?php foreach($statusMapFa as $k => $v): ?>
                         <option value="<?php echo $k; ?>" <?php echo in_array($k, $selectedStatuses) ? 'selected' : ''; ?>><?php echo $v; ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            
-            <button type="submit" class="btn-apply">
-                <i class="fa-solid fa-filter"></i> فیلتر
-            </button>
+            <button type="submit" class="btn-filter-submit">اعمال فیلتر</button>
             <?php if($fromDate || !empty($selectedStatuses)): ?>
-                <a href="index.php" class="btn-apply" style="background: rgba(255,255,255,0.1); width: auto; text-align: center;">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </a>
+                <a href="index.php" class="dock-item" style="width: 50px; background: rgba(255,255,255,0.05); color: #fff;"><i class="fa-solid fa-rotate-left"></i></a>
             <?php endif; ?>
         </form>
 
-        <!-- Stats Overview -->
-        <div class="stats-grid animate-in delay-3">
+        <!-- Stats Cards -->
+        <div class="stats-container anim d-3">
             <!-- Sales -->
-            <div class="stat-card" style="color: #6366F1;">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fa-solid fa-coins"></i></div>
-                    <div style="background: rgba(99, 102, 241, 0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">درآمد</div>
+            <div class="glass-card card-indigo">
+                <div class="stat-top-row">
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-coins"></i></div>
+                    <span class="stat-badge" style="background: rgba(99, 102, 241, 0.2); color: #818CF8;">درآمد</span>
                 </div>
-                <div class="stat-info">
-                    <h3><?php echo $formatted_total_sales; ?></h3>
-                    <span>مجموع فروش (تومان)</span>
+                <div>
+                    <div class="stat-value-big"><?php echo $formatted_total_sales; ?></div>
+                    <span class="stat-label-sub">مجموع فروش (تومان)</span>
                 </div>
             </div>
 
-            <!-- Count -->
-            <div class="stat-card" style="color: #10B981;">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fa-solid fa-receipt"></i></div>
-                    <div style="background: rgba(16, 185, 129, 0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">سفارشات</div>
+            <!-- Orders -->
+            <div class="glass-card card-green">
+                <div class="stat-top-row">
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-receipt"></i></div>
+                    <span class="stat-badge" style="background: rgba(0, 230, 118, 0.2); color: #69F0AE;">فاکتور</span>
                 </div>
-                <div class="stat-info">
-                    <h3><?php echo number_format($resultcontsell); ?></h3>
-                    <span>تعداد فاکتور موفق</span>
+                <div>
+                    <div class="stat-value-big"><?php echo number_format($resultcontsell); ?></div>
+                    <span class="stat-label-sub">تعداد فروش موفق</span>
                 </div>
             </div>
 
             <!-- Users -->
-            <div class="stat-card" style="color: #EC4899;">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                    <div style="background: rgba(236, 72, 153, 0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">کاربران</div>
+            <div class="glass-card card-pink">
+                <div class="stat-top-row">
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-users"></i></div>
+                    <span class="stat-badge" style="background: rgba(245, 0, 87, 0.2); color: #FF4081;">کاربران</span>
                 </div>
-                <div class="stat-info">
-                    <h3><?php echo number_format($resultcount); ?></h3>
-                    <span>کل کاربران</span>
+                <div>
+                    <div class="stat-value-big"><?php echo number_format($resultcount); ?></div>
+                    <span class="stat-label-sub">کل کاربران ثبت شده</span>
                 </div>
             </div>
 
             <!-- New Users -->
-            <div class="stat-card" style="color: #06B6D4;">
-                <div class="stat-header">
-                    <div class="stat-icon"><i class="fa-solid fa-user-plus"></i></div>
-                    <div style="background: rgba(6, 182, 212, 0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">جذب</div>
+            <div class="glass-card card-cyan">
+                <div class="stat-top-row">
+                    <div class="stat-icon-wrapper"><i class="fa-solid fa-user-plus"></i></div>
+                    <span class="stat-badge" style="background: rgba(0, 229, 255, 0.2); color: #18FFFF;">امروز</span>
                 </div>
-                <div class="stat-info">
-                    <h3><?php echo number_format($resultcountday); ?></h3>
-                    <span>ثبت‌نام امروز</span>
+                <div>
+                    <div class="stat-value-big"><?php echo number_format($resultcountday); ?></div>
+                    <span class="stat-label-sub">جذب کاربر جدید</span>
                 </div>
             </div>
         </div>
 
-        <!-- Charts Area -->
-        <div class="grid-charts animate-in delay-3">
-            <div class="chart-container">
+        <!-- Charts -->
+        <div class="charts-wrapper anim d-4">
+            <div class="chart-box">
                 <div class="chart-head">
-                    <h4><i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> نمودار فروش</h4>
+                    <h3><i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> نمودار فروش</h3>
                 </div>
-                <div style="height: 300px;">
+                <div style="height: 320px; width: 100%;">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
-            
-            <div class="chart-container">
+
+            <div class="chart-box">
                 <div class="chart-head">
-                    <h4><i class="fa-solid fa-chart-pie" style="color: var(--secondary);"></i> وضعیت‌ها</h4>
+                    <h3><i class="fa-solid fa-chart-pie" style="color: var(--accent-pink);"></i> وضعیت‌ها</h3>
                 </div>
-                <div style="height: 300px; position: relative;">
+                <div style="height: 300px; width: 100%; position: relative;">
                     <canvas id="statusChart"></canvas>
                 </div>
             </div>
-            
-            <div class="chart-container" style="grid-column: 1 / -1;">
+
+            <div class="chart-box" style="grid-column: 1 / -1;">
                 <div class="chart-head">
-                    <h4><i class="fa-solid fa-arrow-trend-up" style="color: var(--accent);"></i> روند رشد کاربران</h4>
+                    <h3><i class="fa-solid fa-arrow-trend-up" style="color: var(--accent-cyan);"></i> روند جذب کاربر</h3>
                 </div>
-                <div style="height: 250px;">
+                <div style="height: 280px; width: 100%;">
                     <canvas id="usersChart"></canvas>
                 </div>
             </div>
         </div>
 
+    </div>
+
+    <!-- Floating Dock Nav -->
+    <div class="nav-dock-container anim">
+        <nav class="nav-dock">
+            <a href="index.php" class="dock-item active">
+                <i class="fa-solid fa-house"></i>
+                <span class="dock-tooltip">خانه</span>
+            </a>
+            <a href="invoice.php" class="dock-item">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span class="dock-tooltip">سفارشات</span>
+            </a>
+            <a href="user.php" class="dock-item">
+                <i class="fa-solid fa-users"></i>
+                <span class="dock-tooltip">کاربران</span>
+            </a>
+            <a href="server_status.php" class="dock-item">
+                <i class="fa-solid fa-server"></i>
+                <span class="dock-tooltip">سرور</span>
+            </a>
+            <a href="logout.php" class="dock-item" style="color: #FF1744;">
+                <i class="fa-solid fa-power-off"></i>
+                <span class="dock-tooltip">خروج</span>
+            </a>
+        </nav>
     </div>
 
     <!-- Scripts -->
@@ -666,52 +723,43 @@ $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
 
     <script>
-        // --- DatePicker & Logic ---
+        // --- DatePicker Logic ---
         $(function(){
             var start = moment().subtract(13, 'days');
             var end = moment();
             var phpFrom = '<?php echo $fromDate; ?>';
             var phpTo = '<?php echo $toDate; ?>';
-            
             if(phpFrom && phpTo){ start = moment(phpFrom); end = moment(phpTo); }
-
-            function cb(start, end) {
-                $('#dateRange').val(start.format('YYYY/MM/DD') + '  تا  ' + end.format('YYYY/MM/DD'));
-                $('#inputFrom').val(start.format('YYYY-MM-DD'));
-                $('#inputTo').val(end.format('YYYY-MM-DD'));
-            }
 
             $('#dateRange').daterangepicker({
                 startDate: start, endDate: end, opens: 'left',
                 locale: { format: 'YYYY/MM/DD', applyLabel: 'تایید', cancelLabel: 'لغو' }
-            }, cb);
-
-            if(phpFrom) cb(start, end);
+            }, function(s, e) {
+                $('#dateRange').val(s.format('YYYY/MM/DD') + '  -  ' + e.format('YYYY/MM/DD'));
+                $('#inputFrom').val(s.format('YYYY-MM-DD'));
+                $('#inputTo').val(e.format('YYYY-MM-DD'));
+            });
+            if(phpFrom) $('#dateRange').val(start.format('YYYY/MM/DD') + '  -  ' + end.format('YYYY/MM/DD'));
         });
 
-        // --- Aesthetic Charts Config ---
+        // --- Chart Configurations (Modern & Glow) ---
         Chart.defaults.font.family = 'Vazirmatn';
         Chart.defaults.color = '#64748B';
-        Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.03)';
-        Chart.defaults.scale.grid.borderColor = 'transparent';
-        
-        // Tooltip Styling
-        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.9)';
-        Chart.defaults.plugins.tooltip.padding = 12;
-        Chart.defaults.plugins.tooltip.titleFont = { size: 13, family: 'Vazirmatn' };
-        Chart.defaults.plugins.tooltip.bodyFont = { size: 12, family: 'Vazirmatn' };
-        Chart.defaults.plugins.tooltip.cornerRadius = 12;
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(5, 5, 9, 0.95)';
+        Chart.defaults.plugins.tooltip.padding = 15;
+        Chart.defaults.plugins.tooltip.cornerRadius = 10;
         Chart.defaults.plugins.tooltip.displayColors = false;
 
         const salesData = { labels: <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>, values: <?php echo json_encode($salesAmount); ?> };
         const statusData = { labels: <?php echo json_encode($statusLabels, JSON_UNESCAPED_UNICODE); ?>, values: <?php echo json_encode($statusData); ?>, colors: <?php echo json_encode($statusColors); ?> };
         const userData = { labels: <?php echo json_encode($userLabels, JSON_UNESCAPED_UNICODE); ?>, values: <?php echo json_encode($userCounts); ?> };
 
-        // 1. Sales Chart
+        // 1. Sales Chart (Gradient Glow)
         const ctxSales = document.getElementById('salesChart').getContext('2d');
-        const gradSales = ctxSales.createLinearGradient(0, 0, 0, 400);
-        gradSales.addColorStop(0, '#6366F1');
-        gradSales.addColorStop(1, 'rgba(99, 102, 241, 0.01)');
+        const gSales = ctxSales.createLinearGradient(0, 0, 0, 400);
+        gSales.addColorStop(0, '#6366F1');
+        gSales.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
 
         new Chart(ctxSales, {
             type: 'bar',
@@ -720,8 +768,9 @@ $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 datasets: [{
                     label: 'فروش',
                     data: salesData.values,
-                    backgroundColor: gradSales,
+                    backgroundColor: gSales,
                     borderRadius: 8,
+                    hoverBackgroundColor: '#818CF8',
                     barThickness: 25
                 }]
             },
@@ -729,13 +778,13 @@ $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() } },
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { callback: v => v.toLocaleString() } },
                     x: { grid: { display: false } }
                 }
             }
         });
 
-        // 2. Status Chart
+        // 2. Status Chart (Neon Doughnut)
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
@@ -743,23 +792,24 @@ $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 datasets: [{
                     data: statusData.values,
                     backgroundColor: statusData.colors,
-                    borderWidth: 0, hoverOffset: 15
+                    borderWidth: 0,
+                    hoverOffset: 15
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                cutout: '80%',
+                cutout: '85%',
                 plugins: {
-                    legend: { position: 'right', labels: { boxWidth: 10, padding: 15, font: { size: 11 } } }
+                    legend: { position: 'right', labels: { boxWidth: 10, padding: 15, font: { size: 12 }, color: '#94A3B8' } }
                 }
             }
         });
 
-        // 3. User Chart
+        // 3. User Chart (Smooth Line)
         const ctxUser = document.getElementById('usersChart').getContext('2d');
-        const gradUser = ctxUser.createLinearGradient(0, 0, 0, 250);
-        gradUser.addColorStop(0, 'rgba(6, 182, 212, 0.4)');
-        gradUser.addColorStop(1, 'rgba(6, 182, 212, 0)');
+        const gUser = ctxUser.createLinearGradient(0, 0, 0, 300);
+        gUser.addColorStop(0, 'rgba(0, 229, 255, 0.3)');
+        gUser.addColorStop(1, 'rgba(0, 229, 255, 0)');
 
         new Chart(ctxUser, {
             type: 'line',
@@ -768,10 +818,10 @@ $currentDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 datasets: [{
                     label: 'کاربر جدید',
                     data: userData.values,
-                    borderColor: '#06B6D4',
-                    backgroundColor: gradUser,
+                    borderColor: '#00E5FF',
+                    backgroundColor: gUser,
                     fill: true,
-                    tension: 0.4,
+                    tension: 0.45,
                     borderWidth: 3,
                     pointRadius: 0,
                     pointHoverRadius: 6,
