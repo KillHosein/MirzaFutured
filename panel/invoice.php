@@ -825,4 +825,4 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     </script>
 
 </body>
-</html>سس
+</html>
