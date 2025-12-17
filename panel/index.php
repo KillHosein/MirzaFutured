@@ -498,6 +498,10 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <i class="fa-solid fa-file-contract tile-icon"></i>
                 <span class="tile-text">مدیریت سفارشات</span>
             </a>
+            <a href="payment.php" class="dock-item">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span class="dock-tooltip">سفارشات</span>
+            </a>
             <a href="users.php" class="action-tile">
                 <i class="fa-solid fa-users-gear tile-icon"></i>
                 <span class="tile-text">مدیریت کاربران</span>
