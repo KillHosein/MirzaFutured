@@ -661,7 +661,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-gear"></i></div>
                 <span class="dock-label">تنظیمات</span>
             </a>
-            <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
+            <a href="login.php" class="dock-item" style="color: var(--neon-red);">
                 <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div>
                 <span class="dock-label">خروج</span>
             </a>
