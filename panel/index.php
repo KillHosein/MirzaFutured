@@ -146,7 +146,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>پنل مدیریت | نسخه شناور</title>
+    <title>پنل مدیریت | نسخه پرمیوم</title>
     
     <!-- Fonts & Icons -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
@@ -156,27 +156,31 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            /* Palette: Deep Space & Neon */
-            --bg-void: #02040a;
-            --bg-surface: rgba(18, 24, 38, 0.75);
-            --bg-dock: rgba(10, 10, 15, 0.85);
+            /* Palette: Deep Midnight & Neon Glow */
+            --bg-void: #000000;
+            --bg-surface: rgba(15, 15, 20, 0.6);
+            --bg-dock: rgba(5, 5, 10, 0.7);
             
-            --neon-blue: #3b82f6;
-            --neon-purple: #8b5cf6;
-            --neon-teal: #14b8a6;
-            --neon-amber: #f59e0b;
+            /* High Contrast Neons */
+            --neon-blue: #22d3ee;
+            --neon-purple: #c084fc;
+            --neon-teal: #2dd4bf;
+            --neon-amber: #fbbf24;
+            --neon-pink: #f472b6;
             
-            --text-main: #f8fafc;
+            --text-main: #ffffff;
             --text-dim: #94a3b8;
+            --text-highlight: #e2e8f0;
             
-            --border-subtle: 1px solid rgba(255, 255, 255, 0.06);
-            --border-glow: 1px solid rgba(255, 255, 255, 0.12);
+            /* Glass Effects */
+            --border-glass: 1px solid rgba(255, 255, 255, 0.08);
+            --border-glow: 1px solid rgba(255, 255, 255, 0.15);
             
-            --shadow-float: 0 15px 40px rgba(0,0,0,0.6);
-            --glow-soft: 0 0 20px rgba(59, 130, 246, 0.15);
+            --shadow-float: 0 20px 60px -10px rgba(0,0,0,0.9);
+            --glow-text: 0 0 20px rgba(34, 211, 238, 0.3);
             
-            --radius-lg: 24px;
-            --radius-pill: 50px;
+            --radius-lg: 30px;
+            --radius-pill: 100px;
         }
 
         /* --- Base Setup --- */
@@ -188,102 +192,102 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             margin: 0; padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
-            /* Starry Background */
+            /* Starry Deep Background */
             background-image: 
-                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
+                radial-gradient(circle at 15% 10%, rgba(34, 211, 238, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 90%, rgba(192, 132, 252, 0.06) 0%, transparent 40%);
             background-attachment: fixed;
-            padding-bottom: 120px; /* Space for dock */
+            padding-bottom: 140px; /* More space for dock */
         }
 
-        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        a { text-decoration: none; color: inherit; transition: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
 
         /* --- Animations --- */
-        @keyframes floatUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 10px var(--glow-color, rgba(59,130,246,0.3)); }
-            50% { box-shadow: 0 0 25px var(--glow-color, rgba(59,130,246,0.6)); }
-        }
-        
-        .anim-stagger { opacity: 0; animation: floatUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .anim-stagger { opacity: 0; animation: floatIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .d-1 { animation-delay: 0.1s; }
         .d-2 { animation-delay: 0.2s; }
         .d-3 { animation-delay: 0.3s; }
         .d-4 { animation-delay: 0.4s; }
 
-        /* --- Layout: Full Width & Fluid --- */
+        /* --- Layout --- */
         .container-fluid-custom {
             width: 100%;
-            padding: 40px 5%; /* 5% padding sides */
-            max-width: 1800px;
+            padding: 50px 6%;
+            max-width: 1920px;
             margin: 0 auto;
         }
 
         /* --- Header --- */
         .header-top {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 50px;
-            padding-bottom: 20px; border-bottom: var(--border-subtle);
+            margin-bottom: 70px;
+            padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .header-title h1 {
-            font-size: 3rem; font-weight: 900; color: #fff; margin: 0;
-            background: linear-gradient(to right, #fff, #94a3b8);
+            font-size: 4rem; font-weight: 900; color: #fff; margin: 0; line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
         }
         .header-title p {
-            color: var(--text-dim); margin-top: 5px; font-size: 1.1rem; 
-            display: flex; align-items: center; gap: 10px;
+            color: var(--text-dim); margin-top: 10px; font-size: 1.4rem; font-weight: 300;
+            display: flex; align-items: center; gap: 15px;
         }
         
         .user-pill {
-            background: rgba(255,255,255,0.05); border: var(--border-glass);
-            padding: 8px 16px; border-radius: var(--radius-pill);
-            display: flex; align-items: center; gap: 10px;
-            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.03); border: var(--border-glass);
+            padding: 12px 24px; border-radius: var(--radius-pill);
+            display: flex; align-items: center; gap: 15px;
+            backdrop-filter: blur(15px); font-size: 1.1rem;
         }
         .user-avatar {
-            width: 32px; height: 32px; border-radius: 50%;
+            width: 45px; height: 45px; border-radius: 50%;
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
             display: flex; align-items: center; justify-content: center; font-weight: bold;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.4); font-size: 1.2rem;
         }
 
         /* --- Stats Grid (Full Width) --- */
         .stats-deck {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px; margin-bottom: 50px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px; margin-bottom: 80px;
         }
         .stat-card {
             background: var(--bg-surface);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border: var(--border-glass);
             border-radius: var(--radius-lg);
-            padding: 30px;
+            padding: 40px;
             display: flex; flex-direction: column; justify-content: space-between;
-            min-height: 180px; position: relative; overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            min-height: 220px; position: relative; overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
         .stat-card:hover {
-            transform: translateY(-10px);
-            border-color: rgba(255,255,255,0.15);
-            box-shadow: var(--shadow-float), 0 0 20px var(--glow-c);
+            transform: translateY(-15px) scale(1.02);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: var(--shadow-float), 0 0 40px var(--glow-c);
         }
-        /* Background Glow */
+        /* Luxurious Glow */
         .stat-card::before {
             content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: radial-gradient(circle, var(--glow-c) 0%, transparent 70%);
-            opacity: 0.05; transition: 0.5s; pointer-events: none;
+            background: radial-gradient(circle, var(--glow-c) 0%, transparent 65%);
+            opacity: 0.08; transition: 0.6s; pointer-events: none;
         }
-        .stat-card:hover::before { opacity: 0.15; }
+        .stat-card:hover::before { opacity: 0.2; }
 
-        .stat-top { display: flex; justify-content: space-between; align-items: flex-start; z-index: 1; }
-        .stat-icon { font-size: 2rem; color: var(--text-dim); transition: 0.3s; }
-        .stat-card:hover .stat-icon { color: #fff; transform: scale(1.2); text-shadow: 0 0 15px var(--glow-c); }
+        .stat-top { display: flex; justify-content: space-between; align-items: center; z-index: 1; margin-bottom: 20px; }
+        .stat-icon { font-size: 2.8rem; color: var(--text-dim); transition: 0.4s; }
+        .stat-card:hover .stat-icon { color: #fff; transform: scale(1.1) rotate(-5deg); text-shadow: 0 0 20px var(--glow-c); }
         
-        .stat-val { font-size: 2.8rem; font-weight: 800; color: #fff; margin-top: auto; z-index: 1; }
-        .stat-lbl { font-size: 1rem; color: var(--text-dim); margin-top: 5px; z-index: 1; }
+        .stat-val { 
+            font-size: 3.5rem; font-weight: 800; color: #fff; margin-top: auto; z-index: 1; line-height: 1;
+            font-feature-settings: "tnum"; font-variant-numeric: tabular-nums;
+        }
+        .stat-lbl { font-size: 1.2rem; color: var(--text-dim); margin-top: 8px; z-index: 1; font-weight: 400; }
 
         /* Colors */
         .s-blue { --glow-c: var(--neon-blue); }
@@ -291,111 +295,127 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .s-purple { --glow-c: var(--neon-purple); }
         .s-amber { --glow-c: var(--neon-amber); }
 
-        /* --- Quick Actions (Tiles) --- */
+        /* --- Quick Actions (Big Tiles) --- */
+        .section-header { font-size: 2rem; color: #fff; font-weight: 800; margin-bottom: 40px; display: flex; align-items: center; gap: 15px; }
+        .section-header::after { content: ''; height: 2px; width: 60px; background: var(--neon-purple); border-radius: 2px; display: block; }
+
         .action-deck {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 25px; margin-bottom: 60px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 30px; margin-bottom: 80px;
         }
         .action-tile {
             background: rgba(255,255,255,0.02);
-            border: var(--border-glass); border-radius: 20px;
-            padding: 25px; text-align: center;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
-            transition: 0.4s; cursor: pointer; height: 160px;
+            border: var(--border-glass); border-radius: 26px;
+            padding: 35px 20px; text-align: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+            transition: 0.5s; cursor: pointer; height: 200px;
+            position: relative; overflow: hidden;
+        }
+        .action-tile::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.05) 100%);
+            opacity: 0; transition: 0.5s;
         }
         .action-tile:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.04);
             border-color: var(--neon-blue);
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
         }
-        .tile-icon { font-size: 2.5rem; color: var(--text-dim); transition: 0.3s; }
-        .action-tile:hover .tile-icon { color: #fff; transform: translateY(-5px); filter: drop-shadow(0 0 8px var(--neon-blue)); }
-        .tile-text { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
+        .action-tile:hover::after { opacity: 1; }
+        
+        .tile-icon { font-size: 3.5rem; color: var(--text-dim); transition: 0.4s; }
+        .action-tile:hover .tile-icon { color: #fff; transform: scale(1.15); filter: drop-shadow(0 0 15px var(--neon-blue)); }
+        .tile-text { font-size: 1.3rem; font-weight: 700; color: var(--text-highlight); transition: 0.3s; }
+        .action-tile:hover .tile-text { color: #fff; }
 
-        /* --- Charts Area (Full Width) --- */
+        /* --- Charts Area (Clean) --- */
         .charts-grid {
-            display: grid; grid-template-columns: 2.5fr 1fr; gap: 30px; margin-bottom: 40px;
+            display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-bottom: 60px;
         }
         .chart-box {
             background: var(--bg-surface);
             border: var(--border-glass);
             border-radius: var(--radius-lg);
-            padding: 30px; position: relative;
+            padding: 40px; position: relative;
         }
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .chart-title { font-size: 1.4rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 12px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .chart-title { font-size: 1.8rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 15px; }
+        .chart-title i { font-size: 1.6rem; }
 
-        /* --- Floating Dock (The Star) --- */
+        /* --- Floating Dock (Magical) --- */
         .dock-wrapper {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; perspective: 1000px;
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; perspective: 1000px; width: auto; max-width: 90%;
         }
         .dock {
-            display: flex; align-items: center; gap: 12px;
+            display: flex; align-items: center; gap: 10px;
             background: var(--bg-dock);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px; padding: 12px 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-            transition: all 0.3s ease;
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 30px; padding: 15px 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
+            transition: all 0.4s ease;
         }
-        .dock:hover { border-color: rgba(255,255,255,0.2); }
-
+        
         .dock-item {
             position: relative;
-            width: 55px; height: 55px;
+            width: 65px; height: 65px;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 16px;
+            border-radius: 20px;
             color: var(--text-dim);
-            font-size: 1.6rem;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-size: 1.8rem;
+            transition: all 0.3s cubic-bezier(0.3, 0.7, 0.4, 1.5); /* Bouncy transition */
             text-decoration: none;
         }
-        /* Dock Hover Effect (MacOS style) */
+        /* Dock Hover Effect */
         .dock-item:hover {
-            width: 70px; height: 70px; /* Scale up */
-            font-size: 2rem;
+            width: 85px; height: 85px;
+            font-size: 2.4rem;
             color: #fff;
             background: rgba(255,255,255,0.1);
-            transform: translateY(-15px); /* Lift up */
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            margin: 0 10px; /* Push neighbors */
+            transform: translateY(-25px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            margin: 0 12px;
+            z-index: 10;
         }
         .dock-item.active {
             color: var(--neon-blue);
-            background: rgba(59, 130, 246, 0.15);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+            background: rgba(34, 211, 238, 0.15);
+            box-shadow: 0 0 25px rgba(34, 211, 238, 0.2);
         }
         .dock-item.active::after {
-            content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
-            width: 5px; height: 5px; background: var(--neon-blue); border-radius: 50%;
-            box-shadow: 0 0 5px var(--neon-blue);
+            content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            width: 6px; height: 6px; background: var(--neon-blue); border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-blue);
         }
 
-        /* Tooltip for Dock */
         .dock-tooltip {
-            position: absolute; top: -45px; left: 50%; transform: translateX(-50%) scale(0.8);
-            background: #000; color: #fff; padding: 6px 12px; border-radius: 8px;
-            font-size: 0.85rem; opacity: 0; transition: 0.2s; pointer-events: none;
-            border: 1px solid rgba(255,255,255,0.1); white-space: nowrap; font-weight: bold;
+            position: absolute; top: -60px; left: 50%; transform: translateX(-50%) scale(0.8);
+            background: rgba(0,0,0,0.9); color: #fff; padding: 8px 16px; border-radius: 10px;
+            font-size: 1rem; opacity: 0; transition: 0.2s; pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
-        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateX(-50%) scale(1); top: -55px; }
+        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateX(-50%) scale(1); top: -75px; }
 
         /* --- Responsive --- */
+        @media (max-width: 1400px) { .charts-grid { grid-template-columns: 1fr; } }
         @media (max-width: 1200px) {
-            .charts-grid { grid-template-columns: 1fr; }
-            .dock { padding: 10px; gap: 8px; }
-            .dock-item { width: 45px; height: 45px; font-size: 1.4rem; }
-            .dock-item:hover { width: 55px; height: 55px; font-size: 1.6rem; margin: 0 5px; }
+            .dock { padding: 10px 15px; gap: 6px; }
+            .dock-item { width: 55px; height: 55px; font-size: 1.5rem; }
+            .dock-item:hover { width: 65px; height: 65px; font-size: 1.8rem; margin: 0 8px; }
         }
         @media (max-width: 768px) {
+            .container-fluid-custom { padding: 30px 4%; padding-bottom: 120px; }
             .header-top { flex-direction: column; align-items: flex-start; gap: 20px; }
-            .stats-deck { grid-template-columns: 1fr; }
-            .dock-wrapper { width: 90%; bottom: 20px; }
-            .dock { width: 100%; justify-content: space-around; }
-            .dock-item:hover { transform: translateY(-5px); margin: 0; width: 45px; height: 45px; font-size: 1.4rem; } /* Reduce effect on mobile */
+            .header-title h1 { font-size: 2.5rem; }
+            .stats-deck { grid-template-columns: 1fr; gap: 25px; }
+            .stat-val { font-size: 2.8rem; }
+            .dock-wrapper { width: 95%; bottom: 15px; }
+            .dock { width: 100%; justify-content: space-between; border-radius: 20px; }
+            .dock-item:hover { transform: translateY(-10px); margin: 0; width: 55px; height: 55px; font-size: 1.6rem; }
         }
     </style>
 </head>
@@ -409,28 +429,28 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <h1><?php echo $greet; ?>، ادمین</h1>
                 <p>
                     <i class="<?php echo ($hour < 18) ? 'fa-solid fa-sun' : 'fa-solid fa-moon'; ?>" style="color: var(--neon-amber);"></i>
-                    وضعیت سیستم: <span style="color: var(--neon-teal);">پایدار و آنلاین</span>
-                    <span style="margin: 0 10px; color: var(--text-dim);">|</span>
+                    وضعیت سیستم: <span style="color: var(--neon-teal); font-weight: 700; text-shadow: 0 0 10px rgba(45, 212, 191, 0.4);">پایدار و آنلاین</span>
+                    <span style="margin: 0 15px; color: rgba(255,255,255,0.2);">|</span>
                     <?php echo $today; ?>
                 </p>
             </div>
             <div class="user-pill">
-                <span>مدیر سیستم</span>
-                <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                <span>مدیر ارشد سیستم</span>
+                <div class="user-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
             </div>
         </header>
 
-        <!-- Stats Grid (Full Width) -->
+        <!-- Stats Grid -->
         <section class="stats-deck anim d-1">
             <!-- Sales -->
             <div class="stat-card s-blue">
                 <div class="stat-top">
                     <i class="fa-solid fa-sack-dollar stat-icon"></i>
-                    <span style="background: rgba(59,130,246,0.1); color: var(--neon-blue); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">درآمد</span>
+                    <span style="background: rgba(34, 211, 238, 0.1); color: var(--neon-blue); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">درآمد کل</span>
                 </div>
                 <div>
                     <div class="stat-val"><?php echo number_format($stats['sales']); ?></div>
-                    <div class="stat-lbl">تومان فروش کل</div>
+                    <div class="stat-lbl">تومان ایران</div>
                 </div>
             </div>
 
@@ -438,23 +458,23 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <div class="stat-card s-teal">
                 <div class="stat-top">
                     <i class="fa-solid fa-file-invoice-dollar stat-icon"></i>
-                    <span style="background: rgba(20,184,166,0.1); color: var(--neon-teal); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">تراکنش</span>
+                    <span style="background: rgba(45, 212, 191, 0.1); color: var(--neon-teal); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">تراکنش‌ها</span>
                 </div>
                 <div>
                     <div class="stat-val"><?php echo number_format($stats['orders']); ?></div>
-                    <div class="stat-lbl">سفارش موفق</div>
+                    <div class="stat-lbl">سفارش موفق ثبت شده</div>
                 </div>
             </div>
 
             <!-- Users -->
             <div class="stat-card s-purple">
                 <div class="stat-top">
-                    <i class="fa-solid fa-users stat-icon"></i>
-                    <span style="background: rgba(139,92,246,0.1); color: var(--neon-purple); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">کاربران</span>
+                    <i class="fa-solid fa-users-rays stat-icon"></i>
+                    <span style="background: rgba(192, 132, 252, 0.1); color: var(--neon-purple); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">جامعه کاربری</span>
                 </div>
                 <div>
                     <div class="stat-val"><?php echo number_format($stats['users']); ?></div>
-                    <div class="stat-lbl">مشترکین فعال</div>
+                    <div class="stat-lbl">مشترکین فعال سیستم</div>
                 </div>
             </div>
 
@@ -462,44 +482,42 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <div class="stat-card s-amber">
                 <div class="stat-top">
                     <i class="fa-solid fa-user-plus stat-icon"></i>
-                    <span style="background: rgba(245,158,11,0.1); color: var(--neon-amber); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">امروز</span>
+                    <span style="background: rgba(251, 191, 36, 0.1); color: var(--neon-amber); padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">ورودی امروز</span>
                 </div>
                 <div>
                     <div class="stat-val"><?php echo number_format($stats['new_users']); ?></div>
-                    <div class="stat-lbl">ورودی جدید</div>
+                    <div class="stat-lbl">کاربر جدید</div>
                 </div>
             </div>
         </section>
 
         <!-- Action Tiles -->
-        <section class="anim d-2">
-            <h3 style="color: #fff; margin-bottom: 25px; font-size: 1.5rem;">عملیات سریع</h3>
-            <div class="action-deck">
-                <a href="invoice.php" class="action-tile">
-                    <i class="fa-solid fa-list-check tile-icon"></i>
-                    <span class="tile-text">سفارشات</span>
-                </a>
-                <a href="user.php" class="action-tile">
-                    <i class="fa-solid fa-user-group tile-icon"></i>
-                    <span class="tile-text">مدیریت کاربران</span>
-                </a>
-                <a href="inbound.php" class="action-tile">
-                    <i class="fa-solid fa-sliders tile-icon"></i>
-                    <span class="tile-text">کانفیگ‌ها</span>
-                </a>
-                <a href="payment.php" class="action-tile">
-                    <i class="fa-solid fa-credit-card tile-icon"></i>
-                    <span class="tile-text">امور مالی</span>
-                </a>
-                <a href="server_status.php" class="action-tile">
-                    <i class="fa-solid fa-server tile-icon"></i>
-                    <span class="tile-text">وضعیت ادمین</span>
-                </a>
-                <a href="cancelService.php" class="action-tile" style="border-color: rgba(239,68,68,0.3);">
-                    <i class="fa-solid fa-ban tile-icon" style="color: #ef4444;"></i>
-                    <span class="tile-text" style="color: #ef4444;">مسدودسازی</span>
-                </a>
-            </div>
+        <div class="section-header anim d-2">عملیات سریع</div>
+        <section class="action-deck anim d-2">
+            <a href="invoice.php" class="action-tile">
+                <i class="fa-solid fa-file-contract tile-icon"></i>
+                <span class="tile-text">مدیریت سفارشات</span>
+            </a>
+            <a href="user.php" class="action-tile">
+                <i class="fa-solid fa-users-gear tile-icon"></i>
+                <span class="tile-text">مدیریت کاربران</span>
+            </a>
+            <a href="inbound.php" class="action-tile">
+                <i class="fa-solid fa-network-wired tile-icon"></i>
+                <span class="tile-text">تنظیمات شبکه</span>
+            </a>
+            <a href="payment.php" class="action-tile">
+                <i class="fa-solid fa-wallet tile-icon"></i>
+                <span class="tile-text">امور مالی</span>
+            </a>
+            <a href="server_status.php" class="action-tile">
+                <i class="fa-solid fa-shield-cat tile-icon"></i>
+                <span class="tile-text">وضعیت ادمین</span>
+            </a>
+            <a href="cancelService.php" class="action-tile" style="border-color: rgba(244, 114, 182, 0.3);">
+                <i class="fa-solid fa-ban tile-icon" style="color: var(--neon-pink);"></i>
+                <span class="tile-text" style="color: var(--neon-pink);">مسدودسازی</span>
+            </a>
         </section>
 
         <!-- Charts (Full width split) -->
@@ -508,28 +526,28 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="chart-header">
                     <div class="chart-title">
                         <i class="fa-solid fa-chart-area" style="color: var(--neon-blue);"></i>
-                        روند فروش و درآمد
+                        تحلیل روند درآمدی
                     </div>
                 </div>
-                <div style="height: 400px; width: 100%;">
+                <div style="height: 450px; width: 100%;">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 30px;">
+            <div style="display: flex; flex-direction: column; gap: 40px;">
                 <div class="chart-box" style="flex: 1;">
                     <div class="chart-header">
                         <div class="chart-title"><i class="fa-solid fa-chart-pie" style="color: var(--neon-purple);"></i> وضعیت سرویس‌ها</div>
                     </div>
-                    <div style="height: 220px; position: relative;">
+                    <div style="height: 250px; position: relative;">
                         <canvas id="statusChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-box" style="flex: 1;">
                     <div class="chart-header">
-                        <div class="chart-title"><i class="fa-solid fa-arrow-trend-up" style="color: var(--neon-teal);"></i> رشد کاربر</div>
+                        <div class="chart-title"><i class="fa-solid fa-arrow-trend-up" style="color: var(--neon-teal);"></i> نرخ رشد کاربر</div>
                     </div>
-                    <div style="height: 180px;">
+                    <div style="height: 200px;">
                         <canvas id="usersChart"></canvas>
                     </div>
                 </div>
@@ -538,11 +556,11 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     </div>
 
-    <!-- Floating Dock (Bottom Navigation) -->
+    <!-- Floating Dock (Magical Bottom Nav) -->
     <div class="dock-wrapper anim d-4">
         <nav class="dock">
             <a href="index.php" class="dock-item active">
-                <i class="fa-solid fa-house"></i>
+                <i class="fa-solid fa-house-chimney"></i>
                 <span class="dock-tooltip">داشبورد</span>
             </a>
             <a href="invoice.php" class="dock-item">
@@ -558,11 +576,11 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <span class="dock-tooltip">محصولات</span>
             </a>
             <a href="server_status.php" class="dock-item">
-                <i class="fa-solid fa-server"></i>
+                <i class="fa-solid fa-shield-halved"></i>
                 <span class="dock-tooltip">ادمین</span>
             </a>
-            <div style="width: 1px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 5px;"></div>
-            <a href="logout.php" class="dock-item" style="color: #ef4444;">
+            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
+            <a href="logout.php" class="dock-item" style="color: var(--neon-pink);">
                 <i class="fa-solid fa-power-off"></i>
                 <span class="dock-tooltip">خروج</span>
             </a>
@@ -575,14 +593,17 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // --- Chart Config: High-End Fluid ---
+        // --- High-End Chart Configuration ---
         Chart.defaults.font.family = 'Vazirmatn';
-        Chart.defaults.font.size = 14;
+        Chart.defaults.font.size = 15;
+        Chart.defaults.font.weight = 'bold';
         Chart.defaults.color = '#64748B';
-        Chart.defaults.borderColor = 'rgba(255,255,255,0.03)';
-        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(15, 23, 42, 0.95)';
-        Chart.defaults.plugins.tooltip.padding = 15;
-        Chart.defaults.plugins.tooltip.cornerRadius = 10;
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(5, 5, 10, 0.9)';
+        Chart.defaults.plugins.tooltip.padding = 18;
+        Chart.defaults.plugins.tooltip.cornerRadius = 14;
+        Chart.defaults.plugins.tooltip.titleFont = { size: 16, weight: 800 };
+        Chart.defaults.plugins.tooltip.bodyFont = { size: 14 };
         
         const dSales = { labels: <?php echo json_encode($salesLabels); ?>, values: <?php echo json_encode($salesValues); ?> };
         const dPie = { labels: <?php echo json_encode($pieLabels); ?>, values: <?php echo json_encode($pieValues); ?> };
@@ -590,9 +611,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         // 1. Sales (Smooth Area Gradient)
         const ctxS = document.getElementById('salesChart').getContext('2d');
-        const gradS = ctxS.createLinearGradient(0, 0, 0, 400);
-        gradS.addColorStop(0, '#3b82f6');
-        gradS.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
+        const gradS = ctxS.createLinearGradient(0, 0, 0, 500);
+        gradS.addColorStop(0, '#22d3ee');
+        gradS.addColorStop(1, 'rgba(34, 211, 238, 0.02)');
 
         new Chart(ctxS, {
             type: 'line',
@@ -600,17 +621,17 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 labels: dSales.labels,
                 datasets: [{
                     label: 'فروش', data: dSales.values,
-                    borderColor: '#3b82f6', backgroundColor: gradS,
+                    borderColor: '#22d3ee', backgroundColor: gradS,
                     borderWidth: 3, pointRadius: 0, pointHoverRadius: 8, pointBackgroundColor: '#fff',
-                    fill: true, tension: 0.4
+                    fill: true, tension: 0.45
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: { 
-                    x: { grid: { display: false } }, 
-                    y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(255,255,255,0.02)' } } 
+                    x: { grid: { display: false }, ticks: { font: { size: 13 } } }, 
+                    y: { beginAtZero: true, border: { display: false }, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { font: { size: 13 } } } 
                 }
             }
         });
@@ -622,24 +643,29 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 labels: dPie.labels,
                 datasets: [{
                     data: dPie.values,
-                    backgroundColor: ['#f59e0b', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#8b5cf6', '#f97316', '#334155'],
-                    borderWidth: 0, hoverOffset: 15
+                    backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#8b5cf6', '#f97316', '#334155'],
+                    borderWidth: 0, hoverOffset: 20
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, cutout: '80%',
-                plugins: { legend: { position: 'right', labels: { boxWidth: 10, color: '#94a3b8', font: {size: 12} } } }
+                responsive: true, maintainAspectRatio: false, cutout: '82%',
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, color: '#94a3b8', font: {size: 13}, usePointStyle: true, padding: 15 } } }
             }
         });
 
-        // 3. User Growth (Bar)
-        new Chart(document.getElementById('usersChart'), {
+        // 3. User Growth (Rounded Bar)
+        const ctxU = document.getElementById('usersChart').getContext('2d');
+        const gradU = ctxU.createLinearGradient(0, 0, 0, 300);
+        gradU.addColorStop(0, '#2dd4bf');
+        gradU.addColorStop(1, 'rgba(45, 212, 191, 0.3)');
+
+        new Chart(ctxU, {
             type: 'bar',
             data: {
                 labels: dUsers.labels,
                 datasets: [{
                     label: 'کاربر', data: dUsers.values,
-                    backgroundColor: '#14b8a6', borderRadius: 4, barThickness: 15
+                    backgroundColor: gradU, borderRadius: 6, barThickness: 20
                 }]
             },
             options: {
