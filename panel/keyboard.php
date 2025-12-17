@@ -167,17 +167,18 @@ try {
         /* --- LAYOUT GRID --- */
         .main-layout {
             display: grid; 
-            /* Grid: Editor (Right/1fr) | Preview (Center/360px) | Stash (Left/240px) */
-            grid-template-columns: 1fr 380px 240px; 
+            /* Grid: Preview (Right/360px) | Editor (Center/1fr) | Stash (Left/240px) */
+            /* در حالت راست‌چین: ستون اول سمت راست است */
+            grid-template-columns: 360px 1fr 240px; 
             height: calc(100vh - 70px);
         }
 
         /* --- PANELS --- */
-        .editor-panel { flex: 1; overflow-y: auto; padding: 40px; position: relative; }
         .preview-panel { 
-            background: rgba(15, 23, 42, 0.4); border-right: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.4); border-left: 1px solid var(--glass-border);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
+        .editor-panel { flex: 1; overflow-y: auto; padding: 40px; position: relative; }
         .stash-panel {
             background: rgba(10, 15, 25, 0.6); border-right: 1px solid var(--glass-border);
             display: flex; flex-direction: column; padding: 20px;
@@ -230,14 +231,25 @@ try {
 
         /* --- PHONE MOCKUP --- */
         .phone-frame {
-            width: 320px; height: 680px; background: #000; border-radius: 40px; border: 6px solid #2d2d30;
-            overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            width: 320px; height: 680px; 
+            background: #000; border-radius: 48px; 
+            /* Modern bezel */
+            box-shadow: 0 0 0 4px #2d2d30, 0 0 0 7px #1a1a1a, 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden; display: flex; flex-direction: column; position: relative;
         }
-        .tg-key { background: #2c2c2e; color: white; border-radius: 6px; padding: 10px 4px; font-size: 0.8rem; text-align: center; margin: 2px; flex: 1; }
+        .dynamic-island {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 100px; height: 28px; background: #000; border-radius: 20px; z-index: 10;
+        }
+        .tg-key { 
+            background: #2c2c2e; color: white; border-radius: 6px; padding: 10px 4px; 
+            font-size: 0.8rem; text-align: center; margin: 2px; flex: 1; 
+            box-shadow: 0 1px 0 rgba(0,0,0,0.5);
+        }
 
         @media (max-width: 1200px) {
-            .main-layout { grid-template-columns: 1fr 340px 0; }
-            .stash-panel { display: none; } /* Hide stash on smaller screens or make it toggleable */
+            .main-layout { grid-template-columns: 0 1fr 240px; }
+            .preview-panel { display: none; } 
         }
     </style>
 </head>
@@ -265,7 +277,33 @@ try {
     <!-- GRID LAYOUT -->
     <div class="main-layout">
         
-        <!-- COL 1: EDITOR (Right) -->
+        <!-- COL 1: PREVIEW (Right in RTL) -->
+        <div class="preview-panel">
+            <div class="mb-4 text-xs font-bold text-indigo-300 tracking-widest opacity-70">LIVE PREVIEW</div>
+            <div class="phone-frame">
+                <div class="dynamic-island"></div>
+                <!-- Status Bar -->
+                <div class="h-8 w-full flex justify-between px-6 items-center pt-2 select-none">
+                    <span class="text-[10px] text-white font-mono">9:41</span>
+                    <div class="flex gap-1 text-[10px] text-white"><i class="fa-solid fa-signal"></i> <i class="fa-solid fa-wifi"></i> <i class="fa-solid fa-battery-full"></i></div>
+                </div>
+
+                <div class="bg-[#212121] p-3 flex items-center text-white border-b border-black">
+                    <i class="fa-solid fa-arrow-right text-gray-400 ml-3"></i>
+                    <div class="flex-1 text-sm font-bold">ربات تلگرام</div>
+                </div>
+                <div class="flex-1 bg-[#0f0f0f] relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
+                    <div class="absolute bottom-4 right-4 bg-[#2b5278] text-white p-3 rounded-xl rounded-tr-none text-sm max-w-[80%] shadow-lg">
+                        منوی ربات به صورت زیر است 👇
+                    </div>
+                </div>
+                <!-- Keyboard Container: Force LTR for Telegram Layout -->
+                <div id="preview-render" class="bg-[#1c1c1e] p-2 min-h-[200px] flex flex-col justify-end border-t border-black" dir="ltr"></div>
+            </div>
+        </div>
+
+        <!-- COL 2: EDITOR (Center) -->
         <div class="editor-panel">
             <div class="max-w-4xl mx-auto pb-24">
                 <div class="flex justify-between items-end mb-6">
@@ -278,24 +316,6 @@ try {
                 <div onclick="App.addRow()" class="w-full py-5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center text-slate-400 cursor-pointer hover:border-indigo-500 hover:text-indigo-400 hover:bg-indigo-500/5 transition mt-8">
                     <i class="fa-solid fa-plus text-lg ml-2"></i> افزودن سطر جدید
                 </div>
-            </div>
-        </div>
-
-        <!-- COL 2: PREVIEW (Center) -->
-        <div class="preview-panel">
-            <div class="mb-4 text-xs font-bold text-indigo-300 tracking-widest opacity-70">LIVE PREVIEW</div>
-            <div class="phone-frame">
-                <div class="bg-[#212121] p-3 flex items-center text-white border-b border-black">
-                    <i class="fa-solid fa-arrow-right text-gray-400 ml-3"></i>
-                    <div class="flex-1 text-sm font-bold">ربات تلگرام</div>
-                </div>
-                <div class="flex-1 bg-[#0f0f0f] relative overflow-hidden">
-                    <div class="absolute inset-0 opacity-5" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px;"></div>
-                    <div class="absolute bottom-4 right-4 bg-[#2b5278] text-white p-3 rounded-xl rounded-tr-none text-sm max-w-[80%] shadow-lg">
-                        منوی ربات به صورت زیر است 👇
-                    </div>
-                </div>
-                <div id="preview-render" class="bg-[#1c1c1e] p-2 min-h-[200px] flex flex-col justify-end border-t border-black"></div>
             </div>
         </div>
 
@@ -361,7 +381,7 @@ try {
 
             render() {
                 this.renderEditor();
-                this.renderStash(); // New
+                this.renderStash();
                 this.renderPreview();
                 this.checkChanges();
             },
@@ -412,7 +432,7 @@ try {
                 this.initSortable();
             },
 
-            // --- Stash Rendering (New) ---
+            // --- Stash Rendering ---
             renderStash() {
                 const { stash } = this.dom;
                 stash.innerHTML = '';
@@ -422,7 +442,6 @@ try {
                 }
 
                 this.data.stash.forEach((btn, idx) => {
-                    // Pass 'stash' as type to handle edits differently if needed
                     stash.appendChild(this.createKeyElement(btn, null, idx, 'stash'));
                 });
                 
@@ -459,6 +478,7 @@ try {
                 preview.innerHTML = '';
                 this.data.keyboard.forEach(row => {
                     if (row.length === 0) return;
+                    // Note: Container has dir="ltr" so buttons render Left->Right (Telegram standard)
                     const rowDiv = document.createElement('div');
                     rowDiv.className = 'flex w-full gap-1 mb-1';
                     row.forEach(btn => {
@@ -534,6 +554,11 @@ try {
             addRow() {
                 this.data.keyboard.push([{text: 'text_new'}]);
                 this.render();
+                // Scroll to bottom
+                setTimeout(() => {
+                    const container = document.querySelector('.editor-panel');
+                    container.scrollTop = container.scrollHeight;
+                }, 50);
             },
 
             deleteRow(idx) {
