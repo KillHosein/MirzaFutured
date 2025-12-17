@@ -10,6 +10,11 @@ $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
 $query->execute();
 $result = $query->fetch(PDO::FETCH_ASSOC);
 
+// استعلام فاکتورها (طبق کد اصلی شما حفظ شد)
+$query = $pdo->prepare("SELECT * FROM invoice");
+$query->execute();
+$listinvoice = $query->fetchAll();
+
 if( !isset($_SESSION["user"]) || !$result ){
     header('Location: login.php');
     exit;
@@ -30,6 +35,7 @@ if($method == "POST" && is_array($inputData)){
 
 // Reset Logic
 if(isset($_GET['action']) && $_GET['action'] == "reaset"){
+    // مقادیر پیش‌فرض استاندارد
     $defaultKeyboard = json_encode([
         "keyboard" => [
             [["text" => "text_sell"], ["text" => "text_extend"]],
@@ -57,6 +63,7 @@ try {
             $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
     } else {
+         // Default fallback
          $def = [
             "keyboard" => [
                 [["text" => "text_sell"], ["text" => "text_extend"]],
@@ -109,7 +116,6 @@ try {
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            /* Subtle grid background */
             background-image: linear-gradient(var(--border) 1px, transparent 1px),
             linear-gradient(90deg, var(--border) 1px, transparent 1px);
             background-size: 30px 30px;
@@ -186,7 +192,7 @@ try {
             display: flex; flex-direction: column;
         }
 
-        /* Dynamic Island / Notch */
+        /* Dynamic Island */
         .dynamic-island {
             position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
             width: 120px; height: 35px; background: #000; border-radius: 20px; z-index: 20;
@@ -200,7 +206,6 @@ try {
 
         .tg-ui-body {
             flex: 1; background: #000;
-            /* Authentic Telegram Dark Pattern */
             background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%231c1c1e' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
             display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 10px;
         }
@@ -222,7 +227,6 @@ try {
             border-top: 1px solid rgba(255,255,255,0.05);
             transition: background 0.1s;
         }
-        /* Simulate tap effect */
         .tg-key:active { background: #3a3a3c; }
 
         /* --- Editor Pane (Right) --- */
@@ -273,7 +277,6 @@ try {
             border-color: var(--accent);
             background: #202023;
         }
-        /* Active indicator line */
         .btn-card::before {
             content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 3px;
             background: var(--accent); border-radius: 0 4px 4px 0;
