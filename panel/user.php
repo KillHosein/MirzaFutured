@@ -21,6 +21,7 @@ $result = $query->fetch(PDO::FETCH_ASSOC);
 if (!$result) { header('Location: login.php'); exit; }
 
 // Fetch User Data
+if (!isset($_GET["id"])) { die("User ID not provided."); }
 $query = $pdo->prepare("SELECT * FROM user WHERE id=:id");
 $query->bindParam("id", $_GET["id"], PDO::PARAM_STR);
 $query->execute();
@@ -32,13 +33,13 @@ $setting = select("setting","*",null,null);
 $otherservice = select("topicid","idreport","report","otherservice","select")['idreport'];
 $paymentreports = select("topicid","idreport","report","paymentreport","select")['idreport'];
 
-// --- Actions Logic ---
+// --- Actions Logic (Preserved) ---
 
 // Block/Unblock
 if(isset($_GET['status']) && $_GET['status']){
     if($_GET['status'] == "block"){
         $textblok = "کاربر با آیدی عددی\n{$_GET['id']}  در ربات مسدود گردید \n\nادمین مسدود کننده : پنل تحت وب\nنام کاربری  : {$_SESSION['user']}";
-        if (strlen($setting['Channel_Report']) > 0) {
+        if (isset($setting['Channel_Report']) && strlen($setting['Channel_Report']) > 0) {
             telegram('sendmessage',[
                 'chat_id' => $setting['Channel_Report'],
                 'message_thread_id' => $otherservice,
@@ -59,7 +60,7 @@ if(isset($_GET['priceadd']) && $_GET['priceadd']){
     $priceadd = number_format($_GET['priceadd'],0);
     $textadd = "💎 کاربر عزیز مبلغ {$priceadd} تومان به موجودی کیف پول تان اضافه گردید.";
     sendmessage($_GET['id'], $textadd, null, 'HTML');
-     if (strlen($setting['Channel_Report']) > 0) {
+     if (isset($setting['Channel_Report']) && strlen($setting['Channel_Report']) > 0) {
         $textaddbalance = "📌 یک ادمین موجودی کاربر را از پنل تحت وب افزایش داده است :\n\n🪪 اطلاعات ادمین افزایش دهنده موجودی : \nنام کاربری : {$_SESSION['user']}\n👤 اطلاعات کاربر دریافت کننده موجودی :\nآیدی عددی کاربر  : {$_GET['id']}\nمبلغ موجودی : $priceadd";
         telegram('sendmessage',[
             'chat_id' => $setting['Channel_Report'],
@@ -77,7 +78,7 @@ if(isset($_GET['priceadd']) && $_GET['priceadd']){
 // Low Balance
 if(isset($_GET['pricelow']) && $_GET['pricelow']){
     $priceadd = number_format($_GET['pricelow'],0);
-     if (strlen($setting['Channel_Report']) > 0) {
+     if (isset($setting['Channel_Report']) && strlen($setting['Channel_Report']) > 0) {
         $textaddbalance = "📌 یک ادمین موجودی کاربر را از پنل تحت وب کسر کرده است :\n\n🪪 اطلاعات ادمین کسر کننده موجودی : \nنام کاربری : {$_SESSION['user']}\n👤 اطلاعات کاربر :\nآیدی عددی کاربر  : {$_GET['id']}\nمبلغ موجودی : $priceadd";
         telegram('sendmessage',[
             'chat_id' => $setting['Channel_Report'],
@@ -103,7 +104,7 @@ if(isset($_GET['agent']) && $_GET['agent']){
 if(isset($_GET['textmessage']) && $_GET['textmessage']){
     $messagetext = "📥 یک پیام از مدیریت برای شما ارسال شد.\n\nمتن پیام : {$_GET['textmessage']}";
     sendmessage($_GET['id'], $messagetext, null, 'HTML');
-     if (strlen($setting['Channel_Report']) > 0) {
+     if (isset($setting['Channel_Report']) && strlen($setting['Channel_Report']) > 0) {
         $textaddbalance = "📌 از طریق پنل تحت وب یک پیام برای کاربر ارسال شد\n\n🪪 اطلاعات ادمین ارسال کننده  : \nنام کاربری : {$_SESSION['user']}\n👤 اطلاعات ارسال :\nآیدی عددی کاربر  : {$_GET['id']}\nمتن ارسال شده : {$_GET['textmessage']}";
         telegram('sendmessage',[
             'chat_id' => $setting['Channel_Report'],
@@ -116,10 +117,10 @@ if(isset($_GET['textmessage']) && $_GET['textmessage']){
     exit;
 }
 
-$status_user = [
-    'active' => "فعال",
-    'block' => "مسدود",
-][strtolower($user['User_Status'])] ?? $user['User_Status'];
+// Status Display Logic
+$statusKey = strtolower($user['User_Status']);
+$status_user = ($statusKey == 'active') ? "فعال" : (($statusKey == 'block') ? "مسدود" : $user['User_Status']);
+$statusClass = ($statusKey == 'active') ? 'status-active' : (($statusKey == 'block') ? 'status-block' : 'status-other');
 
 if($user['number'] == "none") $user['number'] = "ثبت نشده";
 $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
@@ -144,7 +145,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             --bg-body: #020204;
             --bg-glass: rgba(20, 20, 25, 0.85);
             --bg-dock: rgba(10, 10, 15, 0.95);
-            --bg-modal: rgba(20, 20, 25, 0.95);
+            --bg-modal: rgba(25, 25, 30, 0.98);
             
             --neon-blue: #00f3ff;
             --neon-purple: #bc13fe;
@@ -156,6 +157,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             --text-muted: #b0b0b0;
             
             --border-glass: 1px solid rgba(255, 255, 255, 0.12);
+            --shadow-card: 0 15px 40px rgba(0,0,0,0.6);
             
             --radius-xl: 30px;
             --radius-lg: 20px;
@@ -175,7 +177,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 radial-gradient(circle at 10% 10%, rgba(188, 19, 254, 0.05) 0%, transparent 40%),
                 radial-gradient(circle at 90% 90%, rgba(0, 243, 255, 0.05) 0%, transparent 40%);
             background-attachment: fixed;
-            padding-bottom: 160px;
+            padding-bottom: 160px; /* Space for dock */
         }
 
         a { text-decoration: none; color: inherit; transition: 0.3s; }
@@ -211,7 +213,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             backdrop-filter: blur(25px);
             border: var(--border-glass);
             border-radius: var(--radius-lg);
-            padding: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            padding: 30px; box-shadow: var(--shadow-card);
+            height: 100%;
         }
 
         /* User Card (Left) */
@@ -220,62 +223,73 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .avatar-circle {
-            width: 100px; height: 100px; border-radius: 50%;
+            width: 110px; height: 110px; border-radius: 50%;
             background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
             margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
-            font-size: 3rem; color: #fff; font-weight: bold;
+            font-size: 3.5rem; color: #fff; font-weight: bold;
             box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
+            border: 3px solid rgba(255,255,255,0.1);
         }
-        .user-id {
+        .user-id-badge {
             font-family: monospace; font-size: 1.4rem; color: var(--neon-blue); letter-spacing: 2px;
             background: rgba(0, 243, 255, 0.1); padding: 5px 15px; border-radius: 20px;
-            display: inline-block;
+            display: inline-block; font-weight: 700;
         }
-        .username { font-size: 1.8rem; font-weight: 800; margin: 15px 0 5px; color: #fff; }
-        .telegram-link { color: var(--text-muted); font-size: 1.1rem; text-decoration: none; transition: 0.3s; }
-        .telegram-link:hover { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+        .username { font-size: 2rem; font-weight: 800; margin: 15px 0 5px; color: #fff; }
+        .telegram-link { color: var(--text-muted); font-size: 1.1rem; transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; }
+        .telegram-link:hover { color: var(--neon-blue); }
 
         /* Info List */
         .info-list { list-style: none; padding: 0; margin: 0; }
         .info-item {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 1.1rem;
+            padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 1.15rem;
         }
         .info-item:last-child { border-bottom: none; }
-        .info-label { color: var(--text-muted); }
+        .info-label { color: var(--text-muted); font-weight: 500; }
         .info-value { font-weight: 700; color: #fff; }
-        .val-money { color: var(--neon-green); font-size: 1.2rem; }
-        .val-status { padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; }
-        .status-active { background: rgba(0, 255, 136, 0.15); color: var(--neon-green); }
-        .status-block { background: rgba(255, 0, 76, 0.15); color: var(--neon-red); }
+        
+        .val-money { color: var(--neon-amber); font-size: 1.3rem; text-shadow: 0 0 10px rgba(255, 183, 0, 0.3); }
+        
+        .status-badge { padding: 5px 15px; border-radius: 20px; font-size: 0.95rem; }
+        .status-active { background: rgba(0, 255, 136, 0.15); color: var(--neon-green); border: 1px solid rgba(0, 255, 136, 0.3); }
+        .status-block { background: rgba(255, 0, 76, 0.15); color: var(--neon-red); border: 1px solid rgba(255, 0, 76, 0.3); }
+        .status-other { background: rgba(255, 255, 255, 0.1); color: #ccc; }
 
         /* --- Actions Grid (Right) --- */
-        .actions-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 25px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .actions-header { 
+            font-size: 1.6rem; font-weight: 800; margin-bottom: 30px; color: #fff; 
+            display: flex; align-items: center; gap: 12px;
+            padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
         .actions-buttons {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px;
         }
         
         .btn-action {
-            height: 70px; display: flex; align-items: center; justify-content: center; gap: 12px;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px; color: #fff; font-size: 1.1rem; font-weight: 600;
-            cursor: pointer; text-decoration: none; transition: 0.3s;
+            height: 80px; display: flex; align-items: center; justify-content: center; gap: 15px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px; color: #fff; font-size: 1.15rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; transition: 0.3s; position: relative; overflow: hidden;
         }
-        .btn-action:hover { transform: translateY(-5px); }
-        .btn-action i { font-size: 1.5rem; }
+        .btn-action:hover { transform: translateY(-5px); background: rgba(255,255,255,0.08); }
+        .btn-action i { font-size: 1.8rem; }
         
-        .act-green { border-color: rgba(0, 255, 136, 0.3); color: var(--neon-green); }
-        .act-green:hover { background: rgba(0, 255, 136, 0.1); box-shadow: 0 0 20px rgba(0, 255, 136, 0.2); }
+        .act-green { border-color: rgba(0, 255, 136, 0.4); color: var(--neon-green); }
+        .act-green:hover { box-shadow: 0 0 25px rgba(0, 255, 136, 0.2); }
         
-        .act-red { border-color: rgba(255, 0, 76, 0.3); color: var(--neon-red); }
-        .act-red:hover { background: rgba(255, 0, 76, 0.1); box-shadow: 0 0 20px rgba(255, 0, 76, 0.2); }
+        .act-red { border-color: rgba(255, 0, 76, 0.4); color: var(--neon-red); }
+        .act-red:hover { box-shadow: 0 0 25px rgba(255, 0, 76, 0.2); }
         
-        .act-blue { border-color: rgba(0, 243, 255, 0.3); color: var(--neon-blue); }
-        .act-blue:hover { background: rgba(0, 243, 255, 0.1); box-shadow: 0 0 20px rgba(0, 243, 255, 0.2); }
+        .act-blue { border-color: rgba(0, 243, 255, 0.4); color: var(--neon-blue); }
+        .act-blue:hover { box-shadow: 0 0 25px rgba(0, 243, 255, 0.2); }
         
-        .act-amber { border-color: rgba(255, 170, 0, 0.3); color: var(--neon-amber); }
-        .act-amber:hover { background: rgba(255, 170, 0, 0.1); box-shadow: 0 0 20px rgba(255, 170, 0, 0.2); }
+        .act-amber { border-color: rgba(255, 170, 0, 0.4); color: var(--neon-amber); }
+        .act-amber:hover { box-shadow: 0 0 25px rgba(255, 170, 0, 0.2); }
+        
+        .act-purple { border-color: rgba(188, 19, 254, 0.4); color: var(--neon-purple); }
+        .act-purple:hover { box-shadow: 0 0 25px rgba(188, 19, 254, 0.2); }
 
         /* --- Modals (Dark & Glassy) --- */
         .modal-content {
@@ -284,25 +298,26 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             border: 1px solid var(--neon-blue);
             border-radius: var(--radius-lg);
             color: #fff;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: 0 0 60px rgba(0,0,0,0.9);
         }
-        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 20px; }
-        .modal-title { font-size: 1.5rem; font-weight: 800; color: var(--neon-blue); }
-        .close { text-shadow: none; color: #fff; opacity: 0.8; font-size: 2rem; margin-top: -5px; }
-        .modal-body { padding: 30px; }
+        .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 25px; }
+        .modal-title { font-size: 1.6rem; font-weight: 800; color: var(--neon-blue); display: flex; align-items: center; gap: 10px; }
+        .close { text-shadow: none; color: #fff; opacity: 0.8; font-size: 2.5rem; margin-top: -5px; font-weight: 300; }
+        .modal-body { padding: 35px; }
         
         .form-control-dark {
-            background: #000; border: 2px solid #333; color: #fff;
-            height: 55px; border-radius: 12px; padding: 0 20px; font-size: 1.1rem; width: 100%;
+            background: #050505; border: 2px solid #333; color: #fff;
+            height: 60px; border-radius: 14px; padding: 0 20px; font-size: 1.2rem; width: 100%;
+            transition: 0.3s;
         }
-        .form-control-dark:focus { border-color: var(--neon-blue); outline: none; box-shadow: 0 0 15px rgba(0,243,255,0.2); }
+        .form-control-dark:focus { border-color: var(--neon-blue); outline: none; box-shadow: 0 0 20px rgba(0,243,255,0.25); }
         
         .btn-modal {
-            width: 100%; height: 55px; background: var(--neon-blue); color: #000;
-            border: none; border-radius: 12px; font-size: 1.2rem; font-weight: 800; cursor: pointer;
-            margin-top: 20px; transition: 0.3s;
+            width: 100%; height: 60px; background: var(--neon-blue); color: #000;
+            border: none; border-radius: 14px; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+            margin-top: 25px; transition: 0.3s;
         }
-        .btn-modal:hover { box-shadow: 0 0 30px var(--neon-blue); transform: translateY(-2px); }
+        .btn-modal:hover { box-shadow: 0 0 40px var(--neon-blue); transform: translateY(-3px); }
 
         /* --- Floating Dock (Fixed Center) --- */
         .dock-container {
@@ -342,9 +357,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             .profile-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
-            .page-title h1 { font-size: 2.5rem; }
-            .dock { width: 95%; justify-content: space-between; padding: 10px 20px; }
+            .container-fluid-custom { padding: 30px 15px 160px 15px; }
+            .page-title h1 { font-size: 2.2rem; }
+            .dock { width: 95%; justify-content: space-between; padding: 10px 20px; gap: 5px; }
             .dock-icon { width: 45px; height: 45px; font-size: 1.5rem; }
+            .actions-buttons { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -357,9 +374,9 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <div class="page-title">
                 <h1>پروفایل کاربر</h1>
                 <p>
-                    <span style="color: var(--neon-blue);">#<?php echo $user['id']; ?></span>
+                    <span style="color: var(--neon-blue); font-family:monospace; font-weight:700;">#<?php echo $user['id']; ?></span>
                     <span style="opacity:0.3; margin:0 15px;">|</span>
-                    مدیریت و ویرایش اطلاعات
+                    مدیریت و ویرایش اطلاعات مشترک
                 </p>
             </div>
         </header>
@@ -372,11 +389,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <div class="avatar-circle">
                         <?php echo strtoupper(substr($user['username'] ?: 'U', 0, 1)); ?>
                     </div>
-                    <div class="user-id"><?php echo $user['id']; ?></div>
+                    <div class="user-id-badge"><?php echo $user['id']; ?></div>
                     <div class="username"><?php echo $user['username'] ? $user['username'] : 'بدون نام کاربری'; ?></div>
                     <?php if($user['username']): ?>
                         <a href="https://t.me/<?php echo $user['username']; ?>" target="_blank" class="telegram-link">
-                            <i class="fa-brands fa-telegram"></i> مشاهده پروفایل
+                            <i class="fa-brands fa-telegram"></i> مشاهده در تلگرام
                         </a>
                     <?php endif; ?>
                 </div>
@@ -384,7 +401,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <ul class="info-list">
                     <li class="info-item">
                         <span class="info-label">شماره تماس</span>
-                        <span class="info-value" style="font-family: monospace; font-size: 1.2rem;"><?php echo $user['number']; ?></span>
+                        <span class="info-value" style="font-family: monospace; font-size: 1.3rem;"><?php echo $user['number']; ?></span>
                     </li>
                     <li class="info-item">
                         <span class="info-label">موجودی کیف پول</span>
@@ -393,7 +410,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <li class="info-item">
                         <span class="info-label">وضعیت حساب</span>
                         <span class="info-value">
-                            <span class="val-status <?php echo (strtolower($user['User_Status']) == 'active') ? 'status-active' : 'status-block'; ?>">
+                            <span class="status-badge <?php echo $statusClass; ?>">
                                 <?php echo $status_user; ?>
                             </span>
                         </span>
@@ -415,18 +432,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
             <!-- Actions (Right) -->
             <div class="glass-panel anim d-2" style="display: flex; flex-direction: column;">
-                <div class="actions-title">
-                    <i class="fa-solid fa-sliders" style="color: var(--neon-purple);"></i>
+                <div class="actions-header">
+                    <i class="fa-solid fa-sliders" style="color: var(--neon-purple); font-size: 1.8rem;"></i>
                     پنل عملیات سریع
                 </div>
                 
                 <div class="actions-buttons">
                     <?php if(strtolower($user['User_Status']) == 'active'): ?>
-                        <a href="user.php?id=<?php echo $user['id'];?>&status=block" class="btn-action act-red" onclick="return confirm('آیا مطمئن هستید؟');">
+                        <a href="user.php?id=<?php echo $user['id'];?>&status=block" class="btn-action act-red" onclick="return confirm('آیا از مسدود کردن این کاربر اطمینان دارید؟');">
                             <i class="fa-solid fa-ban"></i> مسدود کردن
                         </a>
                     <?php else: ?>
-                        <a href="user.php?id=<?php echo $user['id'];?>&status=active" class="btn-action act-green" onclick="return confirm('آیا مطمئن هستید؟');">
+                        <a href="user.php?id=<?php echo $user['id'];?>&status=active" class="btn-action act-green" onclick="return confirm('آیا از رفع مسدودی این کاربر اطمینان دارید؟');">
                             <i class="fa-solid fa-unlock"></i> رفع مسدودی
                         </a>
                     <?php endif; ?>
@@ -443,7 +460,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <i class="fa-solid fa-paper-plane"></i> ارسال پیام
                     </a>
                     
-                    <a href="#changeagent" data-toggle="modal" class="btn-action act-purple" style="border-color: rgba(188, 19, 254, 0.3); color: var(--neon-purple);">
+                    <a href="#changeagent" data-toggle="modal" class="btn-action act-purple">
                         <i class="fa-solid fa-user-tag"></i> تغییر سطح
                     </a>
                     
@@ -471,7 +488,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <form action="user.php" method="GET">
                         <input type="hidden" name="id" value="<?php echo $user['id'];?>">
                         <div class="form-group">
-                            <label style="color:#fff; margin-bottom:10px;">مبلغ (تومان)</label>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.1rem;">مبلغ (تومان)</label>
                             <input type="number" name="priceadd" class="form-control-dark" placeholder="مثلا: 50000" required>
                         </div>
                         <button type="submit" class="btn-modal">انجام عملیات</button>
@@ -493,7 +510,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <form action="user.php" method="GET">
                         <input type="hidden" name="id" value="<?php echo $user['id'];?>">
                         <div class="form-group">
-                            <label style="color:#fff; margin-bottom:10px;">مبلغ کسر (تومان)</label>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.1rem;">مبلغ کسر (تومان)</label>
                             <input type="number" name="pricelow" class="form-control-dark" placeholder="مثلا: 10000" required>
                         </div>
                         <button type="submit" class="btn-modal" style="background: var(--neon-amber);">انجام عملیات</button>
@@ -515,8 +532,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <form action="user.php" method="GET">
                         <input type="hidden" name="id" value="<?php echo $user['id'];?>">
                         <div class="form-group">
-                            <label style="color:#fff; margin-bottom:10px;">متن پیام</label>
-                            <textarea name="textmessage" class="form-control-dark" style="height:120px; padding-top:15px;" placeholder="پیام خود را بنویسید..." required></textarea>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.1rem;">متن پیام</label>
+                            <textarea name="textmessage" class="form-control-dark" style="height:150px; padding-top:15px;" placeholder="پیام خود را بنویسید..." required></textarea>
                         </div>
                         <button type="submit" class="btn-modal">ارسال</button>
                     </form>
@@ -537,7 +554,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <form action="user.php" method="GET">
                         <input type="hidden" name="id" value="<?php echo $user['id'];?>">
                         <div class="form-group">
-                            <label style="color:#fff; margin-bottom:10px;">انتخاب سطح جدید</label>
+                            <label style="color:#fff; margin-bottom:15px; font-size: 1.1rem;">انتخاب سطح جدید</label>
                             <select name="agent" class="form-control-dark">
                                 <option value="f" <?php echo ($user['agent']=='f')?'selected':''; ?>>کاربر عادی</option>
                                 <option value="n" <?php echo ($user['agent']=='n')?'selected':''; ?>>نماینده معمولی</option>
