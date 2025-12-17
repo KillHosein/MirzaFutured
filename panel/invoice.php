@@ -403,7 +403,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .custom-check:checked { background: var(--neon-blue); border-color: var(--neon-blue); }
         .custom-check:checked::after { content: '✔'; position: absolute; color: #000; top: -1px; left: 3px; font-size: 16px; font-weight: 800; }
 
-        /* --- Floating Dock (Bigger) --- */
+        /* --- Floating Dock (Bigger & Clean) --- */
         .dock-container {
             position: fixed; bottom: 30px; left: 0; right: 0;
             display: flex; justify-content: center; z-index: 2000; pointer-events: none;
@@ -413,9 +413,12 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(35px);
             border: 1px solid rgba(255,255,255,0.15); border-radius: 30px; padding: 15px;
             box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+            max-width: 95vw; overflow-x: auto; scrollbar-width: none; /* Hide scrollbar */
         }
+        .dock::-webkit-scrollbar { display: none; } /* Hide scrollbar Chrome/Safari */
+        
         .dock-item {
-            width: 60px; height: 60px;
+            width: 60px; height: 60px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
             border-radius: 20px;
             color: var(--text-sec); font-size: 1.6rem;
@@ -430,16 +433,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .dock-item.active {
             color: var(--neon-blue); background: rgba(0, 242, 255, 0.1);
         }
-        .dock-item::before {
-            content: attr(data-tooltip);
-            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.8);
-            background: rgba(0,0,0,0.95); border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; padding: 8px 16px; border-radius: 10px;
-            font-size: 0.9rem; font-weight: 600; white-space: nowrap;
-            opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; margin-bottom: 15px;
+        
+        /* Unified Dock Labels (No Duplicate Tooltips) */
+        .dock-label { 
+            font-size: 0.9rem; font-weight: 600; opacity: 0; position: absolute; 
+            bottom: -35px; transition: 0.3s; white-space: nowrap; 
+            background: rgba(0,0,0,0.9); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; pointer-events: none;
         }
-        .dock-item:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0) scale(1); }
-        .dock-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); margin: 0 6px; }
+        .dock-item:hover .dock-label { opacity: 1; bottom: -45px; }
+        .dock-item.active .dock-label { opacity: 1; bottom: -45px; color: var(--neon-blue); }
+
+        .dock-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); margin: 0 6px; flex-shrink: 0; }
 
         /* --- Modals (Dark & Bigger) --- */
         .modal-content {
@@ -464,8 +469,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         @media (max-width: 768px) {
             .container-fluid-custom { padding: 30px 15px 160px 15px; }
-            .dock { width: 95%; overflow-x: auto; justify-content: flex-start; }
-            .dock-item { flex-shrink: 0; width: 50px; height: 50px; font-size: 1.4rem; }
+            .dock { width: 95%; justify-content: flex-start; }
+            .dock-item { width: 50px; height: 50px; font-size: 1.4rem; }
             .filters-row { flex-direction: column; align-items: stretch; }
             .actions-row { flex-direction: column; align-items: stretch; }
             .btn-act { justify-content: center; }
@@ -737,8 +742,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-server"></i></div>
                 <span class="dock-label">سرویس‌ها</span>
             </a>
-            <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.15);"></div>
-            <a href="cancelService.php" class="dock-item" data-tooltip="مسدودها" style="color: var(--neon-red);">
+            <div class="dock-divider"></div>
+            <a href="cancelService.php" class="dock-item" style="color: var(--neon-red);">
                 <div class="dock-icon"><i class="fa-solid fa-ban"></i></div>
                 <span class="dock-label">مسدود</span>
             </a>
@@ -754,7 +759,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
                 <span class="dock-label">پنل X-UI</span>
             </a>
-            <div style="width: 2px; height: 40px; background: rgba(255,255,255,0.15);"></div>
+            <div class="dock-divider"></div>
             <a href="settings.php" class="dock-item">
                 <div class="dock-icon"><i class="fa-solid fa-gear"></i></div>
                 <span class="dock-label">تنظیمات</span>
