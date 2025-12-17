@@ -17,16 +17,20 @@ $result = $query->fetch(PDO::FETCH_ASSOC);
 
 if( !isset($_SESSION["user"]) || !$result ){ header('Location: login.php'); exit; }
 
-// --- Fetch Data ---
-$query = $pdo->prepare("SELECT * FROM product");
-$query->execute();
-$listinvoice = $query->fetchAll();
+// --- Bulk Actions Handler ---
+if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_delete_ids'])){
+    $ids = json_decode($_POST['bulk_delete_ids'], true);
+    if(is_array($ids) && !empty($ids)){
+        $stmt = $pdo->prepare("DELETE FROM product WHERE id = :id");
+        foreach($ids as $id){
+            $stmt->execute([':id' => intval($id)]);
+        }
+    }
+    header("Location: product.php");
+    exit;
+}
 
-$query = $pdo->prepare("SELECT * FROM marzban_panel");
-$query->execute();
-$listpanel = $query->fetchAll();
-
-// --- Handle Form Submissions ---
+// --- Form Handlers ---
 
 // Add Product
 if(isset($_POST['nameproduct']) && $_POST['nameproduct'] !== ''){
@@ -72,7 +76,7 @@ if(isset($_GET['oneproduct']) && isset($_GET['toweproduct'])){
     exit;
 }
 
-// Delete Product
+// Delete Single Product
 if(isset($_GET['removeid']) && $_GET['removeid']){
     $rid = (int) $_GET['removeid'];
     $stmt = $pdo->prepare("DELETE FROM product WHERE id = :id");
@@ -81,6 +85,15 @@ if(isset($_GET['removeid']) && $_GET['removeid']){
     header("Location: product.php");
     exit;
 }
+
+// --- Fetch Data ---
+$query = $pdo->prepare("SELECT * FROM product ORDER BY id DESC");
+$query->execute();
+$listinvoice = $query->fetchAll();
+
+$query = $pdo->prepare("SELECT * FROM marzban_panel");
+$query->execute();
+$listpanel = $query->fetchAll();
 
 // Export CSV
 if(isset($_GET['export']) && $_GET['export']==='csv'){
@@ -395,6 +408,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 
                 <button class="btn-act" id="prodCopy" style="height: 45px; font-size: 0.9rem;">کپی ID</button>
                 <button class="btn-act" id="prodCopyCodes" style="height: 45px; font-size: 0.9rem;">کپی کد</button>
+                
+                <!-- Hidden form for bulk delete -->
+                <form method="POST" id="bulkDeleteForm" style="display:none;">
+                    <input type="hidden" name="bulk_delete_ids" id="bulkDeleteInput">
+                </form>
                 <button class="btn-act btn-danger-glow" id="prodRemoveBulk" style="height: 45px; font-size: 0.9rem;">حذف گروهی</button>
             </div>
 
@@ -588,7 +606,6 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="js/dynamic-table.js"></script> <!-- Assuming this handles search -->
     
     <script>
         $(document).ready(function(){
@@ -625,20 +642,20 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 else alert('هیچ موردی انتخاب نشده');
             });
 
-            // Bulk Delete
+            // Bulk Delete with POST
             $('#prodRemoveBulk').click(function(){
                 let ids = [];
                 $('.prod-check:checked').each(function(){ ids.push($(this).val()); });
-                if(!ids.length) { alert('انتخاب کنید'); return; }
-                if(!confirm('آیا مطمئن هستید؟')) return;
                 
-                let done = 0;
-                ids.forEach(id => {
-                    $.get('product.php', {removeid: id}, function(){
-                        done++;
-                        if(done == ids.length) location.reload();
-                    });
-                });
+                if(!ids.length) { alert('هیچ محصولی انتخاب نشده است!'); return; }
+                
+                if(!confirm('آیا از حذف گروهی ' + ids.length + ' محصول اطمینان دارید؟')) return;
+                
+                // Set the hidden input value to JSON string of IDs
+                $('#bulkDeleteInput').val(JSON.stringify(ids));
+                
+                // Submit the form
+                $('#bulkDeleteForm').submit();
             });
         });
     </script>
