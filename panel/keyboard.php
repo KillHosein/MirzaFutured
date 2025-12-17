@@ -40,10 +40,13 @@ if ($method === 'POST') {
 
 // 4. Reset Logic
 if (isset($_GET['action']) && $_GET['action'] === 'reset') {
+    // Full Default Keyboard Layout
     $defaultData = json_encode([
         "keyboard" => [
             [["text" => "text_sell"], ["text" => "text_extend"]],
-            [["text" => "accountwallet"]],
+            [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
+            [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
+            [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
             [["text" => "text_support"], ["text" => "text_help"]]
         ],
         "stash" => []
@@ -79,9 +82,15 @@ try {
         }
     }
     
-    // Fallback
+    // Fallback if empty
     if ($currentKeyboardJSON == '[]' || $currentKeyboardJSON == 'null') {
-         $def = [[["text" => "text_start"]]];
+         $def = [
+            [["text" => "text_sell"], ["text" => "text_extend"]],
+            [["text" => "text_usertest"], ["text" => "text_wheel_luck"]],
+            [["text" => "text_Purchased_services"], ["text" => "accountwallet"]],
+            [["text" => "text_affiliates"], ["text" => "text_Tariff_list"]],
+            [["text" => "text_support"], ["text" => "text_help"]]
+         ];
          $currentKeyboardJSON = json_encode($def);
     }
 } catch (Exception $e) { 
