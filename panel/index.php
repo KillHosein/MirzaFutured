@@ -344,53 +344,58 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .chart-title { font-size: 1.8rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 15px; }
 
-        /* --- Floating Dock (Centered) --- */
+        /* --- Floating Dock (Centered & Responsive) --- */
         .dock-container {
             position: fixed; bottom: 40px; left: 0; right: 0;
             display: flex; justify-content: center; z-index: 2000; pointer-events: none;
         }
         .dock {
-            pointer-events: auto; display: flex; align-items: center; gap: 10px;
+            pointer-events: auto; display: flex; align-items: center; gap: 8px;
             background: var(--bg-dock);
             backdrop-filter: blur(40px) saturate(200%);
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 30px; padding: 15px 20px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
             transition: all 0.4s ease;
+            max-width: 95vw;
+            overflow-x: auto; /* Enable scrolling if too many items */
+            scrollbar-width: none; /* Firefox hide scrollbar */
         }
+        .dock::-webkit-scrollbar { display: none; /* Chrome hide scrollbar */ }
         
         .dock-item {
             position: relative;
-            width: 65px; height: 65px;
+            flex-shrink: 0; /* Prevent shrinking */
+            width: 60px; height: 60px;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 20px;
+            border-radius: 18px;
             color: var(--text-dim);
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             transition: all 0.3s cubic-bezier(0.3, 0.7, 0.4, 1.5);
             text-decoration: none;
         }
         .dock-item:hover {
-            width: 85px; height: 85px; font-size: 2.4rem; color: #fff;
-            background: rgba(255,255,255,0.1); transform: translateY(-25px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4); margin: 0 12px; z-index: 10;
+            width: 75px; height: 75px; font-size: 2.2rem; color: #fff;
+            background: rgba(255,255,255,0.1); transform: translateY(-20px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4); margin: 0 8px; z-index: 10;
         }
         .dock-item.active {
             color: var(--neon-blue); background: rgba(34, 211, 238, 0.15);
             box-shadow: 0 0 25px rgba(34, 211, 238, 0.2);
         }
         .dock-item.active::after {
-            content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            width: 6px; height: 6px; background: var(--neon-blue); border-radius: 50%;
+            content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+            width: 5px; height: 5px; background: var(--neon-blue); border-radius: 50%;
             box-shadow: 0 0 8px var(--neon-blue);
         }
         .dock-tooltip {
-            position: absolute; top: -60px; left: 50%; transform: translateX(-50%) scale(0.8);
-            background: rgba(0,0,0,0.9); color: #fff; padding: 8px 16px; border-radius: 10px;
-            font-size: 1rem; opacity: 0; transition: 0.2s; pointer-events: none;
+            position: absolute; top: -55px; left: 50%; transform: translateX(-50%) scale(0.8);
+            background: rgba(0,0,0,0.9); color: #fff; padding: 6px 14px; border-radius: 10px;
+            font-size: 0.9rem; opacity: 0; transition: 0.2s; pointer-events: none;
             border: 1px solid rgba(255,255,255,0.2); white-space: nowrap; font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); visibility: hidden;
         }
-        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateX(-50%) scale(1); top: -75px; }
+        .dock-item:hover .dock-tooltip { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); top: -70px; }
 
         @media (max-width: 1200px) { .charts-grid { grid-template-columns: 1fr; } }
         @media (max-width: 768px) {
@@ -398,8 +403,10 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             .header-top { flex-direction: column; align-items: flex-start; gap: 20px; }
             .header-title h1 { font-size: 2.5rem; }
             .stats-deck { grid-template-columns: 1fr; gap: 25px; }
-            .dock { width: 95%; justify-content: space-between; padding: 10px 15px; gap: 5px; }
-            .dock-icon { width: 45px; height: 45px; font-size: 1.5rem; }
+            /* Mobile Dock Adjustments */
+            .dock { width: 95%; justify-content: flex-start; padding: 10px 15px; gap: 5px; bottom: 20px; }
+            .dock-item { width: 50px; height: 50px; font-size: 1.4rem; }
+            .dock-item:hover { width: 60px; height: 60px; transform: translateY(-10px); }
         }
     </style>
 </head>
@@ -505,33 +512,51 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     </div>
 
-    <!-- Floating Dock -->
-    <div class="dock-wrapper anim d-4">
+    <!-- Floating Dock (Full Quick Actions) -->
+    <div class="dock-container anim d-4">
         <nav class="dock">
             <a href="index.php" class="dock-item active">
-                <div class="dock-icon"><i class="fa-solid fa-house-chimney"></i></div><span class="dock-label">داشبورد</span>
+                <i class="fa-solid fa-house-chimney"></i><span class="dock-tooltip">داشبورد</span>
             </a>
             <a href="invoice.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div><span class="dock-label">سفارشات</span>
+                <i class="fa-solid fa-file-contract"></i><span class="dock-tooltip">سفارشات</span>
             </a>
             <a href="users.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-users"></i></div><span class="dock-label">کاربران</span>
+                <i class="fa-solid fa-users-gear"></i><span class="dock-tooltip">کاربران</span>
             </a>
             <a href="product.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-box-open"></i></div><span class="dock-label">محصولات</span>
-            </a>
-            <a href="service.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-server"></i></div><span class="dock-label">سرویس‌ها</span>
+                <i class="fa-solid fa-box-open"></i><span class="dock-tooltip">محصولات</span>
             </a>
             <a href="payment.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-credit-card"></i></div><span class="dock-label">مالی</span>
+                <i class="fa-solid fa-wallet"></i><span class="dock-tooltip">مالی</span>
+            </a>
+            <a href="inbound.php" class="dock-item">
+                <i class="fa-solid fa-network-wired"></i><span class="dock-tooltip">کانفیگ‌ها</span>
+            </a>
+            <a href="service.php" class="dock-item">
+                <i class="fa-solid fa-server"></i><span class="dock-tooltip">سرویس‌ها</span>
+            </a>
+            <a href="metrics.php" class="dock-item">
+                <i class="fa-solid fa-chart-simple"></i><span class="dock-tooltip">آمار</span>
             </a>
             <a href="settings.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-gear"></i></div><span class="dock-label">تنظیمات</span>
+                <i class="fa-solid fa-sliders"></i><span class="dock-tooltip">تنظیمات</span>
             </a>
-            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
-            <a href="logout.php" class="dock-item" style="color: var(--neon-pink);">
-                <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div><span class="dock-label">خروج</span>
+            <a href="seeting_x_ui.php" class="dock-item">
+                <i class="fa-solid fa-tower-broadcast"></i><span class="dock-tooltip">X-UI</span>
+            </a>
+            <a href="text.php" class="dock-item">
+                <i class="fa-solid fa-file-lines"></i><span class="dock-tooltip">متن‌ها</span>
+            </a>
+            <a href="keyboard.php" class="dock-item">
+                <i class="fa-solid fa-keyboard"></i><span class="dock-tooltip">کیبورد</span>
+            </a>
+            <a href="cancelService.php" class="dock-item" style="color: var(--neon-pink);">
+                <i class="fa-solid fa-ban"></i><span class="dock-tooltip">مسدودی</span>
+            </a>
+            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 4px;"></div>
+            <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
+                <i class="fa-solid fa-power-off"></i><span class="dock-tooltip">خروج</span>
             </a>
         </nav>
     </div>
