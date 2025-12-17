@@ -377,6 +377,65 @@ $greeting = ($h < 12) ? "صبح بخیر" : (($h < 17) ? "ظهر بخیر" : "ع
             .hero-section { flex-direction: column; align-items: flex-start; gap: 10px; }
             .quick-actions-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
         }
+
+        /* --- Custom Dark Datepicker Styles --- */
+        .daterangepicker {
+            background-color: #1e293b !important; /* Dark Slate */
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f8fafc !important;
+            font-family: 'Vazirmatn', sans-serif !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+            border-radius: 16px !important;
+        }
+        .daterangepicker .calendar-table {
+            background-color: transparent !important;
+            border: none !important;
+        }
+        .daterangepicker td.off, .daterangepicker td.off.in-range, .daterangepicker td.off.start-date, .daterangepicker td.off.end-date {
+            background-color: transparent !important;
+            color: #475569 !important;
+        }
+        .daterangepicker td.available:hover, .daterangepicker th.available:hover {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+            border-radius: 8px;
+            color: #fff !important;
+        }
+        .daterangepicker td.active, .daterangepicker td.active:hover {
+            background-color: var(--primary) !important;
+            border-color: transparent !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px var(--primary-glow);
+            border-radius: 8px;
+        }
+        .daterangepicker td.in-range {
+            background-color: rgba(99, 102, 241, 0.1) !important;
+            color: #e2e8f0 !important;
+        }
+        .daterangepicker .ranges li {
+            background-color: transparent !important;
+            color: #94a3b8 !important;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .daterangepicker .ranges li:hover {
+            background-color: rgba(255,255,255,0.05) !important;
+            color: #fff !important;
+        }
+        .daterangepicker .ranges li.active {
+            background-color: var(--primary) !important;
+            color: #fff !important;
+        }
+        .daterangepicker:before, .daterangepicker:after { display: none !important; } /* Remove arrow */
+        .daterangepicker select.monthselect, .daterangepicker select.yearselect {
+            background: #0f172a;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            border-radius: 6px;
+            padding: 2px 5px;
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -450,8 +509,8 @@ $greeting = ($h < 12) ? "صبح بخیر" : (($h < 17) ? "ظهر بخیر" : "ع
         <div class="glass-filter fade-in-up delay-1">
             <form id="filterForm" method="get" style="display: contents;">
                 <div style="position: relative; flex-grow: 1; max-width: 300px;">
-                    <input type="text" id="dateRange" class="modern-input" placeholder="انتخاب بازه زمانی..." style="width: 100%; padding-right: 40px;" readonly>
-                    <i class="icon-calendar" style="position: absolute; right: 15px; top: 12px; color: var(--text-muted);"></i>
+                    <input type="text" id="dateRange" class="modern-input" placeholder="تاریخ را انتخاب کنید..." style="width: 100%; padding-right: 40px; cursor: pointer;" readonly>
+                    <i class="icon-calendar" style="position: absolute; right: 15px; top: 12px; color: var(--text-muted); pointer-events: none;"></i>
                     <input type="hidden" name="from" id="inputFrom" value="<?php echo htmlspecialchars($fromDate ?? ''); ?>">
                     <input type="hidden" name="to" id="inputTo" value="<?php echo htmlspecialchars($toDate ?? ''); ?>">
                 </div>
@@ -547,8 +606,18 @@ $greeting = ($h < 12) ? "صبح بخیر" : (($h < 17) ? "ظهر بخیر" : "ع
     <script src="assets/bootstrap-daterangepicker/daterangepicker.js"></script>
 
     <script>
-        // --- Daterangepicker Logic ---
+        // --- Daterangepicker Logic (Enhanced) ---
         $(function(){
+            // Define ranges in Persian
+            var ranges = {
+                'امروز': [moment(), moment()],
+                'دیروز': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                '۷ روز گذشته': [moment().subtract(6, 'days'), moment()],
+                '۳۰ روز گذشته': [moment().subtract(29, 'days'), moment()],
+                'این ماه': [moment().startOf('month'), moment().endOf('month')],
+                'ماه گذشته': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+            };
+
             var start = moment().subtract(13, 'days');
             var end = moment();
             var phpFrom = '<?php echo $fromDate; ?>';
@@ -557,14 +626,28 @@ $greeting = ($h < 12) ? "صبح بخیر" : (($h < 17) ? "ظهر بخیر" : "ع
             if(phpFrom && phpTo){ start = moment(phpFrom); end = moment(phpTo); }
 
             function cb(start, end) {
+                // Formatting date for display (using standard Gregorian for now as moment-jalaali isn't loaded)
+                // You can swap this with a Persian date formatter if available
                 $('#dateRange').val(start.format('YYYY/MM/DD') + ' - ' + end.format('YYYY/MM/DD'));
                 $('#inputFrom').val(start.format('YYYY-MM-DD'));
                 $('#inputTo').val(end.format('YYYY-MM-DD'));
             }
 
             $('#dateRange').daterangepicker({
-                startDate: start, endDate: end, opens: 'left',
-                locale: { format: 'YYYY/MM/DD', applyLabel: 'تایید', cancelLabel: 'لغو' }
+                startDate: start, 
+                endDate: end, 
+                opens: 'left',
+                ranges: ranges, // Add the preset ranges
+                showDropdowns: true,
+                locale: { 
+                    format: 'YYYY/MM/DD', 
+                    applyLabel: 'تایید', 
+                    cancelLabel: 'لغو',
+                    customRangeLabel: 'انتخاب دستی',
+                    daysOfWeek: ["یک", "دو", "سه", "چهار", "پنج", "جمعه", "شنبه"],
+                    monthNames: ["ژانویه", "فوریه", "مارس", "آوریل", "مه", "ژوئن", "ژوئیه", "آگوست", "سپتامبر", "اکتبر", "نوامبر", "دسامبر"],
+                    firstDay: 6 // Saturday as first day
+                }
             }, cb);
 
             if(phpFrom) cb(start, end);
