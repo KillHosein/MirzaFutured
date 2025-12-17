@@ -36,33 +36,16 @@ if($method == "POST" && is_array($keyboard)){
     exit;
 }
 
-// منطق ریست کردن (GET) - با متن‌های فارسی اصلاح شده
+// منطق ریست کردن (GET)
 $action = filter_input(INPUT_GET, 'action');
 if($action === "reaset"){
-    // کیبورد پیش‌فرض با متن‌های فارسی استاندارد
-    // نکته: این متن‌ها باید دقیقاً همان‌هایی باشند که ربات برای شناسایی دستورات استفاده می‌کند
     $defaultKeyboard = json_encode([
         "keyboard" => [
-            [
-                ["text" => "🛍 خرید سرویس"],
-                ["text" => "🔄 تمدید سرویس"]
-            ],
-            [
-                ["text" => "👤 حساب کاربری"],
-                ["text" => "💳 کیف پول"]
-            ],
-            [
-                ["text" => "🔥 تست رایگان"],
-                ["text" => "🎰 گردونه شانس"]
-            ],
-            [
-                ["text" => "🤝 همکاری در فروش"],
-                ["text" => "📋 لیست تعرفه‌ها"]
-            ],
-            [
-                ["text" => "🎧 پشتیبانی"],
-                ["text" => "📚 راهنما"]
-            ]
+            [["text" => "🛍 خرید سرویس"], ["text" => "🔄 تمدید سرویس"]],
+            [["text" => "👤 حساب کاربری"], ["text" => "💳 کیف پول"]],
+            [["text" => "🔥 تست رایگان"], ["text" => "🎰 گردونه شانس"]],
+            [["text" => "🤝 همکاری در فروش"], ["text" => "📋 لیست تعرفه‌ها"]],
+            [["text" => "🎧 پشتیبانی"], ["text" => "📚 راهنما"]]
         ]
     ], JSON_UNESCAPED_UNICODE);
     
@@ -83,7 +66,6 @@ try {
             $currentKeyboardJSON = json_encode($decoded['keyboard']);
         }
     } else {
-        // اگر دیتایی نبود، از همین ساختار فارسی استفاده کن
          $def = [
             "keyboard" => [
                 [["text" => "🛍 خرید سرویس"], ["text" => "🔄 تمدید سرویس"]],
@@ -102,8 +84,8 @@ try {
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>مدیریت کیبورد حرفه‌ای</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>پنل مدیریت حرفه‌ای کیبورد</title>
     
     <!-- کتابخانه‌ها -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -114,13 +96,16 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
+        /* تم رنگی فوق حرفه‌ای */
         :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-main: #f8fafc;
-            --border-color: #334155;
+            --bg-body: #09090b;
+            --bg-panel: #18181b;
+            --bg-card: #27272a;
+            --accent-primary: #6366f1; /* Indigo */
+            --accent-secondary: #ec4899; /* Pink */
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --border-subtle: #3f3f46;
         }
 
         @font-face {
@@ -134,13 +119,38 @@ try {
         
         body {
             font-family: 'yekan', 'Vazirmatn', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            overflow-x: hidden;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
+
+        /* --- UI Elements --- */
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* دکمه‌های مدرن */
+        .btn-modern {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-modern:active { transform: scale(0.96); }
+        .btn-modern::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .btn-modern:hover::after { opacity: 1; }
 
         /* --- Layout --- */
         .main-container {
@@ -149,287 +159,283 @@ try {
             overflow: hidden;
         }
 
-        /* --- Left Side: Preview --- */
+        /* --- PREVIEW PANE (Left) --- */
         .preview-pane {
-            width: 420px;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-left: 1px solid var(--border-color);
+            width: 450px;
+            background: radial-gradient(circle at top left, #1c1c2e, #09090b);
+            border-left: 1px solid var(--border-subtle);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
             position: relative;
             flex-shrink: 0;
-            box-shadow: inset 10px 0 20px rgba(0,0,0,0.2);
+            z-index: 10;
         }
 
-        .phone-frame {
-            width: 360px;
-            height: 720px;
+        .phone-mockup {
+            width: 370px;
+            height: 740px;
             background: #000;
-            border-radius: 45px;
+            border-radius: 50px;
             box-shadow: 
-                0 0 0 12px #334155,
-                0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                0 0 0 14px #2e2e30,
+                0 0 0 16px #1a1a1a,
+                0 50px 100px -20px rgba(0,0,0,0.7);
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
-            border: 4px solid #1e293b;
+            transform: scale(0.95);
+            transition: transform 0.5s;
         }
 
-        .phone-notch {
+        .notch-island {
             position: absolute;
-            top: 0;
+            top: 12px;
             left: 50%;
             transform: translateX(-50%);
-            width: 140px;
-            height: 28px;
-            background: #334155;
-            border-bottom-left-radius: 18px;
-            border-bottom-right-radius: 18px;
-            z-index: 20;
+            width: 120px;
+            height: 35px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 50;
         }
 
-        .telegram-preview-header {
-            background: #17212b;
-            padding: 40px 15px 12px 15px;
-            color: white;
+        .tg-header {
+            background: #1c242f; /* Telegram Dark Header */
+            padding: 50px 20px 15px 20px;
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid #0f1318;
+            color: white;
+            border-bottom: 1px solid #000;
         }
 
-        .telegram-preview-chat {
+        .tg-chat {
             flex: 1;
-            background-color: #0e1621;
-            /* Telegram Dark Pattern */
+            background-color: #0f1621;
+            /* Telegram Pattern */
             background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20.5V18H0v-2h20v-2H0v-2h20v-2H0V8h20V6H0V4h20V2H0V0h21.5v21.5h-1.5z' fill='%23182533' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
             padding-bottom: 10px;
-        }
-
-        .telegram-preview-keyboard {
-            background: #17212b;
-            padding: 5px;
-            min-height: 180px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        }
-
-        .preview-btn {
-            background: #2b5278; /* Classic Telegram Dark Button */
-            color: #fff;
-            border-radius: 6px;
-            padding: 10px 4px;
-            text-align: center;
-            font-size: 13px;
-            margin: 2px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
+        }
+
+        .tg-bubble {
+            background: #2b5278;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 16px;
+            border-top-left-radius: 4px;
+            max-width: 85%;
+            margin: 0 15px 15px 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: text;
+            position: relative;
+        }
+        .tg-bubble:hover::before {
+            content: '✎';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent-primary);
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .tg-keyboard {
+            background: #1c242f;
+            padding: 6px;
+            min-height: 200px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+        }
+
+        .tg-key {
+            background: #2b5278;
+            color: white;
+            border-radius: 6px;
+            margin: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 13px;
             font-weight: 500;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+            padding: 10px 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* --- Right Side: Editor --- */
+        /* --- EDITOR PANE (Right) --- */
         .editor-pane {
             flex: 1;
-            background: var(--bg-panel);
+            background: var(--bg-body);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+            position: relative;
+        }
+        
+        /* Grid background effect */
+        .editor-pane::before {
+            content: '';
+            position: absolute;
+            width: 100%; height: 100%;
+            background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px),
+            linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.05;
+            pointer-events: none;
         }
 
         .editor-header {
-            padding: 24px 40px;
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
+            padding: 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            z-index: 10;
+            z-index: 20;
         }
 
         .editor-workspace {
             flex: 1;
             overflow-y: auto;
-            padding: 40px;
+            padding: 20px 40px 100px 40px;
             scroll-behavior: smooth;
+            z-index: 10;
         }
 
-        /* Editor Rows */
-        .edit-row {
-            background: rgba(51, 65, 85, 0.6);
-            border: 1px solid rgba(71, 85, 105, 0.6);
-            border-radius: 16px;
-            padding: 12px;
-            margin-bottom: 16px;
+        /* --- Edit Row & Buttons --- */
+        .row-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 12px;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             position: relative;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(4px);
+            transition: all 0.2s;
         }
-        .edit-row:hover {
-            border-color: #64748b;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            background: rgba(51, 65, 85, 0.9);
-            transform: translateY(-2px);
+        .row-wrapper:hover {
+            border-color: #52525b;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
-        .row-handle {
+        .row-drag-handle {
             position: absolute;
-            left: -14px;
-            top: 50%;
-            transform: translateY(-50%) translateX(-100%);
-            color: #64748b;
+            left: -30px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
             cursor: grab;
-            padding: 12px;
-            opacity: 0.6;
+            padding: 10px;
+            opacity: 0;
             transition: 0.2s;
         }
-        .row-handle:hover { color: #94a3b8; opacity: 1; }
-        .row-handle:active { cursor: grabbing; }
+        .row-wrapper:hover .row-drag-handle { opacity: 1; left: -25px; }
 
-        /* Editor Buttons */
-        .edit-btn {
+        .key-btn {
             flex: 1;
             min-width: 140px;
-            background: linear-gradient(145deg, #1e293b, #172033);
-            border: 1px solid #475569;
-            border-radius: 10px;
-            padding: 14px 16px;
-            color: white;
+            background: #18181b;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: grab;
+            user-select: none;
             transition: all 0.2s;
             position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .edit-btn:hover {
-            background: #27354f;
-            border-color: var(--accent);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
-        .edit-btn:active { cursor: grabbing; transform: scale(0.99); }
-
-        .btn-text {
-            font-size: 15px;
-            font-weight: 500;
-            max-width: 75%;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #f1f5f9;
         }
-
-        .btn-actions {
-            display: flex;
-            gap: 8px;
-            opacity: 0.3;
-            transition: opacity 0.2s;
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 6px;
-            padding: 2px;
+        .key-btn::before {
+            content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%;
+            background: var(--accent-primary); opacity: 0; transition: 0.2s;
         }
-        .edit-btn:hover .btn-actions { opacity: 1; }
+        .key-btn:hover {
+            background: #27272a;
+            border-color: #52525b;
+        }
+        .key-btn:hover::before { opacity: 1; }
 
-        .action-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
+        .key-actions {
+            display: flex; gap: 5px; opacity: 0; transition: 0.2s;
+        }
+        .key-btn:hover .key-actions { opacity: 1; }
+
+        .action-mini-btn {
+            width: 24px; height: 24px; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; cursor: pointer; color: var(--text-secondary);
+            background: rgba(255,255,255,0.05);
+        }
+        .action-mini-btn:hover { color: white; background: var(--accent-primary); }
+        .action-mini-btn.del:hover { background: #ef4444; }
+
+        /* Add Buttons */
+        .add-key-inline {
+            width: 40px;
+            border: 1px dashed var(--border-subtle);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
             cursor: pointer;
             transition: 0.2s;
         }
-        .action-edit:hover { background: var(--accent); color: white; }
-        .action-delete:hover { background: #ef4444; color: white; }
-
-        /* Add Buttons */
-        .add-btn-in-row {
-            width: 45px;
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed rgba(255,255,255,0.2);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .add-btn-in-row:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.5);
-            transform: scale(1.05);
+        .add-key-inline:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
         }
 
-        .btn-add-row-big {
+        .fab-add-row {
             width: 100%;
-            padding: 20px;
-            border: 2px dashed #475569;
-            border-radius: 16px;
-            background: rgba(30, 41, 59, 0.5);
-            color: #94a3b8;
-            font-weight: 600;
-            font-size: 1.1rem;
+            padding: 15px;
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
             cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            transition: 0.2s;
         }
-        .btn-add-row-big:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: rgba(59, 130, 246, 0.08);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+        .fab-add-row:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { 
-            background: #475569; 
-            border-radius: 5px; 
-            border: 2px solid var(--bg-dark);
+        /* Save Button Indicator */
+        .save-indicator {
+            width: 10px; height: 10px; background: #ef4444;
+            border-radius: 50%; display: none; margin-left: auto;
+            box-shadow: 0 0 10px #ef4444;
         }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .btn-save.dirty .save-indicator { display: block; }
+        .btn-save.dirty { border: 1px solid rgba(239, 68, 68, 0.5); }
 
-        /* SweetAlert Dark */
-        div:where(.swal2-container) div:where(.swal2-popup) {
-            background: #1e293b !important;
-            border: 1px solid #334155 !important;
-            border-radius: 16px !important;
-        }
-        div:where(.swal2-container) .swal2-title, 
-        div:where(.swal2-container) .swal2-html-container {
-            color: #f8fafc !important;
-        }
-        div:where(.swal2-container) .swal2-input {
-            color: #fff !important;
-            background: #0f172a !important;
-            border-color: #334155 !important;
-            border-radius: 8px !important;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .preview-pane { display: none; } /* On mobile, maybe hide or tabulate */
+            .editor-header { padding: 15px 20px; }
+            .editor-workspace { padding: 15px 20px; }
         }
     </style>
   </head>
@@ -437,80 +443,83 @@ try {
 
     <div class="main-container">
         
-        <!-- SIDEBAR: PREVIEW (LEFT) -->
-        <div class="preview-pane hidden lg:flex">
-            <div class="mb-6 text-gray-400 text-xs font-bold tracking-[0.2em] uppercase opacity-70">
-                <i class="fa-solid fa-eye mr-2"></i> پیش‌نمایش زنده ربات
+        <!-- LEFT: PREVIEW -->
+        <div class="preview-pane glass-panel hidden lg:flex">
+            <div class="absolute top-5 left-5 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                Realtime Preview
+            </div>
+
+            <div class="phone-mockup animate__animated animate__fadeInLeft">
+                <div class="notch-island"></div>
+                
+                <div class="tg-header">
+                    <i class="fa-solid fa-arrow-right opacity-70"></i>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-sm font-bold shadow-lg">MB</div>
+                    <div>
+                        <div class="font-bold text-sm">Mirza Bot</div>
+                        <div class="text-xs text-indigo-300">bot</div>
+                    </div>
+                </div>
+
+                <div class="tg-chat">
+                    <div class="tg-bubble animate__animated animate__fadeInUp" contenteditable="true" title="برای ویرایش کلیک کنید">
+                        سلام! من ربات میرزا هستم. 👋<br>
+                        از منوی زیر استفاده کنید.
+                    </div>
+                </div>
+
+                <div id="preview-container" class="tg-keyboard flex flex-col justify-end">
+                    <!-- Rendered Keys -->
+                </div>
             </div>
             
-            <div class="phone-frame animate__animated animate__fadeInLeft">
-                <div class="phone-notch"></div>
-                
-                <!-- Telegram Header -->
-                <div class="telegram-preview-header">
-                    <i class="fa-solid fa-arrow-right text-gray-400 cursor-pointer hover:text-white"></i>
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">
-                        MB
-                    </div>
-                    <div>
-                        <div class="font-bold text-sm text-white">Mirza Bot</div>
-                        <div class="text-xs text-blue-300 font-medium">bot</div>
-                    </div>
-                </div>
-
-                <!-- Chat Body -->
-                <div class="telegram-preview-chat flex-1">
-                    <div class="bg-[#2b5278] px-5 py-3 rounded-2xl rounded-tl-none text-sm text-white shadow-lg max-w-[85%] mb-4 mx-4 animate__animated animate__fadeInUp">
-                        سلام! من ربات میرزا هستم. 👋<br>
-                        از کیبورد زیر استفاده کنید:
-                    </div>
-                </div>
-
-                <!-- Live Keyboard Preview -->
-                <div id="preview-container" class="telegram-preview-keyboard flex flex-col justify-end">
-                    <!-- Buttons Render Here -->
-                </div>
+            <div class="mt-6 flex gap-2">
+                <button onclick="copyJSON()" class="text-xs text-gray-500 hover:text-white transition flex items-center gap-1 px-3 py-1 rounded border border-gray-800 hover:border-gray-600">
+                    <i class="fa-regular fa-copy"></i> کپی JSON
+                </button>
             </div>
         </div>
 
-        <!-- MAIN: EDITOR (RIGHT) -->
+        <!-- RIGHT: EDITOR -->
         <div class="editor-pane">
-            <!-- Top Bar -->
-            <div class="editor-header">
+            <div class="editor-header glass-panel">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20 border border-blue-500/30">
-                        <i class="fa-solid fa-keyboard text-white text-xl"></i>
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                        <i class="fa-solid fa-layer-group"></i>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-white tracking-tight">ویرایشگر کیبورد</h1>
-                        <p class="text-xs text-gray-400 font-medium mt-1">طراحی رابط کاربری ربات با کشیدن و رها کردن</p>
+                        <h1 class="text-xl font-bold text-white">ویرایشگر کیبورد</h1>
+                        <div class="flex items-center gap-2 text-xs text-gray-400">
+                            <span id="row-count">0</span> سطر
+                            <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                            <span id="btn-count">0</span> دکمه
+                        </div>
                     </div>
                 </div>
-                
+
                 <div class="flex gap-3">
-                    <a href="index.php" class="px-5 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white transition text-sm font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i> بازگشت
+                    <a href="index.php" class="btn-modern px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span class="hidden sm:inline">بازگشت</span>
                     </a>
-                    <a href="keyboard.php?action=reaset" onclick="return confirm('آیا مطمئن هستید؟ تمام تنظیمات به حالت اولیه با متن‌های فارسی باز می‌گردد.')" class="px-5 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition text-sm font-bold flex items-center gap-2">
-                        <i class="fa-solid fa-rotate-right"></i> ریست پیش‌فرض
+                    <a href="keyboard.php?action=reaset" onclick="return confirm('همه تنظیمات ریست شود؟')" class="btn-modern px-4 py-2 rounded-lg border border-red-900/30 text-red-400 hover:bg-red-900/10 text-sm font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i>
                     </a>
-                    <button onclick="saveKeyboard()" id="btn-save" class="px-7 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition font-bold flex items-center gap-2 transform active:scale-95">
-                        <i class="fa-solid fa-floppy-disk"></i> ذخیره تغییرات
+                    <button onclick="saveKeyboard()" id="btn-save" class="btn-save btn-modern px-6 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 text-sm font-bold flex items-center gap-3">
+                        <span>ذخیره تغییرات</span>
+                        <span class="save-indicator"></span>
                     </button>
                 </div>
             </div>
 
-            <!-- Workspace -->
             <div class="editor-workspace">
-                <div id="editor-rows-container" class="max-w-4xl mx-auto pb-10 min-h-[300px]">
-                    <!-- Edit Rows Render Here -->
+                <div id="editor-container" class="max-w-4xl mx-auto pb-8">
+                    <!-- Rows go here -->
                 </div>
 
                 <div class="max-w-4xl mx-auto pb-20">
-                    <button onclick="addRow()" class="btn-add-row-big group">
-                        <span class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center group-hover:bg-blue-600 transition duration-300 shadow-lg">
-                            <i class="fa-solid fa-plus text-white text-xl"></i>
-                        </span>
+                    <button onclick="addRow()" class="fab-add-row btn-modern">
+                        <i class="fa-solid fa-plus-circle text-xl"></i>
                         افزودن سطر جدید
                     </button>
                 </div>
@@ -520,93 +529,97 @@ try {
     </div>
 
     <script>
-        // دیتای اولیه از PHP
+        // Data Initialization
         let keyboardRows = <?php echo $currentKeyboardJSON ?: '[]'; ?>;
         if (!Array.isArray(keyboardRows)) keyboardRows = [];
+        
+        let initialDataStr = JSON.stringify(keyboardRows);
+        let isDirty = false;
 
-        // المان‌های DOM
-        const editorContainer = document.getElementById('editor-rows-container');
+        const editorContainer = document.getElementById('editor-container');
         const previewContainer = document.getElementById('preview-container');
+        const saveBtn = document.getElementById('btn-save');
 
-        // SweetAlert Config
-        const SwalDark = Swal.mixin({
-            confirmButtonColor: '#3b82f6',
+        // SweetAlert Configuration
+        const SwalTheme = Swal.mixin({
+            confirmButtonColor: '#6366f1',
             cancelButtonColor: '#ef4444',
-            background: '#1e293b',
-            color: '#fff',
-            showClass: { popup: 'animate__animated animate__fadeInDown' },
-            hideClass: { popup: 'animate__animated animate__fadeOutUp' }
+            background: '#18181b',
+            color: '#f4f4f5',
+            showClass: { popup: 'animate__animated animate__zoomIn' },
+            hideClass: { popup: 'animate__animated animate__zoomOut' }
         });
 
-        // تابع اصلی رندر (هر دو بخش را آپدیت می‌کند)
+        // --- Main Render Function ---
         function render() {
             renderEditor();
             renderPreview();
+            updateStats();
+            checkDirty();
         }
 
-        // 1. رندر بخش ویرایشگر (سمت راست)
+        // --- Editor Render ---
         function renderEditor() {
             editorContainer.innerHTML = '';
-
+            
             if (keyboardRows.length === 0) {
                 editorContainer.innerHTML = `
-                    <div class="text-center text-gray-500 py-10 animate__animated animate__fadeIn">
-                        <i class="fa-solid fa-layer-group text-4xl mb-3 opacity-50"></i>
-                        <p>هیچ دکمه‌ای وجود ندارد. با دکمه پایین یک سطر اضافه کنید.</p>
+                    <div class="text-center py-20 opacity-30">
+                        <i class="fa-solid fa-keyboard text-6xl mb-4"></i>
+                        <p>هیچ دکمه‌ای وجود ندارد</p>
                     </div>
                 `;
             }
 
             keyboardRows.forEach((row, rowIndex) => {
                 const rowEl = document.createElement('div');
-                rowEl.className = 'edit-row animate__animated animate__fadeInUp';
-                rowEl.style.animationDelay = `${rowIndex * 0.05}s`; // Staggered animation
-                rowEl.dataset.rowIndex = rowIndex;
-
-                // هندل درگ برای سطر
+                rowEl.className = 'row-wrapper animate__animated animate__fadeIn';
+                rowEl.style.animationDuration = '0.3s';
+                
+                // Drag Handle
                 const handle = document.createElement('div');
-                handle.className = 'row-handle';
-                handle.innerHTML = '<i class="fa-solid fa-grip-vertical text-xl"></i>';
-                handle.title = 'برای جابجایی سطر بکشید';
+                handle.className = 'row-drag-handle';
+                handle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
                 rowEl.appendChild(handle);
 
-                // دکمه‌ها
+                // Buttons in Row
                 row.forEach((btn, btnIndex) => {
                     const btnEl = document.createElement('div');
-                    btnEl.className = 'edit-btn group';
+                    btnEl.className = 'key-btn';
                     btnEl.innerHTML = `
-                        <div class="btn-text" title="${btn.text}">
-                            <i class="fa-regular fa-keyboard mr-2 opacity-50 text-xs"></i>${btn.text}
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <i class="fa-regular fa-square text-gray-600 text-xs"></i>
+                            <span class="truncate text-sm font-medium" title="${btn.text}">${btn.text}</span>
                         </div>
-                        <div class="btn-actions">
-                            <div class="action-icon action-edit" onclick="editButton(${rowIndex}, ${btnIndex})" title="ویرایش متن">
+                        <div class="key-actions">
+                            <div class="action-mini-btn" onclick="editButton(${rowIndex}, ${btnIndex})" title="Edit">
                                 <i class="fa-solid fa-pen"></i>
                             </div>
-                            <div class="action-icon action-delete" onclick="deleteButton(${rowIndex}, ${btnIndex})" title="حذف دکمه">
-                                <i class="fa-solid fa-trash-can"></i>
+                            <div class="action-mini-btn del" onclick="deleteButton(${rowIndex}, ${btnIndex})" title="Delete">
+                                <i class="fa-solid fa-xmark"></i>
                             </div>
                         </div>
                     `;
                     rowEl.appendChild(btnEl);
                 });
 
-                // دکمه افزودن آیتم در سطر
+                // Add Button (Inline)
                 if (row.length < 8) {
                     const addBtn = document.createElement('div');
-                    addBtn.className = 'add-btn-in-row ignore-elements';
-                    addBtn.innerHTML = '<i class="fa-solid fa-plus text-sm text-gray-400"></i>';
+                    addBtn.className = 'add-key-inline ignore-elements';
+                    addBtn.innerHTML = '<i class="fa-solid fa-plus text-xs"></i>';
                     addBtn.onclick = () => addButton(rowIndex);
-                    addBtn.title = "افزودن دکمه به این سطر";
+                    addBtn.title = "Add Button";
                     rowEl.appendChild(addBtn);
                 }
 
-                // دکمه حذف سطر (اگر خالی باشد یا دکمه مخصوص حذف)
+                // Delete Row if Empty
                 if (row.length === 0) {
-                    const emptyInfo = document.createElement('div');
-                    emptyInfo.className = 'flex-1 text-center text-sm text-red-400 border border-dashed border-red-500/30 p-3 rounded-lg cursor-pointer hover:bg-red-500/10 transition flex items-center justify-center gap-2';
-                    emptyInfo.innerHTML = '<i class="fa-solid fa-trash-can"></i> سطر خالی است - برای حذف کلیک کنید';
-                    emptyInfo.onclick = () => deleteRow(rowIndex);
-                    rowEl.appendChild(emptyInfo);
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'flex-1 text-center py-2 text-xs text-red-400 cursor-pointer border border-dashed border-red-500/20 rounded hover:bg-red-500/10 transition';
+                    emptyState.innerHTML = '<i class="fa-solid fa-trash mr-2"></i> سطر خالی (حذف)';
+                    emptyState.onclick = () => deleteRow(rowIndex);
+                    rowEl.appendChild(emptyState);
                 }
 
                 editorContainer.appendChild(rowEl);
@@ -615,180 +628,194 @@ try {
             initSortable();
         }
 
-        // 2. رندر بخش پیش‌نمایش (سمت چپ)
+        // --- Preview Render ---
         function renderPreview() {
             previewContainer.innerHTML = '';
             
             keyboardRows.forEach(row => {
                 const rowEl = document.createElement('div');
-                rowEl.className = 'flex w-full gap-[2px] mb-[2px]';
+                rowEl.className = 'flex w-full gap-[4px] mb-[4px]';
                 
                 row.forEach(btn => {
                     const btnEl = document.createElement('div');
-                    btnEl.className = 'preview-btn flex-1 truncate';
+                    btnEl.className = 'tg-key flex-1';
                     btnEl.innerText = btn.text;
                     rowEl.appendChild(btnEl);
                 });
-
-                if (row.length > 0) {
-                    previewContainer.appendChild(rowEl);
-                }
+                
+                if(row.length > 0) previewContainer.appendChild(rowEl);
             });
         }
 
-        // فعال‌سازی Drag & Drop
+        // --- Logic & Helpers ---
+        function updateStats() {
+            document.getElementById('row-count').innerText = keyboardRows.length;
+            let btnCount = 0;
+            keyboardRows.forEach(r => btnCount += r.length);
+            document.getElementById('btn-count').innerText = btnCount;
+        }
+
+        function checkDirty() {
+            const currentStr = JSON.stringify(keyboardRows);
+            isDirty = currentStr !== initialDataStr;
+            if(isDirty) {
+                saveBtn.classList.add('dirty');
+                saveBtn.querySelector('span').innerText = 'ذخیره تغییرات *';
+            } else {
+                saveBtn.classList.remove('dirty');
+                saveBtn.querySelector('span').innerText = 'ذخیره تغییرات';
+            }
+        }
+
+        // --- Actions ---
+        function addRow() {
+            keyboardRows.push([{text: 'دکمه جدید'}]);
+            render();
+            // Scroll to bottom
+            setTimeout(() => {
+                document.querySelector('.editor-workspace').scrollTop = document.querySelector('.editor-workspace').scrollHeight;
+            }, 50);
+        }
+
+        function deleteRow(idx) {
+            keyboardRows.splice(idx, 1);
+            render();
+        }
+
+        async function addButton(rowIdx) {
+            const { value: text } = await SwalTheme.fire({
+                title: 'افزودن دکمه',
+                input: 'text',
+                inputValue: 'دکمه جدید',
+                showCancelButton: true,
+                confirmButtonText: 'افزودن',
+                cancelButtonText: 'لغو'
+            });
+            if(text) {
+                keyboardRows[rowIdx].push({text});
+                render();
+            }
+        }
+
+        function deleteButton(rowIdx, btnIdx) {
+            keyboardRows[rowIdx].splice(btnIdx, 1);
+            render();
+        }
+
+        async function editButton(rowIdx, btnIdx) {
+            const current = keyboardRows[rowIdx][btnIdx].text;
+            const { value: text } = await SwalTheme.fire({
+                title: 'ویرایش متن',
+                input: 'text',
+                inputValue: current,
+                showCancelButton: true,
+                confirmButtonText: 'ذخیره',
+                cancelButtonText: 'لغو'
+            });
+            if(text) {
+                keyboardRows[rowIdx][btnIdx].text = text;
+                render();
+            }
+        }
+
+        function copyJSON() {
+            navigator.clipboard.writeText(JSON.stringify({keyboard: keyboardRows}, null, 2));
+            SwalTheme.fire({
+                icon: 'success',
+                title: 'کپی شد',
+                text: 'ساختار JSON در کلیپ‌بورد کپی شد.',
+                timer: 1500,
+                showConfirmButton: false,
+                backdrop: false
+            });
+        }
+
+        // --- Drag & Drop ---
         function initSortable() {
-            // جابجایی سطرها
+            // Rows
             new Sortable(editorContainer, {
                 animation: 200,
-                handle: '.row-handle',
+                handle: '.row-drag-handle',
                 ghostClass: 'opacity-50',
                 onEnd: function (evt) {
                     const item = keyboardRows.splice(evt.oldIndex, 1)[0];
                     keyboardRows.splice(evt.newIndex, 0, item);
-                    render(); // رندر مجدد برای همگام‌سازی
+                    render();
                 }
             });
 
-            // جابجایی دکمه‌ها داخل سطر
-            document.querySelectorAll('.edit-row').forEach(rowEl => {
+            // Buttons
+            document.querySelectorAll('.row-wrapper').forEach((rowEl, rIndex) => {
                 new Sortable(rowEl, {
-                    group: 'shared', // اجازه جابجایی بین سطرها
+                    group: 'shared',
                     animation: 200,
-                    filter: '.ignore-elements', // نادیده گرفتن دکمه +
-                    draggable: '.edit-btn',
+                    draggable: '.key-btn',
+                    filter: '.ignore-elements',
                     ghostClass: 'opacity-50',
                     onEnd: function (evt) {
-                        updateStateFromDOM();
+                        // Reconstruct array from DOM to handle complex drag across rows
+                        rebuildDataFromDOM();
                     }
                 });
             });
         }
 
-        // تابع مهم: خواندن وضعیت فعلی از ادیتور و آپدیت متغیر اصلی
-        function updateStateFromDOM() {
+        function rebuildDataFromDOM() {
             const newRows = [];
-            const rows = editorContainer.querySelectorAll('.edit-row');
-            
-            rows.forEach(row => {
+            const domRows = editorContainer.querySelectorAll('.row-wrapper');
+            domRows.forEach(domRow => {
                 const rowData = [];
-                const buttons = row.querySelectorAll('.edit-btn .btn-text');
-                buttons.forEach(btn => {
-                    // متن داخل title ذخیره شده
-                    rowData.push({ text: btn.getAttribute('title') });
-                });
+                const buttons = domRow.querySelectorAll('.key-btn span'); // The text span
+                buttons.forEach(span => rowData.push({text: span.innerText}));
                 
-                // حفظ سطر اگر دکمه دارد یا دکمه افزودن دارد (یعنی سطر خالی نیست)
-                if (rowData.length > 0 || row.querySelectorAll('.add-btn-in-row').length > 0) {
+                // Keep row if it has buttons OR has an add button (meaning it exists visually)
+                if (rowData.length > 0 || domRow.querySelector('.add-key-inline')) {
                     newRows.push(rowData);
                 }
             });
-            
             keyboardRows = newRows;
-            renderPreview(); 
+            render(); // Rerender to sync visuals perfectly
         }
 
-        // --- Actions ---
-
-        function addRow() {
-            keyboardRows.push([{text: 'دکمه جدید'}]);
-            render();
-            // اسکرول نرم به پایین
-            setTimeout(() => {
-                editorContainer.scrollTo({ top: editorContainer.scrollHeight, behavior: 'smooth' });
-            }, 100);
-        }
-
-        function deleteRow(index) {
-            keyboardRows.splice(index, 1);
-            render();
-        }
-
-        async function addButton(rowIndex) {
-            const { value: text } = await SwalDark.fire({
-                title: 'افزودن دکمه جدید',
-                input: 'text',
-                inputPlaceholder: 'مثال: 🛍 خرید سرویس',
-                confirmButtonText: '<i class="fa-solid fa-plus ml-1"></i> افزودن',
-                showCancelButton: true,
-                cancelButtonText: 'لغو'
-            });
-
-            if (text) {
-                keyboardRows[rowIndex].push({text: text});
-                render();
-            }
-        }
-
-        function deleteButton(rowIndex, btnIndex) {
-            keyboardRows[rowIndex].splice(btnIndex, 1);
-            render();
-        }
-
-        async function editButton(rowIndex, btnIndex) {
-            const currentText = keyboardRows[rowIndex][btnIndex].text;
-            const { value: text } = await SwalDark.fire({
-                title: 'ویرایش متن دکمه',
-                input: 'text',
-                inputValue: currentText,
-                confirmButtonText: '<i class="fa-solid fa-check ml-1"></i> ذخیره',
-                showCancelButton: true,
-                cancelButtonText: 'لغو'
-            });
-
-            if (text) {
-                keyboardRows[rowIndex][btnIndex].text = text;
-                render();
-            }
-        }
-
+        // --- Save ---
         function saveKeyboard() {
-            // آپدیت نهایی
-            updateStateFromDOM();
-            
-            const btn = document.getElementById('btn-save');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> در حال ذخیره...';
-            btn.disabled = true;
-            btn.classList.add('opacity-75');
+            const btnContent = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            saveBtn.disabled = true;
 
             fetch('keyboard.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(keyboardRows)
             })
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-                btn.classList.remove('opacity-75');
-                
+                saveBtn.innerHTML = btnContent;
+                saveBtn.disabled = false;
                 if(data.status === 'success') {
+                    initialDataStr = JSON.stringify(keyboardRows);
+                    checkDirty();
                     const Toast = Swal.mixin({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
-                        timerProgressBar: true,
-                        background: '#1e293b',
-                        color: '#fff'
+                        toast: true, position: 'top-end', showConfirmButton: false,
+                        timer: 3000, background: '#18181b', color: '#fff',
+                        timerProgressBar: true
                     });
-                    
-                    Toast.fire({
-                        icon: 'success',
-                        title: 'کیبورد با موفقیت ذخیره شد'
-                    });
+                    Toast.fire({ icon: 'success', title: 'تغییرات ذخیره شد' });
                 }
             })
             .catch(err => {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-                btn.classList.remove('opacity-75');
-                SwalDark.fire({icon: 'error', title: 'خطا در ارتباط با سرور'});
+                saveBtn.innerHTML = btnContent;
+                saveBtn.disabled = false;
+                SwalTheme.fire({icon:'error', title:'خطا در ارتباط'});
             });
         }
 
-        // شروع
+        // Warn on exit if dirty
+        window.onbeforeunload = function() {
+            if (isDirty) return "تغییرات ذخیره نشده دارید. آیا مطمئن هستید؟";
+        };
+
+        // Initialize
         render();
 
     </script>
