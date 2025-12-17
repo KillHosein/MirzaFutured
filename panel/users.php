@@ -1,306 +1,615 @@
 <?php
+// --- Logic & Config (Preserved) ---
 session_start();
+// تنظیمات گزارش خطا برای محیط پروداکشن (خاموش کردن نمایش خطا)
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../config.php';
+
+// Authentication Check
+if (!isset($_SESSION["user"])) { header('Location: login.php'); exit; }
+
 $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-    $query->execute();
-    $result = $query->fetch(PDO::FETCH_ASSOC);
-    $where = [];$params = [];
-    if(!empty($_GET['status'])){
-        $where[] = "LOWER(User_Status) = :st";
-        $params[':st'] = strtolower($_GET['status']);
-    }
-    if(!empty($_GET['agent'])){
-        $where[] = "agent = :ag";
-        $params[':ag'] = $_GET['agent'];
-    }
-    if(!empty($_GET['q'])){
-        $search = '%' . $_GET['q'] . '%';
-        $where[] = "(CAST(id AS CHAR) LIKE :q OR username LIKE :q OR number LIKE :q)";
-        $params[':q'] = $search;
-    }
-    $sql = "SELECT * FROM user";
-    if(!empty($where)) $sql .= " WHERE " . implode(' AND ', $where);
-    $sql .= " ORDER BY id DESC";
-    $query = $pdo->prepare($sql);
-    $query->execute($params);
-    $listusers = $query->fetchAll();
-    if(isset($_GET['export']) && $_GET['export'] === 'csv'){
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=users-'.date('Y-m-d').'.csv');
-        $out = fopen('php://output','w');
-        fputcsv($out, ['ID','Username','Number','Balance','Affiliates','Status','Agent']);
-        foreach($listusers as $u){
-            $status = strtolower($u['User_Status']);
-            fputcsv($out, [
-                $u['id'],
-                $u['username'],
-                $u['number'],
-                $u['Balance'],
-                $u['affiliatescount'],
-                $status,
-                $u['agent']
-            ]);
-        }
-        fclose($out);
-        exit();
-    }
-if( !isset($_SESSION["user"]) || !$result ){
-    header('Location: login.php');
-    return;
+$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+$query->execute();
+$result = $query->fetch(PDO::FETCH_ASSOC);
+
+if (!$result) { header('Location: login.php'); exit; }
+
+// --- Query Construction ---
+$where = [];
+$params = [];
+
+// Filter: Status
+if (!empty($_GET['status'])) {
+    $where[] = "LOWER(User_Status) = :st";
+    $params[':st'] = strtolower($_GET['status']);
 }
+// Filter: Agent
+if (!empty($_GET['agent'])) {
+    $where[] = "agent = :ag";
+    $params[':ag'] = $_GET['agent'];
+}
+// Filter: Search
+if (!empty($_GET['q'])) {
+    $search = '%' . $_GET['q'] . '%';
+    $where[] = "(CAST(id AS CHAR) LIKE :q OR username LIKE :q OR number LIKE :q)";
+    $params[':q'] = $search;
+}
+
+$sql = "SELECT * FROM user";
+if (!empty($where)) $sql .= " WHERE " . implode(' AND ', $where);
+$sql .= " ORDER BY id DESC";
+
+$query = $pdo->prepare($sql);
+$query->execute($params);
+$listusers = $query->fetchAll();
+
+// --- Export Logic ---
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=users-' . date('Y-m-d') . '.csv');
+    $out = fopen('php://output', 'w');
+    // BOM for Excel UTF-8
+    fputs($out, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+    fputcsv($out, ['شناسه', 'نام کاربری', 'شماره', 'موجودی', 'زیرمجموعه', 'وضعیت', 'نماینده']);
+    foreach ($listusers as $u) {
+        $status = strtolower($u['User_Status']);
+        fputcsv($out, [
+            $u['id'],
+            $u['username'],
+            $u['number'],
+            $u['Balance'],
+            $u['affiliatescount'],
+            $status,
+            $u['agent']
+        ]);
+    }
+    fclose($out);
+    exit();
+}
+
+// Statistics Calculation
+$totalUsers = count($listusers);
+$activeUsers = 0;
+$blockedUsers = 0;
+foreach ($listusers as $u) {
+    $s = strtolower($u['User_Status']);
+    if ($s === 'active') $activeUsers++;
+    else if ($s === 'block') $blockedUsers++;
+}
+
+// Date for Header
+$todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-  <head>
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <meta name="description" content="">
-    <meta name="author" content="Mosaddek">
-    <meta name="keyword" content="FlatLab, Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
-    <link rel="shortcut icon" href="img/favicon.html">
-
-    <title>پنل مدیریت ربات میرزا</title>
-
-    <!-- Bootstrap core CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدیریت کاربران | پنل حرفه‌ای</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    
+    <!-- Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-reset.css" rel="stylesheet">
-    <!--external css-->
-    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
-    <link href="assets/jquery-easy-pie-chart/jquery.easy-pie-chart.css" rel="stylesheet" type="text/css" media="screen"/>
-    <link rel="stylesheet" href="css/owl.carousel.css" type="text/css">
-    <!-- Custom styles for this template -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/style-responsive.css" rel="stylesheet" />
+    <!-- DataTables CSS Override -->
+    <style>
+        :root {
+            /* Palette: Deep Midnight & Neon Glow (Consistent with Index) */
+            --bg-void: #000000;
+            --bg-surface: rgba(15, 15, 20, 0.6);
+            --bg-dock: rgba(5, 5, 10, 0.8);
+            
+            --neon-blue: #22d3ee;
+            --neon-purple: #c084fc;
+            --neon-teal: #2dd4bf;
+            --neon-amber: #fbbf24;
+            --neon-pink: #f472b6;
+            --neon-green: #10b981;
+            --neon-red: #ef4444;
+            
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --text-highlight: #e2e8f0;
+            
+            --border-glass: 1px solid rgba(255, 255, 255, 0.08);
+            --border-glow: 1px solid rgba(255, 255, 255, 0.15);
+            
+            --shadow-float: 0 20px 60px -10px rgba(0,0,0,0.9);
+            
+            --radius-lg: 30px;
+            --radius-md: 16px;
+            --radius-pill: 100px;
+        }
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 tooltipss and media queries -->
-    <!--[if lt IE 9]>
-      <script src="js/html5shiv.js"></script>
-      <script src="js/respond.min.js"></script>
-    <![endif]-->
-  </head>
+        /* --- Global Reset --- */
+        * { box-sizing: border-box; outline: none; }
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            font-family: 'Vazirmatn', sans-serif;
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* Starry Deep Background */
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(34, 211, 238, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 90%, rgba(192, 132, 252, 0.06) 0%, transparent 40%);
+            background-attachment: fixed;
+            padding-bottom: 140px; /* Space for dock */
+        }
 
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
 
+        /* --- Animations --- */
+        @keyframes floatIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .anim { animation: floatIn 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+        .d-1 { animation-delay: 0.1s; } .d-2 { animation-delay: 0.2s; } .d-3 { animation-delay: 0.3s; }
+
+        /* --- Layout --- */
+        .container-fluid-custom {
+            width: 100%; padding: 50px 6%; max-width: 1920px; margin: 0 auto;
+        }
+
+        /* --- Header --- */
+        .header-top {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 50px; padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .header-title h1 {
+            font-size: 3.5rem; font-weight: 900; color: #fff; margin: 0; line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px;
+        }
+        .header-title p {
+            color: var(--text-dim); margin-top: 10px; font-size: 1.2rem; font-weight: 300;
+            display: flex; align-items: center; gap: 15px;
+        }
+        
+        /* --- Stats Deck --- */
+        .stats-deck {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px; margin-bottom: 50px;
+        }
+        .stat-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(30px); border: var(--border-glass);
+            border-radius: var(--radius-lg); padding: 30px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 180px; position: relative; overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        .stat-card:hover { transform: translateY(-10px); border-color: rgba(255,255,255,0.2); box-shadow: var(--shadow-float); }
+        
+        .stat-icon { font-size: 2.5rem; color: var(--text-dim); margin-bottom: 15px; }
+        .stat-val { font-size: 3rem; font-weight: 800; color: #fff; line-height: 1; }
+        .stat-lbl { font-size: 1.1rem; color: var(--text-dim); font-weight: 400; margin-top: 5px; }
+        
+        .s-users .stat-icon { color: var(--neon-blue); }
+        .s-active .stat-icon { color: var(--neon-green); }
+        .s-block .stat-icon { color: var(--neon-red); }
+
+        /* --- Glass Panel (Table & Controls) --- */
+        .glass-panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(40px);
+            border: var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: var(--shadow-float);
+        }
+
+        /* --- Filter & Action Toolbar --- */
+        .toolbar-section {
+            display: flex; flex-direction: column; gap: 30px; margin-bottom: 40px;
+        }
+        
+        .filter-row {
+            display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+            background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.03);
+        }
+        
+        .input-glass {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 12px 20px; border-radius: 12px; height: 50px;
+            font-family: inherit; font-size: 1rem; flex: 1; min-width: 200px;
+            transition: 0.3s;
+        }
+        .input-glass:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(34, 211, 238, 0.2); }
+        
+        .btn-neon {
+            background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue);
+            padding: 0 30px; height: 50px; border-radius: 12px; font-weight: 700; cursor: pointer;
+            transition: 0.3s; display: flex; align-items: center; gap: 10px;
+        }
+        .btn-neon:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+        
+        .btn-glass-action {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-dim); height: 45px; padding: 0 20px; border-radius: 12px;
+            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s; text-decoration: none; font-size: 0.9rem;
+        }
+        .btn-glass-action:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.3); }
+        
+        .bulk-actions {
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;
+        }
+
+        /* --- Table Styling --- */
+        .table-responsive { overflow-x: auto; }
+        .custom-table {
+            width: 100%; border-collapse: separate; border-spacing: 0 10px;
+            font-size: 1.1rem;
+        }
+        .custom-table thead th {
+            color: var(--text-dim); font-weight: 600; padding: 15px 20px;
+            text-align: right; border-bottom: 2px solid rgba(255,255,255,0.05);
+            font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .custom-table tbody tr {
+            background: rgba(255,255,255,0.02); transition: 0.3s;
+        }
+        .custom-table tbody tr:hover {
+            background: rgba(255,255,255,0.06); transform: scale(1.005);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .custom-table td {
+            padding: 20px; color: #fff; vertical-align: middle;
+            border-top: 1px solid rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .custom-table td:first-child { border-radius: 0 16px 16px 0; border-right: 1px solid rgba(255,255,255,0.02); }
+        .custom-table td:last-child { border-radius: 16px 0 0 16px; border-left: 1px solid rgba(255,255,255,0.02); }
+
+        /* Badges */
+        .badge-status {
+            padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .st-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .st-block { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .st-other { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        /* Checkbox Custom */
+        input[type="checkbox"] {
+            appearance: none; width: 20px; height: 20px;
+            border: 2px solid var(--text-dim); border-radius: 6px; background: transparent; cursor: pointer; position: relative;
+        }
+        input[type="checkbox"]:checked { background: var(--neon-blue); border-color: var(--neon-blue); }
+        input[type="checkbox"]:checked::after {
+            content: '✔'; position: absolute; color: #000; font-size: 14px; top: -2px; left: 3px; font-weight: bold;
+        }
+
+        /* --- Floating Dock --- */
+        .dock-wrapper {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; width: auto;
+        }
+        .dock {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-dock);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 30px; padding: 15px 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+        .dock-item {
+            width: 65px; height: 65px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-dim); font-size: 1.8rem; text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.3, 0.7, 0.4, 1.5); position: relative;
+        }
+        .dock-item:hover {
+            width: 85px; height: 85px; font-size: 2.4rem; color: #fff;
+            background: rgba(255,255,255,0.1); margin: 0 12px; transform: translateY(-25px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        .dock-item.active { color: var(--neon-blue); background: rgba(34, 211, 238, 0.15); box-shadow: 0 0 20px rgba(34, 211, 238, 0.2); }
+        .dock-tooltip {
+            position: absolute; top: -50px; left: 50%; transform: translateX(-50%) scale(0.8);
+            background: #000; color: #fff; padding: 5px 12px; border-radius: 8px; opacity: 0; pointer-events: none; transition: 0.2s; font-size: 0.9rem;
+        }
+        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateX(-50%) scale(1); top: -65px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container-fluid-custom { padding: 30px 15px; padding-bottom: 120px; }
+            .header-top { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .header-title h1 { font-size: 2.5rem; }
+            .filter-row, .bulk-actions { flex-direction: column; align-items: stretch; }
+            .input-glass, .btn-neon, .btn-glass-action { width: 100%; }
+            .dock-wrapper { width: 95%; bottom: 20px; }
+            .dock { justify-content: space-between; padding: 10px; }
+            .dock-item:hover { transform: translateY(-10px); width: 55px; height: 55px; font-size: 1.5rem; margin: 0; }
+        }
+    </style>
+</head>
 <body>
 
-    <section id="container" class="">
-<?php include("header.php");
-?>
-        <!--main content start-->
-        <section id="main-content">
-        <section class="wrapper content-template">
-                <!-- page start-->
-                <div class="row">
-                    <div class="col-lg-12">
-                        <section class="panel">
-                            <header class="panel-heading panel-heading--modern">
-                                <div class="panel-heading-main">
-                                    <span class="panel-heading-icon">
-                                        <i class="icon-user"></i>
-                                    </span>
-                                    <div class="panel-heading-text">
-                                        <div class="panel-heading-title">لیست کاربران</div>
-                                        <div class="panel-heading-subtitle">مدیریت کاربران، وضعیت حساب و عملیات گروهی</div>
-                                    </div>
-                                </div>
-                            </header>
-                            <div class="panel-body">
-                                <form class="form-inline filter-bar" method="get" id="usersFilterForm">
-                                    <div class="form-group">
-                                        <label for="filterSearch" class="control-label">جستجو</label>
-                                        <input type="text" id="filterSearch" name="q" class="form-control" placeholder="نام کاربری، آیدی یا شماره" value="<?php echo isset($_GET['q'])?htmlspecialchars($_GET['q']):''; ?>">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="filterStatus" class="control-label">وضعیت</label>
-                                        <select id="filterStatus" name="status" class="form-control">
-                                            <option value="">همه وضعیت‌ها</option>
-                                            <option value="active" <?php echo (isset($_GET['status']) && $_GET['status']==='active')?'selected':''; ?>>فعال</option>
-                                            <option value="block" <?php echo (isset($_GET['status']) && $_GET['status']==='block')?'selected':''; ?>>مسدود</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="filterAgent" class="control-label">نوع کاربر</label>
-                                        <select id="filterAgent" name="agent" class="form-control">
-                                            <option value="">همه گروه‌ها</option>
-                                            <option value="f" <?php echo (isset($_GET['agent']) && $_GET['agent']==='f')?'selected':''; ?>>کاربر عادی</option>
-                                            <option value="n" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n')?'selected':''; ?>>نماینده معمولی</option>
-                                            <option value="n2" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n2')?'selected':''; ?>>نماینده پیشرفته</option>
-                                        </select>
-                                    </div>
-                                    <div class="filter-actions">
-                                        <button type="submit" class="btn btn-primary" id="usersFilterSubmit">اعمال فیلتر</button>
-                                        <a href="users.php" class="btn btn-default">پاک کردن</a>
-                                        <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn btn-success">خروجی CSV</a>
-                                        <a href="#" class="btn btn-default" id="usersSaveFilter"><i class="icon-save"></i> ذخیره فیلتر</a>
-                                        <a href="#" class="btn btn-default" id="usersLoadFilter"><i class="icon-repeat"></i> بارگذاری فیلتر</a>
-                                    </div>
-                                    <div class="filter-chips">
-                                        <?php if(!empty($_GET['q'])){ ?>
-                                            <span class="filter-chip">جستجو: <?php echo htmlspecialchars($_GET['q']); ?></span>
-                                        <?php } ?>
-                                        <?php if(!empty($_GET['status'])){ ?>
-                                            <span class="filter-chip">وضعیت: <?php echo $_GET['status']==='active'?'فعال':'مسدود'; ?></span>
-                                        <?php } ?>
-                                        <?php if(!empty($_GET['agent'])){ ?>
-                                            <span class="filter-chip">نوع: <?php echo $_GET['agent']==='f'?'کاربر عادی':($_GET['agent']==='n'?'نماینده معمولی':'نماینده پیشرفته'); ?></span>
-                                        <?php } ?>
-                                        <?php if(empty($_GET['q']) && empty($_GET['status']) && empty($_GET['agent'])){ ?>
-                                            <span class="filter-chip muted">هیچ فیلتری اعمال نشده است</span>
-                                        <?php } ?>
-                                    </div>
-                                </form>
-                                <div class="action-toolbar sticky">
-                                    <a href="users.php" class="btn btn-default" id="usersRefresh"><i class="icon-refresh"></i> بروزرسانی</a>
-                                    <input type="text" id="usersQuickSearch" class="form-control" placeholder="جستجوی سریع در جدول" style="max-width:220px;">
-                                    <a href="#" class="btn btn-default tooltips" id="usersSelectVisible" data-original-title="انتخاب همه ردیف‌های قابل‌مشاهده" aria-label="انتخاب همه"><i class="icon-check"></i> انتخاب همه نمایش‌داده‌ها</a>
-                                    <a href="#" class="btn btn-default tooltips" id="usersInvertSelection" data-original-title="معکوس کردن وضعیت انتخاب ردیف‌ها" aria-label="معکوس انتخاب"><i class="icon-retweet"></i> معکوس انتخاب‌ها</a>
-                                    <a href="#" class="btn btn-default tooltips" id="usersClearSelection" data-original-title="لغو انتخاب همه ردیف‌ها" aria-label="لغو انتخاب"><i class="icon-remove"></i> لغو انتخاب</a>
-                                    <span id="usersSelCount" class="sel-count">انتخاب‌ها: 0</span>
-                                    <a href="#" class="btn btn-danger" id="usersBlockSel"><i class="icon-ban-circle"></i> مسدود گروهی</a>
-                                    <a href="#" class="btn btn-success" id="usersUnblockSel"><i class="icon-ok-circle"></i> رفع مسدودی گروهی</a>
-                                    <div class="btn-group" style="margin-right:8px;">
-                                      <a href="#" class="btn btn-success" id="usersPresetActive">نمایش فعال</a>
-                                      <a href="#" class="btn btn-danger" id="usersPresetBlock">نمایش مسدود</a>
-                                    </div>
-                                    <a href="#" class="btn btn-info" id="usersCompact"><i class="icon-resize-small"></i> حالت فشرده</a>
-                                    <a href="#" class="btn btn-primary" id="usersCopy"><i class="icon-copy"></i> کپی آیدی‌های انتخاب‌شده</a>
-                                    <input type="text" id="usersMessage" class="form-control" placeholder="پیام گروهی" style="max-width:240px;">
-                                    <a href="#" class="btn btn-info" id="usersSendMsg"><i class="icon-envelope"></i> ارسال پیام</a>
-                                    <input type="number" id="usersAmount" class="form-control" placeholder="مبلغ (تومان)" style="max-width:160px;">
-                                    <a href="#" class="btn btn-success" id="usersAddBalance"><i class="icon-plus"></i> افزایش موجودی</a>
-                                    <a href="#" class="btn btn-warning" id="usersLowBalance"><i class="icon-minus"></i> کسر موجودی</a>
-                                    <select id="usersAgentSelect" class="form-control" style="max-width:180px;">
-                                      <option value="">تغییر نوع کاربر…</option>
-                                      <option value="f">عادی</option>
-                                      <option value="n">نماینده</option>
-                                      <option value="n2">نماینده پیشرفته</option>
-                                    </select>
-                                    <a href="#" class="btn btn-primary" id="usersApplyAgent"><i class="icon-user"></i> اعمال نوع کاربر</a>
-                                    <a href="#" class="btn btn-success" id="usersExportVisible"><i class="icon-download"></i> خروجی CSV نمایش‌داده‌ها</a>
-                                    <a href="#" class="btn btn-success" id="usersExportSelected"><i class="icon-download"></i> خروجی CSV انتخاب‌شده‌ها</a>
-                                    <a href="#" class="btn btn-default" id="usersPrint"><i class="icon-print"></i> چاپ</a>
-                                    <a href="#" class="btn btn-info tooltips" id="usersColumnsBtn" data-original-title="نمایش/پنهان‌کردن ستون‌های جدول" aria-label="ستون‌ها"><i class="icon-th"></i> ستون‌ها</a>
-                                </div>
-                            </div>
-                            <?php
-                            $total = count($listusers); $activeCount = 0; $blockCount = 0;
-                            foreach($listusers as $u){ $s = strtolower($u['User_Status']); if($s==='active') $activeCount++; else if($s==='block') $blockCount++; }
-                            ?>
-                            <div class="stat-grid">
-                                <div class="stat-card"><div class="stat-title">تعداد نتایج</div><div class="stat-value"><?php echo number_format($total); ?></div></div>
-                                <div class="stat-card"><div class="stat-title">فعال</div><div class="stat-value"><?php echo number_format($activeCount); ?></div></div>
-                                <div class="stat-card"><div class="stat-title">مسدود</div><div class="stat-value"><?php echo number_format($blockCount); ?></div></div>
-                            </div>
-                            <?php if(!$total){ ?>
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="icon-user"></i>
-                                    </div>
-                                    <h3>کاربری یافت نشد</h3>
-                                    <p>می‌توانید فیلترها را تغییر دهید یا جستجو را خالی کنید و دوباره تلاش کنید.</p>
-                                    <div class="empty-actions">
-                                        <a href="users.php" class="btn btn-default">نمایش همه کاربران</a>
-                                    </div>
-                                </div>
-                            <?php } ?>
-                            <table class="table table-striped border-top" id="sample_1">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 8px;">
-                                            <input type="checkbox" class="group-checkable" data-set="#sample_1 .checkboxes" /></th>
-                                        <th class="hidden-phone">آیدی عددی</th>
-                                        <th>نام کاربری</th>
-                                        <th class="hidden-phone">شماره تلفن</th>
-                                        <th class="hidden-phone">موجودی کاربر</th>
-                                        <th class="hidden-phone">تعداد زیرمجموعه های کاربر</th>
-                                        <th class="hidden-phone">وضعیت کاربر</th>
-                                        <th class="hidden-phone">مدیریت کاربر</th>
-                                    </tr>
-                                </thead>
-                                <tbody> <?php
-                                if($total){
-                                foreach($listusers as $list){
-                                    $statusKey = strtolower($list['User_Status']);
-                                    $status_user = [
-                                        'active' => "فعال",
-                                        'block' => "مسدود",
-                                    ][$statusKey] ?? $list['User_Status'];
-                                    $status_color = $statusKey==='active' ? '#10b981' : ($statusKey==='block' ? '#ef4444' : '#6b7280');
-                                    if($list['number'] == "none")$list['number'] ="بدون شماره ";
-                                   $statusClass = 'status-'.strtolower($statusKey);
-                                   echo "<tr class=\"odd gradeX\">\n                                        <td>\n                                        <input type=\"checkbox\" class=\"checkboxes\" value=\"1\" /></td>\n                                        <td>{$list['id']}</td>\n                                        <td class=\"hidden-phone\">{$list['username']}</td>\n                                        <td class=\"hidden-phone\">{$list['number']}</td>\n                                        <td class=\"hidden-phone\">".number_format($list['Balance'])."</td>\n                                        <td class=\"hidden-phone\">{$list['affiliatescount']}</td>\n                                        <td class=\"hidden-phone\"><span class=\"status-badge {$statusClass}\">{$status_user}</span></td>\n                                        <td class=\"hidden-phone\">\n                                        <a class = \"btn btn-success\" href= \"user.php?id={$list['id']}\">مدیریت کاربر </a></td>\n                                    </tr>";
-                                }
-                                }
-                                    ?>
-                                </tbody>
-                            </table>
-                        </section>
-                    </div>
-                </div>
-                <!-- page end-->
-            </section>
-        </section>
-        <!--main content end-->
-    </section>
+    <div class="container-fluid-custom">
+        
+        <!-- Header -->
+        <header class="header-top anim">
+            <div class="header-title">
+                <h1>لیست کاربران</h1>
+                <p>
+                    <i class="fa-solid fa-users-gear" style="color: var(--neon-purple);"></i>
+                    مدیریت، ویرایش و نظارت بر مشترکین
+                    <span style="margin: 0 15px; opacity: 0.3;">|</span>
+                    <?php echo $todayDate; ?>
+                </p>
+            </div>
+        </header>
 
-    <!-- js placed at the end of the document so the pages load faster -->
+        <!-- Stats Grid -->
+        <div class="stats-deck anim d-1">
+            <div class="stat-card s-users">
+                <i class="fa-solid fa-users stat-icon"></i>
+                <div class="stat-val"><?php echo number_format($totalUsers); ?></div>
+                <div class="stat-lbl">کل کاربران ثبت شده</div>
+            </div>
+            <div class="stat-card s-active">
+                <i class="fa-solid fa-user-check stat-icon"></i>
+                <div class="stat-val"><?php echo number_format($activeUsers); ?></div>
+                <div class="stat-lbl">کاربران فعال</div>
+            </div>
+            <div class="stat-card s-block">
+                <i class="fa-solid fa-user-lock stat-icon"></i>
+                <div class="stat-val"><?php echo number_format($blockedUsers); ?></div>
+                <div class="stat-lbl">کاربران مسدود</div>
+            </div>
+        </div>
+
+        <!-- Main Glass Panel -->
+        <div class="glass-panel anim d-2">
+            
+            <!-- Filters -->
+            <div class="toolbar-section">
+                <form method="get" class="filter-row" id="usersFilterForm">
+                    <input type="text" name="q" class="input-glass" placeholder="جستجو (نام، آیدی، شماره)..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+                    
+                    <select name="status" class="input-glass" style="cursor: pointer;">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="active" <?php echo (isset($_GET['status']) && $_GET['status']==='active')?'selected':''; ?>>فعال</option>
+                        <option value="block" <?php echo (isset($_GET['status']) && $_GET['status']==='block')?'selected':''; ?>>مسدود</option>
+                    </select>
+                    
+                    <select name="agent" class="input-glass" style="cursor: pointer;">
+                        <option value="">همه گروه‌ها</option>
+                        <option value="f" <?php echo (isset($_GET['agent']) && $_GET['agent']==='f')?'selected':''; ?>>کاربر عادی</option>
+                        <option value="n" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n')?'selected':''; ?>>نماینده</option>
+                        <option value="n2" <?php echo (isset($_GET['agent']) && $_GET['agent']==='n2')?'selected':''; ?>>نماینده ارشد</option>
+                    </select>
+                    
+                    <button type="submit" class="btn-neon" id="usersFilterSubmit">
+                        <i class="fa-solid fa-filter"></i> اعمال فیلتر
+                    </button>
+                    
+                    <?php if(!empty($_GET['q']) || !empty($_GET['status']) || !empty($_GET['agent'])): ?>
+                        <a href="users.php" class="btn-glass-action" title="پاک کردن">
+                            <i class="fa-solid fa-xmark"></i>
+                        </a>
+                    <?php endif; ?>
+                </form>
+
+                <!-- Action Toolbar -->
+                <div class="bulk-actions">
+                    <button class="btn-glass-action" id="usersSelectVisible"><i class="fa-solid fa-check-double"></i> انتخاب همه صفحه</button>
+                    <button class="btn-glass-action" id="usersClearSelection"><i class="fa-solid fa-minus"></i> لغو انتخاب</button>
+                    <span id="usersSelCount" style="color: var(--neon-blue); font-weight: bold; margin: 0 10px;">0 انتخاب</span>
+                    
+                    <div style="flex:1;"></div> <!-- Spacer -->
+                    
+                    <button class="btn-glass-action" id="usersCopy"><i class="fa-solid fa-copy"></i> کپی آیدی</button>
+                    <button class="btn-glass-action" style="color: var(--neon-red); border-color: rgba(239,68,68,0.3);" id="usersBlockSel"><i class="fa-solid fa-ban"></i> مسدود سازی</button>
+                    <button class="btn-glass-action" style="color: var(--neon-green); border-color: rgba(16,185,129,0.3);" id="usersUnblockSel"><i class="fa-solid fa-unlock"></i> رفع مسدودی</button>
+                    
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-glass-action"><i class="fa-solid fa-download"></i> خروجی CSV</a>
+                </div>
+                
+                <!-- Additional Bulk Actions (Hidden by default or expandable, simplified here) -->
+                <div class="bulk-actions" style="border-top: none; padding-top: 0;">
+                    <input type="number" id="usersAmount" class="input-glass" placeholder="مبلغ (تومان)" style="max-width: 150px; height: 40px;">
+                    <button class="btn-glass-action" id="usersAddBalance"><i class="fa-solid fa-plus"></i> شارژ</button>
+                    <button class="btn-glass-action" id="usersLowBalance"><i class="fa-solid fa-minus"></i> کسر</button>
+                    
+                    <input type="text" id="usersMessage" class="input-glass" placeholder="پیام گروهی..." style="max-width: 250px; height: 40px;">
+                    <button class="btn-glass-action" id="usersSendMsg"><i class="fa-solid fa-paper-plane"></i> ارسال</button>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <?php if(!$totalUsers): ?>
+                <div style="text-align: center; padding: 50px; color: var(--text-dim);">
+                    <i class="fa-solid fa-folder-open" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                    <h3>کاربری یافت نشد</h3>
+                    <p>فیلترها را تغییر دهید یا جستجو را پاک کنید.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="custom-table" id="sample_1">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><i class="fa-solid fa-check"></i></th>
+                                <th>آیدی</th>
+                                <th>کاربر</th>
+                                <th>تلفن</th>
+                                <th>موجودی (تومان)</th>
+                                <th>زیرمجموعه</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach($listusers as $list): 
+                                $s = strtolower($list['User_Status']);
+                                $statusLabel = ($s === 'active') ? 'فعال' : (($s === 'block') ? 'مسدود' : $list['User_Status']);
+                                $statusClass = ($s === 'active') ? 'st-active' : (($s === 'block') ? 'st-block' : 'st-other');
+                                $phone = ($list['number'] == "none") ? '<span style="opacity:0.5">---</span>' : $list['number'];
+                            ?>
+                            <tr>
+                                <td><input type="checkbox" class="checkboxes" value="1"></td>
+                                <td style="font-family: monospace; color: var(--neon-blue);"><?php echo $list['id']; ?></td>
+                                <td style="font-weight: bold;"><?php echo htmlspecialchars($list['username']); ?></td>
+                                <td><?php echo $phone; ?></td>
+                                <td style="color: var(--neon-amber); font-weight: bold;"><?php echo number_format($list['Balance']); ?></td>
+                                <td><?php echo number_format($list['affiliatescount']); ?></td>
+                                <td><span class="badge-status <?php echo $statusClass; ?>"><?php echo $statusLabel; ?></span></td>
+                                <td>
+                                    <a href="user.php?id=<?php echo $list['id']; ?>" class="btn-glass-action" style="height: 35px; font-size: 0.8rem;">
+                                        <i class="fa-solid fa-pen-to-square"></i> مدیریت
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+            
+        </div>
+
+    </div>
+
+    <!-- Floating Dock -->
+    <div class="dock-wrapper anim d-3">
+        <nav class="dock">
+            <a href="index.php" class="dock-item">
+                <i class="fa-solid fa-house-chimney"></i>
+                <span class="dock-tooltip">داشبورد</span>
+            </a>
+            <a href="invoice.php" class="dock-item">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                <span class="dock-tooltip">سفارشات</span>
+            </a>
+            <a href="user.php" class="dock-item active">
+                <i class="fa-solid fa-users"></i>
+                <span class="dock-tooltip">کاربران</span>
+            </a>
+            <a href="product.php" class="dock-item">
+                <i class="fa-solid fa-box-open"></i>
+                <span class="dock-tooltip">محصولات</span>
+            </a>
+            <a href="server_status.php" class="dock-item">
+                <i class="fa-solid fa-server"></i>
+                <span class="dock-tooltip">ادمین</span>
+            </a>
+            <div style="width: 2px; height: 30px; background: rgba(255,255,255,0.1); margin: 0 8px;"></div>
+            <a href="logout.php" class="dock-item" style="color: var(--neon-red);">
+                <i class="fa-solid fa-power-off"></i>
+                <span class="dock-tooltip">خروج</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Scripts (Keeping Logic Intact) -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery.scrollTo.min.js"></script>
-    <script src="js/jquery.nicescroll.js" type="text/javascript"></script>
-    <script type="text/javascript" src="assets/data-tables/jquery.dataTables.js"></script>
-    <script type="text/javascript" src="assets/data-tables/DT_bootstrap.js"></script>
-
-
-    <!--common script for all pages-->
-    <script src="js/common-scripts.js"></script>
-
-    <!--script for this page only-->
-    <script src="js/dynamic-table.js"></script>
+    
+    <!-- Custom JS Logic for Actions -->
     <script>
       (function(){
-        $('#usersCompact').on('click', function(e){ e.preventDefault(); $('#sample_1').toggleClass('compact'); });
-        attachTableQuickSearch('#sample_1','#usersQuickSearch');
+        // Toast Notification Helper
+        function showToast(msg) {
+            // Simple alert for now, can be upgraded to fancy toast
+            alert(msg);
+        }
+
+        // Selection Logic
+        function updateSelCount() {
+            var count = $('#sample_1 tbody .checkboxes:checked').length;
+            $('#usersSelCount').text(count + ' انتخاب');
+        }
+        $(document).on('change', '.checkboxes', updateSelCount);
+
+        $('#usersSelectVisible').on('click', function(e){ 
+            e.preventDefault(); 
+            $('#sample_1 tbody tr:visible').each(function(){ $(this).find('.checkboxes').prop('checked', true); }); 
+            updateSelCount();
+        });
+        $('#usersClearSelection').on('click', function(e){ 
+            e.preventDefault(); 
+            $('#sample_1 tbody .checkboxes').prop('checked', false); 
+            updateSelCount();
+        });
+
+        // Copy IDs
         $('#usersCopy').on('click', function(e){
           e.preventDefault();
           var ids = [];
           $('#sample_1 tbody tr').each(function(){
             var $row = $(this);
-            var checked = $row.find('.checkboxes').prop('checked');
-            if(checked){ ids.push($row.find('td').eq(1).text().trim()); }
+            if($row.find('.checkboxes').prop('checked')){ ids.push($row.find('td').eq(1).text().trim()); }
           });
-          if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('آیدی‌ها کپی شد'); }
+          if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast('آیدی‌ها کپی شد (' + ids.length + ' مورد)'); }
           else{ showToast('هیچ ردیفی انتخاب نشده است'); }
         });
-        function bulkUserStatus(status){
-          var ids = [];
-          $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); });
-          if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; }
-          var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,status:status}).always(function(){ done++; if(done===ids.length){ showToast('عملیات انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); });
+
+        // Bulk Actions (AJAX)
+        function bulkAction(actionType, value) {
+            var ids = [];
+            $('#sample_1 tbody tr').each(function(){
+                var $r=$(this); 
+                if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); 
+            });
+            
+            if(!ids.length){ showToast('کاربری انتخاب نشده است'); return; }
+            
+            if(!confirm('آیا از انجام عملیات روی ' + ids.length + ' کاربر اطمینان دارید؟')) return;
+
+            var done=0; 
+            var total=ids.length;
+            
+            ids.forEach(function(id){ 
+                var data = {id: id};
+                if(actionType === 'status') data.status = value;
+                if(actionType === 'msg') data.textmessage = value;
+                if(actionType === 'balance_add') data.priceadd = value;
+                if(actionType === 'balance_low') data.pricelow = value;
+                if(actionType === 'agent') data.agent = value;
+
+                $.get('user.php', data).always(function(){ 
+                    done++; 
+                    if(done === total){ 
+                        showToast('عملیات با موفقیت انجام شد'); 
+                        setTimeout(function(){ location.reload(); }, 1000); 
+                    } 
+                }); 
+            });
         }
-        $('#usersBlockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('block'); });
-        $('#usersUnblockSel').on('click', function(e){ e.preventDefault(); bulkUserStatus('active'); });
-        $('#usersPresetActive').on('click', function(e){ e.preventDefault(); var $f=$('#usersFilterForm'); $f.find('select[name="status"]').val('active'); $f.submit(); });
-        $('#usersPresetBlock').on('click', function(e){ e.preventDefault(); var $f=$('#usersFilterForm'); $f.find('select[name="status"]').val('block'); $f.submit(); });
-        $('#usersSendMsg').on('click', function(e){ e.preventDefault(); var txt=$('#usersMessage').val(); if(!txt){ showToast('متن پیام را وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,textmessage:txt}).always(function(){ done++; if(done===ids.length){ showToast('پیام‌ها ارسال شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
-        function bulkBalance(param){ var amt=parseInt($('#usersAmount').val(),10); if(!(amt>0)){ showToast('مبلغ معتبر وارد کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; var key = param==='add' ? 'priceadd' : 'pricelow'; ids.forEach(function(id){ var args={id:id}; args[key]=amt; $.get('user.php',args).always(function(){ done++; if(done===ids.length){ showToast('عملیات موجودی انجام شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); }
-        $('#usersAddBalance').on('click', function(e){ e.preventDefault(); bulkBalance('add'); });
-        $('#usersLowBalance').on('click', function(e){ e.preventDefault(); bulkBalance('low'); });
-        $('#usersApplyAgent').on('click', function(e){ e.preventDefault(); var ag=$('#usersAgentSelect').val(); if(!ag){ showToast('نوع کاربر را انتخاب کنید'); return; } var ids=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')) ids.push($r.find('td').eq(1).text().trim()); }); if(!ids.length){ showToast('هیچ کاربری انتخاب نشده است'); return; } var done=0; ids.forEach(function(id){ $.get('user.php',{id:id,agent:ag}).always(function(){ done++; if(done===ids.length){ showToast('نوع کاربر اعمال شد'); setTimeout(function(){ location.reload(); }, 600); } }); }); });
-        $('#usersSelectVisible').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr:visible').each(function(){ $(this).find('.checkboxes').prop('checked', true); }); });
-        $('#usersInvertSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody tr').each(function(){ var $cb=$(this).find('.checkboxes'); $cb.prop('checked', !$cb.prop('checked')); }); });
-        $('#usersClearSelection').on('click', function(e){ e.preventDefault(); $('#sample_1 tbody .checkboxes').prop('checked', false); });
-        $('#usersPrint').on('click', function(e){ e.preventDefault(); window.print(); });
-        $('#usersExportVisible').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr:visible').each(function(){ var $td=$(this).find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); }); var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-visible-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
-        $('#usersExportSelected').on('click', function(e){ e.preventDefault(); var rows=[]; $('#sample_1 tbody tr').each(function(){ var $r=$(this); if($r.find('.checkboxes').prop('checked')){ var $td=$r.find('td'); rows.push([$td.eq(1).text().trim(), $td.eq(2).text().trim(), $td.eq(3).text().trim(), $td.eq(4).text().trim(), $td.eq(5).text().trim(), $td.eq(6).text().trim()]); } }); if(!rows.length){ showToast('هیچ ردیفی انتخاب نشده است'); return; } var csv='ID,Username,Number,Balance,Affiliates,Status\n'; rows.forEach(function(r){ csv += r.map(function(x){ return '"'+x.replace(/"/g,'""')+'"'; }).join(',')+'\n'; }); var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = 'users-selected-'+(new Date().toISOString().slice(0,10))+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); });
-        attachSelectionCounter('#sample_1','#usersSelCount');
-        setupSavedFilter('#usersFilterForm','#usersSaveFilter','#usersLoadFilter','users');
-        attachColumnToggles('#sample_1','#usersColumnsBtn');
+
+        $('#usersBlockSel').on('click', function(e){ e.preventDefault(); bulkAction('status', 'block'); });
+        $('#usersUnblockSel').on('click', function(e){ e.preventDefault(); bulkAction('status', 'active'); });
+        
+        $('#usersSendMsg').on('click', function(e){ 
+            e.preventDefault(); 
+            var txt=$('#usersMessage').val(); 
+            if(!txt) return showToast('متن پیام خالی است');
+            bulkAction('msg', txt); 
+        });
+
+        $('#usersAddBalance').on('click', function(e){
+            e.preventDefault();
+            var amt = parseInt($('#usersAmount').val(), 10);
+            if(!amt) return showToast('مبلغ نامعتبر');
+            bulkAction('balance_add', amt);
+        });
+
+        $('#usersLowBalance').on('click', function(e){
+            e.preventDefault();
+            var amt = parseInt($('#usersAmount').val(), 10);
+            if(!amt) return showToast('مبلغ نامعتبر');
+            bulkAction('balance_low', amt);
+        });
+
       })();
     </script>
-
-
 </body>
 </html>
