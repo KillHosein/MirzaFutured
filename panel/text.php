@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $jsonData = file_get_contents('php://input');
     $dataArray = json_decode($jsonData, true);
     if (json_last_error() === JSON_ERROR_NONE) {
-        file_put_contents('text.json', json_encode($dataArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents('../text.json', json_encode($dataArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         header('Content-Type: application/json');
         echo json_encode(['status' => 'success']);
         exit;
@@ -34,6 +34,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['status' => 'error', 'message' => 'Invalid JSON']);
         exit;
     }
+}
+
+// Handle Get JSON
+if (isset($_GET['action']) && $_GET['action'] === 'get_json') {
+    $jsonPath = '../text.json';
+    if (file_exists($jsonPath)) {
+        header('Content-Type: application/json');
+        readfile($jsonPath);
+    } else {
+        echo json_encode([]);
+    }
+    exit;
 }
 
 $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
@@ -395,7 +407,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         // 2. Load Data
         function loadData() {
-            fetch('text.json?v=' + new Date().getTime())
+            fetch('text.php?action=get_json&v=' + new Date().getTime())
                 .then(response => response.json())
                 .then(data => {
                     currentData = data;
