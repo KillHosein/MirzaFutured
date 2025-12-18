@@ -37,10 +37,6 @@ if (!$result) {
     exit;
 }
 
-/**
- * @param string $value
- * @return string
- */
 function csvSafeCell($value)
 {
     $value = (string) $value;

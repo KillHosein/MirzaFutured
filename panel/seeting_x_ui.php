@@ -41,10 +41,6 @@ if (empty($_SESSION['csrf_token'])) {
 }
 $csrfToken = (string) $_SESSION['csrf_token'];
 
-/**
- * @param string $token
- * @return bool
- */
 function isValidCsrfToken($token)
 {
     if (!isset($_SESSION['csrf_token'])) {
@@ -53,10 +49,6 @@ function isValidCsrfToken($token)
     return hash_equals((string) $_SESSION['csrf_token'], (string) $token);
 }
 
-/**
- * @param string $codepanel
- * @return array|null
- */
 function fetchXuiPanelRow($codepanel)
 {
     global $pdo;
@@ -76,11 +68,6 @@ function fetchXuiPanelRow($codepanel)
     }
 }
 
-/**
- * @param string $codepanel
- * @param string $normalizedJson
- * @return void
- */
 function saveXuiPanelSetting($codepanel, $normalizedJson)
 {
     global $pdo;
