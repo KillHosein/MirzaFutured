@@ -258,6 +258,9 @@ $config = [
     <!-- Your Core App Script -->
     <script type="module" crossorigin src="<?php echo htmlspecialchars($assetPrefix . 'assets/index-C-2a0Dur.js', ENT_QUOTES); ?>"></script>
     <link rel="modulepreload" crossorigin href="<?php echo htmlspecialchars($assetPrefix . 'assets/vendor-CIGJ9g2q.js', ENT_QUOTES); ?>">
+    
+    <!-- UI Enhancer (Animations & Effects) -->
+    <script src="<?php echo htmlspecialchars($assetPrefix . 'js/ui-enhancer.js', ENT_QUOTES); ?>"></script>
 </head>
 <body>
 
