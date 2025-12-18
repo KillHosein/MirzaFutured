@@ -1,7 +1,7 @@
 <?php
 /**
- * Telegram Web App - Quantum Edition
- * Optimized for TWA with Ultra-Premium Theme
+ * Telegram Web App - Quantum Supreme Edition
+ * Professional TWA Hosting with Cinematic Background
  * Designed & Developed by KillHosein
  */
 
@@ -49,16 +49,18 @@ $config = [
     <title>Professional Web App</title>
     <base href="<?php echo htmlspecialchars($prefix, ENT_QUOTES); ?>" />
     
-    <!-- Libraries -->
+    <!-- Libraries & Assets -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <script src="<?php echo htmlspecialchars($assetPrefix . 'js/telegram-web-app.js', ENT_QUOTES); ?>"></script>
     
+    <!-- Your Core App Styles -->
+    <link rel="stylesheet" crossorigin href="<?php echo htmlspecialchars($assetPrefix . 'assets/index-BoHBsj0Z.css', ENT_QUOTES); ?>">
+
     <style>
         :root {
             --primary: #8b5cf6;
             --secondary: #06b6d4;
-            --accent: #d946ef;
             --bg-void: #000;
         }
 
@@ -79,69 +81,68 @@ $config = [
         }
         .video-background video {
             width: 100%; height: 100%; object-fit: cover;
-            filter: brightness(0.4) contrast(1.1);
+            filter: brightness(0.45) contrast(1.1);
         }
         .video-overlay {
             position: absolute; inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.7) 100%);
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%);
         }
 
-        .starfield {
+        .star-layer {
             position: fixed; inset: 0; z-index: -9;
-            background-image: radial-gradient(1px 1px at 20px 30px, #fff, transparent), radial-gradient(1.5px 1.5px at 40px 70px, #fff, transparent);
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, transparent), 
+                radial-gradient(1.5px 1.5px at 150px 150px, #fff, transparent);
             background-size: 300px 300px;
-            animation: moveStars 150s linear infinite;
+            animation: moveStars 180s linear infinite;
             opacity: 0.3;
         }
         @keyframes moveStars { from { background-position: 0 0; } to { background-position: 0 4000px; } }
 
-        /* --- CONTENT WRAPPER --- */
+        /* --- CONTENT MOUNT POINT --- */
         #root {
             flex: 1;
             z-index: 10;
             position: relative;
-            /* این بخش اجازه می‌دهد اپلیکیشن شما بدون مشکل رندر شود */
+            /* این تنظیم باعث می‌شود اپلیکیشن شما روی پس‌زمینه متحرک شناور باشد */
         }
 
-        /* --- SUPREME FOOTER (KILLHOSEIN) --- */
+        /* --- SUPREME SIGNATURE (KILLHOSEIN) --- */
         .supreme-footer {
-            padding: 50px 20px;
+            padding: 60px 20px 40px;
             text-align: center;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
             border-top: 1px solid rgba(255,255,255,0.05);
             z-index: 20;
             position: relative;
+            backdrop-filter: blur(10px);
         }
         .brand-link {
             text-decoration: none !important;
             display: inline-flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .brand-hint {
-            font-size: 14px;
+            font-size: 12px;
             color: rgba(255,255,255,0.4);
             font-weight: 600;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
         .brand-name {
-            font-size: clamp(28px, 8vw, 48px);
+            font-size: clamp(28px, 8vw, 42px);
             font-weight: 950;
             background: linear-gradient(90deg, #fff, #a78bfa, #22d3ee, #d946ef);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 1.5px;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
             filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.6));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
         }
         .brand-tg {
-            font-size: clamp(35px, 10vw, 60px);
+            font-size: clamp(32px, 10vw, 55px);
             color: #229ED9;
             -webkit-text-fill-color: #229ED9;
             filter: drop-shadow(0 0 20px rgba(34, 158, 217, 0.8));
@@ -150,17 +151,18 @@ $config = [
         .brand-link:hover { transform: scale(1.1); }
         .brand-link:hover .brand-tg { transform: rotate(-15deg) scale(1.2); }
         
-        .contact-text {
+        .contact-cta {
             font-size: 11px;
             color: var(--secondary);
-            margin-top: 5px;
+            margin-top: 8px;
+            font-weight: 600;
             opacity: 0.7;
-            animation: pulse 2s infinite;
+            animation: pulseFade 3s infinite;
         }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes pulseFade { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
@@ -168,32 +170,33 @@ $config = [
     <script>
       window.__APP_CONFIG__ = <?php echo json_encode($config, JSON_UNESCAPED_SLASHES); ?>;
     </script>
+    
+    <!-- Your Core App Script -->
     <script type="module" crossorigin src="<?php echo htmlspecialchars($assetPrefix . 'assets/index-C-2a0Dur.js', ENT_QUOTES); ?>"></script>
     <link rel="modulepreload" crossorigin href="<?php echo htmlspecialchars($assetPrefix . 'assets/vendor-CIGJ9g2q.js', ENT_QUOTES); ?>">
-    <link rel="stylesheet" crossorigin href="<?php echo htmlspecialchars($assetPrefix . 'assets/index-BoHBsj0Z.css', ENT_QUOTES); ?>">
 </head>
 <body>
 
-    <!-- Space Background Engine -->
+    <!-- Space Engine Background -->
     <div class="video-background">
-        <video autoplay muted loop playsinline>
+        <video autoplay muted loop playsinline poster="https://assets.mixkit.co/videos/preview/mixkit-flying-through-stars-in-space-23214-large.mp4">
             <source src="https://assets.mixkit.co/videos/preview/mixkit-flying-through-stars-in-space-23214-large.mp4" type="video/mp4">
         </video>
         <div class="video-overlay"></div>
     </div>
-    <div class="starfield"></div>
+    <div class="star-layer"></div>
 
-    <!-- Application Root -->
+    <!-- Application Mounting Point -->
     <div id="root"></div>
 
-    <!-- Supreme Footer -->
+    <!-- Supreme Footer: Branding KillHosein -->
     <footer class="supreme-footer">
         <a href="https://t.me/KillHosein" class="brand-link" target="_blank">
             <span class="brand-hint">Designed & Developed by</span>
             <span class="brand-name">
                 <i class="fa-brands fa-telegram brand-tg"></i> KillHosein
             </span>
-            <span class="contact-text">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
+            <span class="contact-cta">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
         </a>
     </footer>
 
