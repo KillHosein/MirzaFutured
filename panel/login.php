@@ -2,7 +2,7 @@
 /**
  * Login Page - Nebula Pro Edition
  * Professional Animations, Moving Background & Glassmorphism Pro
- * Designed for MirzaBot Studio
+ * Designed for Professional Management Studio
  */
 
 ini_set('session.cookie_httponly', true);
@@ -69,7 +69,7 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ورود به مدیریت | MirzaBot</title>
+    <title>ورود به مدیریت</title>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -214,11 +214,11 @@ if (isset($_POST['login'])) {
             padding-top: 20px;
         }
         .dev-link {
-            text-decoration: none; color: rgba(255,255,255,0.4);
-            font-size: 11px; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none; color: rgba(255,255,255,0.6);
+            font-size: 15px; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px;
         }
-        .dev-link:hover { color: var(--text-silver); text-shadow: 0 0 8px white; }
-        .dev-link strong { color: var(--primary); }
+        .dev-link:hover { color: var(--text-silver); text-shadow: 0 0 15px var(--primary); transform: scale(1.05); }
+        .dev-link strong { color: var(--primary); font-size: 18px; }
 
         /* --- ERROR & IP ALERTS --- */
         .alert-error {
@@ -264,7 +264,7 @@ if (isset($_POST['login'])) {
             <div class="ip-box animate__animated animate__pulse animate__infinite"><?php echo $user_ip; ?></div>
             <div class="dev-footer">
                 <a href="https://t.me/KillHosein" class="dev-link" target="_blank">
-                    Developed by <i class="fa-brands fa-telegram text-sky-500"></i> <strong>KillHosein</strong>
+                    طراحی و توسعه توسط <i class="fa-brands fa-telegram text-sky-500"></i> <strong>KillHosein</strong>
                 </a>
             </div>
         </div>
@@ -279,7 +279,7 @@ if (isset($_POST['login'])) {
                 </div>
                 
                 <h2 class="text-center text-2xl font-black text-white mb-1">ورود به پنل</h2>
-                <p class="text-center text-[10px] text-indigo-400 uppercase tracking-[4px] mb-8 opacity-80">MirzaBot Management</p>
+                <p class="text-center text-[10px] text-indigo-400 uppercase tracking-[4px] mb-8 opacity-80">Management Admin Studio</p>
 
                 <?php if(!empty($texterrr)): ?>
                 <div class="alert-error">
@@ -303,7 +303,7 @@ if (isset($_POST['login'])) {
 
                 <div class="dev-footer">
                     <a href="https://t.me/KillHosein" class="dev-link" target="_blank">
-                        طراحی و توسعه توسط <i class="fa-brands fa-telegram text-sky-500"></i> <strong>KillHosein</strong>
+                        طراحی و توسعه توسط <i class="fa-brands fa-telegram text-sky-500 text-lg"></i> <strong>KillHosein</strong>
                     </a>
                 </div>
             </form>
