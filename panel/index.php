@@ -17,7 +17,6 @@ if (file_exists('../jdf.php')) require_once '../jdf.php';
 $isConnected = isset($pdo) && ($pdo instanceof PDO);
 
 // --- تنظیمات زمانی ---
-// تغییر از ۲۴ ساعت گذشته به "بامداد امروز" برای دقت بیشتر در آمار روزانه
 $startOfToday = strtotime('today'); 
 $filterFrom = isset($_GET['from']) ? $_GET['from'] : null;
 $filterTo = isset($_GET['to']) ? $_GET['to'] : null;
@@ -75,7 +74,6 @@ if ($isConnected) {
 
         $stats['users'] = $pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
 
-        // اصلاح: شمارش کاربران از ابتدای امروز (ساعت ۰۰:۰۰)
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :ts AND register != 'none'");
         $stmt->execute([':ts' => $startOfToday]);
         $stats['new_users'] = $stmt->fetchColumn();
@@ -132,7 +130,7 @@ $salesValues = array_values($chartData['sales']);
 $userLabels = array_map(function($d) { return function_exists('jdate') ? jdate('Y/m/d', strtotime($d)) : $d; }, array_keys($chartData['growth']));
 $userValues = array_values($chartData['growth']);
 
-// Luxury Status Colors
+// Status Colors
 $statusConfig = [
     'unpaid'       => ['label' => 'در انتظار', 'color' => '#EAB308'],
     'active'       => ['label' => 'فعال',      'color' => '#10B981'],
@@ -174,31 +172,20 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            /* Theme Core: Deep Void & Electric Accents */
             --bg-body: #050509;
-            --bg-card: rgba(15, 15, 20, 0.7); 
+            --bg-card: rgba(23, 23, 30, 0.65);
             --bg-card-hover: rgba(35, 35, 45, 0.85);
-            
-            /* Neons */
             --neon-blue: #00f2ff;
             --neon-purple: #c026d3;
             --neon-green: #00ffa3;
             --neon-red: #ff2a6d;
             --neon-gold: #fbbf24;
-            
-            /* Text */
             --text-pri: #ffffff;
             --text-sec: #94a3b8;
-            
-            /* Borders & Shadows */
-            --border-subtle: 1px solid rgba(255, 255, 255, 0.1);
-            --border-highlight: 1px solid rgba(255, 255, 255, 0.2);
-            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5);
-            
+            --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
             --radius-main: 24px;
         }
 
-        /* --- Base & Scrollbar --- */
         * { box-sizing: border-box; outline: none; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-body); }
@@ -211,7 +198,6 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             background-position: center;
             background-attachment: fixed;
             background-repeat: no-repeat;
-            
             color: var(--text-pri);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
@@ -220,277 +206,146 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             overflow-x: hidden;
         }
 
-        /* --- Container --- */
         .dashboard-container {
             width: 100%; max-width: 1920px; margin: 0 auto;
-            padding: 35px 5%; 
-            display: flex; flex-direction: column; gap: 35px;
+            padding: 35px 5%; display: flex; flex-direction: column; gap: 35px;
             position: relative; z-index: 1;
         }
 
-        /* --- 1. Header Enhanced --- */
-        .header-section {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            position: relative;
-        }
-        
-        .header-titles { display: flex; flex-direction: column; gap: 5px; }
-        .ht-sup {
-            font-size: 0.9rem; color: var(--neon-blue); font-weight: 700; letter-spacing: 1px;
-            text-transform: uppercase; display: flex; align-items: center; gap: 8px;
-        }
+        /* Header */
+        .header-section { display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .ht-sup { font-size: 0.9rem; color: var(--neon-blue); font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .ht-sup::before { content: ''; width: 20px; height: 2px; background: var(--neon-blue); border-radius: 2px; }
-        
-        .ht-main {
-            font-size: 3rem; font-weight: 900; margin: 0; line-height: 1.1;
-            background: linear-gradient(to right, #ffffff 40%, #94a3b8 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .ht-sub { color: var(--text-sec); font-size: 1.1rem; font-weight: 300; margin-top: 5px; }
+        .ht-main { font-size: 3rem; font-weight: 900; margin: 0; background: linear-gradient(to right, #fff 40%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .info-pill { background: rgba(255,255,255,0.05); border: var(--border-subtle); padding: 10px 20px; border-radius: 16px; backdrop-filter: blur(15px); }
+        .user-avatar-ring { width: 55px; height: 55px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple)); box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); position: relative; }
+        .user-avatar-img { width: 100%; height: 100%; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #fff; }
 
-        .header-actions { display: flex; gap: 15px; align-items: center; }
-        
-        .info-pill {
-            background: rgba(255,255,255,0.05); border: var(--border-subtle);
-            padding: 10px 20px; border-radius: 16px;
-            display: flex; align-items: center; gap: 10px;
-            backdrop-filter: blur(15px); transition: 0.3s;
-        }
-        .info-pill:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
-        .ip-icon { color: var(--text-sec); font-size: 1.1rem; }
-        
-        .user-avatar-ring {
-            width: 55px; height: 55px; border-radius: 50%;
-            padding: 3px; background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-            position: relative;
-        }
-        .user-avatar-img {
-            width: 100%; height: 100%; background: #000; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; color: #fff; border: 2px solid #000;
-        }
-        .status-dot {
-            position: absolute; bottom: 0; right: 0; width: 14px; height: 14px;
-            background: #10b981; border: 2px solid #000; border-radius: 50%;
-            box-shadow: 0 0 10px #10b981;
-        }
+        /* Stats Card */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+        .holo-card { background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main); padding: 25px; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(15px); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .holo-card:hover { transform: translateY(-5px) scale(1.02); background: var(--bg-card-hover); border-color: rgba(255,255,255,0.2); }
+        .hc-val { font-size: 2.2rem; font-weight: 800; }
+        .hc-icon-box { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; background: rgba(255,255,255,0.05); }
 
-        /* --- 2. Stats Grid --- */
-        .stats-row {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px;
-        }
-        .holo-card {
-            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
-            padding: 25px; position: relative; overflow: hidden;
-            display: flex; align-items: center; justify-content: space-between;
-            backdrop-filter: blur(15px);
-            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        .holo-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            background: var(--bg-card-hover);
-            box-shadow: 0 15px 40px -10px rgba(0,0,0,0.6);
-            border-color: rgba(255,255,255,0.2);
-        }
-        
-        .hc-val { font-size: 2.2rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
-        .hc-lbl { color: var(--text-sec); font-size: 0.9rem; font-weight: 500; }
-        
-        .hc-icon-box {
-            width: 60px; height: 60px; border-radius: 18px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; z-index: 2;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(5px);
-        }
-
-        .hc-blue .hc-icon-box { color: var(--neon-blue); }
-        .hc-green .hc-icon-box { color: var(--neon-green); }
-        .hc-purple .hc-icon-box { color: var(--neon-purple); }
-        .hc-gold .hc-icon-box { color: var(--neon-gold); }
-
-        /* --- 3. Bento Layout --- */
-        .bento-wrapper {
-            display: grid; grid-template-columns: 2.2fr 1fr; gap: 30px;
-        }
+        /* Bento */
+        .bento-wrapper { display: grid; grid-template-columns: 2.2fr 1fr; gap: 30px; }
         .col-main, .col-side { display: flex; flex-direction: column; gap: 30px; }
+        .glass-panel { background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main); padding: 30px; backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        .actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .nav-tile { height: 110px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-decoration: none; color: var(--text-sec); transition: 0.3s; backdrop-filter: blur(10px); }
+        .nav-tile:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.4); color: #fff; }
 
-        .glass-panel {
-            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
-            padding: 30px; display: flex; flex-direction: column;
-            backdrop-filter: blur(20px); box-shadow: var(--shadow-card);
-        }
-        .ph-title { font-size: 1.25rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 12px; }
-        .ph-title i { color: var(--neon-blue); }
-
-        .actions-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
-        }
-        .nav-tile {
-            position: relative; height: 110px;
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px; overflow: hidden;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-            text-decoration: none; color: var(--text-sec);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .nav-tile:hover {
-            transform: translateY(-5px); border-color: rgba(255,255,255,0.4);
-            color: #fff; background: rgba(255,255,255,0.08);
-        }
-        .nt-icon { font-size: 2rem; transition: 0.3s; }
-        .nav-tile:hover .nt-icon { transform: scale(1.15); }
-
-        /* --- 4. Super Dock --- */
-        .dock-container {
-            position: fixed; bottom: 30px; left: 0; right: 0;
-            display: flex; justify-content: center; pointer-events: none; z-index: 9999;
-        }
+        /* --- SUPER DOCK (RESTORED VERSION) --- */
+        .dock-container { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 9999; }
         .super-dock {
             pointer-events: auto;
-            background: rgba(15, 15, 20, 0.8);
+            background: rgba(15, 15, 20, 0.85);
             backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
             padding: 12px; border-radius: 28px;
             display: flex; align-items: center; gap: 8px;
+            transition: 0.3s;
         }
         .dock-item {
             width: 54px; height: 54px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 18px; color: var(--text-sec); font-size: 1.5rem;
-            text-decoration: none; transition: 0.25s;
+            text-decoration: none; position: relative;
+            background: transparent;
+            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5); /* فنری بودن ورژن اصلی */
         }
         .dock-item:hover {
-            background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-10px);
+            width: 65px; height: 65px;
+            margin: 0 5px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            transform: translateY(-15px);
         }
-        .dock-item.active {
-            color: var(--neon-blue); background: rgba(0, 242, 255, 0.1);
+        .dock-item.active { color: var(--neon-blue); background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2); }
+        
+        /* Tooltips */
+        .dock-item::before {
+            content: attr(data-tooltip);
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(10px) scale(0.8);
+            background: rgba(0,0,0,0.9); border: 1px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 6px 14px; border-radius: 10px; font-size: 0.8rem;
+            opacity: 0; visibility: hidden; transition: 0.2s; pointer-events: none; margin-bottom: 15px;
         }
+        .dock-item:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0) scale(1); }
+        .dock-divider { width: 1px; height: 35px; background: rgba(255,255,255,0.1); margin: 0 5px; }
 
         @media (max-width: 1400px) { .bento-wrapper { grid-template-columns: 1fr; } }
-        @media (max-width: 992px) {
-            .actions-grid { grid-template-columns: repeat(2, 1fr); }
-            .stats-row { grid-template-columns: repeat(2, 1fr); }
-            .ht-main { font-size: 2rem; }
-        }
+        @media (max-width: 992px) { .actions-grid { grid-template-columns: repeat(2, 1fr); } .stats-row { grid-template-columns: repeat(2, 1fr); } .ht-main { font-size: 2.2rem; } }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
-        
-        <!-- Header -->
         <header class="header-section">
             <div class="header-titles">
                 <div class="ht-sup">پنل فرماندهی سیستم</div>
                 <h1 class="ht-main"><?php echo $greet; ?>، ادمین</h1>
-                <div class="ht-sub">همه سیستم‌ها پایدار و در وضعیت نرمال هستند.</div>
+                <div class="ht-sub">وضعیت کلی سیستم در حالت پایدار است.</div>
             </div>
-            
             <div class="header-actions">
-                <div class="info-pill">
-                    <i class="fa-regular fa-calendar ip-icon"></i>
-                    <span class="ip-text"><?php echo $today; ?></span>
-                </div>
-                <div class="user-avatar-ring">
-                    <div class="user-avatar-img"><i class="fa-solid fa-user-astronaut"></i></div>
-                    <div class="status-dot"></div>
-                </div>
+                <div class="info-pill"><i class="fa-regular fa-calendar me-2"></i><span><?php echo $today; ?></span></div>
+                <div class="user-avatar-ring"><div class="user-avatar-img"><i class="fa-solid fa-user-astronaut"></i></div></div>
             </div>
         </header>
 
-        <!-- Stats -->
         <section class="stats-row">
-            <div class="holo-card hc-blue">
-                <div class="hc-info">
-                    <div class="hc-val"><?php echo number_format($stats['sales']); ?></div>
-                    <div class="hc-lbl">درآمد کل (تومان)</div>
-                </div>
-                <div class="hc-icon-box"><i class="fa-solid fa-sack-dollar"></i></div>
+            <div class="holo-card" style="--c: var(--neon-blue);">
+                <div><div class="hc-val"><?php echo number_format($stats['sales']); ?></div><div class="hc-lbl">درآمد (تومان)</div></div>
+                <div class="hc-icon-box" style="color: var(--neon-blue);"><i class="fa-solid fa-sack-dollar"></i></div>
             </div>
-            <div class="holo-card hc-green">
-                <div class="hc-info">
-                    <div class="hc-val"><?php echo number_format($stats['orders']); ?></div>
-                    <div class="hc-lbl">تعداد سفارشات</div>
-                </div>
-                <div class="hc-icon-box"><i class="fa-solid fa-receipt"></i></div>
+            <div class="holo-card">
+                <div><div class="hc-val"><?php echo number_format($stats['orders']); ?></div><div class="hc-lbl">سفارشات</div></div>
+                <div class="hc-icon-box" style="color: var(--neon-green);"><i class="fa-solid fa-receipt"></i></div>
             </div>
-            <div class="holo-card hc-purple">
-                <div class="hc-info">
-                    <div class="hc-val"><?php echo number_format($stats['users']); ?></div>
-                    <div class="hc-lbl">کل کاربران</div>
-                </div>
-                <div class="hc-icon-box"><i class="fa-solid fa-users"></i></div>
+            <div class="holo-card">
+                <div><div class="hc-val"><?php echo number_format($stats['users']); ?></div><div class="hc-lbl">کل کاربران</div></div>
+                <div class="hc-icon-box" style="color: var(--neon-purple);"><i class="fa-solid fa-users"></i></div>
             </div>
-            <div class="holo-card hc-gold">
-                <div class="hc-info">
-                    <div class="hc-val"><?php echo number_format($stats['new_users']); ?></div>
-                    <div class="hc-lbl">ثبت‌نام امروز</div>
-                </div>
-                <div class="hc-icon-box"><i class="fa-solid fa-user-plus"></i></div>
+            <div class="holo-card">
+                <div><div class="hc-val"><?php echo number_format($stats['new_users']); ?></div><div class="hc-lbl">ثبت‌نام امروز</div></div>
+                <div class="hc-icon-box" style="color: var(--neon-gold);"><i class="fa-solid fa-user-plus"></i></div>
             </div>
         </section>
 
-        <!-- Main Content -->
         <section class="bento-wrapper">
             <div class="col-main">
-                <div class="glass-panel" style="flex-grow: 1;">
-                    <div class="panel-head">
-                        <div class="ph-title"><i class="fa-solid fa-chart-line"></i> نمودار فروش زنده</div>
-                    </div>
-                    <div style="width: 100%; height: 350px;">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
-
+                <div class="glass-panel" style="flex-grow: 1;"><div class="panel-head"><div class="ph-title"><i class="fa-solid fa-chart-line"></i> نمودار فروش</div></div><div style="height: 350px;"><canvas id="salesChart"></canvas></div></div>
                 <div class="actions-grid">
-                    <a href="users.php" class="nav-tile"><i class="fa-solid fa-users-gear nt-icon"></i><span class="nt-label">کاربران</span></a>
-                    <a href="invoice.php" class="nav-tile"><i class="fa-solid fa-file-invoice nt-icon"></i><span class="nt-label">سفارشات</span></a>
-                    <a href="product.php" class="nav-tile"><i class="fa-solid fa-box-open nt-icon"></i><span class="nt-label">محصولات</span></a>
-                    <a href="service.php" class="nav-tile"><i class="fa-solid fa-server nt-icon"></i><span class="nt-label">سرویس‌ها</span></a>
-                    <a href="payment.php" class="nav-tile"><i class="fa-solid fa-wallet nt-icon"></i><span class="nt-label">امور مالی</span></a>
-                    <a href="keyboard.php" class="nav-tile"><i class="fa-solid fa-network-wired nt-icon"></i><span class="nt-label">مدیریت بات</span></a>
-                    <a href="seeting_x_ui.php" class="nav-tile"><i class="fa-solid fa-tower-broadcast nt-icon"></i><span class="nt-label">پنل X-UI</span></a>
-                    <a href="cancelService.php" class="nav-tile" style="border-color: rgba(255, 42, 109, 0.3);"><i class="fa-solid fa-ban nt-icon" style="color: var(--neon-red);"></i><span class="nt-label">مسدودها</span></a>
+                    <a href="users.php" class="nav-tile"><i class="fa-solid fa-users-gear fa-2x"></i><span>کاربران</span></a>
+                    <a href="invoice.php" class="nav-tile"><i class="fa-solid fa-file-invoice fa-2x"></i><span>سفارشات</span></a>
+                    <a href="product.php" class="nav-tile"><i class="fa-solid fa-box-open fa-2x"></i><span>محصولات</span></a>
+                    <a href="service.php" class="nav-tile"><i class="fa-solid fa-server fa-2x"></i><span>سرویس‌ها</span></a>
                 </div>
             </div>
-
             <div class="col-side">
-                <div class="glass-panel" style="flex: 1;">
-                    <div class="panel-head"><div class="ph-title"><i class="fa-solid fa-chart-pie"></i> وضعیت سرویس‌ها</div></div>
-                    <div style="position: relative; height: 220px; display: flex; align-items: center; justify-content: center;">
-                        <canvas id="statusChart"></canvas>
-                        <div style="position: absolute; text-align: center;">
-                            <div style="font-size: 2.2rem; font-weight: 800; color: #fff;"><?php echo $totalStatus; ?></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-panel" style="flex: 1;">
-                    <div class="panel-head"><div class="ph-title"><i class="fa-solid fa-chart-column"></i> جذب کاربر</div></div>
-                    <div style="height: 180px;"><canvas id="usersChart"></canvas></div>
-                </div>
+                <div class="glass-panel"><div class="panel-head"><div class="ph-title"><i class="fa-solid fa-chart-pie"></i> وضعیت</div></div><div style="height: 220px; display: flex; align-items: center; justify-content: center; position: relative;"><canvas id="statusChart"></canvas><div style="position: absolute; font-size: 2rem; font-weight: 800;"><?php echo $totalStatus; ?></div></div></div>
+                <div class="glass-panel"><div class="panel-head"><div class="ph-title"><i class="fa-solid fa-chart-column"></i> جذب</div></div><div style="height: 180px;"><canvas id="usersChart"></canvas></div></div>
             </div>
         </section>
-
     </div>
 
-    <!-- The Super Dock -->
+    <!-- The Super Dock (Restored Hover Effects) -->
     <div class="dock-container">
         <nav class="super-dock">
-            <a href="index.php" class="dock-item active"><i class="fa-solid fa-house"></i></a>
-            <a href="users.php" class="dock-item"><i class="fa-solid fa-users"></i></a>
-            <a href="invoice.php" class="dock-item"><i class="fa-solid fa-file-contract"></i></a>
-            <a href="product.php" class="dock-item"><i class="fa-solid fa-box"></i></a>
-            <a href="service.php" class="dock-item"><i class="fa-solid fa-server"></i></a>
-            <a href="cancelService.php" class="dock-item" style="color: var(--neon-red);"><i class="fa-solid fa-ban"></i></a>
-            <a href="payment.php" class="dock-item"><i class="fa-solid fa-wallet"></i></a>
-            <a href="settings.php" class="dock-item"><i class="fa-solid fa-gear"></i></a>
-            <a href="login.php" class="dock-item" style="color: var(--neon-red);"><i class="fa-solid fa-power-off"></i></a>
+            <a href="index.php" class="dock-item active" data-tooltip="داشبورد"><i class="fa-solid fa-house"></i></a>
+            <div class="dock-divider"></div>
+            <a href="users.php" class="dock-item" data-tooltip="کاربران"><i class="fa-solid fa-users"></i></a>
+            <a href="invoice.php" class="dock-item" data-tooltip="سفارشات"><i class="fa-solid fa-file-contract"></i></a>
+            <a href="product.php" class="dock-item" data-tooltip="محصولات"><i class="fa-solid fa-box"></i></a>
+            <a href="service.php" class="dock-item" data-tooltip="سرویس‌ها"><i class="fa-solid fa-server"></i></a>
+            <div class="dock-divider"></div>
+            <a href="payment.php" class="dock-item" data-tooltip="امور مالی"><i class="fa-solid fa-wallet"></i></a>
+            <a href="settings.php" class="dock-item" data-tooltip="تنظیمات"><i class="fa-solid fa-gear"></i></a>
+            <a href="login.php" class="dock-item" data-tooltip="خروج" style="color: var(--neon-red);"><i class="fa-solid fa-power-off"></i></a>
         </nav>
     </div>
 
@@ -507,46 +362,19 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         new Chart(document.getElementById('salesChart').getContext('2d'), {
             type: 'line',
-            data: {
-                labels: dSales.labels,
-                datasets: [{
-                    label: 'فروش',
-                    data: dSales.values,
-                    borderColor: '#00f2ff',
-                    backgroundColor: 'rgba(0, 242, 255, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
+            data: { labels: dSales.labels, datasets: [{ data: dSales.values, borderColor: '#00f2ff', backgroundColor: 'rgba(0, 242, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
-            data: {
-                labels: dPie.labels,
-                datasets: [{
-                    data: dPie.values,
-                    backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#d946ef', '#f97316', '#334155'],
-                    borderWidth: 0,
-                    cutout: '80%'
-                }]
-            },
+            data: { labels: dPie.labels, datasets: [{ data: dPie.values, backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#d946ef', '#f97316', '#334155'], borderWidth: 0, cutout: '80%' }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
 
         new Chart(document.getElementById('usersChart'), {
             type: 'bar',
-            data: {
-                labels: dUsers.labels,
-                datasets: [{
-                    label: 'کاربر جدید',
-                    data: dUsers.values,
-                    backgroundColor: '#00ff9d',
-                    borderRadius: 8
-                }]
-            },
+            data: { labels: dUsers.labels, datasets: [{ data: dUsers.values, backgroundColor: '#00ff9d', borderRadius: 8 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     </script>
