@@ -1,6 +1,6 @@
 <?php
 /**
- * Login Page - Quantum Glass Edition
+ * Login Page - Quantum Glass Edition (Supreme)
  * Ultra-Premium Animations, Dynamic Deep Space & Advanced Glassmorphism
  * Designed & Developed by KillHosein
  */
@@ -134,127 +134,135 @@ if (isset($_POST['login'])) {
         .glass-container {
             position: relative;
             padding: 3px;
-            border-radius: 35px;
+            border-radius: 40px;
             background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent, rgba(255,255,255,0.1));
             animation: cardEntrance 1s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .glass-card {
-            width: 100%; max-width: 420px;
-            background: rgba(10, 15, 28, 0.8);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border-radius: 32px;
-            padding: 50px 45px;
-            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%; max-width: 480px; /* Increased width */
+            background: rgba(10, 15, 28, 0.85);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 38px;
+            padding: 60px 50px;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             z-index: 100;
         }
 
         @keyframes cardEntrance {
-            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            from { opacity: 0; transform: scale(0.85) translateY(50px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         /* --- LOGO FX --- */
         .logo-wrapper {
-            display: flex; justify-content: center; margin-bottom: 35px;
+            display: flex; justify-content: center; margin-bottom: 40px;
         }
         .shield-icon {
-            width: 100px; height: 100px;
+            width: 110px; height: 110px;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 30px;
+            border-radius: 35px;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 40px var(--primary-glow);
+            box-shadow: 0 0 50px var(--primary-glow);
             position: relative;
             animation: floatIcon 6s ease-in-out infinite;
         }
-        .shield-icon i { font-size: 45px; color: #fff; filter: drop-shadow(0 0 15px var(--primary)); }
+        .shield-icon i { font-size: 50px; color: #fff; filter: drop-shadow(0 0 20px var(--primary)); }
         
         .shield-icon::after {
-            content: ''; position: absolute; inset: -5px; border-radius: 35px;
-            border: 1px solid var(--primary); opacity: 0.3; animation: pulseRing 3s infinite;
+            content: ''; position: absolute; inset: -8px; border-radius: 42px;
+            border: 2px solid var(--primary); opacity: 0.3; animation: pulseRing 3s infinite;
         }
 
-        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        @keyframes pulseRing { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(1.2); opacity: 0; } }
+        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes pulseRing { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(1.3); opacity: 0; } }
 
         /* --- INPUTS --- */
-        .input-group { position: relative; margin-bottom: 25px; }
+        .input-group { position: relative; margin-bottom: 28px; }
         .input-field {
             width: 100%;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 18px;
-            padding: 16px 52px 16px 18px;
-            color: #fff; font-size: 14px; transition: all 0.4s; outline: none;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 18px 56px 18px 20px;
+            color: #fff; font-size: 15px; transition: all 0.4s; outline: none;
         }
         .input-field:focus {
             border-color: var(--accent);
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 25px rgba(0, 242, 255, 0.15), inset 0 0 10px rgba(0, 242, 255, 0.05);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.2), inset 0 0 10px rgba(0, 242, 255, 0.05);
         }
         .input-icon {
-            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-            color: rgba(255,255,255,0.3); transition: 0.4s;
+            position: absolute; right: 22px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.35); transition: 0.4s; font-size: 18px;
         }
         .input-field:focus + .input-icon { color: var(--accent); transform: translateY(-50%) scale(1.2); }
 
         /* --- SUBMIT BUTTON --- */
         .btn-quantum {
-            width: 100%; padding: 16px;
+            width: 100%; padding: 18px;
             background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
-            color: #fff; border: none; border-radius: 18px;
-            font-weight: 800; font-size: 16px; cursor: pointer;
-            box-shadow: 0 10px 30px var(--primary-glow);
+            color: #fff; border: none; border-radius: 20px;
+            font-weight: 800; font-size: 17px; cursor: pointer;
+            box-shadow: 0 12px 35px var(--primary-glow);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative; overflow: hidden;
         }
         .btn-quantum:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px var(--primary-glow);
+            transform: translateY(-6px);
+            box-shadow: 0 18px 45px var(--primary-glow);
             filter: brightness(1.2);
         }
         .btn-quantum::before {
             content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: 0.5s;
+            transition: 0.6s;
         }
         .btn-quantum:hover::before { left: 100%; }
 
         /* --- SIGNATURE / CREDITS --- */
         .killhosein-footer {
-            margin-top: 40px; text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 25px;
+            margin-top: 45px; text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 30px;
         }
         .signature-text {
-            color: rgba(255,255,255,0.5); font-size: 13px;
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            color: rgba(255,255,255,0.6); font-size: 14px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
             text-decoration: none; transition: 0.4s;
         }
         .killhosein-brand {
-            font-size: 22px; font-weight: 900;
-            background: linear-gradient(90deg, #fff, var(--primary), var(--accent));
+            font-size: 32px; font-weight: 900; /* Made much larger */
+            background: linear-gradient(90deg, #fff, #8b5cf6, var(--accent));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            letter-spacing: 1px; filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.3));
+            letter-spacing: 1.5px; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.4));
+            display: flex; align-items: center; gap: 12px;
         }
-        .signature-text:hover { transform: scale(1.05); color: #fff; }
-        .signature-text:hover .killhosein-brand { filter: drop-shadow(0 0 15px var(--accent)); }
+        .signature-text:hover { transform: scale(1.08); color: #fff; }
+        .signature-text:hover .killhosein-brand { filter: drop-shadow(0 0 25px var(--accent)); }
+        
+        .tg-logo {
+            font-size: 36px; color: #0088cc; 
+            filter: drop-shadow(0 0 10px rgba(0, 136, 204, 0.5));
+            transition: 0.3s;
+        }
+        .signature-text:hover .tg-logo { transform: rotate(-10deg) scale(1.2); }
 
         /* --- ALERTS --- */
         .err-glow {
-            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5; padding: 14px; border-radius: 16px;
-            font-size: 13px; text-align: center; margin-bottom: 25px;
+            background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5; padding: 16px; border-radius: 18px;
+            font-size: 14px; text-align: center; margin-bottom: 28px;
             animation: headShake 0.6s;
         }
         .ip-token {
             background: rgba(0,0,0,0.5); border: 1px solid var(--accent);
-            padding: 10px 20px; border-radius: 14px; font-family: monospace;
-            margin: 20px 0; color: var(--accent); font-weight: bold; font-size: 16px;
-            display: inline-block; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+            padding: 12px 24px; border-radius: 16px; font-family: monospace;
+            margin: 24px 0; color: var(--accent); font-weight: bold; font-size: 18px;
+            display: inline-block; box-shadow: 0 0 25px rgba(0, 242, 255, 0.25);
         }
     </style>
 </head>
@@ -289,7 +297,9 @@ if (isset($_POST['login'])) {
                 <div class="killhosein-footer">
                     <a href="https://t.me/KillHosein" class="signature-text" target="_blank">
                         <span>طراحی و توسعه توسط</span>
-                        <span class="killhosein-brand">KillHosein</span>
+                        <span class="killhosein-brand">
+                            <i class="fa-brands fa-telegram tg-logo"></i> KillHosein
+                        </span>
                     </a>
                 </div>
             </div>
@@ -306,7 +316,7 @@ if (isset($_POST['login'])) {
                     </div>
                     
                     <h2 class="text-center text-3xl font-black text-white mb-2">خوش‌آمدید</h2>
-                    <p class="text-center text-[11px] text-indigo-300 uppercase tracking-[5px] mb-10 opacity-70">Secured Access Only</p>
+                    <p class="text-center text-[11px] text-indigo-300 uppercase tracking-[5px] mb-12 opacity-70">Secured Access Only</p>
 
                     <?php if(!empty($texterrr)): ?>
                     <div class="err-glow">
@@ -331,7 +341,9 @@ if (isset($_POST['login'])) {
                     <div class="killhosein-footer">
                         <a href="https://t.me/KillHosein" class="signature-text" target="_blank">
                             <span>طراحی و توسعه توسط</span>
-                            <span class="killhosein-brand">KillHosein</span>
+                            <span class="killhosein-brand">
+                                <i class="fa-brands fa-telegram tg-logo"></i> KillHosein
+                            </span>
                         </a>
                     </div>
                 </form>
