@@ -344,6 +344,23 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script>
         let currentData = {};
 
+        // Helper: Show Message (Swal or Alert)
+        function showMessage(type, title, text) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: type,
+                    title: title,
+                    text: text,
+                    background: '#1e1e2d',
+                    color: '#fff',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                alert(title + (text ? '\n' + text : ''));
+            }
+        }
+
         // 1. Create Form (Recursive with Accordion)
         function createForm(data, parentElement = null, parentKey = '') {
             const container = parentElement || document.getElementById('jsonForm');
@@ -389,8 +406,6 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     input.name = fullKey;
                     input.id = 'field_' + fullKey.replace(/\./g, '_');
                     
-                    // Auto-expand textarea if long? For now keep as input.
-                    
                     const copyBtn = document.createElement('button');
                     copyBtn.type = 'button';
                     copyBtn.className = 'btn-copy-field';
@@ -418,54 +433,94 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         loadData();
 
         // 3. Search Functionality
-        document.getElementById('searchField').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const items = document.querySelectorAll('.field-item');
-            const sections = document.querySelectorAll('details.json-section');
-            
-            items.forEach(item => {
-                const key = item.dataset.key;
-                const val = item.dataset.value;
-                if (key.includes(term) || val.includes(term)) {
-                    item.style.display = 'block';
-                    // Ensure parent details is open
-                    let parent = item.closest('details');
-                    while(parent) {
-                        parent.open = true;
-                        parent = parent.parentElement.closest('details');
+        const searchField = document.getElementById('searchField');
+        if (searchField) {
+            searchField.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+                const items = document.querySelectorAll('.field-item');
+                
+                items.forEach(item => {
+                    const key = item.dataset.key;
+                    const val = item.dataset.value;
+                    if (key.includes(term) || val.includes(term)) {
+                        item.style.display = 'block';
+                        // Ensure parent details is open
+                        let parent = item.closest('details');
+                        while(parent) {
+                            parent.open = true;
+                            parent = parent.parentElement.closest('details');
+                        }
+                    } else {
+                        item.style.display = 'none';
                     }
-                } else {
-                    item.style.display = 'none';
-                }
+                });
             });
+        }
 
-            // Hide empty sections if needed (optional refinement)
-        });
+        // 4. Raw Editor Handling
+        let rawModalInstance = null;
+        const rawModalEl = document.getElementById('rawModal');
 
-        // 4. Raw Editor
-        const rawModal = new bootstrap.Modal(document.getElementById('rawModal'));
+        // Try to initialize Bootstrap 5 modal
+        try {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                rawModalInstance = new bootstrap.Modal(rawModalEl);
+            }
+        } catch(e) { console.log('Bootstrap 5 Modal init failed', e); }
+
         document.getElementById('toggleRaw').addEventListener('click', () => {
-            // Get current form values to ensure latest edits are captured
             const formValues = getFormData();
             document.getElementById('rawJsonText').value = JSON.stringify(formValues, null, 4);
-            rawModal.show();
+            
+            if (rawModalInstance) {
+                rawModalInstance.show();
+            } else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') {
+                $(rawModalEl).modal('show');
+            } else {
+                // Fallback
+                rawModalEl.style.display = 'block';
+                rawModalEl.classList.add('show');
+                rawModalEl.style.opacity = '1';
+                document.body.appendChild(document.createElement('div')).className = 'modal-backdrop fade show';
+            }
         });
 
-        window.applyRawChanges = function() {
+        // Close button handler for fallback
+        const closeBtns = rawModalEl.querySelectorAll('.btn-close, [data-bs-dismiss="modal"]');
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (rawModalInstance) {
+                    rawModalInstance.hide();
+                } else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') {
+                    $(rawModalEl).modal('hide');
+                } else {
+                    rawModalEl.style.display = 'none';
+                    rawModalEl.classList.remove('show');
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if(backdrop) backdrop.remove();
+                }
+            });
+        });
+
+        function applyRawChanges() {
             try {
                 const raw = document.getElementById('rawJsonText').value;
                 const parsed = JSON.parse(raw);
                 currentData = parsed;
                 createForm(parsed);
-                rawModal.hide();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'JSON بروز شد',
-                    text: 'برای ذخیره نهایی دکمه "ذخیره تغییرات" را بزنید.',
-                    background: '#1e1e2d', color: '#fff', timer: 2000, showConfirmButton: false
-                });
+                
+                // Hide modal
+                if (rawModalInstance) rawModalInstance.hide();
+                else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') $(rawModalEl).modal('hide');
+                else {
+                    rawModalEl.style.display = 'none';
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if(backdrop) backdrop.remove();
+                }
+
+                showMessage('success', 'JSON بروز شد', 'برای ذخیره نهایی دکمه "ذخیره تغییرات" را بزنید.');
             } catch (e) {
-                Swal.fire('Error', 'فرمت JSON نامعتبر است:\n' + e.message, 'error');
+                showMessage('error', 'Error', 'فرمت JSON نامعتبر است:\n' + e.message);
             }
         };
 
@@ -480,23 +535,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     const json = JSON.parse(e.target.result);
                     currentData = json;
                     createForm(json);
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'فایل بارگذاری شد',
-                        background: '#1e1e2d', color: '#fff', timer: 1500, showConfirmButton: false
-                    });
+                    showMessage('success', 'فایل بارگذاری شد');
                 } catch (err) {
-                    Swal.fire('Error', 'فایل JSON نامعتبر است', 'error');
+                    showMessage('error', 'Error', 'فایل JSON نامعتبر است');
                 }
             };
             reader.readAsText(file);
-            // Reset input
             this.value = '';
         });
 
         // 6. Save Changes
-        window.saveChanges = function() {
-            // Get data from form (in case user edited inputs)
+        function saveChanges() {
+            // Get data from form
             const updatedJson = getFormData();
 
             fetch('text.php', {
@@ -507,40 +557,31 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success', title: 'تغییرات ذخیره شد',
-                        showConfirmButton: false, timer: 1500,
-                        background: '#1e1e2d', color: '#fff'
-                    });
+                    showMessage('success', 'تغییرات ذخیره شد');
                     currentData = updatedJson;
                 } else {
-                    Swal.fire('Error', 'خطا در ذخیره سازی', 'error');
+                    showMessage('error', 'Error', 'خطا در ذخیره سازی');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire('Error', 'خطا در ارتباط با سرور', 'error');
+                showMessage('error', 'Error', 'خطا در ارتباط با سرور');
             });
         };
+        // Expose to window for onclick
+        window.saveChanges = saveChanges;
+        window.applyRawChanges = applyRawChanges;
 
         // Helper: Get Form Data as Nested Object
         function getFormData() {
             const form = document.getElementById('jsonForm');
-            const formData = new FormData(form); // This only gets inputs, not recursive structure directly
-            // Actually, since we generated inputs with name="key.subkey", we can reconstruct easily
-            // But wait, FormData only grabs inputs inside a <form>. 
-            // Our createForm appends to #jsonForm which IS a form tag.
-            // However, details/summary structure might affect it? No, standard HTML form collection works deep.
-            
             const result = {};
-            // We need to iterate all inputs manually to handle hierarchy correctly if we want to support dynamic structure changes from Raw Editor
-            // But for simple value updates, iterating inputs is fine.
-            
-            // Better approach: start with currentData structure and update values from inputs
-            // OR reconstruct from inputs. Reconstruct is safer for "what you see is what you get".
-            
             const inputs = form.querySelectorAll('input');
+            
             inputs.forEach(input => {
+                // Skip if name is empty
+                if(!input.name) return;
+                
                 const keys = input.name.split('.');
                 let temp = result;
                 while (keys.length > 1) {
@@ -551,8 +592,6 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 temp[keys[0]] = input.value;
             });
             
-            // Merge with currentData to keep keys that might be hidden/missing? 
-            // No, the form represents the full state.
             return result;
         }
 
@@ -580,6 +619,9 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     this.innerHTML = originalText;
                     this.className = 'btn-act btn-cyan';
                 }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                showMessage('error', 'کپی ناموفق', 'دسترسی به کلیپ‌بورد امکان‌پذیر نیست');
             });
         });
 
@@ -593,6 +635,25 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     btn.innerHTML = originalIcon;
                     btn.style.color = '';
                 }, 2000);
+            }).catch(err => {
+                // Fallback for http
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    const originalIcon = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    btn.style.color = '#00ffa3';
+                    setTimeout(() => {
+                        btn.innerHTML = originalIcon;
+                        btn.style.color = '';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                document.body.removeChild(textarea);
             });
         }
     </script>
