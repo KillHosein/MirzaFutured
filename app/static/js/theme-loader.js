@@ -1,4 +1,4 @@
-(function() {
+﻿(function() {
   // 1. Setup State
   const getTheme = () => {
     if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
@@ -66,3 +66,4 @@
 
   init();
 })();
+

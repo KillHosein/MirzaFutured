@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   /* Modern Color Palette - Light Mode */
   --primary-hue: 250;
   --primary-sat: 95%;
@@ -135,3 +135,4 @@ button:active {
 .text-foreground { color: var(--foreground) !important; }
 .text-primary { color: var(--primary) !important; }
 .bg-primary { background-color: var(--primary) !important; }
+
