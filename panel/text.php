@@ -55,608 +55,427 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ویرایش متون ربات</title>
+    <title>مدیریت محتوای ربات</title>
     
-    <!-- Fonts & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-
+    
     <style>
         :root {
-            /* Theme Core */
-            --bg-body: #050509;
-            --bg-card: rgba(23, 23, 30, 0.75);
-            --bg-glass: rgba(20, 20, 25, 0.85);
-            --bg-dock: rgba(10, 10, 15, 0.95);
-            
-            /* Neons */
-            --neon-blue: #00f2ff;
-            --neon-purple: #c026d3;
-            --neon-green: #00ffa3;
-            --neon-red: #ff2a6d;
-            --neon-amber: #fbbf24;
-            
-            /* Text */
-            --text-pri: #ffffff;
-            --text-sec: #94a3b8;
-            
-            /* Borders */
-            --border-subtle: 1px solid rgba(255, 255, 255, 0.08);
-            --border-highlight: 1px solid rgba(255, 255, 255, 0.2);
-            --shadow-card: 0 15px 50px rgba(0,0,0,0.6);
-            
-            --radius-main: 28px;
-            --radius-lg: 24px;
+            --bg-deep: #020617;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #06b6d4;
+            --glass-panel: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
         }
-
-        /* --- Global Reset --- */
-        * { box-sizing: border-box; outline: none; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-body); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--text-pri);
             font-family: 'Vazirmatn', sans-serif;
-            margin: 0; padding: 0;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
             min-height: 100vh;
-            overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(192, 38, 211, 0.08) 0%, transparent 45%);
+                radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
             background-attachment: fixed;
-            padding-bottom: 150px;
-            display: flex; flex-direction: column;
         }
 
-        /* --- Full Height Container --- */
-        .container-fluid-custom {
-            width: 100%; padding: 30px 4%; max-width: 1200px; margin: 0 auto;
-            flex-grow: 1;
-            display: flex; flex-direction: column; gap: 30px;
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* Panels */
+        .glass-card {
+            background: var(--glass-panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* --- Header Bigger --- */
-        .page-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.08);
+        /* Form Controls */
+        .text-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: none;
         }
-        .page-title h1 {
-            font-size: 3rem; font-weight: 900; margin: 0; color: #fff;
-            text-shadow: 0 0 30px rgba(255,255,255,0.1);
-        }
-        .page-title p { color: var(--text-sec); font-size: 1.2rem; margin-top: 5px; font-weight: 400; }
-        
-        .info-pill {
-            background: rgba(255,255,255,0.03); border: var(--border-subtle);
-            padding: 12px 25px; border-radius: 18px;
-            display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
-            backdrop-filter: blur(10px); color: var(--text-sec);
-        }
-
-        /* --- Glass Panel --- */
-        .glass-panel {
-            background: var(--bg-card); border: var(--border-subtle); border-radius: var(--radius-main);
-            padding: 40px;
-            flex-grow: 1;
-            display: flex; flex-direction: column;
-            backdrop-filter: blur(20px); box-shadow: var(--shadow-card);
+        .text-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            background: rgba(15, 23, 42, 0.8);
         }
 
-        /* --- Inputs --- */
-        .form-group { margin-bottom: 25px; position: relative; }
-        .form-group label { display: block; color: var(--text-sec); font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; direction: ltr; text-align: right; }
-        
-        .input-readable {
-            width: 100%; height: 60px;
-            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 0 20px 0 50px; border-radius: 16px;
-            font-family: inherit; font-size: 1.1rem; transition: 0.3s;
-        }
-        .input-readable:focus { background: rgba(0,0,0,0.5); border-color: var(--neon-blue); outline: none; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
-
-        /* --- Buttons --- */
-        .btn-act {
-            height: 50px; padding: 0 25px;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px; color: var(--text-sec); font-size: 1rem; font-weight: 600;
-            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.3s; text-decoration: none;
-        }
-        .btn-act:hover { transform: translateY(-3px); color: #fff; background: rgba(255,255,255,0.1); }
-        
-        .btn-green-glow { 
-            background: var(--neon-green); color: #000; border: none; font-weight: 800; 
-            height: 60px; width: 100%; font-size: 1.3rem; border-radius: 18px;
-        }
-        .btn-green-glow:hover { background: #fff; box-shadow: 0 0 30px var(--neon-green); color: #000; }
-        
-        .btn-cyan { border-color: var(--neon-blue); color: var(--neon-blue); }
-        .btn-cyan:hover { background: rgba(0, 242, 255, 0.1); box-shadow: 0 0 20px var(--neon-blue); }
-
-        /* --- Copy Button --- */
-        .btn-copy-field {
-            position: absolute; left: 5px; top: 38px; width: 40px; height: 40px;
-            background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 10px;
-            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-copy-field:hover { background: rgba(255,255,255,0.2); color: var(--neon-blue); }
-
-        /* --- Accordion --- */
-        .json-section {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-        .json-summary {
-            padding: 15px 20px;
-            background: rgba(255, 255, 255, 0.05);
+        /* Sections */
+        .section-header {
             cursor: pointer;
-            display: flex; align-items: center; justify-content: space-between;
-            font-weight: 700; color: var(--neon-blue);
-            transition: 0.3s;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
         }
-        .json-summary:hover { background: rgba(255, 255, 255, 0.08); }
-        .json-summary::after {
-            content: '\f107'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
-            transition: 0.3s;
+        .section-header:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.05);
         }
-        details[open] .json-summary::after { transform: rotate(180deg); }
-        .json-content { padding: 20px; }
+        .section-content {
+            padding: 8px 12px 24px 12px;
+            display: none;
+        }
+        .section-container.active .section-content { display: block; }
+        .section-container.active .section-header {
+            background: rgba(139, 92, 246, 0.05);
+            border-color: rgba(139, 92, 246, 0.2);
+            margin-bottom: 4px;
+        }
 
-        /* --- Search Bar --- */
-        .search-container {
-            position: sticky; top: 0; z-index: 100;
-            background: rgba(23, 23, 30, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px 0; margin-bottom: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        /* Buttons */
+        .btn-modern {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
         }
+        .btn-save {
+            background: linear-gradient(135deg, var(--accent-primary), #6366f1);
+            color: white;
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(139, 92, 246, 0.5);
+        }
+        .btn-save:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+
+        /* Floating Nav */
+        .floating-nav {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .nav-item {
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 14px;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { background: var(--accent-primary); color: white; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease forwards; }
     </style>
 </head>
-<body>
+<body class="pb-32">
 
-    <div class="container-fluid-custom">
-        
-        <!-- Header -->
-        <header class="page-header anim">
-            <div class="page-title">
-                <h1>ویرایش متون ربات</h1>
-                <p>
-                    <i class="fa-solid fa-file-pen" style="color: var(--neon-blue);"></i>
-                    مدیریت متن‌ها و پیام‌های ربات
-                </p>
-            </div>
-            <div class="info-pill">
-                <i class="fa-regular fa-calendar"></i>
-                <span><?php echo $todayDate; ?></span>
-            </div>
-        </header>
-
-        <!-- Main Panel -->
-        <div class="glass-panel anim d-1">
-            
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-                <div class="d-flex gap-2">
-                    <button type="button" id="toggleRaw" class="btn-act" style="border-color: var(--neon-purple); color: var(--neon-purple);">
-                        <i class="fa-solid fa-code"></i> ویرایشگر خام
-                    </button>
-                    <input type="file" id="importFile" accept=".json" style="display: none;">
-                    <button type="button" onclick="document.getElementById('importFile').click()" class="btn-act" style="border-color: var(--neon-amber); color: var(--neon-amber);">
-                        <i class="fa-solid fa-file-import"></i> وارد کردن JSON
-                    </button>
+    <!-- Header Section -->
+    <div class="max-w-6xl mx-auto px-6 pt-12">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
+                        <i class="fa-solid fa-feather-pointed text-violet-400"></i>
+                    </div>
+                    <h1 class="text-3xl font-black text-white tracking-tight">مدیریت محتوای <span class="text-violet-400">ربات</span></h1>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="button" id="copyAllJson" class="btn-act btn-cyan">
-                        <i class="fa-solid fa-copy"></i> کپی کل
-                    </button>
-                    <button type="button" id="exportJson" class="btn-act">
-                        <i class="fa-solid fa-file-export"></i> خروجی
-                    </button>
-                </div>
+                <p class="text-slate-400 text-sm font-medium mr-1">پیکربندی تمامی پیام‌ها و پاسخ‌های خودکار سیستم</p>
             </div>
-
-            <div class="search-container">
-                <div class="form-group" style="margin: 0;">
-                    <input type="text" id="searchField" class="input-readable" placeholder="جستجو در متن‌ها..." style="border-color: var(--neon-blue);">
-                    <i class="fa-solid fa-search" style="position: absolute; left: 20px; top: 20px; color: var(--text-sec);"></i>
+            
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex flex-col items-end ml-4">
+                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">آخرین همگام‌سازی</span>
+                    <span class="text-xs text-slate-300"><?php echo $todayDate; ?></span>
                 </div>
+                <button onclick="App.save()" id="btn-save" class="btn-modern btn-save" disabled>
+                    <i class="fa-regular fa-floppy-disk text-lg"></i>
+                    <span>ذخیره تغییرات</span>
+                </button>
             </div>
-
-            <form id="jsonForm"></form>
-            
-            <button type="button" onclick="saveChanges()" class="btn-act btn-green-glow" style="margin-top: 30px;">
-                <i class="fa-solid fa-floppy-disk"></i> ذخیره تغییرات
-            </button>
-            
         </div>
 
-    </div>
+        <!-- Toolbar -->
+        <div class="glass-card p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div class="relative flex-1 min-w-[300px]">
+                <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="searchField" placeholder="جستجو در بین کلیدها یا محتوا..." class="w-full bg-slate-900/50 border border-white/5 rounded-xl py-2.5 pr-11 pl-4 text-sm focus:ring-2 focus:ring-violet-500/50 outline-none transition-all">
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="App.openRaw()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition" title="ویرایش خام">
+                    <i class="fa-solid fa-code"></i>
+                </button>
+                <button onclick="App.export()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition" title="خروجی JSON">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+            </div>
+        </div>
 
-    <!-- Raw Editor Modal -->
-    <div class="modal fade" id="rawModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content" style="background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;">
-                <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                    <h5 class="modal-title" style="color: #fff;">ویرایشگر خام JSON</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <textarea id="rawJsonText" class="input-readable" style="height: 400px; font-family: monospace; line-height: 1.5; resize: vertical;"></textarea>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
-                    <button type="button" class="btn-act" data-bs-dismiss="modal">انصراف</button>
-                    <button type="button" onclick="applyRawChanges()" class="btn-act btn-green-glow" style="height: 45px; font-size: 1rem;">اعمال تغییرات</button>
-                </div>
+        <!-- Main Editor Container -->
+        <div id="editor-container" class="space-y-4">
+            <!-- Loading State -->
+            <div id="loader" class="flex flex-col items-center justify-center py-24 opacity-50">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-violet-500 mb-4"></i>
+                <p class="text-sm font-bold tracking-widest uppercase">Initializing Database...</p>
             </div>
         </div>
     </div>
 
-    <!-- Floating Dock -->
-    <div class="dock-container anim d-3">
-        <div class="dock">
-            <a href="index.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-house-chimney"></i></div>
-                <span class="dock-label">داشبورد</span>
-            </a>
-            <a href="invoice.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <span class="dock-label">سفارشات</span>
-            </a>
-            <a href="users.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-users"></i></div>
-                <span class="dock-label">کاربران</span>
-            </a>
-            <a href="product.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-box-open"></i></div>
-                <span class="dock-label">محصولات</span>
-            </a>
-            <a href="service.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-server"></i></div>
-                <span class="dock-label">سرویس‌ها</span>
-            </a>
-            <div class="dock-divider"></div>
-            <a href="text.php" class="dock-item active">
-                <div class="dock-icon"><i class="fa-solid fa-file-pen"></i></div>
-                <span class="dock-label">متون</span>
-            </a>
-            <a href="settings.php" class="dock-item">
-                <div class="dock-icon"><i class="fa-solid fa-gear"></i></div>
-                <span class="dock-label">تنظیمات</span>
-            </a>
-            <a href="login.php" class="dock-item" style="color: var(--neon-red);">
-                <div class="dock-icon"><i class="fa-solid fa-power-off"></i></div>
-                <span class="dock-label">خروج</span>
-            </a>
+    <!-- Raw Editor Modal (Simplified with Tailwind) -->
+    <div id="rawModal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <h3 class="font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-code text-violet-400"></i>
+                    ویرایشگر مستقیم JSON
+                </h3>
+                <button onclick="App.closeRaw()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <textarea id="rawTextarea" class="w-full h-[500px] bg-slate-950 border border-white/5 rounded-xl p-6 font-mono text-sm text-emerald-400 focus:outline-none focus:ring-2 focus:ring-violet-500/50" dir="ltr"></textarea>
+            </div>
+            <div class="p-6 border-t border-white/5 bg-white/5 flex justify-end gap-3">
+                <button onclick="App.closeRaw()" class="px-6 py-2 rounded-xl text-slate-400 hover:text-white transition">انصراف</button>
+                <button onclick="App.applyRaw()" class="px-8 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition">اعمال تغییرات</button>
+            </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/jquery.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+    <!-- Navigation Bar -->
+    <nav class="floating-nav">
+        <a href="index.php" class="nav-item" title="داشبورد"><i class="fa-solid fa-house"></i></a>
+        <a href="users.php" class="nav-item" title="کاربران"><i class="fa-solid fa-users"></i></a>
+        <a href="service.php" class="nav-item" title="سرویس‌ها"><i class="fa-solid fa-server"></i></a>
+        <div class="w-px h-6 bg-white/10 my-auto mx-1"></div>
+        <a href="text.php" class="nav-item active" title="متون"><i class="fa-solid fa-file-pen"></i></a>
+        <a href="settings.php" class="nav-item" title="تنظیمات"><i class="fa-solid fa-gear"></i></a>
+    </nav>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        let currentData = {};
+        const App = {
+            data: {},
+            original: '',
+            
+            init() {
+                this.load();
+                this.setupSearch();
+            },
 
-        // Helper: Show Message (Swal or Alert)
-        function showMessage(type, title, text) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: type,
-                    title: title,
-                    text: text,
-                    background: '#1e1e2d',
-                    color: '#fff',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } else {
-                alert(title + (text ? '\n' + text : ''));
-            }
-        }
-
-        // 1. Create Form (Recursive with Accordion)
-        function createForm(data, parentElement = null, parentKey = '') {
-            const container = parentElement || document.getElementById('jsonForm');
-            if(!parentElement) container.innerHTML = ''; // Clear only if root
-
-            Object.keys(data).forEach((key) => {
-                const fullKey = parentKey ? `${parentKey}.${key}` : key;
-                const value = data[key];
-
-                if (typeof value === 'object' && value !== null) {
-                    // Create Accordion Section
-                    const details = document.createElement('details');
-                    details.className = 'json-section';
-                    // Open by default if it's a top-level section or small enough
-                    if(!parentKey) details.open = true;
-
-                    const summary = document.createElement('summary');
-                    summary.className = 'json-summary';
-                    summary.innerText = fullKey;
-                    
-                    const content = document.createElement('div');
-                    content.className = 'json-content';
-
-                    details.appendChild(summary);
-                    details.appendChild(content);
-                    container.appendChild(details);
-
-                    createForm(value, content, fullKey);
-                } else {
-                    // Create Input Field
-                    const group = document.createElement('div');
-                    group.className = 'form-group field-item';
-                    group.dataset.key = fullKey.toLowerCase();
-                    group.dataset.value = String(value).toLowerCase();
-                    
-                    const label = document.createElement('label');
-                    label.innerText = fullKey;
-                    
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'input-readable';
-                    input.value = value;
-                    input.name = fullKey;
-                    input.id = 'field_' + fullKey.replace(/\./g, '_');
-                    
-                    const copyBtn = document.createElement('button');
-                    copyBtn.type = 'button';
-                    copyBtn.className = 'btn-copy-field';
-                    copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i>';
-                    copyBtn.onclick = () => copyToClipboard(input.value, copyBtn);
-                    
-                    group.appendChild(label);
-                    group.appendChild(input);
-                    group.appendChild(copyBtn);
-                    container.appendChild(group);
+            async load() {
+                try {
+                    const res = await fetch('text.php?action=get_json&t=' + Date.now());
+                    this.data = await res.json();
+                    this.original = JSON.stringify(this.data);
+                    this.render();
+                } catch (e) {
+                    console.error("Load failed", e);
                 }
-            });
-        }
+            },
 
-        // 2. Load Data
-        function loadData() {
-            fetch('text.php?action=get_json&v=' + new Date().getTime())
-                .then(response => response.json())
-                .then(data => {
-                    currentData = data;
-                    createForm(data);
-                })
-                .catch(error => console.error('Error loading JSON:', error));
-        }
-        loadData();
-
-        // 3. Search Functionality
-        const searchField = document.getElementById('searchField');
-        if (searchField) {
-            searchField.addEventListener('input', function(e) {
-                const term = e.target.value.toLowerCase();
-                const items = document.querySelectorAll('.field-item');
+            render() {
+                const container = document.getElementById('editor-container');
+                container.innerHTML = '';
                 
-                items.forEach(item => {
-                    const key = item.dataset.key;
-                    const val = item.dataset.value;
-                    if (key.includes(term) || val.includes(term)) {
-                        item.style.display = 'block';
-                        // Ensure parent details is open
-                        let parent = item.closest('details');
-                        while(parent) {
-                            parent.open = true;
-                            parent = parent.parentElement.closest('details');
-                        }
+                Object.entries(this.data).forEach(([section, contents]) => {
+                    const sectionDiv = document.createElement('div');
+                    sectionDiv.className = 'section-container animate-fade';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'section-header';
+                    header.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-folder-open text-violet-400/60 text-sm"></i>
+                            <span class="font-bold text-slate-200 tracking-tight">${section}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-slate-600 text-xs transition-transform duration-300"></i>
+                    `;
+                    header.onclick = () => {
+                        sectionDiv.classList.toggle('active');
+                        header.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
+                    };
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'section-content space-y-6';
+
+                    this.buildFields(contents, contentDiv, section);
+
+                    sectionDiv.appendChild(header);
+                    sectionDiv.appendChild(contentDiv);
+                    container.appendChild(sectionDiv);
+                });
+                
+                document.getElementById('loader').style.display = 'none';
+                this.autoResizeAll();
+            },
+
+            buildFields(obj, parent, path) {
+                Object.entries(obj).forEach(([key, val]) => {
+                    const fullPath = `${path}.${key}`;
+                    if (typeof val === 'object' && val !== null) {
+                        const subGroup = document.createElement('div');
+                        subGroup.className = 'mr-6 border-r-2 border-white/5 pr-6 mt-4';
+                        subGroup.innerHTML = `<div class="text-[10px] font-black uppercase text-slate-600 mb-4 tracking-[0.2em]">${key}</div>`;
+                        this.buildFields(val, subGroup, fullPath);
+                        parent.appendChild(subGroup);
                     } else {
-                        item.style.display = 'none';
+                        const field = document.createElement('div');
+                        field.className = 'field-item group';
+                        field.dataset.search = (fullPath + ' ' + val).toLowerCase();
+                        
+                        field.innerHTML = `
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center justify-between px-1">
+                                    <label class="text-xs font-mono text-slate-500 group-hover:text-violet-400 transition-colors" dir="ltr">${key}</label>
+                                    <button onclick="App.copy('${fullPath}')" class="text-[10px] text-slate-600 hover:text-white transition-opacity opacity-0 group-hover:opacity-100">
+                                        <i class="fa-regular fa-copy"></i>
+                                    </button>
+                                </div>
+                                <textarea class="text-input" oninput="App.update('${fullPath}', this.value)" rows="1">${val}</textarea>
+                            </div>
+                        `;
+                        parent.appendChild(field);
                     }
                 });
-            });
-        }
+            },
 
-        // 4. Raw Editor Handling
-        let rawModalInstance = null;
-        const rawModalEl = document.getElementById('rawModal');
-
-        // Try to initialize Bootstrap 5 modal
-        try {
-            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                rawModalInstance = new bootstrap.Modal(rawModalEl);
-            }
-        } catch(e) { console.log('Bootstrap 5 Modal init failed', e); }
-
-        document.getElementById('toggleRaw').addEventListener('click', () => {
-            const formValues = getFormData();
-            document.getElementById('rawJsonText').value = JSON.stringify(formValues, null, 4);
-            
-            if (rawModalInstance) {
-                rawModalInstance.show();
-            } else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') {
-                $(rawModalEl).modal('show');
-            } else {
-                // Fallback
-                rawModalEl.style.display = 'block';
-                rawModalEl.classList.add('show');
-                rawModalEl.style.opacity = '1';
-                document.body.appendChild(document.createElement('div')).className = 'modal-backdrop fade show';
-            }
-        });
-
-        // Close button handler for fallback
-        const closeBtns = rawModalEl.querySelectorAll('.btn-close, [data-bs-dismiss="modal"]');
-        closeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (rawModalInstance) {
-                    rawModalInstance.hide();
-                } else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') {
-                    $(rawModalEl).modal('hide');
-                } else {
-                    rawModalEl.style.display = 'none';
-                    rawModalEl.classList.remove('show');
-                    const backdrop = document.querySelector('.modal-backdrop');
-                    if(backdrop) backdrop.remove();
+            update(path, value) {
+                const keys = path.split('.');
+                let current = this.data;
+                for (let i = 0; i < keys.length - 1; i++) {
+                    current = current[keys[i]];
                 }
-            });
-        });
+                current[keys[keys.length - 1]] = value;
+                this.checkChanges();
+            },
 
-        function applyRawChanges() {
-            try {
-                const raw = document.getElementById('rawJsonText').value;
-                const parsed = JSON.parse(raw);
-                currentData = parsed;
-                createForm(parsed);
-                
-                // Hide modal
-                if (rawModalInstance) rawModalInstance.hide();
-                else if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal !== 'undefined') $(rawModalEl).modal('hide');
-                else {
-                    rawModalEl.style.display = 'none';
-                    const backdrop = document.querySelector('.modal-backdrop');
-                    if(backdrop) backdrop.remove();
+            checkChanges() {
+                const isChanged = JSON.stringify(this.data) !== this.original;
+                document.getElementById('btn-save').disabled = !isChanged;
+            },
+
+            setupSearch() {
+                document.getElementById('searchField').oninput = (e) => {
+                    const query = e.target.value.toLowerCase();
+                    const fields = document.querySelectorAll('.field-item');
+                    const sections = document.querySelectorAll('.section-container');
+
+                    fields.forEach(f => {
+                        const visible = f.dataset.search.includes(query);
+                        f.style.display = visible ? 'block' : 'none';
+                    });
+
+                    sections.forEach(s => {
+                        const hasVisibleChild = Array.from(s.querySelectorAll('.field-item')).some(f => f.style.display !== 'none');
+                        s.style.display = hasVisibleChild ? 'block' : 'none';
+                        if (query.length > 1 && hasVisibleChild) s.classList.add('active');
+                        else if (query.length === 0) s.classList.remove('active');
+                    });
+                };
+            },
+
+            async save() {
+                const btn = document.getElementById('btn-save');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+                try {
+                    const res = await fetch('text.php', {
+                        method: 'POST',
+                        body: JSON.stringify(this.data)
+                    });
+                    const result = await res.json();
+                    if (result.status === 'success') {
+                        this.original = JSON.stringify(this.data);
+                        this.checkChanges();
+                        Swal.fire({ icon: 'success', title: 'تغییرات با موفقیت ذخیره شد', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#0f172a', color: '#fff' });
+                    }
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'خطا در ارتباط با سرور' });
+                } finally {
+                    btn.innerHTML = '<i class="fa-regular fa-floppy-disk text-lg"></i> <span>ذخیره تغییرات</span>';
                 }
+            },
 
-                showMessage('success', 'JSON بروز شد', 'برای ذخیره نهایی دکمه "ذخیره تغییرات" را بزنید.');
-            } catch (e) {
-                showMessage('error', 'Error', 'فرمت JSON نامعتبر است:\n' + e.message);
+            openRaw() {
+                document.getElementById('rawTextarea').value = JSON.stringify(this.data, null, 4);
+                document.getElementById('rawModal').classList.remove('hidden');
+            },
+
+            closeRaw() { document.getElementById('rawModal').classList.add('hidden'); },
+
+            applyRaw() {
+                try {
+                    const parsed = JSON.parse(document.getElementById('rawTextarea').value);
+                    this.data = parsed;
+                    this.render();
+                    this.closeRaw();
+                    this.checkChanges();
+                } catch (e) {
+                    Swal.fire({ icon: 'error', title: 'فرمت JSON نامعتبر است' });
+                }
+            },
+
+            export() {
+                const blob = new Blob([JSON.stringify(this.data, null, 4)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'bot_texts.json';
+                a.click();
+            },
+
+            copy(text) {
+                navigator.clipboard.writeText(text);
+                Swal.fire({ title: 'کپی شد!', toast: true, position: 'bottom-end', timer: 1500, showConfirmButton: false });
+            },
+
+            autoResizeAll() {
+                const textareas = document.querySelectorAll('textarea.text-input');
+                textareas.forEach(t => {
+                    t.style.height = 'auto';
+                    t.style.height = t.scrollHeight + 'px';
+                    t.addEventListener('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = this.scrollHeight + 'px';
+                    });
+                });
             }
         };
 
-        // 5. Import File
-        document.getElementById('importFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const json = JSON.parse(e.target.result);
-                    currentData = json;
-                    createForm(json);
-                    showMessage('success', 'فایل بارگذاری شد');
-                } catch (err) {
-                    showMessage('error', 'Error', 'فایل JSON نامعتبر است');
-                }
-            };
-            reader.readAsText(file);
-            this.value = '';
-        });
-
-        // 6. Save Changes
-        function saveChanges() {
-            // Get data from form
-            const updatedJson = getFormData();
-
-            fetch('text.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedJson)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    showMessage('success', 'تغییرات ذخیره شد');
-                    currentData = updatedJson;
-                } else {
-                    showMessage('error', 'Error', 'خطا در ذخیره سازی');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage('error', 'Error', 'خطا در ارتباط با سرور');
-            });
-        };
-        // Expose to window for onclick
-        window.saveChanges = saveChanges;
-        window.applyRawChanges = applyRawChanges;
-
-        // Helper: Get Form Data as Nested Object
-        function getFormData() {
-            const form = document.getElementById('jsonForm');
-            const result = {};
-            const inputs = form.querySelectorAll('input');
-            
-            inputs.forEach(input => {
-                // Skip if name is empty
-                if(!input.name) return;
-                
-                const keys = input.name.split('.');
-                let temp = result;
-                while (keys.length > 1) {
-                    const k = keys.shift();
-                    if (!temp[k]) temp[k] = {};
-                    temp = temp[k];
-                }
-                temp[keys[0]] = input.value;
-            });
-            
-            return result;
-        }
-
-        // 7. Export JSON
-        document.getElementById('exportJson').addEventListener('click', () => {
-            const data = getFormData();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-            const node = document.createElement('a');
-            node.setAttribute("href", dataStr);
-            node.setAttribute("download", "text_settings.json");
-            document.body.appendChild(node);
-            node.click();
-            node.remove();
-        });
-
-        // 8. Copy All
-        document.getElementById('copyAllJson').addEventListener('click', function() {
-            const data = getFormData();
-            const jsonStr = JSON.stringify(data, null, 2);
-            navigator.clipboard.writeText(jsonStr).then(() => {
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fa-solid fa-check"></i> کپی شد';
-                this.className = 'btn-act btn-green-glow';
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                    this.className = 'btn-act btn-cyan';
-                }, 2000);
-            }).catch(err => {
-                console.error('Copy failed:', err);
-                showMessage('error', 'کپی ناموفق', 'دسترسی به کلیپ‌بورد امکان‌پذیر نیست');
-            });
-        });
-
-        // Helper: Copy Single Field
-        function copyToClipboard(text, btn) {
-            navigator.clipboard.writeText(text).then(() => {
-                const originalIcon = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-                btn.style.color = '#00ffa3';
-                setTimeout(() => {
-                    btn.innerHTML = originalIcon;
-                    btn.style.color = '';
-                }, 2000);
-            }).catch(err => {
-                // Fallback for http
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
-                    const originalIcon = btn.innerHTML;
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-                    btn.style.color = '#00ffa3';
-                    setTimeout(() => {
-                        btn.innerHTML = originalIcon;
-                        btn.style.color = '';
-                    }, 2000);
-                } catch (err) {
-                    console.error('Fallback copy failed', err);
-                }
-                document.body.removeChild(textarea);
-            });
-        }
+        App.init();
     </script>
-
 </body>
 </html>
