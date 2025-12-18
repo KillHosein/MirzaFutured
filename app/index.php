@@ -11,67 +11,101 @@
 
     <style>
       :root {
-        /* Theme Variables from Panel */
-        --primary-color: #3498db;
-        --error-color: #e74c3c;
-        --background-color: #f8f9fa;
-        --card-bg: #ffffff;
-        --text-color: #333333;
-        --text-strong: #111827;
-        --text-body: #374151;
-        --text-muted: #6b7280;
-        --btn-primary: #3b82f6;
+        /* Forced Dark Theme (Professional & Sleek) */
+        --primary-color: #3b82f6; /* Vivid Blue */
+        --primary-hover: #2563eb;
+        --secondary-color: #8b5cf6; /* Violet */
+        --background-color: #0f172a; /* Deep Slate */
+        --surface-color: #1e293b; /* Slate 800 */
+        --surface-hover: #334155;
+        --text-color: #f1f5f9; /* Slate 100 */
+        --text-secondary: #94a3b8; /* Slate 400 */
+        --border-color: #334155;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
+        
         --font-family-sans: 'Vazirmatn', 'Vazir', sans-serif;
         
-        /* Telegram Theme Overrides */
-        --tg-theme-bg-color: var(--background-color);
-        --tg-theme-text-color: var(--text-color);
-        --tg-theme-button-color: var(--btn-primary);
-        --tg-theme-button-text-color: #ffffff;
-        --tg-theme-hint-color: var(--text-muted);
-        --tg-theme-link-color: var(--primary-color);
-        --tg-theme-secondary-bg-color: var(--card-bg);
+        /* Telegram Theme Overrides - FORCE DARK */
+        --tg-theme-bg-color: var(--background-color) !important;
+        --tg-theme-text-color: var(--text-color) !important;
+        --tg-theme-button-color: var(--primary-color) !important;
+        --tg-theme-button-text-color: #ffffff !important;
+        --tg-theme-hint-color: var(--text-secondary) !important;
+        --tg-theme-link-color: var(--primary-color) !important;
+        --tg-theme-secondary-bg-color: var(--surface-color) !important;
+        --tg-theme-header-bg-color: var(--background-color) !important;
         
-        /* Additional Colors */
+        /* App Specific */
         --color-primary: var(--primary-color);
         --color-background: var(--background-color);
         --color-text: var(--text-color);
-      }
-
-      /* Dark Mode Support matching Panel */
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --background-color: #111827; /* Darker background for app feel */
-          --card-bg: #1f2937;
-          --text-color: #e5e7eb;
-          --text-strong: #f9fafb;
-          --text-body: #d1d5db;
-          --text-muted: #9ca3af;
-          --btn-primary: #60a5fa;
-          
-          --tg-theme-bg-color: var(--background-color);
-          --tg-theme-text-color: var(--text-color);
-          --tg-theme-button-color: var(--btn-primary);
-          --tg-theme-secondary-bg-color: var(--card-bg);
-        }
+        
+        /* UI Dimensions */
+        --btn-radius: 12px;
+        --card-radius: 16px;
       }
 
       body {
         font-family: var(--font-family-sans) !important;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background: linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%); /* Panel Gradient */
-        color: var(--text-body);
-        direction: rtl; /* Ensure RTL for Persian */
+        background-color: var(--background-color) !important;
+        color: var(--text-color) !important;
+        direction: rtl;
         overflow-x: hidden;
         margin: 0;
         padding: 0;
       }
+
+      /* Enhanced Buttons (More "Button-like") */
+      button, .btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border: none;
+        border-radius: var(--btn-radius);
+        padding: 12px 20px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
       
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: linear-gradient(180deg, #111827 0%, #0b1220 100%);
-        }
+      button:active, .btn:active {
+        transform: scale(0.96);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      }
+
+      /* Enhanced Cards */
+      .card, .box {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: var(--card-radius);
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+
+      /* Enhanced Inputs */
+      input, select, textarea {
+        background-color: var(--surface-hover) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-color) !important;
+        border-radius: var(--btn-radius) !important;
+        padding: 12px 16px !important;
+        transition: all 0.2s ease;
+      }
+      
+      input:focus, select:focus, textarea:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        outline: none;
       }
 
       /* Professional Scrollbar */
@@ -83,9 +117,8 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: var(--text-muted);
+        background: var(--surface-hover);
         border-radius: 10px;
-        opacity: 0.5;
       }
       
       /* Smooth Entry */
@@ -98,13 +131,13 @@
         to { opacity: 1; }
       }
 
-      /* Prevent text selection on UI elements for app-like feel */
+      /* Prevent text selection */
       .no-select {
         user-select: none;
         -webkit-user-select: none;
       }
       
-      /* Loading Screen Styles */
+      /* Loading Screen */
       .loading-container {
         display: flex;
         flex-direction: column;
@@ -112,15 +145,16 @@
         align-items: center;
         height: 100vh;
         width: 100%;
-        background: inherit;
-        color: var(--text-strong);
+        background: var(--background-color);
+        color: var(--text-color);
       }
       .loading-spinner {
         animation: spin 1s linear infinite;
         height: 48px;
         width: 48px;
-        color: var(--btn-primary);
+        color: var(--primary-color);
         margin-bottom: 16px;
+        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
       }
     </style>
 
