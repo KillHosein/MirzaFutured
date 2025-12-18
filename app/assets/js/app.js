@@ -448,7 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openLink(url) {
         if (tg) {
-            if (typeof tg.openTelegramLink === 'function' && /^https?:\\/\\/t\\.me\\//i.test(url)) {
+            // Fix regex escaping: matches https://t.me/ or http://t.me/
+            if (typeof tg.openTelegramLink === 'function' && /^https?:\/\/t\.me\//i.test(url)) {
                 tg.openTelegramLink(url);
                 return;
             }
