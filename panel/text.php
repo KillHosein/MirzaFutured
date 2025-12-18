@@ -173,53 +173,37 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         }
         .btn-copy-field:hover { background: rgba(255,255,255,0.2); color: var(--neon-blue); }
 
-        /* --- Floating Dock --- */
-        .dock-container {
-            position: fixed; bottom: 30px; left: 0; right: 0;
-            display: flex; justify-content: center; z-index: 2000; pointer-events: none;
+        /* --- Accordion --- */
+        .json-section {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            overflow: hidden;
         }
-        .dock {
-            pointer-events: auto; display: flex; align-items: center; gap: 12px;
-            background: rgba(15, 15, 20, 0.9); backdrop-filter: blur(35px);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 30px; padding: 15px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.9);
-            max-width: 95vw; overflow-x: auto; scrollbar-width: none;
+        .json-summary {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            font-weight: 700; color: var(--neon-blue);
+            transition: 0.3s;
         }
-        .dock::-webkit-scrollbar { display: none; }
-        
-        .dock-item {
-            width: 60px; height: 60px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 20px;
-            color: var(--text-sec); font-size: 1.6rem;
-            text-decoration: none; position: relative; background: transparent;
-            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5);
+        .json-summary:hover { background: rgba(255, 255, 255, 0.08); }
+        .json-summary::after {
+            content: '\f107'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            transition: 0.3s;
         }
-        .dock-item:hover {
-            width: 75px; height: 75px; margin: 0 6px;
-            background: rgba(255,255,255,0.1); color: #fff;
-            transform: translateY(-12px);
-        }
-        .dock-item.active {
-            color: var(--neon-blue); background: rgba(0, 242, 255, 0.1);
-        }
-        
-        .dock-label { 
-            font-size: 0.9rem; font-weight: 600; opacity: 0; position: absolute; 
-            bottom: 100%; transition: 0.3s; white-space: nowrap; 
-            background: rgba(0,0,0,0.9); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; pointer-events: none; margin-bottom: 15px;
-        }
-        .dock-item:hover .dock-label { opacity: 1; bottom: 100%; transform: translateY(-5px); }
-        .dock-item.active .dock-label { opacity: 1; bottom: 100%; color: var(--neon-blue); }
+        details[open] .json-summary::after { transform: rotate(180deg); }
+        .json-content { padding: 20px; }
 
-        .dock-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); margin: 0 6px; flex-shrink: 0; }
-
-        @media (max-width: 768px) {
-            .container-fluid-custom { padding: 30px 15px 160px 15px; }
-            .dock { width: 95%; justify-content: flex-start; }
-            .dock-item { width: 50px; height: 50px; font-size: 1.4rem; }
-            .page-title h1 { font-size: 2.5rem; }
+        /* --- Search Bar --- */
+        .search-container {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(23, 23, 30, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 0; margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
     </style>
 </head>
@@ -245,13 +229,31 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         <!-- Main Panel -->
         <div class="glass-panel anim d-1">
             
-            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
-                <button type="button" id="copyAllJson" class="btn-act btn-cyan">
-                    <i class="fa-solid fa-copy"></i> کپی کل JSON
-                </button>
-                <button type="button" id="exportJson" class="btn-act">
-                    <i class="fa-solid fa-file-export"></i> خروجی JSON
-                </button>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div class="d-flex gap-2">
+                    <button type="button" id="toggleRaw" class="btn-act" style="border-color: var(--neon-purple); color: var(--neon-purple);">
+                        <i class="fa-solid fa-code"></i> ویرایشگر خام
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                    <button type="button" onclick="document.getElementById('importFile').click()" class="btn-act" style="border-color: var(--neon-amber); color: var(--neon-amber);">
+                        <i class="fa-solid fa-file-import"></i> وارد کردن JSON
+                    </button>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" id="copyAllJson" class="btn-act btn-cyan">
+                        <i class="fa-solid fa-copy"></i> کپی کل
+                    </button>
+                    <button type="button" id="exportJson" class="btn-act">
+                        <i class="fa-solid fa-file-export"></i> خروجی
+                    </button>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="form-group" style="margin: 0;">
+                    <input type="text" id="searchField" class="input-readable" placeholder="جستجو در متن‌ها..." style="border-color: var(--neon-blue);">
+                    <i class="fa-solid fa-search" style="position: absolute; left: 20px; top: 20px; color: var(--text-sec);"></i>
+                </div>
             </div>
 
             <form id="jsonForm"></form>
@@ -262,6 +264,25 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             
         </div>
 
+    </div>
+
+    <!-- Raw Editor Modal -->
+    <div class="modal fade" id="rawModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;">
+                <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <h5 class="modal-title" style="color: #fff;">ویرایشگر خام JSON</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="rawJsonText" class="input-readable" style="height: 400px; font-family: monospace; line-height: 1.5; resize: vertical;"></textarea>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                    <button type="button" class="btn-act" data-bs-dismiss="modal">انصراف</button>
+                    <button type="button" onclick="applyRawChanges()" class="btn-act btn-green-glow" style="height: 45px; font-size: 1rem;">اعمال تغییرات</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Floating Dock -->
@@ -311,23 +332,40 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script>
         let currentData = {};
 
-        // 1. Create Form
-        function createForm(data, parentKey = '') {
-            const form = document.getElementById('jsonForm');
-            Object.keys(data).forEach((key, index) => {
+        // 1. Create Form (Recursive with Accordion)
+        function createForm(data, parentElement = null, parentKey = '') {
+            const container = parentElement || document.getElementById('jsonForm');
+            if(!parentElement) container.innerHTML = ''; // Clear only if root
+
+            Object.keys(data).forEach((key) => {
                 const fullKey = parentKey ? `${parentKey}.${key}` : key;
-                if (typeof data[key] === 'object' && data[key] !== null) {
-                    // Recursive for objects if needed, but simple key-value preferred here
-                    // If complex, maybe add a section title?
-                    const sectionTitle = document.createElement('h4');
-                    sectionTitle.style.color = 'var(--neon-blue)';
-                    sectionTitle.style.marginTop = '20px';
-                    sectionTitle.innerText = fullKey;
-                    form.appendChild(sectionTitle);
-                    createForm(data[key], fullKey);
+                const value = data[key];
+
+                if (typeof value === 'object' && value !== null) {
+                    // Create Accordion Section
+                    const details = document.createElement('details');
+                    details.className = 'json-section';
+                    // Open by default if it's a top-level section or small enough
+                    if(!parentKey) details.open = true;
+
+                    const summary = document.createElement('summary');
+                    summary.className = 'json-summary';
+                    summary.innerText = fullKey;
+                    
+                    const content = document.createElement('div');
+                    content.className = 'json-content';
+
+                    details.appendChild(summary);
+                    details.appendChild(content);
+                    container.appendChild(details);
+
+                    createForm(value, content, fullKey);
                 } else {
+                    // Create Input Field
                     const group = document.createElement('div');
-                    group.className = 'form-group';
+                    group.className = 'form-group field-item';
+                    group.dataset.key = fullKey.toLowerCase();
+                    group.dataset.value = String(value).toLowerCase();
                     
                     const label = document.createElement('label');
                     label.innerText = fullKey;
@@ -335,9 +373,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     const input = document.createElement('input');
                     input.type = 'text';
                     input.className = 'input-readable';
-                    input.value = data[key];
+                    input.value = value;
                     input.name = fullKey;
                     input.id = 'field_' + fullKey.replace(/\./g, '_');
+                    
+                    // Auto-expand textarea if long? For now keep as input.
                     
                     const copyBtn = document.createElement('button');
                     copyBtn.type = 'button';
@@ -348,37 +388,104 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     group.appendChild(label);
                     group.appendChild(input);
                     group.appendChild(copyBtn);
-                    form.appendChild(group);
+                    container.appendChild(group);
                 }
             });
         }
 
         // 2. Load Data
-        fetch('<?php echo $Pathfile; ?>text.json')
-            .then(response => response.json())
-            .then(data => {
-                currentData = data;
-                createForm(data);
-            })
-            .catch(error => console.error('Error loading JSON:', error));
+        function loadData() {
+            fetch('text.json?v=' + new Date().getTime())
+                .then(response => response.json())
+                .then(data => {
+                    currentData = data;
+                    createForm(data);
+                })
+                .catch(error => console.error('Error loading JSON:', error));
+        }
+        loadData();
 
-        // 3. Save Changes
-        function saveChanges() {
-            const form = document.getElementById('jsonForm');
-            const formData = new FormData(form);
-            const updatedJson = {};
+        // 3. Search Functionality
+        document.getElementById('searchField').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            const items = document.querySelectorAll('.field-item');
+            const sections = document.querySelectorAll('details.json-section');
             
-            // Reconstruct JSON from flat keys (dot notation)
-            formData.forEach((value, key) => {
-                const keys = key.split('.');
-                let temp = updatedJson;
-                while (keys.length > 1) {
-                    const k = keys.shift();
-                    if (!temp[k]) temp[k] = {};
-                    temp = temp[k];
+            items.forEach(item => {
+                const key = item.dataset.key;
+                const val = item.dataset.value;
+                if (key.includes(term) || val.includes(term)) {
+                    item.style.display = 'block';
+                    // Ensure parent details is open
+                    let parent = item.closest('details');
+                    while(parent) {
+                        parent.open = true;
+                        parent = parent.parentElement.closest('details');
+                    }
+                } else {
+                    item.style.display = 'none';
                 }
-                temp[keys[0]] = value;
             });
+
+            // Hide empty sections if needed (optional refinement)
+        });
+
+        // 4. Raw Editor
+        const rawModal = new bootstrap.Modal(document.getElementById('rawModal'));
+        document.getElementById('toggleRaw').addEventListener('click', () => {
+            // Get current form values to ensure latest edits are captured
+            const formValues = getFormData();
+            document.getElementById('rawJsonText').value = JSON.stringify(formValues, null, 4);
+            rawModal.show();
+        });
+
+        window.applyRawChanges = function() {
+            try {
+                const raw = document.getElementById('rawJsonText').value;
+                const parsed = JSON.parse(raw);
+                currentData = parsed;
+                createForm(parsed);
+                rawModal.hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'JSON بروز شد',
+                    text: 'برای ذخیره نهایی دکمه "ذخیره تغییرات" را بزنید.',
+                    background: '#1e1e2d', color: '#fff', timer: 2000, showConfirmButton: false
+                });
+            } catch (e) {
+                Swal.fire('Error', 'فرمت JSON نامعتبر است:\n' + e.message, 'error');
+            }
+        };
+
+        // 5. Import File
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    currentData = json;
+                    createForm(json);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'فایل بارگذاری شد',
+                        background: '#1e1e2d', color: '#fff', timer: 1500, showConfirmButton: false
+                    });
+                } catch (err) {
+                    Swal.fire('Error', 'فایل JSON نامعتبر است', 'error');
+                }
+            };
+            reader.readAsText(file);
+            // Reset input
+            this.value = '';
+        });
+
+        // 6. Save Changes
+        window.saveChanges = function() {
+            // Get data from form (in case user edited inputs)
+            const updatedJson = getFormData();
 
             fetch('text.php', {
                 method: 'POST',
@@ -389,12 +496,9 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             .then(data => {
                 if (data.status === 'success') {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'تغییرات ذخیره شد',
-                        showConfirmButton: false,
-                        timer: 1500,
-                        background: '#1e1e2d',
-                        color: '#fff'
+                        icon: 'success', title: 'تغییرات ذخیره شد',
+                        showConfirmButton: false, timer: 1500,
+                        background: '#1e1e2d', color: '#fff'
                     });
                     currentData = updatedJson;
                 } else {
@@ -405,27 +509,61 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 console.error('Error:', error);
                 Swal.fire('Error', 'خطا در ارتباط با سرور', 'error');
             });
+        };
+
+        // Helper: Get Form Data as Nested Object
+        function getFormData() {
+            const form = document.getElementById('jsonForm');
+            const formData = new FormData(form); // This only gets inputs, not recursive structure directly
+            // Actually, since we generated inputs with name="key.subkey", we can reconstruct easily
+            // But wait, FormData only grabs inputs inside a <form>. 
+            // Our createForm appends to #jsonForm which IS a form tag.
+            // However, details/summary structure might affect it? No, standard HTML form collection works deep.
+            
+            const result = {};
+            // We need to iterate all inputs manually to handle hierarchy correctly if we want to support dynamic structure changes from Raw Editor
+            // But for simple value updates, iterating inputs is fine.
+            
+            // Better approach: start with currentData structure and update values from inputs
+            // OR reconstruct from inputs. Reconstruct is safer for "what you see is what you get".
+            
+            const inputs = form.querySelectorAll('input');
+            inputs.forEach(input => {
+                const keys = input.name.split('.');
+                let temp = result;
+                while (keys.length > 1) {
+                    const k = keys.shift();
+                    if (!temp[k]) temp[k] = {};
+                    temp = temp[k];
+                }
+                temp[keys[0]] = input.value;
+            });
+            
+            // Merge with currentData to keep keys that might be hidden/missing? 
+            // No, the form represents the full state.
+            return result;
         }
 
-        // 4. Export JSON
+        // 7. Export JSON
         document.getElementById('exportJson').addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentData, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "text_settings.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            const data = getFormData();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const node = document.createElement('a');
+            node.setAttribute("href", dataStr);
+            node.setAttribute("download", "text_settings.json");
+            document.body.appendChild(node);
+            node.click();
+            node.remove();
         });
 
-        // 5. Copy All JSON
+        // 8. Copy All
         document.getElementById('copyAllJson').addEventListener('click', function() {
-            const jsonStr = JSON.stringify(currentData, null, 2);
+            const data = getFormData();
+            const jsonStr = JSON.stringify(data, null, 2);
             navigator.clipboard.writeText(jsonStr).then(() => {
                 const originalText = this.innerHTML;
                 this.innerHTML = '<i class="fa-solid fa-check"></i> کپی شد';
                 this.className = 'btn-act btn-green-glow';
-                this.style.width = 'auto'; // Reset width if needed
                 setTimeout(() => {
                     this.innerHTML = originalText;
                     this.className = 'btn-act btn-cyan';
