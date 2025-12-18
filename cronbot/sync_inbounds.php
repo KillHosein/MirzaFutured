@@ -27,6 +27,31 @@ echo "Starting inbound synchronization...\n";
 if (!$is_cli) echo "<br>";
 
 try {
+    // 0. Ensure Inbound table exists
+    $result = $pdo->query("SHOW TABLES LIKE 'Inbound'");
+    if ($result->rowCount() == 0) {
+        $pdo->exec("CREATE TABLE Inbound (
+            id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            location VARCHAR(200) NULL,
+            protocol VARCHAR(50) NULL,
+            nameinbound VARCHAR(200) NULL,
+            setting TEXT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci");
+        echo "Created Inbound table.\n";
+        if (!$is_cli) echo "<br>";
+    }
+
+    // 0.1 Ensure x_ui table exists (as per error logs)
+    $result = $pdo->query("SHOW TABLES LIKE 'x_ui'");
+    if ($result->rowCount() == 0) {
+        $pdo->exec("CREATE TABLE x_ui (
+            codepanel VARCHAR(200) PRIMARY KEY,
+            setting TEXT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci");
+        echo "Created x_ui table.\n";
+        if (!$is_cli) echo "<br>";
+    }
+
     // 1. Clear existing inbounds (optional, or we can upsert)
     // For now, let's truncate to ensure fresh data, or we can check existence.
     // Truncating is safer for synchronization if we want to remove deleted inbounds.
