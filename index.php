@@ -68,8 +68,8 @@ require_once 'function.php';
 require_once 'keyboard.php';
 require_once 'vendor/autoload.php';
 require_once 'panels.php';
-// $content = file_get_contents("php://input");
-// $update = json_decode($content, true);
+$content = file_get_contents("php://input");
+$update = json_decode($content, true);
 
 if (empty($update)) {
     header('Content-Type: text/html; charset=utf-8');
