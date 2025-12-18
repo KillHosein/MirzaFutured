@@ -194,6 +194,18 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             --radius-main: 24px;
         }
 
+        /* --- New: Animated Background Canvas Style --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, #0a0a14, #050509);
+        }
+
         /* --- Base & Scrollbar --- */
         * { box-sizing: border-box; outline: none; }
         ::-webkit-scrollbar { width: 6px; }
@@ -202,16 +214,14 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
         body {
-            background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(192, 38, 211, 0.08) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(0, 242, 255, 0.08) 0%, transparent 45%);
+            background-color: transparent; /* Changed to show canvas */
             color: var(--text-pri);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0; padding: 0;
             min-height: 100vh;
             padding-bottom: 140px;
             overflow-x: hidden;
+            position: relative;
         }
 
         /* --- Container --- */
@@ -219,6 +229,8 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             width: 100%; max-width: 1920px; margin: 0 auto;
             padding: 35px 5%; 
             display: flex; flex-direction: column; gap: 35px;
+            position: relative;
+            z-index: 1;
         }
 
         /* --- 1. Header Enhanced --- */
@@ -462,6 +474,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     </style>
 </head>
 <body>
+
+    <!-- Animated Canvas Background -->
+    <canvas id="bg-canvas"></canvas>
 
     <div class="dashboard-container">
         
@@ -733,6 +748,78 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 scales: { x: { display: false }, y: { display: false } }
             }
         });
+
+        // --- Background Animation Engine ---
+        (function() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const particleCount = 60;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() {
+                    this.init();
+                }
+                init() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+                    this.vy = (Math.random() - 0.5) * 0.5;
+                    this.radius = Math.random() * 2 + 1;
+                    this.color = Math.random() > 0.5 ? '#00f2ff' : '#c026d3';
+                    this.alpha = Math.random() * 0.5 + 0.1;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw Connections
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dist = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+                        if (dist < 150) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - dist/1500})`;
+                            ctx.stroke();
+                        }
+                    }
+                    particles[i].update();
+                    particles[i].draw();
+                }
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
     </script>
 </body>
 </html>
