@@ -70,7 +70,7 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ورود به پنل مدیریت حرفه‌ای</title>
+    <title>ورود به پنل مدیریت</title>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -332,7 +332,7 @@ if (isset($_POST['login'])) {
                         <span class="developer-name">
                             <i class="fa-brands fa-telegram tg-symbol"></i> KillHosein
                         </span>
-                        <span class="contact-hint">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
+                        <span class="contact-hint">جهت ارتباط در تلگرام کلیک کنید</span>
                     </a>
                 </div>
             </div>
@@ -377,7 +377,7 @@ if (isset($_POST['login'])) {
                             <span class="developer-name">
                                 <i class="fa-brands fa-telegram tg-symbol"></i> KillHosein
                             </span>
-                            <span class="contact-hint">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
+                            <span class="contact-hint">جهت ارتباط در تلگرام کلیک کنید</span>
                         </a>
                     </div>
                 </form>
