@@ -1,0 +1,270 @@
+/* * Quantum Supreme Theme v3.0 (Nebula Edition)
+ * Ultra-Modern UI for Telegram Web Apps
+ */
+
+:root {
+    /* --- 1. Colors: Deep Space & Neon --- */
+    --bg-void: #030014;       /* Darker Void */
+    --bg-deep: #0f0728;       
+    
+    /* Neon Accents */
+    --primary-glow: #6366f1;  /* Indigo Neon */
+    --accent-cyan: #00d4ff;   /* Cyber Blue */
+    --accent-pink: #f472b6;   /* Soft Pink */
+    --accent-purple: #a855f7; /* Electric Purple */
+    
+    --text-main: #ffffff;
+    --text-muted: #9ca3af;
+    
+    /* --- Glassmorphism 3.0 --- */
+    --glass-bg: rgba(17, 25, 40, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.125);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+    --glass-blur: 20px;
+    
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+}
+
+/* --- 2. Global Reset --- */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: none !important;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    margin: 0; padding: 0;
+    min-height: 100vh;
+    color: var(--text-main);
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    
+    /* Animated Aurora Background */
+    background: linear-gradient(
+        125deg,
+        #000000 0%,
+        #0f0728 40%,
+        #0a0a2e 70%,
+        #000000 100%
+    );
+    background-size: 200% 200%;
+    animation: auroraGradient 15s ease infinite;
+}
+
+@keyframes auroraGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Canvas for Particles */
+#bg-canvas {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+    opacity: 0.6; /* Subtle blend */
+    pointer-events: none;
+}
+
+/* --- 3. Splash Screen --- */
+#splash-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-void);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    transition: all 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+.splash-logo-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hexagon Pulse Effect */
+.hex-ripple {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(transparent 30%, rgba(99, 102, 241, 0.4) 70%);
+    box-shadow: 0 0 20px var(--primary-glow);
+    opacity: 0;
+    animation: rippleSplash 2.5s infinite;
+}
+.hex-ripple:nth-child(2) { animation-delay: 0.8s; border-color: var(--accent-cyan); }
+
+@keyframes rippleSplash {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+.splash-text {
+    margin-top: 40px;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(to right, #fff, var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+    animation: fadeInUp 1s ease-out;
+}
+
+/* --- 4. Glass Cards (The Jewel) --- */
+
+/* Reset Tailwind/React Backgrounds */
+#root > div, .bg-zinc-900, .bg-slate-900, .bg-gray-900, .bg-black {
+    background: transparent !important;
+}
+
+/* The Main Glass Class */
+.card, .bg-zinc-800, .bg-slate-800, .bg-surface {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
+    
+    /* Double Border Effect for Depth */
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: 
+        var(--glass-shadow), 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important; /* Inner highlight */
+    
+    border-radius: var(--radius-xl) !important;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Top Glossy Reflection */
+.card::before, .bg-zinc-800::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card:active {
+    transform: scale(0.98);
+}
+
+/* --- 5. Typography --- */
+h1, h2, h3, .font-bold {
+    color: #fff !important;
+    letter-spacing: -0.5px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+/* Gradient Text for Emphasis */
+.text-gradient {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- 6. Futuristic Buttons --- */
+button, .btn {
+    font-family: 'Vazirmatn', sans-serif !important;
+    font-weight: 700 !important;
+    border-radius: var(--radius-md) !important;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* Primary Button */
+[class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
+    background: linear-gradient(90deg, var(--primary-glow), var(--accent-purple)) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.3), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    color: white !important;
+}
+
+/* Button Glow on Active */
+button:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.6) !important;
+}
+
+/* --- 7. Inputs --- */
+input, textarea, select {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    color: white !important;
+    font-size: 15px !important;
+    padding: 14px !important;
+    transition: 0.3s ease !important;
+}
+input:focus {
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15) !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* --- 8. Layout Adjustments --- */
+#root {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-bottom: 110px;
+}
+
+/* --- 9. Footer --- */
+.pro-footer {
+    margin-top: auto;
+    padding: 25px;
+    text-align: center;
+    z-index: 10;
+}
+.credit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 50px;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.credit-badge:hover {
+    background: rgba(255,255,255,0.05);
+    transform: translateY(-4px) scale(1.05);
+    border-color: var(--accent-cyan);
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+}
+.credit-badge i { color: var(--accent-cyan); }
+
+/* --- 10. Animation Utility Classes --- */
+.fade-in-up { animation: fadeInUp 0.7s ease-out forwards; opacity: 0; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
