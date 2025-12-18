@@ -55,7 +55,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>مدیریت محتوای ربات</title>
+    <title>مدیریت هوشمند محتوا</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
@@ -66,7 +66,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             --bg-deep: #020617;
             --accent-primary: #8b5cf6;
             --accent-secondary: #06b6d4;
-            --glass-panel: rgba(15, 23, 42, 0.7);
+            --glass-panel: rgba(15, 23, 42, 0.75);
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
@@ -78,209 +78,231 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             color: var(--text-main);
             min-height: 100vh;
             background-image: 
-                radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+                radial-gradient(circle at 0% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
             background-attachment: fixed;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
-        /* Panels */
         .glass-card {
             background: var(--glass-panel);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 28px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* Form Controls */
         .text-input {
             width: 100%;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(2, 6, 23, 0.5);
             border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: white;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 0.95rem;
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: #fff;
+            transition: all 0.2s;
+            font-size: 0.9rem;
             line-height: 1.6;
             resize: none;
         }
         .text-input:focus {
             outline: none;
             border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(2, 6, 23, 0.8);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
         }
 
-        /* Sections */
+        /* Section Container with Grid Support */
+        .section-container {
+            height: fit-content;
+            break-inside: avoid;
+        }
+
         .section-header {
             cursor: pointer;
-            padding: 16px 24px;
+            padding: 18px 22px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            margin-bottom: 12px;
-            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
             border: 1px solid transparent;
+            transition: all 0.2s;
         }
         .section-header:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.05);
             border-color: rgba(255, 255, 255, 0.05);
         }
-        .section-content {
-            padding: 8px 12px 24px 12px;
-            display: none;
-        }
-        .section-container.active .section-content { display: block; }
+
         .section-container.active .section-header {
-            background: rgba(139, 92, 246, 0.05);
-            border-color: rgba(139, 92, 246, 0.2);
-            margin-bottom: 4px;
+            background: linear-gradient(to left, rgba(139, 92, 246, 0.1), transparent);
+            border-color: rgba(139, 92, 246, 0.25);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
         }
 
-        /* Buttons */
+        .section-content {
+            padding: 20px;
+            display: none;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            border-top: none;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            background: rgba(139, 92, 246, 0.02);
+        }
+        .section-container.active .section-content { display: block; }
+
         .btn-modern {
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 14px;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
+            gap: 10px;
+            transition: all 0.3s;
             cursor: pointer;
         }
         .btn-save {
             background: linear-gradient(135deg, var(--accent-primary), #6366f1);
             color: white;
-            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 8px 20px -6px rgba(139, 92, 246, 0.5);
         }
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 25px -5px rgba(139, 92, 246, 0.5);
-        }
-        .btn-save:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+        .btn-save:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-save:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
 
-        /* Floating Nav */
         .floating-nav {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            padding: 8px 12px;
-            border-radius: 20px;
-            display: flex;
-            gap: 8px;
-            z-index: 1000;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); padding: 10px 14px;
+            border-radius: 22px; display: flex; gap: 10px; z-index: 1000;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
         }
 
         .nav-item {
-            width: 44px; height: 44px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 14px;
-            color: var(--text-muted);
-            transition: all 0.2s;
+            width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+            border-radius: 15px; color: var(--text-muted); transition: 0.2s;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { background: var(--accent-primary); color: white; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+        .nav-item.active { background: var(--accent-primary); color: #fff; }
 
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeIn 0.4s ease forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide { animation: slideUp 0.5s ease forwards; }
+
+        /* Multi-column grid for dashboard feel */
+        .editor-grid {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+        @media (min-width: 1024px) { .editor-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1536px) { .editor-grid { grid-template-columns: repeat(3, 1fr); } }
     </style>
 </head>
-<body class="pb-32">
+<body class="pb-36">
 
-    <!-- Header Section -->
-    <div class="max-w-6xl mx-auto px-6 pt-12">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+    <div class="max-w-[1600px] mx-auto px-6 pt-10">
+        
+        <!-- Header & Stats Overview -->
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 mb-10">
             <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
-                        <i class="fa-solid fa-feather-pointed text-violet-400"></i>
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-14 h-14 rounded-2xl bg-violet-600/20 flex items-center justify-center border border-violet-500/30 shadow-lg shadow-violet-500/10">
+                        <i class="fa-solid fa-wand-magic-sparkles text-violet-400 text-2xl"></i>
                     </div>
-                    <h1 class="text-3xl font-black text-white tracking-tight">مدیریت محتوای <span class="text-violet-400">ربات</span></h1>
+                    <div>
+                        <h1 class="text-3xl font-black text-white leading-none">مدیریت محتوای <span class="text-violet-400">هوشمند</span></h1>
+                        <p class="text-slate-500 text-xs font-bold mt-2 uppercase tracking-widest">Bot Text & Language Engine</p>
+                    </div>
                 </div>
-                <p class="text-slate-400 text-sm font-medium mr-1">پیکربندی تمامی پیام‌ها و پاسخ‌های خودکار سیستم</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Mini Stats to fill space -->
+                <div class="glass-card px-5 py-3 flex items-center gap-4">
+                    <div class="text-left">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Total Keys</div>
+                        <div id="stat-keys" class="text-lg font-black text-white">0</div>
+                    </div>
+                    <div class="w-px h-8 bg-white/10"></div>
+                    <div class="text-left">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Sections</div>
+                        <div id="stat-sections" class="text-lg font-black text-violet-400">0</div>
+                    </div>
+                </div>
+
+                <button onclick="App.save()" id="btn-save" class="btn-modern btn-save" disabled>
+                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                    <span>ذخیره نهایی</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Master Toolbar -->
+        <div class="glass-card p-5 mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="relative w-full md:w-1/2">
+                <i class="fa-solid fa-filter absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="searchField" placeholder="جستجوی سریع در کلیدها، دسته‌ها یا محتوا..." class="w-full bg-slate-900/60 border border-white/5 rounded-2xl py-3 pr-12 pl-4 text-sm focus:ring-2 focus:ring-violet-500/40 outline-none transition-all placeholder:text-slate-600">
             </div>
             
-            <div class="flex items-center gap-3">
-                <div class="hidden sm:flex flex-col items-end ml-4">
-                    <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">آخرین همگام‌سازی</span>
-                    <span class="text-xs text-slate-300"><?php echo $todayDate; ?></span>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <button onclick="App.openRaw()" class="flex-1 md:flex-none h-12 px-5 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center gap-3 text-slate-400 hover:text-white hover:bg-violet-600/20 hover:border-violet-500/30 transition group">
+                    <i class="fa-solid fa-terminal text-sm group-hover:animate-pulse"></i>
+                    <span class="text-sm font-bold">ویرایش کد</span>
+                </button>
+                <button onclick="App.export()" class="h-12 w-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-cyan-400/10 transition" title="خروجی فایل">
+                    <i class="fa-solid fa-file-export"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid Editor -->
+        <div id="editor-grid" class="editor-grid">
+            <!-- Loading Skeleton -->
+            <div class="col-span-full py-32 flex flex-col items-center justify-center opacity-30">
+                <div class="relative w-16 h-16 mb-6">
+                    <div class="absolute inset-0 border-4 border-violet-500/20 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-t-violet-500 rounded-full animate-spin"></div>
                 </div>
-                <button onclick="App.save()" id="btn-save" class="btn-modern btn-save" disabled>
-                    <i class="fa-regular fa-floppy-disk text-lg"></i>
-                    <span>ذخیره تغییرات</span>
-                </button>
+                <p class="font-mono text-xs tracking-widest uppercase">Fetching Localization Data...</p>
             </div>
         </div>
 
-        <!-- Toolbar -->
-        <div class="glass-card p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
-            <div class="relative flex-1 min-w-[300px]">
-                <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                <input type="text" id="searchField" placeholder="جستجو در بین کلیدها یا محتوا..." class="w-full bg-slate-900/50 border border-white/5 rounded-xl py-2.5 pr-11 pl-4 text-sm focus:ring-2 focus:ring-violet-500/50 outline-none transition-all">
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="App.openRaw()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition" title="ویرایش خام">
-                    <i class="fa-solid fa-code"></i>
-                </button>
-                <button onclick="App.export()" class="w-11 h-11 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition" title="خروجی JSON">
-                    <i class="fa-solid fa-download"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Main Editor Container -->
-        <div id="editor-container" class="space-y-4">
-            <!-- Loading State -->
-            <div id="loader" class="flex flex-col items-center justify-center py-24 opacity-50">
-                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-violet-500 mb-4"></i>
-                <p class="text-sm font-bold tracking-widest uppercase">Initializing Database...</p>
-            </div>
-        </div>
     </div>
 
-    <!-- Raw Editor Modal (Simplified with Tailwind) -->
-    <div id="rawModal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
-        <div class="glass-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+    <!-- Direct Code Editor Modal -->
+    <div id="rawModal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-4 md:p-10 bg-black/90 backdrop-blur-md">
+        <div class="glass-card w-full max-w-5xl max-h-[85vh] flex flex-col overflow-hidden shadow-[0_0_100px_rgba(139,92,246,0.15)]">
             <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <h3 class="font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-code text-violet-400"></i>
-                    ویرایشگر مستقیم JSON
-                </h3>
-                <button onclick="App.closeRaw()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-code"></i></div>
+                    <h3 class="font-bold text-lg tracking-tight">ساختار خام JSON</h3>
+                </div>
+                <button onclick="App.closeRaw()" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="p-6 overflow-y-auto">
-                <textarea id="rawTextarea" class="w-full h-[500px] bg-slate-950 border border-white/5 rounded-xl p-6 font-mono text-sm text-emerald-400 focus:outline-none focus:ring-2 focus:ring-violet-500/50" dir="ltr"></textarea>
+            <div class="p-4 bg-slate-950/50 flex-1 overflow-hidden">
+                <textarea id="rawTextarea" class="w-full h-full bg-transparent border-none p-4 font-mono text-sm text-blue-300 focus:outline-none resize-none custom-scrollbar" dir="ltr" spellcheck="false"></textarea>
             </div>
-            <div class="p-6 border-t border-white/5 bg-white/5 flex justify-end gap-3">
-                <button onclick="App.closeRaw()" class="px-6 py-2 rounded-xl text-slate-400 hover:text-white transition">انصراف</button>
-                <button onclick="App.applyRaw()" class="px-8 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition">اعمال تغییرات</button>
+            <div class="p-6 border-t border-white/5 bg-white/5 flex justify-end gap-4">
+                <button onclick="App.closeRaw()" class="text-sm font-bold text-slate-500 hover:text-white transition px-4">لغو</button>
+                <button onclick="App.applyRaw()" class="btn-modern bg-emerald-600 hover:bg-emerald-500 text-white text-sm">بروزرسانی مخزن</button>
             </div>
         </div>
     </div>
 
-    <!-- Navigation Bar -->
+    <!-- Navigation -->
     <nav class="floating-nav">
-        <a href="index.php" class="nav-item" title="داشبورد"><i class="fa-solid fa-house"></i></a>
-        <a href="users.php" class="nav-item" title="کاربران"><i class="fa-solid fa-users"></i></a>
+        <a href="index.php" class="nav-item" title="داشبورد"><i class="fa-solid fa-gauge-high"></i></a>
+        <a href="users.php" class="nav-item" title="کاربران"><i class="fa-solid fa-user-group"></i></a>
         <a href="service.php" class="nav-item" title="سرویس‌ها"><i class="fa-solid fa-server"></i></a>
         <div class="w-px h-6 bg-white/10 my-auto mx-1"></div>
-        <a href="text.php" class="nav-item active" title="متون"><i class="fa-solid fa-file-pen"></i></a>
-        <a href="settings.php" class="nav-item" title="تنظیمات"><i class="fa-solid fa-gear"></i></a>
+        <a href="text.php" class="nav-item active" title="متون"><i class="fa-solid fa-language"></i></a>
+        <a href="settings.php" class="nav-item" title="تنظیمات"><i class="fa-solid fa-sliders"></i></a>
     </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -300,35 +322,56 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     this.data = await res.json();
                     this.original = JSON.stringify(this.data);
                     this.render();
+                    this.updateStats();
                 } catch (e) {
-                    console.error("Load failed", e);
+                    console.error("Critical: Data load failed", e);
                 }
             },
 
+            updateStats() {
+                let count = 0;
+                const countKeys = (obj) => {
+                    Object.values(obj).forEach(v => {
+                        if (typeof v === 'object' && v !== null) countKeys(v);
+                        else count++;
+                    });
+                };
+                countKeys(this.data);
+                document.getElementById('stat-keys').innerText = count.toLocaleString();
+                document.getElementById('stat-sections').innerText = Object.keys(this.data).length;
+            },
+
             render() {
-                const container = document.getElementById('editor-container');
+                const container = document.getElementById('editor-grid');
                 container.innerHTML = '';
                 
-                Object.entries(this.data).forEach(([section, contents]) => {
+                Object.entries(this.data).forEach(([section, contents], idx) => {
                     const sectionDiv = document.createElement('div');
-                    sectionDiv.className = 'section-container animate-fade';
+                    sectionDiv.className = `section-container glass-card overflow-hidden animate-slide`;
+                    sectionDiv.style.animationDelay = `${idx * 0.05}s`;
                     
                     const header = document.createElement('div');
                     header.className = 'section-header';
                     header.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-folder-open text-violet-400/60 text-sm"></i>
-                            <span class="font-bold text-slate-200 tracking-tight">${section}</span>
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-violet-400 border border-white/5">
+                                <i class="fa-solid fa-box-archive text-sm"></i>
+                            </div>
+                            <div>
+                                <span class="block font-black text-slate-200 tracking-tight text-sm">${section}</span>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">${Object.keys(contents).length} Keys</span>
+                            </div>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-slate-600 text-xs transition-transform duration-300"></i>
+                        <i class="fa-solid fa-plus text-slate-600 text-[10px] transition-transform duration-300"></i>
                     `;
+                    
                     header.onclick = () => {
                         sectionDiv.classList.toggle('active');
-                        header.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
+                        header.querySelector('i.fa-solid').classList.toggle('rotate-45');
                     };
 
                     const contentDiv = document.createElement('div');
-                    contentDiv.className = 'section-content space-y-6';
+                    contentDiv.className = 'section-content space-y-5';
 
                     this.buildFields(contents, contentDiv, section);
 
@@ -336,39 +379,37 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     sectionDiv.appendChild(contentDiv);
                     container.appendChild(sectionDiv);
                 });
-                
-                document.getElementById('loader').style.display = 'none';
-                this.autoResizeAll();
             },
 
             buildFields(obj, parent, path) {
                 Object.entries(obj).forEach(([key, val]) => {
                     const fullPath = `${path}.${key}`;
                     if (typeof val === 'object' && val !== null) {
-                        const subGroup = document.createElement('div');
-                        subGroup.className = 'mr-6 border-r-2 border-white/5 pr-6 mt-4';
-                        subGroup.innerHTML = `<div class="text-[10px] font-black uppercase text-slate-600 mb-4 tracking-[0.2em]">${key}</div>`;
-                        this.buildFields(val, subGroup, fullPath);
-                        parent.appendChild(subGroup);
+                        const sub = document.createElement('div');
+                        sub.className = 'mt-4 border-r-2 border-violet-500/10 pr-4';
+                        sub.innerHTML = `<div class="text-[9px] font-black uppercase text-violet-400/60 mb-3 tracking-widest flex items-center gap-2"><i class="fa-solid fa-caret-down"></i> ${key}</div>`;
+                        this.buildFields(val, sub, fullPath);
+                        parent.appendChild(sub);
                     } else {
                         const field = document.createElement('div');
                         field.className = 'field-item group';
                         field.dataset.search = (fullPath + ' ' + val).toLowerCase();
                         
                         field.innerHTML = `
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center justify-between px-1">
-                                    <label class="text-xs font-mono text-slate-500 group-hover:text-violet-400 transition-colors" dir="ltr">${key}</label>
-                                    <button onclick="App.copy('${fullPath}')" class="text-[10px] text-slate-600 hover:text-white transition-opacity opacity-0 group-hover:opacity-100">
-                                        <i class="fa-regular fa-copy"></i>
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center justify-between opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <label class="text-[10px] font-mono text-slate-400 group-hover:text-violet-400 transition-colors" dir="ltr">${key}</label>
+                                    <button onclick="App.copy('${fullPath}')" class="text-[10px] hover:text-white transition-colors">
+                                        <i class="fa-regular fa-clone"></i>
                                     </button>
                                 </div>
-                                <textarea class="text-input" oninput="App.update('${fullPath}', this.value)" rows="1">${val}</textarea>
+                                <textarea class="text-input custom-scrollbar" oninput="App.update('${fullPath}', this.value)" rows="1">${val}</textarea>
                             </div>
                         `;
                         parent.appendChild(field);
                     }
                 });
+                this.autoResizeAll();
             },
 
             update(path, value) {
@@ -383,7 +424,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
             checkChanges() {
                 const isChanged = JSON.stringify(this.data) !== this.original;
-                document.getElementById('btn-save').disabled = !isChanged;
+                const btn = document.getElementById('btn-save');
+                btn.disabled = !isChanged;
+                if(isChanged) btn.classList.add('animate-pulse');
+                else btn.classList.remove('animate-pulse');
             },
 
             setupSearch() {
@@ -399,8 +443,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
                     sections.forEach(s => {
                         const hasVisibleChild = Array.from(s.querySelectorAll('.field-item')).some(f => f.style.display !== 'none');
-                        s.style.display = hasVisibleChild ? 'block' : 'none';
-                        if (query.length > 1 && hasVisibleChild) s.classList.add('active');
+                        const sectionNameMatch = s.innerText.toLowerCase().includes(query);
+                        
+                        s.style.display = (hasVisibleChild || sectionNameMatch) ? 'block' : 'none';
+                        if (query.length > 2 && (hasVisibleChild || sectionNameMatch)) s.classList.add('active');
                         else if (query.length === 0) s.classList.remove('active');
                     });
                 };
@@ -409,7 +455,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             async save() {
                 const btn = document.getElementById('btn-save');
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                btn.innerHTML = '<i class="fa-solid fa-sync fa-spin"></i>';
 
                 try {
                     const res = await fetch('text.php', {
@@ -420,12 +466,15 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     if (result.status === 'success') {
                         this.original = JSON.stringify(this.data);
                         this.checkChanges();
-                        Swal.fire({ icon: 'success', title: 'تغییرات با موفقیت ذخیره شد', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#0f172a', color: '#fff' });
+                        Swal.fire({ 
+                            icon: 'success', title: 'داده‌ها همگام‌سازی شد', toast: true, position: 'top-end', 
+                            timer: 3000, showConfirmButton: false, background: '#020617', color: '#fff' 
+                        });
                     }
                 } catch (e) {
-                    Swal.fire({ icon: 'error', title: 'خطا در ارتباط با سرور' });
+                    Swal.fire({ icon: 'error', title: 'خطا در ذخیره‌سازی' });
                 } finally {
-                    btn.innerHTML = '<i class="fa-regular fa-floppy-disk text-lg"></i> <span>ذخیره تغییرات</span>';
+                    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up text-lg"></i> <span>ذخیره نهایی</span>';
                 }
             },
 
@@ -441,10 +490,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     const parsed = JSON.parse(document.getElementById('rawTextarea').value);
                     this.data = parsed;
                     this.render();
+                    this.updateStats();
                     this.closeRaw();
                     this.checkChanges();
                 } catch (e) {
-                    Swal.fire({ icon: 'error', title: 'فرمت JSON نامعتبر است' });
+                    Swal.fire({ icon: 'error', title: 'ساختار JSON نامعتبر است' });
                 }
             },
 
@@ -452,24 +502,21 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 const blob = new Blob([JSON.stringify(this.data, null, 4)], {type: 'application/json'});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = 'bot_texts.json';
-                a.click();
+                a.href = url; a.download = 'backup_texts.json'; a.click();
             },
 
             copy(text) {
                 navigator.clipboard.writeText(text);
-                Swal.fire({ title: 'کپی شد!', toast: true, position: 'bottom-end', timer: 1500, showConfirmButton: false });
+                Swal.fire({ title: 'کلید کپی شد', toast: true, position: 'bottom-end', timer: 1500, showConfirmButton: false, background: '#1e293b', color: '#fff' });
             },
 
             autoResizeAll() {
-                const textareas = document.querySelectorAll('textarea.text-input');
-                textareas.forEach(t => {
+                document.querySelectorAll('textarea.text-input').forEach(t => {
                     t.style.height = 'auto';
-                    t.style.height = t.scrollHeight + 'px';
+                    t.style.height = (t.scrollHeight) + 'px';
                     t.addEventListener('input', function() {
                         this.style.height = 'auto';
-                        this.style.height = this.scrollHeight + 'px';
+                        this.style.height = (this.scrollHeight) + 'px';
                     });
                 });
             }
