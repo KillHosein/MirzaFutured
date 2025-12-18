@@ -459,9 +459,15 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     لیست کامل اینباندهای متصل به سیستم
                 </p>
             </div>
-            <div class="info-pill">
-                <i class="fa-regular fa-calendar"></i>
-                <span><?php echo $todayDate; ?></span>
+            <div style="display: flex; gap: 10px;">
+                <a href="../cronbot/sync_inbounds.php" target="_blank" class="info-pill" style="text-decoration: none; color: var(--neon-green); border-color: var(--neon-green);">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>همگام‌سازی</span>
+                </a>
+                <div class="info-pill">
+                    <i class="fa-regular fa-calendar"></i>
+                    <span><?php echo $todayDate; ?></span>
+                </div>
             </div>
         </header>
 
