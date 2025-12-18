@@ -176,20 +176,39 @@ $config = [
         /* --- 4. Advanced Component Overrides --- */
         
         /* Make React App containers transparent */
-        #root > div, .bg-zinc-900, .bg-slate-900, .bg-gray-900, .bg-black {
+        #root > div, .bg-zinc-900, .bg-slate-900, .bg-gray-900, .bg-black, .bg-\[\#18181b\] {
             background: transparent !important;
         }
 
-        /* Glass Cards */
-        .card, .bg-zinc-800, .bg-slate-800, .bg-surface {
+        /* Glass Cards - Targeting specific classes seen in screenshot */
+        .card, 
+        .bg-zinc-800, 
+        .bg-slate-800, 
+        .bg-surface,
+        /* Target the specific card structure likely used in the screenshot */
+        .rounded-2xl.bg-zinc-900, 
+        .rounded-xl.bg-zinc-900,
+        .bg-\[\#18181b\], /* Common Tailwind arbitrary value for dark backgrounds */
+        .bg-\[\#09090b\],
+        .bg-card {
             background: var(--glass-bg) !important;
             backdrop-filter: blur(var(--glass-blur)) !important;
             -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
             border: 1px solid var(--glass-border) !important;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
             border-radius: var(--radius-lg) !important;
             position: relative;
             overflow: hidden;
+        }
+
+        /* Override specific text colors for better contrast on glass */
+        .text-zinc-500, .text-gray-500, .text-slate-500 {
+            color: var(--text-muted) !important;
+        }
+        
+        /* Force icons to be colorful */
+        i, svg {
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
         }
 
         /* Shine Effect on Cards */

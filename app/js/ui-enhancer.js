@@ -146,22 +146,72 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- 4. Observer for Animations & Haptics ---
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    const forceGlassStyle = (node) => {
+        // Tailwind dark classes often found in React apps
+        const darkClasses = ['bg-zinc-900', 'bg-gray-900', 'bg-slate-900', 'bg-[#18181b]', 'bg-black', 'bg-neutral-900'];
+        
+        let hasDarkClass = false;
+        if (node.classList) {
+            for (const cls of darkClasses) {
+                if (node.classList.contains(cls)) {
+                    hasDarkClass = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasDarkClass) {
+            // Check if it's a container (likely card-like)
+            if (node.classList.contains('rounded-2xl') || node.classList.contains('rounded-xl') || node.classList.contains('rounded-lg') || node.classList.contains('p-4') || node.classList.contains('p-6')) {
+                node.style.cssText += `
+                    background: rgba(20, 20, 35, 0.6) !important;
+                    backdrop-filter: blur(24px) !important;
+                    -webkit-backdrop-filter: blur(24px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+                `;
+                node.classList.add('glass-forced');
+            } else {
+                // Just remove the dark background if it's not a card (e.g. wrapper)
+                node.style.background = 'transparent !important';
+            }
+        }
+    };
+
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
                 if (node.nodeType === 1) {
                     
+                    // Force Glass on new elements
+                    forceGlassStyle(node);
+                    node.querySelectorAll('.bg-zinc-900, .bg-gray-900, .bg-slate-900, .bg-[#18181b]').forEach(forceGlassStyle);
+
                     // Attach effects to buttons
                     const buttons = node.tagName === 'BUTTON' ? [node] : node.querySelectorAll('button, .btn, a[class*="btn"]');
                     buttons.forEach(btn => {
                         btn.addEventListener('click', addRipple);
-                        // Add hover sound logic here if needed
                     });
 
                     // Staggered Entry Animation for Lists/Cards
-                    if (node.classList.contains('card') || node.classList.contains('list-item')) {
-                        node.style.opacity = '0';
-                        node.style.animation = 'fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+                    if (node.classList.contains('card') || node.classList.contains('list-item') || node.classList.contains('glass-forced')) {
+                         node.style.opacity = '0';
+                         node.style.transform = 'translateY(20px)';
+                         node.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                         // Small delay to ensure styles applied
+                         setTimeout(() => {
+                             node.style.opacity = '1';
+                             node.style.transform = 'translateY(0)';
+                         }, 50);
                     }
                 }
             });
@@ -169,6 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Initial Run
+    document.querySelectorAll('.bg-zinc-900, .bg-gray-900, .bg-slate-900, .bg-[#18181b]').forEach(forceGlassStyle);
 
     // Inject Styles for JS-created elements
     const style = document.createElement('style');
