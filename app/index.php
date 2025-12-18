@@ -185,21 +185,38 @@ $config = [
         .bg-zinc-800, 
         .bg-slate-800, 
         .bg-surface,
-        /* Target the specific card structure likely used in the screenshot */
         .rounded-2xl.bg-zinc-900, 
         .rounded-xl.bg-zinc-900,
-        .bg-\[\#18181b\], /* Common Tailwind arbitrary value for dark backgrounds */
+        .bg-\[\#18181b\], 
         .bg-\[\#09090b\],
         .bg-card {
-            background: var(--glass-bg) !important;
-            backdrop-filter: blur(var(--glass-blur)) !important;
-            -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
-            border: 1px solid var(--glass-border) !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+            background: rgba(20, 20, 35, 0.4) !important; /* More transparent for holographic feel */
+            backdrop-filter: blur(30px) !important;
+            -webkit-backdrop-filter: blur(30px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
             border-radius: var(--radius-lg) !important;
             position: relative;
             overflow: hidden;
+            transition: all 0.4s ease;
         }
+
+        /* Holographic Border Effect */
+        .card::before, .bg-zinc-800::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-lg);
+            padding: 1px; /* Border width */
+            background: linear-gradient(45deg, transparent, rgba(6, 182, 212, 0.3), rgba(168, 85, 247, 0.3), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+        
+        .card:hover::before { opacity: 1; }
 
         /* Override specific text colors for better contrast on glass */
         .text-zinc-500, .text-gray-500, .text-slate-500 {
@@ -208,23 +225,35 @@ $config = [
         
         /* Force icons to be colorful */
         i, svg {
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
         }
 
-        /* Shine Effect on Cards */
+        /* Shine Effect on Cards (Moving Light) */
         .card::after, .bg-zinc-800::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--glass-shine), transparent);
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-25deg);
+            animation: shine 6s infinite;
+            pointer-events: none;
+        }
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
         }
 
-        /* Typography */
+        /* Typography Polish (Gradient Headers) */
         h1, h2, h3, .font-bold {
-            color: #fff !important;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 20px rgba(255,255,255,0.1) !important;
+            letter-spacing: -0.5px;
         }
         p, .text-sm { color: var(--text-muted) !important; }
+
 
         /* --- 5. Modern Buttons (Neumorphic Glass) --- */
         button, .btn {
