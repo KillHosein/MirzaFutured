@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VPN Dashboard</title>
     
     <!-- Telegram WebApp -->
@@ -30,16 +30,20 @@
 
     <div class="container">
         <!-- Header -->
-        <header>
+        <header id="main-header">
             <div class="profile-section">
-                <img src="assets/img/default-avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'" alt="Avatar" class="avatar" id="user-avatar">
+                <div class="avatar-container">
+                    <img src="assets/img/default-avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff'" alt="Avatar" class="avatar" id="user-avatar">
+                </div>
                 <div class="user-info">
-                    <h3 id="user-name">کاربر مهمان</h3>
-                    <span id="user-id">ID: ---</span>
+                    <h3 id="user-name" class="user-name">کاربر مهمان</h3>
+                    <span id="user-id" class="user-id">ID: ---</span>
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-icon" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
+                <button class="btn btn-icon" onclick="location.reload()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
         </header>
 
@@ -50,8 +54,8 @@
                 <div class="balance-label">موجودی کیف پول</div>
                 <div class="balance-value" id="user-balance">--- تومان</div>
                 <div class="balance-actions">
-                    <button class="btn btn-light btn-sm" onclick="Telegram.WebApp.openLink('https://t.me/Bot?start=charge')">
-                        <i class="fas fa-plus"></i> افزایش موجودی
+                    <button class="btn btn-glass btn-sm w-full" onclick="Telegram.WebApp.openLink('https://t.me/Bot?start=charge')">
+                        <i class="fas fa-plus-circle"></i> افزایش موجودی
                     </button>
                 </div>
             </div>
@@ -60,8 +64,9 @@
             <div class="card">
                 <div class="card-header">
                     <h4>نمودار مصرف</h4>
+                    <span class="text-xs text-muted">۷ تراکنش اخیر</span>
                 </div>
-                <div style="height: 200px; position: relative;">
+                <div class="chart-container">
                     <canvas id="usageChart"></canvas>
                 </div>
             </div>
@@ -69,7 +74,7 @@
             <!-- Active Services -->
             <div class="section-header">
                 <h3>سرویس‌های فعال</h3>
-                <span class="badge" id="active-services-count">0</span>
+                <span class="badge badge-success" id="active-services-count">0</span>
             </div>
             <div class="card-list" id="my-services-list">
                 <div class="empty-state">درحال بارگذاری...</div>
@@ -78,16 +83,20 @@
 
         <!-- Shop Section -->
         <div id="shop" class="page-section" style="display: none;">
-            <h3 class="section-title">خرید سرویس جدید</h3>
-            <div class="shop-grid" id="shop-list">
+            <div class="section-header">
+                <h3>خرید سرویس جدید</h3>
+            </div>
+            <div class="card-list" id="shop-list">
                 <!-- Shop items will be injected here -->
                  <div class="empty-state">محصولی یافت نشد</div>
             </div>
         </div>
 
-        <!-- History Section (New) -->
+        <!-- History Section -->
         <div id="history" class="page-section" style="display: none;">
-            <h3 class="section-title">تاریخچه تراکنش‌ها</h3>
+            <div class="section-header">
+                <h3>تاریخچه تراکنش‌ها</h3>
+            </div>
             <div class="card-list" id="transactions-list">
                 <div class="empty-state">درحال بارگذاری...</div>
             </div>
@@ -112,10 +121,18 @@
                     </div>
                     <i class="fas fa-chevron-left text-muted"></i>
                 </div>
+                 <div class="list-item">
+                    <div class="item-icon bg-orange"><i class="fas fa-question-circle"></i></div>
+                    <div class="item-content">
+                        <span class="item-title">راهنما</span>
+                        <span class="item-subtitle">آموزش استفاده</span>
+                    </div>
+                    <i class="fas fa-chevron-left text-muted"></i>
+                </div>
             </div>
             
             <div class="text-center mt-4">
-                <p class="text-muted text-sm">نسخه ۱.۰.۰</p>
+                <p class="text-muted text-xs">نسخه ۱.۱.۰ Pro</p>
             </div>
         </div>
     </div>
@@ -127,7 +144,7 @@
             <span>خانه</span>
         </a>
         <a href="#shop" class="nav-item">
-            <i class="fas fa-shopping-cart"></i>
+            <i class="fas fa-shopping-bag"></i>
             <span>فروشگاه</span>
         </a>
         <a href="#history" class="nav-item">
@@ -141,5 +158,16 @@
     </nav>
 
     <script src="assets/js/app.js"></script>
+    <script>
+        // Header Scroll Effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 10) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
 </body>
 </html>
