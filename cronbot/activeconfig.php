@@ -5,6 +5,14 @@ require_once '../config.php';
 require_once '../botapi.php';
 require_once '../panels.php';
 require_once '../function.php';
+
+// Prevent overlapping execution
+$lockFile = __DIR__ . '/activeconfig.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    die("Another instance is already running.");
+}
+
 $ManagePanel = new ManagePanel();
 
 

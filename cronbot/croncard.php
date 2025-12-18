@@ -8,6 +8,14 @@ require_once '../function.php';
 require_once '../keyboard.php';
 require '../vendor/autoload.php';
 require_once '../jdf.php';
+
+// Prevent overlapping execution
+$lockFile = __DIR__ . '/croncard.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    die("Another instance is already running.");
+}
+
 $ManagePanel = new ManagePanel();
 $setting = select("setting", "*");
 $paymentreports = select("topicid","idreport","report","paymentreport","select")['idreport'];

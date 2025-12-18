@@ -6,6 +6,14 @@ require_once '../botapi.php';
 require_once '../panels.php';
 require_once '../function.php';
 require '../vendor/autoload.php';
+
+// Prevent overlapping execution
+$lockFile = __DIR__ . '/payment_expire.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    die("Another instance is already running.");
+}
+
 $ManagePanel = new ManagePanel();
 $setting = select("setting", "*");
 $stmt = $pdo->prepare("SHOW TABLES LIKE 'textbot'");

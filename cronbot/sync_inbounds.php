@@ -13,6 +13,13 @@ require_once __DIR__ . '/../marzneshin.php';
 require_once __DIR__ . '/../hiddify.php';
 require_once __DIR__ . '/../s_ui.php';
 
+// Prevent overlapping execution
+$lockFile = __DIR__ . '/sync_inbounds.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    die("Another instance is already running.");
+}
+
 // Check if run from browser or CLI
 $is_cli = (php_sapi_name() === 'cli');
 if (!$is_cli) {

@@ -4,6 +4,14 @@ date_default_timezone_set('Asia/Tehran');
 require_once '../config.php';
 require_once '../botapi.php';
 require_once '../function.php';
+
+// Prevent overlapping execution
+$lockFile = __DIR__ . '/statusday.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    die("Another instance is already running.");
+}
+
 $setting = select("setting","*",null,null,"select");
 
 //________________[ time 12 report]________________
