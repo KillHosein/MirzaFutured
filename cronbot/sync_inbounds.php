@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../function.php';
 require_once __DIR__ . '/../Marzban.php';
+require_once __DIR__ . '/../x-ui_single.php';
 
 // Check if run from browser or CLI
 $is_cli = (php_sapi_name() === 'cli');
@@ -67,27 +68,26 @@ try {
             }
         } 
         elseif ($panelType == 'x-ui_single') {
-            // For X-UI, usually we connect to its DB or API.
-            // Assuming X-UI integration via API if available, or maybe it's stored in x_ui table?
-            // The file 'x-ui_single.php' might have helper functions, but typically X-UI uses 'inbounds' table in its own DB.
-            // If 'x-ui_single' means we have access via API (like get_clinets), let's see if we can list inbounds.
-            // Standard X-UI API: /xui/inbound/list
+            $inbounds = getinbounds_xui($panelName);
             
-            // Let's try to fetch inbounds using a custom curl request since standard wrapper might not exist.
-            $url = rtrim($panel['url_panel'], '/') . '/xui/inbound/list';
-            // Need login cookie? x-ui_single.php -> login()
-            
-            // We can reuse login function from x-ui_single.php if we include it
-            // require_once __DIR__ . '/../x-ui_single.php'; // Already included in panels.php but this is a standalone script
-            
-            // Let's implement a simple X-UI list fetcher here or use existing helpers if possible.
-            // Since x-ui_single.php is not included here, let's skip complex X-UI sync for now 
-            // OR attempt to query the 'x_ui' table if it holds config (it seems 'x_ui' table holds settings, not list of active inbounds on remote).
-            
-            // NOTE: The user's request specifically mentioned "x-ui settings" and "inbounds". 
-            // Let's try to see if there is a generic way. For now, let's mark as skipped or try basic API.
-            
-            echo "  -> X-UI sync not fully implemented in this script yet (requires API access).\n";
+            if (is_array($inbounds) && count($inbounds) > 0) {
+                foreach ($inbounds as $inbound) {
+                    $name = $inbound['remark'] ?? "Inbound " . ($inbound['id'] ?? '?');
+                    $protocol = $inbound['protocol'] ?? 'unknown';
+                    $settings = json_encode($inbound);
+
+                    $stmt = $pdo->prepare("INSERT INTO Inbound (location, protocol, nameinbound, setting) VALUES (:loc, :prot, :name, :set)");
+                    $stmt->execute([
+                        ':loc' => $panelName,
+                        ':prot' => $protocol,
+                        ':name' => $name,
+                        ':set' => $settings
+                    ]);
+                }
+                echo "  -> Synced " . count($inbounds) . " inbounds.\n";
+            } else {
+                echo "  -> Failed to fetch inbounds or empty (or API not supported).\n";
+            }
         }
         
         if (!$is_cli) echo "<br>";

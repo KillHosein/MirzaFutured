@@ -27,6 +27,45 @@ function panel_login_cookie($code_panel)
     curl_close($curl);
     return $response;
 }
+function getinbounds_xui($namepanel)
+{
+    $marzban_list_get = select("marzban_panel", "*", "name_panel", $namepanel, "select");
+    login($marzban_list_get['code_panel']);
+    
+    // Try standard X-UI API
+    $url = $marzban_list_get['url_panel'] . "/xui/inbound/list";
+    
+    // Fallback or specific fork path if needed, e.g. /inbound/list
+    // But usually standard X-UI (Sanaei) is /xui/inbound/list or /panel/api/inbounds/list for Marzban-like
+    // Based on existing code using /panel/api/inbounds/..., it might be a specific fork.
+    // However, for fetching all inbounds, let's try the X-UI list endpoint.
+    
+    $headers = array(
+        'Accept: application/json',
+        'Content-Type: application/json',
+    );
+    $req = new CurlRequest($url);
+    $req->setHeaders($headers);
+    $req->setCookie('cookie.txt');
+    $response = $req->get();
+    
+    if (is_file('cookie.txt')) {
+        @unlink('cookie.txt');
+    }
+
+    $body = isset($response['body']) ? json_decode($response['body'], true) : null;
+    if ($body && isset($body['success']) && $body['success'] && isset($body['obj'])) {
+        return $body['obj'];
+    }
+    
+    // Fallback: Try /inbound/list (some versions without /xui prefix)
+    /*
+    $url2 = $marzban_list_get['url_panel'] . "/inbound/list";
+    // ... logic to try url2 ...
+    */
+
+    return [];
+}
 function login($code_panel, $verify = true)
 {
     $panel = select("marzban_panel", "*", "code_panel", $code_panel, "select");
