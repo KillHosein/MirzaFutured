@@ -49,6 +49,35 @@ curl_close($curl);
 unlink('cookie.txt');
 return $output;
 }
+function getinbounds_alireza_single($namepanel){
+    $marzban_list_get = select("marzban_panel", "*", "name_panel", $namepanel,"select");
+    login($marzban_list_get['code_panel']);
+    $curl = curl_init();
+
+    curl_setopt_array($curl, array(
+      CURLOPT_URL => $marzban_list_get['url_panel'].'/xui/API/inbounds',
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => '',
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_SSL_VERIFYHOST =>  false,
+      CURLOPT_SSL_VERIFYPEER => false,
+      CURLOPT_TIMEOUT_MS => 4000,
+      CURLOPT_FOLLOWLOCATION => true,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => 'GET',
+      CURLOPT_HTTPHEADER => array(
+        'Accept: application/json'
+      ),
+      CURLOPT_COOKIEFILE => 'cookie.txt',
+    ));
+    $response = curl_exec($curl);
+    curl_close($curl);
+    if(is_file('cookie.txt')) unlink('cookie.txt');
+
+    if(!isset($response)) return [];
+    $body = json_decode($response, true);
+    return isset($body['obj']) ? $body['obj'] : [];
+}
 function addClientalireza_singel($namepanel, $usernameac, $Expire,$Total, $Uuid,$Flow,$subid,$inboundid){
     $marzban_list_get = select("marzban_panel", "*", "name_panel", $namepanel,"select");
     login($marzban_list_get['code_panel']);

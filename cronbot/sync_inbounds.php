@@ -7,6 +7,11 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../function.php';
 require_once __DIR__ . '/../Marzban.php';
 require_once __DIR__ . '/../x-ui_single.php';
+require_once __DIR__ . '/../alireza.php';
+require_once __DIR__ . '/../alireza_single.php';
+require_once __DIR__ . '/../marzneshin.php';
+require_once __DIR__ . '/../hiddify.php';
+require_once __DIR__ . '/../s_ui.php';
 
 // Check if run from browser or CLI
 $is_cli = (php_sapi_name() === 'cli');
@@ -39,55 +44,41 @@ try {
         echo "Processing panel: $panelName ($panelType)...\n";
         if (!$is_cli) echo "<br>";
 
+        $inbounds = [];
         if ($panelType == 'marzban') {
-            // Get inbounds from Marzban
-            // Marzban.php has getinbounds($location) function
             $inbounds = getinbounds($panelName);
-            
-            if (is_array($inbounds)) {
-                foreach ($inbounds as $key => $inbound) {
-                    // Marzban structure might vary, usually it's a list of inbounds
-                    // We need to extract tag (name) and protocol
-                    
-                    $name = $inbound['tag'] ?? "Inbound $key";
-                    $protocol = $inbound['protocol'] ?? 'unknown';
-                    $settings = json_encode($inbound); // Store full setting just in case
-
-                    // Insert into Inbound table
-                    $stmt = $pdo->prepare("INSERT INTO Inbound (location, protocol, nameinbound, setting) VALUES (:loc, :prot, :name, :set)");
-                    $stmt->execute([
-                        ':loc' => $panelName,
-                        ':prot' => $protocol,
-                        ':name' => $name,
-                        ':set' => $settings
-                    ]);
-                }
-                echo "  -> Synced " . count($inbounds) . " inbounds.\n";
-            } else {
-                echo "  -> Failed to fetch inbounds or empty.\n";
-            }
-        } 
-        elseif ($panelType == 'x-ui_single') {
+        } elseif ($panelType == 'x-ui_single') {
             $inbounds = getinbounds_xui($panelName);
-            
-            if (is_array($inbounds) && count($inbounds) > 0) {
-                foreach ($inbounds as $inbound) {
-                    $name = $inbound['remark'] ?? "Inbound " . ($inbound['id'] ?? '?');
-                    $protocol = $inbound['protocol'] ?? 'unknown';
-                    $settings = json_encode($inbound);
+        } elseif ($panelType == 'alireza') {
+            $inbounds = getinbounds_alireza($panelName);
+        } elseif ($panelType == 'alireza_single') {
+            $inbounds = getinbounds_alireza_single($panelName);
+        } elseif ($panelType == 'marzneshin') {
+            $inbounds = getinbounds_marzneshin($panelName);
+        } elseif ($panelType == 'hiddify') {
+            $inbounds = getinbounds_hiddify($panelName);
+        } elseif ($panelType == 's_ui') {
+            $inbounds = getinbounds_sui($panelName);
+        }
 
-                    $stmt = $pdo->prepare("INSERT INTO Inbound (location, protocol, nameinbound, setting) VALUES (:loc, :prot, :name, :set)");
-                    $stmt->execute([
-                        ':loc' => $panelName,
-                        ':prot' => $protocol,
-                        ':name' => $name,
-                        ':set' => $settings
-                    ]);
-                }
-                echo "  -> Synced " . count($inbounds) . " inbounds.\n";
-            } else {
-                echo "  -> Failed to fetch inbounds or empty (or API not supported).\n";
+        if (is_array($inbounds) && count($inbounds) > 0) {
+            foreach ($inbounds as $key => $inbound) {
+                // Normalize data
+                $name = $inbound['tag'] ?? $inbound['remark'] ?? $inbound['name'] ?? "Inbound $key";
+                $protocol = $inbound['protocol'] ?? 'unknown';
+                $settings = json_encode($inbound);
+
+                $stmt = $pdo->prepare("INSERT INTO Inbound (location, protocol, nameinbound, setting) VALUES (:loc, :prot, :name, :set)");
+                $stmt->execute([
+                    ':loc' => $panelName,
+                    ':prot' => $protocol,
+                    ':name' => $name,
+                    ':set' => $settings
+                ]);
             }
+            echo "  -> Synced " . count($inbounds) . " inbounds.\n";
+        } else {
+            echo "  -> Failed to fetch inbounds or empty.\n";
         }
         
         if (!$is_cli) echo "<br>";
