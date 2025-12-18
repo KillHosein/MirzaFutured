@@ -11,55 +11,116 @@ require_once '../config.php';
 if (file_exists('../jdf.php')) require_once '../jdf.php';
 
 // Authentication
+if (!isset($_SESSION["user"])) {
+    header('Location: login.php');
+    exit;
+}
+
 $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
 $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
 $query->execute();
 $result = $query->fetch(PDO::FETCH_ASSOC);
 
-if( !isset($_SESSION["user"]) || !$result ){ header('Location: login.php'); exit; }
+if (!$result) {
+    header('Location: login.php');
+    exit;
+}
+
+/**
+ * @param string $value
+ * @return string
+ */
+function csvSafeCell($value)
+{
+    $value = (string) $value;
+    $firstChar = $value !== '' ? substr($value, 0, 1) : '';
+    if (in_array($firstChar, ['=', '+', '-', '@'], true)) {
+        return "'" . $value;
+    }
+    return $value;
+}
+
+$protocolInput = trim((string)($_GET['protocol'] ?? ''));
+$locationInput = trim((string)($_GET['location'] ?? ''));
+$qInput = trim((string)($_GET['q'] ?? ''));
+
+$strlen = function ($v) { return function_exists('mb_strlen') ? mb_strlen($v, 'UTF-8') : strlen($v); };
+$substr = function ($v, $start, $len) { return function_exists('mb_substr') ? mb_substr($v, $start, $len, 'UTF-8') : substr($v, $start, $len); };
+
+if ($strlen($protocolInput) > 60) $protocolInput = $substr($protocolInput, 0, 60);
+if ($strlen($locationInput) > 120) $locationInput = $substr($locationInput, 0, 120);
+if ($strlen($qInput) > 160) $qInput = $substr($qInput, 0, 160);
 
 // --- Query Building ---
 $where = [];
 $params = [];
 
-if(!empty($_GET['protocol'])){
+if($protocolInput !== ''){
     $where[] = "protocol = :protocol";
-    $params[':protocol'] = $_GET['protocol'];
+    $params[':protocol'] = $protocolInput;
 }
-if(!empty($_GET['location'])){
+if($locationInput !== ''){
     $where[] = "location = :location";
-    $params[':location'] = $_GET['location'];
+    $params[':location'] = $locationInput;
 }
-if(!empty($_GET['q'])){
-    $search = '%' . $_GET['q'] . '%';
+if($qInput !== ''){
+    $search = '%' . $qInput . '%';
     $where[] = "(location LIKE :q OR protocol LIKE :q OR NameInbound LIKE :q)";
     $params[':q'] = $search;
 }
 
-$sql = "SELECT * FROM Inbound";
+$countSql = "SELECT COUNT(*) FROM Inbound";
 if(!empty($where)){
-    $sql .= " WHERE " . implode(' AND ', $where);
+    $countSql .= " WHERE " . implode(' AND ', $where);
 }
-$query = $pdo->prepare($sql);
+$countStmt = $pdo->prepare($countSql);
+$countStmt->execute($params);
+$totalRows = (int) $countStmt->fetchColumn();
+
+$page = (int)($_GET['page'] ?? 1);
+if ($page < 1) $page = 1;
+$perPage = (int)($_GET['per_page'] ?? 25);
+if (!in_array($perPage, [10, 25, 50, 100], true)) $perPage = 25;
+$offset = ($page - 1) * $perPage;
+if ($offset < 0) $offset = 0;
+
+$dataSql = "SELECT * FROM Inbound";
+if(!empty($where)){
+    $dataSql .= " WHERE " . implode(' AND ', $where);
+}
+$dataSql .= " ORDER BY location ASC, protocol ASC, NameInbound ASC LIMIT {$perPage} OFFSET {$offset}";
+$query = $pdo->prepare($dataSql);
 $query->execute($params);
-$listinvoice = $query->fetchAll();
+$listinvoice = $query->fetchAll(PDO::FETCH_ASSOC);
+
+$protocolOptions = $pdo->query("SELECT DISTINCT protocol FROM Inbound WHERE protocol IS NOT NULL AND protocol != '' ORDER BY protocol ASC")->fetchAll(PDO::FETCH_COLUMN) ?: [];
+$locationOptions = $pdo->query("SELECT DISTINCT location FROM Inbound WHERE location IS NOT NULL AND location != '' ORDER BY location ASC")->fetchAll(PDO::FETCH_COLUMN) ?: [];
 
 // --- Export CSV ---
 if(isset($_GET['export']) && $_GET['export']==='csv'){
+    $exportSql = "SELECT location, protocol, NameInbound FROM Inbound";
+    if(!empty($where)){
+        $exportSql .= " WHERE " . implode(' AND ', $where);
+    }
+    $exportSql .= " ORDER BY location ASC, protocol ASC, NameInbound ASC";
+    $exportStmt = $pdo->prepare($exportSql);
+    $exportStmt->execute($params);
+    $exportRows = $exportStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=inbounds-'.date('Y-m-d').'.csv');
     $out = fopen('php://output','w');
     fputs($out, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
     fputcsv($out, ['Location','Protocol','Inbound Name']);
-    foreach($listinvoice as $row){
-        fputcsv($out, [$row['location'], $row['protocol'], $row['NameInbound']]);
+    foreach($exportRows as $row){
+        fputcsv($out, [csvSafeCell($row['location'] ?? ''), csvSafeCell($row['protocol'] ?? ''), csvSafeCell($row['NameInbound'] ?? '')]);
     }
     fclose($out);
     exit();
 }
 
 // --- Stats Calculation ---
-$totalInbounds = count($listinvoice);
+$totalInbounds = $totalRows;
 $protocols = [];
 $locations = [];
 foreach($listinvoice as $row){
@@ -367,17 +428,42 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             <form method="get" class="filters-row">
                 <div class="form-group">
                     <label>جستجو</label>
-                    <input type="text" name="q" class="input-readable" placeholder="نام پنل، پروتکل یا اینباند..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
+                    <input type="text" name="q" class="input-readable" placeholder="نام پنل، پروتکل یا اینباند..." value="<?php echo htmlspecialchars($qInput ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                 </div>
                 
                 <div class="form-group">
                     <label>پروتکل</label>
-                    <input type="text" name="protocol" class="input-readable" placeholder="مثلا: vmess" value="<?php echo htmlspecialchars($_GET['protocol'] ?? ''); ?>">
+                    <select name="protocol" class="input-readable">
+                        <option value="">همه</option>
+                        <?php foreach($protocolOptions as $p): $p = (string)$p; ?>
+                            <option value="<?php echo htmlspecialchars($p, ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($protocolInput === $p ? 'selected' : ''); ?>>
+                                <?php echo htmlspecialchars($p, ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 
                 <div class="form-group">
                     <label>لوکیشن (نام پنل)</label>
-                    <input type="text" name="location" class="input-readable" placeholder="نام پنل..." value="<?php echo htmlspecialchars($_GET['location'] ?? ''); ?>">
+                    <select name="location" class="input-readable">
+                        <option value="">همه</option>
+                        <?php foreach($locationOptions as $l): $l = (string)$l; ?>
+                            <option value="<?php echo htmlspecialchars($l, ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($locationInput === $l ? 'selected' : ''); ?>>
+                                <?php echo htmlspecialchars($l, ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="max-width: 220px;">
+                    <label>نمایش در هر صفحه</label>
+                    <select name="per_page" class="input-readable">
+                        <?php foreach([10,25,50,100] as $pp): ?>
+                            <option value="<?php echo (int)$pp; ?>" <?php echo ($perPage === (int)$pp ? 'selected' : ''); ?>>
+                                <?php echo (int)$pp; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 
                 <button type="submit" class="btn-filter">
@@ -426,13 +512,41 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                             <?php foreach($listinvoice as $list): ?>
                             <tr>
                                 <td><input type="checkbox" class="custom-check inb-check" value="1"></td>
-                                <td style="font-weight: 800; font-size: 1.2rem; color: #fff;"><?php echo htmlspecialchars($list['location']); ?></td>
-                                <td style="font-family: monospace; color: var(--neon-purple); font-size: 1.2rem; font-weight: 700;"><?php echo htmlspecialchars($list['protocol']); ?></td>
-                                <td style="color: var(--neon-cyan); font-family: monospace; font-size: 1.1rem;"><?php echo htmlspecialchars($list['NameInbound']); ?></td>
+                                <td style="font-weight: 800; font-size: 1.2rem; color: #fff;"><?php echo htmlspecialchars($list['location'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td style="font-family: monospace; color: var(--neon-purple); font-size: 1.2rem; font-weight: 700;"><?php echo htmlspecialchars($list['protocol'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td style="color: var(--neon-cyan); font-family: monospace; font-size: 1.1rem;"><?php echo htmlspecialchars($list['NameInbound'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+                <?php
+                    $totalPages = (int) max(1, ceil($totalRows / max(1, $perPage)));
+                    if ($page > $totalPages) $page = $totalPages;
+                    $baseParams = $_GET;
+                    unset($baseParams['page'], $baseParams['export']);
+                ?>
+                <div style="display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:20px; flex-wrap:wrap;">
+                    <div style="color: var(--text-sec); font-size: 1.05rem;">
+                        <?php echo number_format($totalRows); ?> نتیجه
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <a class="btn-act" href="?<?php echo http_build_query(array_merge($baseParams, ['page'=>1])); ?>" <?php echo ($page<=1?'style="pointer-events:none;opacity:.5"':''); ?>>
+                            <i class="fa-solid fa-angles-right"></i> اول
+                        </a>
+                        <a class="btn-act" href="?<?php echo http_build_query(array_merge($baseParams, ['page'=>max(1,$page-1)])); ?>" <?php echo ($page<=1?'style="pointer-events:none;opacity:.5"':''); ?>>
+                            <i class="fa-solid fa-angle-right"></i> قبلی
+                        </a>
+                        <span class="btn-act" style="cursor:default; color:#fff;">
+                            صفحه <?php echo (int)$page; ?> از <?php echo (int)$totalPages; ?>
+                        </span>
+                        <a class="btn-act" href="?<?php echo http_build_query(array_merge($baseParams, ['page'=>min($totalPages,$page+1)])); ?>" <?php echo ($page>=$totalPages?'style="pointer-events:none;opacity:.5"':''); ?>>
+                            بعدی <i class="fa-solid fa-angle-left"></i>
+                        </a>
+                        <a class="btn-act" href="?<?php echo http_build_query(array_merge($baseParams, ['page'=>$totalPages])); ?>" <?php echo ($page>=$totalPages?'style="pointer-events:none;opacity:.5"':''); ?>>
+                            آخر <i class="fa-solid fa-angles-left"></i>
+                        </a>
+                    </div>
                 </div>
             <?php endif; ?>
             
@@ -476,7 +590,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-network-wired"></i></div>
                 <span class="dock-label">کانفیگ</span>
             </a>
-            <a href="seeting_x_ui.php" class="dock-item">
+            <a href="setting_x_ui.php" class="dock-item">
                 <div class="dock-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
                 <span class="dock-label">پنل X-UI</span>
             </a>
@@ -498,13 +612,19 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     
     <script>
       (function(){
-        function showToast(msg) { alert(msg); }
+        function showToast(msg) {
+            var $t = $('#inbToast');
+            if (!$t.length) { alert(msg); return; }
+            $t.text(msg).addClass('show');
+            clearTimeout(window.__inbToastTimer);
+            window.__inbToastTimer = setTimeout(function(){ $t.removeClass('show'); }, 2500);
+        }
 
         function updateSelCount() {
             var count = $('.inb-check:checked').length;
             $('#inbSelCount').text(count + ' انتخاب');
         }
-        $(document).on('change', '.inb-check', updateCount);
+        $(document).on('change', '.inb-check', updateSelCount);
 
         $('#inbSelectVisible').on('click', function(e){ 
             e.preventDefault(); 
@@ -525,11 +645,45 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             var row = $(this).closest('tr');
             names.push(row.find('td').eq(3).text().trim());
           });
-          if(names.length){ navigator.clipboard.writeText(names.join(', ')); showToast(names.length + ' نام کپی شد'); }
+          if(names.length){
+            var text = names.join(', ');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function(){
+                    showToast(names.length + ' نام کپی شد');
+                }).catch(function(){
+                    try{
+                        var ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast(names.length + ' نام کپی شد');
+                    }catch(err){
+                        showToast('امکان کپی وجود ندارد');
+                    }
+                });
+            } else {
+                try{
+                    var ta2 = document.createElement('textarea');
+                    ta2.value = text;
+                    document.body.appendChild(ta2);
+                    ta2.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta2);
+                    showToast(names.length + ' نام کپی شد');
+                }catch(err2){
+                    showToast('امکان کپی وجود ندارد');
+                }
+            }
+          }
           else{ showToast('هیچ ردیفی انتخاب نشده است'); }
         });
+        updateSelCount();
       })();
     </script>
 
+    <div id="inbToast" style="position:fixed; bottom:120px; left:20px; z-index:2500; background:rgba(0,0,0,0.85); color:#fff; border:1px solid rgba(255,255,255,0.15); padding:12px 16px; border-radius:14px; opacity:0; transform: translateY(10px); transition: .25s; pointer-events:none; max-width: 70vw; white-space: nowrap; overflow:hidden; text-overflow: ellipsis;"></div>
+    <style>#inbToast.show{ opacity:1; transform: translateY(0); }</style>
 </body>
 </html>

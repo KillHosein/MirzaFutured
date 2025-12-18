@@ -11,48 +11,156 @@ require_once '../config.php';
 if (file_exists('../jdf.php')) require_once '../jdf.php';
 
 // Authentication
-$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-$query->execute();
-$result = $query->fetch(PDO::FETCH_ASSOC);
-
-if( !isset($_SESSION["user"]) || !$result ){ header('Location: login.php'); exit; }
-
-// --- Update Function ---
-function update($table, $field, $newValue, $whereField = null, $whereValue = null) {
-    global $pdo, $user;
-
-    if ($whereField !== null) {
-        $stmt = $pdo->prepare("SELECT $field FROM $table WHERE $whereField = ? FOR UPDATE");
-        $stmt->execute([$whereValue]);
-        $currentValue = $stmt->fetchColumn();
-        $stmt = $pdo->prepare("UPDATE $table SET $field = ? WHERE $whereField = ?");
-        $stmt->execute([$newValue, $whereValue]);
-    } else {
-        $stmt = $pdo->prepare("UPDATE $table SET $field = ?");
-        $stmt->execute([$newValue]);
-    }
-    // Log is disabled for cleaner performance in this context, or can be re-enabled
-    // $date = date("Y-m-d");
-    // $logss = "{$table}_{$field}_{$newValue}_{$whereField}_{$whereValue}_{$user['step']}_$date";
-    // if($field != "message_count" || $field != "last_message_time"){
-    //     file_put_contents('log.txt',"\n".$logss,FILE_APPEND);
-    // }
-}
-
-// --- Fetch X-UI Panels ---
-$query = $pdo->prepare("SELECT * FROM x_ui");
-$query->execute();
-$resultpanel = $query->fetchAll();
-
-// --- Action Handler ---
-if(isset($_GET['action']) && $_GET['action'] == "save"){
-    update("x_ui", "setting", $_POST['settings'], "codepanel", $_POST['namepanel']);
-    header('Location: seeting_x_ui.php');
+if (!isset($_SESSION["user"])) {
+    header('Location: login.php');
     exit;
 }
 
-$namepanel = isset($_POST['namepanel']) ? htmlspecialchars($_POST['namepanel'], ENT_QUOTES, 'UTF-8') : '';
+try {
+    $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+    $query->execute();
+    $result = $query->fetch(PDO::FETCH_ASSOC);
+    if (!$result) {
+        header('Location: login.php');
+        exit;
+    }
+} catch (Throwable $e) {
+    header('Location: login.php');
+    exit;
+}
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrfToken = (string) $_SESSION['csrf_token'];
+
+/**
+ * @param string $token
+ * @return bool
+ */
+function isValidCsrfToken($token)
+{
+    if (!isset($_SESSION['csrf_token'])) {
+        return false;
+    }
+    return hash_equals((string) $_SESSION['csrf_token'], (string) $token);
+}
+
+/**
+ * @param string $codepanel
+ * @return array|null
+ */
+function fetchXuiPanelRow($codepanel)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT x_ui.codepanel, x_ui.setting, marzban_panel.name_panel 
+        FROM x_ui 
+        LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
+        WHERE x_ui.codepanel = :codepanel
+        LIMIT 1");
+    $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+/**
+ * @param string $codepanel
+ * @param string $normalizedJson
+ * @return void
+ */
+function saveXuiPanelSetting($codepanel, $normalizedJson)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("UPDATE x_ui SET setting = :setting WHERE codepanel = :codepanel");
+    $stmt->bindParam(':setting', $normalizedJson, PDO::PARAM_STR);
+    $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
+    $stmt->execute();
+}
+
+// --- Fetch X-UI Panels ---
+$panelsStmt = $pdo->query("SELECT x_ui.codepanel, marzban_panel.name_panel
+    FROM x_ui
+    LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
+    ORDER BY COALESCE(marzban_panel.name_panel, x_ui.codepanel) ASC");
+$resultpanel = $panelsStmt ? ($panelsStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+
+$action = isset($_GET['action']) ? (string) $_GET['action'] : '';
+$alert = null;
+
+$selectedPanel = '';
+if ($action === 'change' || $action === 'export') {
+    $selectedPanel = trim((string)($_GET['namepanel'] ?? ''));
+}
+if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $selectedPanel = trim((string)($_POST['namepanel'] ?? ''));
+}
+
+if (($action === 'change' || $action === 'export') && $selectedPanel === '') {
+    $action = '';
+}
+
+if (strlen($selectedPanel) > 100) {
+    $selectedPanel = substr($selectedPanel, 0, 100);
+}
+
+$panelRow = $selectedPanel !== '' ? fetchXuiPanelRow($selectedPanel) : null;
+if ($selectedPanel !== '' && !$panelRow && ($action === 'change' || $action === 'export' || $action === 'save')) {
+    $alert = ['type' => 'danger', 'message' => 'پنل انتخاب‌شده معتبر نیست یا در دیتابیس یافت نشد.'];
+    $action = '';
+    $selectedPanel = '';
+}
+
+// --- Action Handler ---
+if ($action === 'export' && $selectedPanel !== '' && $panelRow) {
+    $dataToExport = $panelRow['setting'] ?? '';
+    $decoded = json_decode((string) $dataToExport, true);
+    if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+        $decoded = $dataToExport;
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=xui-setting-' . preg_replace('/[^a-zA-Z0-9_-]+/', '-', $selectedPanel) . '-' . date('Y-m-d') . '.json');
+    echo json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
+
+if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isValidCsrfToken((string)($_POST['csrf_token'] ?? ''))) {
+        $alert = ['type' => 'danger', 'message' => 'درخواست نامعتبر است. صفحه را رفرش کنید و دوباره تلاش کنید.'];
+        $action = 'change';
+    } elseif ($selectedPanel === '' || !$panelRow) {
+        $alert = ['type' => 'danger', 'message' => 'پنل انتخاب‌شده معتبر نیست.'];
+        $action = '';
+    } else {
+        $rawSettings = (string)($_POST['settings'] ?? '');
+        if (strlen($rawSettings) > 200000) {
+            $alert = ['type' => 'danger', 'message' => 'حجم JSON خیلی بزرگ است.'];
+            $action = 'change';
+        } else {
+            $decoded = json_decode($rawSettings, true);
+            if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+                $alert = ['type' => 'danger', 'message' => 'JSON نامعتبر است: ' . json_last_error_msg()];
+                $action = 'change';
+            } elseif (!is_array($decoded)) {
+                $alert = ['type' => 'danger', 'message' => 'JSON باید یک شیء یا آرایه باشد.'];
+                $action = 'change';
+            } else {
+                $normalized = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                if ($normalized === false) {
+                    $alert = ['type' => 'danger', 'message' => 'ذخیره‌سازی JSON با خطا مواجه شد.'];
+                    $action = 'change';
+                } else {
+                    saveXuiPanelSetting($selectedPanel, $normalized);
+                    header('Location: setting_x_ui.php?action=change&namepanel=' . rawurlencode($selectedPanel) . '&saved=1');
+                    exit;
+                }
+            }
+        }
+    }
+}
+
+$namepanel = $selectedPanel;
 $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 ?>
 <!DOCTYPE html>
@@ -192,6 +300,42 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .btn-green-glow { background: var(--neon-green); color: #000; border: none; font-weight: 800; }
         .btn-green-glow:hover { background: #fff; box-shadow: 0 0 30px var(--neon-green); color: #000; }
 
+        .alert-box {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.25);
+            color: #fff;
+            font-size: 1.05rem;
+        }
+        .alert-box.success { border-color: rgba(0,255,163,0.35); }
+        .alert-box.danger { border-color: rgba(255,42,109,0.35); }
+        .editor-toolbar {
+            display:flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .editor-toolbar .tools {
+            display:flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .btn-small {
+            height: 46px;
+            padding: 0 16px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .file-input {
+            display:none;
+        }
+
         /* --- Step Layout --- */
         .step-container {
             max-width: 600px; margin: 0 auto; text-align: center; padding: 40px 0;
@@ -272,7 +416,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         <!-- Main Panel -->
         <div class="glass-panel anim d-1">
             
-            <?php if(!isset($_GET['action']) || $_GET['action'] != 'change'): ?>
+            <?php if($action !== 'change'): ?>
                 <!-- Step 1: Select Panel -->
                 <div class="step-container">
                     <i class="fa-solid fa-server step-icon"></i>
@@ -281,18 +425,26 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         لطفاً پنل مورد نظر برای ویرایش تنظیمات JSON را انتخاب کنید.
                     </p>
                     
-                    <form method="POST" action="seeting_x_ui.php?action=change">
+                    <?php if(isset($_GET['saved']) && $_GET['saved'] == '1'): ?>
+                        <div class="alert-box success"><i class="fa-solid fa-check"></i> تنظیمات با موفقیت ذخیره شد.</div>
+                    <?php endif; ?>
+                    <?php if($alert): ?>
+                        <div class="alert-box <?php echo htmlspecialchars($alert['type'], ENT_QUOTES, 'UTF-8'); ?>">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <?php echo htmlspecialchars($alert['message'], ENT_QUOTES, 'UTF-8'); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <form method="GET" action="setting_x_ui.php">
+                        <input type="hidden" name="action" value="change">
                         <div class="form-group">
                             <select name="namepanel" class="input-readable" required>
                                 <option value="">پنل را انتخاب کنید...</option>
                                 <?php
                                 if(count($resultpanel) > 0){
                                     foreach($resultpanel as $panel){
-                                        $query = $pdo->prepare("SELECT * FROM marzban_panel WHERE code_panel=:code_panel");
-                                        $query->bindParam("code_panel", $panel['codepanel'], PDO::PARAM_STR);
-                                        $query->execute();
-                                        $pName = $query->fetch(PDO::FETCH_ASSOC);
-                                        echo "<option value=\"{$panel['codepanel']}\">{$pName['name_panel']}</option>";
+                                        $code = (string)($panel['codepanel'] ?? '');
+                                        $nm = (string)($panel['name_panel'] ?? $code);
+                                        echo "<option value=\"" . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . "\">" . htmlspecialchars($nm, ENT_QUOTES, 'UTF-8') . "</option>";
                                     }
                                 }
                                 ?>
@@ -310,10 +462,19 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <h3 style="margin:0; font-weight: 800; font-size: 1.8rem; color: var(--neon-cyan);">
                         <i class="fa-solid fa-code" style="margin-left: 10px;"></i> ویرایش کانفیگ JSON
                     </h3>
-                    <a href="seeting_x_ui.php" class="btn-act" style="height: 45px; padding: 0 20px; font-size: 1rem;">
+                    <a href="setting_x_ui.php" class="btn-act" style="height: 45px; padding: 0 20px; font-size: 1rem;">
                         <i class="fa-solid fa-rotate-right"></i> بازگشت
                     </a>
                 </div>
+
+                <?php if(isset($_GET['saved']) && $_GET['saved'] == '1'): ?>
+                    <div class="alert-box success"><i class="fa-solid fa-check"></i> تنظیمات با موفقیت ذخیره شد.</div>
+                <?php endif; ?>
+                <?php if($alert): ?>
+                    <div class="alert-box <?php echo htmlspecialchars($alert['type'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <?php echo htmlspecialchars($alert['message'], ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                <?php endif; ?>
 
                 <div class="form-group">
                     <label>قالب‌های آماده (اختیاری)</label>
@@ -324,20 +485,35 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     </select>
                 </div>
 
-                <form method="POST" action="seeting_x_ui.php?action=save">
+                <div class="editor-toolbar">
+                    <div style="color: var(--text-sec); font-weight: 700;">
+                        <?php echo htmlspecialchars((string)($panelRow['name_panel'] ?? $namepanel), ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                    <div class="tools">
+                        <button type="button" class="btn-act btn-small" id="btnValidate"><i class="fa-solid fa-circle-check"></i> اعتبارسنجی</button>
+                        <button type="button" class="btn-act btn-small" id="btnFormat"><i class="fa-solid fa-wand-magic-sparkles"></i> فرمت</button>
+                        <button type="button" class="btn-act btn-small" id="btnCopy"><i class="fa-solid fa-copy"></i> کپی</button>
+                        <a class="btn-act btn-small" href="setting_x_ui.php?<?php echo http_build_query(['action'=>'export','namepanel'=>$namepanel]); ?>"><i class="fa-solid fa-download"></i> دانلود</a>
+                        <label class="btn-act btn-small" for="jsonFile" style="margin:0;"><i class="fa-solid fa-file-arrow-up"></i> بارگذاری</label>
+                        <input class="file-input" id="jsonFile" type="file" accept="application/json">
+                    </div>
+                </div>
+
+                <form method="POST" action="setting_x_ui.php?action=save" id="xuiForm">
                     <div class="form-group">
                         <label>ویرایشگر تنظیمات</label>
                         <textarea id="settings" name="settings" class="json-editor"><?php
-                            $query = $pdo->prepare("SELECT * FROM x_ui WHERE codepanel=:codepanel");
-                            $query->bindParam("codepanel", $namepanel, PDO::PARAM_STR);
-                            $query->execute();
-                            $getsetting = $query->fetch(PDO::FETCH_ASSOC);
-                            if($getsetting && $getsetting['setting']) {
-                                $data = json_decode($getsetting['setting']);
-                                echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                            $displayText = '';
+                            if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                                $displayText = (string)($_POST['settings'] ?? '');
+                            } elseif ($panelRow && isset($panelRow['setting']) && $panelRow['setting'] !== null && $panelRow['setting'] !== '') {
+                                $data = json_decode((string)$panelRow['setting']);
+                                $displayText = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                             }
+                            echo htmlspecialchars($displayText, ENT_NOQUOTES, 'UTF-8');
                         ?></textarea>
-                        <input name="namepanel" type="hidden" value="<?php echo $namepanel?>">
+                        <input name="namepanel" type="hidden" value="<?php echo htmlspecialchars($namepanel, ENT_QUOTES, 'UTF-8'); ?>">
+                        <input name="csrf_token" type="hidden" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
                     </div>
                     
                     <button type="submit" class="btn-act btn-green-glow" style="width: 100%; margin-top: 10px;">
@@ -386,7 +562,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-network-wired"></i></div>
                 <span class="dock-label">کانفیگ</span>
             </a>
-            <a href="seeting_x_ui.php" class="dock-item active">
+            <a href="setting_x_ui.php" class="dock-item active">
                 <div class="dock-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
                 <span class="dock-label">پنل X-UI</span>
             </a>
@@ -407,6 +583,47 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="js/bootstrap.min.js"></script>
     
     <script>
+        function showInlineMessage(type, message) {
+            var el = document.getElementById('inlineMsg');
+            if (!el) return;
+            el.className = 'alert-box ' + (type === 'success' ? 'success' : 'danger');
+            el.textContent = message;
+            el.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function parseJsonEditor() {
+            var textarea = document.getElementById('settings');
+            if (!textarea) return null;
+            var raw = textarea.value || '';
+            return JSON.parse(raw);
+        }
+
+        function formatJsonEditor() {
+            var textarea = document.getElementById('settings');
+            var obj = parseJsonEditor();
+            textarea.value = JSON.stringify(obj, null, 2);
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise(function(resolve, reject){
+                try{
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    resolve();
+                }catch(e){
+                    reject(e);
+                }
+            });
+        }
+
         function updateTextarea() {
             var selectElement = document.getElementById("mySelect");
             var textareaElement = document.getElementById("settings");
@@ -466,7 +683,76 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 }, null, 2);
             }
         }
+
+        (function(){
+            var validateBtn = document.getElementById('btnValidate');
+            var formatBtn = document.getElementById('btnFormat');
+            var copyBtn = document.getElementById('btnCopy');
+            var form = document.getElementById('xuiForm');
+            var fileInput = document.getElementById('jsonFile');
+            var textarea = document.getElementById('settings');
+
+            if (validateBtn) {
+                validateBtn.addEventListener('click', function(){
+                    try{
+                        parseJsonEditor();
+                        showInlineMessage('success', 'JSON معتبر است.');
+                    }catch(e){
+                        showInlineMessage('danger', 'JSON نامعتبر است: ' + (e && e.message ? e.message : 'خطای نامشخص'));
+                    }
+                });
+            }
+            if (formatBtn) {
+                formatBtn.addEventListener('click', function(){
+                    try{
+                        formatJsonEditor();
+                        showInlineMessage('success', 'JSON با موفقیت فرمت شد.');
+                    }catch(e){
+                        showInlineMessage('danger', 'امکان فرمت وجود ندارد: ' + (e && e.message ? e.message : 'خطای نامشخص'));
+                    }
+                });
+            }
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function(){
+                    if (!textarea) return;
+                    copyToClipboard(textarea.value || '').then(function(){
+                        showInlineMessage('success', 'کپی شد.');
+                    }).catch(function(){
+                        showInlineMessage('danger', 'امکان کپی وجود ندارد.');
+                    });
+                });
+            }
+            if (fileInput && textarea) {
+                fileInput.addEventListener('change', function(){
+                    var f = fileInput.files && fileInput.files[0];
+                    if (!f) return;
+                    var reader = new FileReader();
+                    reader.onload = function(){
+                        textarea.value = reader.result || '';
+                        try{
+                            formatJsonEditor();
+                            showInlineMessage('success', 'فایل بارگذاری شد.');
+                        }catch(e){
+                            showInlineMessage('danger', 'فایل بارگذاری شد ولی JSON معتبر نیست.');
+                        }
+                        fileInput.value = '';
+                    };
+                    reader.readAsText(f);
+                });
+            }
+            if (form) {
+                form.addEventListener('submit', function(e){
+                    try{
+                        parseJsonEditor();
+                    }catch(err){
+                        e.preventDefault();
+                        showInlineMessage('danger', 'JSON نامعتبر است و ذخیره نشد.');
+                    }
+                });
+            }
+        })();
     </script>
 
+    <div id="inlineMsg" class="alert-box" style="display:none; position:fixed; top:20px; left:20px; z-index:2500; max-width: 420px; box-shadow: 0 10px 35px rgba(0,0,0,0.6);"></div>
 </body>
 </html>
