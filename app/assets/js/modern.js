@@ -38,16 +38,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             API.setToken(token);
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
-            Router.init();
-        } else {
-             // Show Login Modal
-             UI.showLogin((token) => {
-                 API.setToken(token);
-                 location.reload();
-             });
         }
-    } else {
-        // Initialize Router
-        Router.init();
     }
+
+    // Initialize Router (Always init, API will handle auth bypass)
+    Router.init();
 });

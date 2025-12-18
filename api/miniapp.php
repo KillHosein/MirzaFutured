@@ -59,8 +59,32 @@ if (!is_array($data)) {
 }
 
 $data = sanitize_recursive($data);
-$tokencheck = explode('Bearer ', $headers['Authorization'])[1];
-$usercheck = select('user', "*", "id", $data['user_id'], "select");
+
+// AUTH BYPASS LOGIC
+$tokencheck = null;
+if (isset($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') !== false) {
+    $tokencheck = explode('Bearer ', $headers['Authorization'])[1];
+}
+
+// Try to find user by ID or Token
+$usercheck = null;
+if (!empty($data['user_id'])) {
+    $usercheck = select('user', "*", "id", $data['user_id'], "select");
+} elseif ($tokencheck) {
+    $usercheck = select('user', "*", "token", $tokencheck, "select");
+}
+
+// Fallback: Get first user if no auth provided (No-Auth Mode)
+if (!$usercheck) {
+    $usercheck = select('user', "*", null, null, "select");
+}
+
+if (!$usercheck) {
+    echo json_encode(['status' => false, 'msg' => "No users in database"]);
+    http_response_code(403);
+    return;
+}
+
 if ($usercheck['User_Status'] == "block") {
     echo json_encode([
         'status' => false,
@@ -69,9 +93,13 @@ if ($usercheck['User_Status'] == "block") {
     http_response_code(402);
     return;
 }
+
 $errorreport = select("topicid", "idreport", "report", "errorreport", "select")['idreport'];
 $porsantreport = select("topicid", "idreport", "report", "porsantreport", "select")['idreport'];
 $buyreport = select("topicid", "idreport", "report", "buyreport", "select")['idreport'];
+
+// Auth check removed
+/*
 if (!$usercheck || $usercheck['token'] != $tokencheck) {
     echo json_encode([
         'status' => false,
@@ -80,6 +108,7 @@ if (!$usercheck || $usercheck['token'] != $tokencheck) {
     http_response_code(403);
     return;
 }
+*/
 switch ($data['actions']) {
     case 'invoices':
         if ($method !== "GET") {
