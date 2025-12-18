@@ -147,6 +147,25 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        /* Back Button Style */
+        .btn-back-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-back-panel:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 25px -10px rgba(139, 92, 246, 0.4);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: #fff;
+            background: rgba(139, 92, 246, 0.15);
+        }
+        .btn-back-panel i { transition: transform 0.3s; }
+        .btn-back-panel:hover i { transform: translateX(-3px); }
     </style>
 </head>
 <body>
@@ -173,6 +192,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         </div>
 
         <div class="flex items-center gap-3">
+            <a href="index.php" class="btn-back-panel h-10 px-4 rounded-xl flex items-center gap-2 text-xs font-bold" title="بازگشت به داشبورد">
+                <i class="fa-solid fa-house"></i>
+                <span class="hidden md:inline">پنل اصلی</span>
+            </a>
+            <div class="w-px h-6 bg-white/10 mx-1"></div>
             <button onclick="App.openRaw()" class="h-10 px-4 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 text-xs font-bold transition-all" title="ویرایش خام">
                 <i class="fa-solid fa-code"></i>
             </button>
