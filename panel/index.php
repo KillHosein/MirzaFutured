@@ -127,7 +127,7 @@ $salesValues = array_values($chartData['sales']);
 $userLabels = array_map(function($d) { return function_exists('jdate') ? jdate('Y/m/d', strtotime($d)) : $d; }, array_keys($chartData['growth']));
 $userValues = array_values($chartData['growth']);
 
-// Luxury Status Colors
+// Status Config
 $statusConfig = [
     'unpaid'       => ['label' => 'در انتظار', 'color' => '#EAB308'],
     'active'       => ['label' => 'فعال',      'color' => '#10B981'],
@@ -159,9 +159,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>داشبورد مدیریت حرفه‌ای</title>
+    <title>پنل مدیریت حرفه‌ای | استودیو کوانتوم</title>
     
-    <!-- Fonts & Icons -->
+    <!-- Libraries -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -169,13 +169,14 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
     <style>
         :root {
-            --primary: #8b5cf6; /* Violet */
-            --primary-glow: rgba(139, 92, 246, 0.5);
-            --secondary: #06b6d4; /* Cyan */
-            --accent: #d946ef; /* Fuchsia */
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --secondary: #06b6d4;
+            --accent: #d946ef;
             --bg-void: #02040a;
-            --glass: rgba(10, 15, 28, 0.75);
+            --glass-base: rgba(10, 15, 28, 0.72);
             --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
         }
 
         body {
@@ -186,288 +187,344 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             min-height: 100vh;
             padding-bottom: 120px;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- QUANTUM BACKGROUND --- */
-        .background-engine {
+        /* --- QUANTUM ENGINE BACKGROUND --- */
+        .quantum-bg {
             position: fixed; inset: 0; z-index: -10;
             background: radial-gradient(circle at 50% 50%, #0f172a 0%, #02040a 100%);
         }
-        .star-field {
+        .starfield {
             position: absolute; inset: 0;
             background-image: 
-                radial-gradient(1.5px 1.5px at 25% 35%, #fff, transparent),
-                radial-gradient(2px 2px at 50% 60%, #fff, transparent),
-                radial-gradient(1.5px 1.5px at 75% 20%, #fff, transparent);
-            background-size: 400px 400px;
-            animation: moveStars 150s linear infinite;
-            opacity: 0.4;
+                radial-gradient(1px 1px at 15% 15%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 45% 65%, #fff, transparent),
+                radial-gradient(1px 1px at 85% 35%, #fff, transparent);
+            background-size: 500px 500px;
+            animation: moveStars 180s linear infinite;
+            opacity: 0.35;
         }
-        .nebula-core {
-            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.25;
-            animation: nebulaFlow 40s infinite alternate ease-in-out;
+        .nebula {
+            position: absolute; border-radius: 50%; filter: blur(140px); opacity: 0.28;
+            animation: nebulaFlow 45s infinite alternate ease-in-out;
         }
-        .nc-1 { width: 800px; height: 800px; background: var(--primary); top: -20%; left: -10%; }
-        .nc-2 { width: 700px; height: 700px; background: var(--accent); bottom: -15%; right: -5%; }
+        .nebula-1 { width: 900px; height: 900px; background: var(--primary); top: -20%; left: -10%; }
+        .nebula-2 { width: 800px; height: 800px; background: var(--accent); bottom: -15%; right: -5%; }
+
+        .noise-layer {
+            position: fixed; inset: 0; z-index: -5; opacity: 0.04; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
 
         @keyframes moveStars { from { background-position: 0 0; } to { background-position: 0 4000px; } }
         @keyframes nebulaFlow {
             0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            100% { transform: translate(100px, 50px) scale(1.2) rotate(10deg); }
+            100% { transform: translate(120px, 60px) scale(1.2) rotate(12deg); }
         }
 
-        /* --- DASHBOARD CONTAINER --- */
-        .dashboard-container {
-            width: 100%; max-width: 1600px; margin: 0 auto;
-            padding: 40px 20px;
+        /* --- DASHBOARD ELEMENTS --- */
+        .main-wrapper {
+            width: 100%; max-width: 1700px; margin: 0 auto;
+            padding: 40px 30px;
             display: flex; flex-direction: column; gap: 40px;
         }
 
-        /* --- GLASS HEADER --- */
-        .header-section {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 30px; background: var(--glass); backdrop-filter: blur(20px);
-            border-radius: 30px; border: 1px solid var(--glass-border);
-            animation: fadeInDown 0.8s ease-out;
+        /* 1. Header */
+        .glass-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 35px 40px; background: var(--glass-base); backdrop-filter: blur(30px);
+            border-radius: 35px; border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative; overflow: hidden;
         }
-        .ht-main { font-size: 2.5rem; font-weight: 900; margin: 0; color: #fff; }
-        .ht-sub { color: #94a3b8; font-size: 1rem; margin-top: 5px; }
+        .glass-header::before {
+            content: ''; position: absolute; inset: 0; background: var(--glass-shine);
+            pointer-events: none;
+        }
+        .header-title-block h1 { font-size: 2.8rem; font-weight: 950; margin: 0; letter-spacing: -1px; }
+        .header-title-block p { color: #94a3b8; font-size: 1.1rem; margin-top: 8px; font-weight: 300; }
 
-        /* --- HOLO STATS --- */
-        .stats-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;
+        .system-pill {
+            background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 8px 18px; border-radius: 99px; display: flex; align-items: center; gap: 10px;
         }
-        .holo-card {
-            background: var(--glass); border: 1px solid var(--glass-border);
-            border-radius: 30px; padding: 30px; position: relative; overflow: hidden;
+        .status-pulse { width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 12px #10b981; animation: pulse 2s infinite; }
+
+        /* 2. Holo Stats */
+        .stats-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;
+        }
+        .stat-card {
+            background: var(--glass-base); border: 1px solid var(--glass-border);
+            border-radius: 32px; padding: 35px; position: relative; overflow: hidden;
             display: flex; align-items: center; justify-content: space-between;
-            transition: 0.4s; backdrop-filter: blur(15px);
+            transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); backdrop-filter: blur(20px);
         }
-        .holo-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .hc-val { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
-        .hc-lbl { color: #94a3b8; font-size: 0.9rem; }
-        .hc-icon { width: 60px; height: 60px; border-radius: 18px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--primary); }
+        .stat-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.6);
+        }
+        .stat-card .val { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 4px; }
+        .stat-card .lbl { color: #94a3b8; font-size: 0.95rem; font-weight: 500; }
+        .stat-card .icon-wrap {
+            width: 70px; height: 70px; border-radius: 20px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: var(--primary);
+            transition: 0.4s;
+        }
+        .stat-card:hover .icon-wrap { transform: rotate(-15deg) scale(1.1); color: #fff; background: var(--primary); }
 
-        /* --- MAIN GRID --- */
+        /* 3. Bento Layout */
         .bento-grid {
-            display: grid; grid-template-columns: 2fr 1fr; gap: 30px;
+            display: grid; grid-template-columns: 2.2fr 1fr; gap: 30px;
         }
         .glass-panel {
-            background: var(--glass); border: 1px solid var(--glass-border);
-            border-radius: 35px; padding: 35px; backdrop-filter: blur(25px);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            background: var(--glass-base); border: 1px solid var(--glass-border);
+            border-radius: 40px; padding: 40px; backdrop-filter: blur(35px);
+            box-shadow: 0 40px 100px -30px rgba(0,0,0,0.7);
+            position: relative;
         }
-        .panel-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
-        .panel-title i { color: var(--secondary); }
+        .panel-head { font-size: 1.5rem; font-weight: 900; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        .panel-head i { color: var(--secondary); filter: drop-shadow(0 0 8px var(--secondary)); }
 
-        /* --- NAVIGATION TILES --- */
-        .actions-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;
-            margin-top: 30px;
+        /* 4. Quick Nav Tiles */
+        .tiles-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 20px;
         }
-        .nav-tile {
-            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 20px; padding: 25px 15px; text-align: center;
-            text-decoration: none; color: #cbd5e1; transition: 0.3s;
+        .tile {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px; padding: 30px 15px; text-align: center;
+            text-decoration: none !important; color: #cbd5e1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .nav-tile:hover { background: rgba(255,255,255,0.06); border-color: var(--primary); transform: scale(1.05); color: #fff; }
-        .nt-icon { font-size: 1.8rem; margin-bottom: 12px; display: block; }
-        .nt-label { font-size: 0.85rem; font-weight: 600; }
+        .tile:hover {
+            background: rgba(255,255,255,0.08); border-color: var(--primary);
+            transform: translateY(-8px); color: #fff;
+            box-shadow: 0 15px 30px -10px var(--primary-glow);
+        }
+        .tile i { font-size: 2.2rem; margin-bottom: 15px; display: block; transition: 0.3s; }
+        .tile:hover i { transform: scale(1.2); filter: drop-shadow(0 0 10px currentColor); }
+        .tile span { font-size: 0.9rem; font-weight: 700; }
 
-        /* --- SUPER DOCK --- */
-        .dock-container {
-            position: fixed; bottom: 30px; left: 0; right: 0;
-            display: flex; justify-content: center; z-index: 9999;
+        /* --- MAC-STYLE SUPER DOCK --- */
+        .dock-wrapper {
+            position: fixed; bottom: 35px; left: 0; right: 0;
+            display: flex; justify-content: center; z-index: 10000;
         }
-        .super-dock {
-            background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255,255,255,0.12); padding: 12px; border-radius: 32px;
-            display: flex; align-items: center; gap: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        .quantum-dock {
+            background: rgba(5, 5, 10, 0.82); backdrop-filter: blur(25px) saturate(200%);
+            border: 1px solid rgba(255,255,255,0.14); padding: 12px 15px; border-radius: 32px;
+            display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
         }
-        .dock-item {
-            width: 55px; height: 55px; display: flex; align-items: center; justify-content: center;
-            border-radius: 20px; color: #94a3b8; font-size: 1.5rem; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-decoration: none; position: relative;
+        .dock-btn {
+            width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
+            border-radius: 20px; color: #94a3b8; font-size: 1.6rem;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none !important; position: relative;
         }
-        .dock-item:hover { transform: translateY(-15px) scale(1.2); color: #fff; background: rgba(255,255,255,0.1); }
-        .dock-item.active { color: var(--primary); background: rgba(139, 92, 246, 0.1); }
+        .dock-btn:hover {
+            transform: translateY(-20px) scale(1.3);
+            color: #fff; background: rgba(255,255,255,0.12);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        .dock-btn.active { color: var(--primary); background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.2); }
+        
+        /* Tooltip for Dock */
+        .dock-btn::after {
+            content: attr(data-label); position: absolute; bottom: 100%; left: 50%;
+            transform: translateX(-50%) translateY(15px); padding: 8px 16px;
+            background: #000; border: 1px solid var(--glass-border); border-radius: 12px;
+            color: #fff; font-size: 0.8rem; font-weight: 700; white-space: nowrap;
+            opacity: 0; pointer-events: none; transition: 0.3s; margin-bottom: 20px;
+        }
+        .dock-btn:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* --- KILLHOSEIN SIGNATURE --- */
-        .killhosein-signature {
-            margin-top: 80px; padding-bottom: 60px; text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.05); padding-top: 40px;
+        /* --- KILLHOSEIN SIGNATURE SUPREME --- */
+        .signature-supreme {
+            margin-top: 100px; padding-bottom: 80px; text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.06); padding-top: 50px;
         }
-        .signature-link {
-            text-decoration: none; display: inline-flex; flex-direction: column; align-items: center; gap: 15px;
-            transition: 0.4s;
+        .brand-link {
+            text-decoration: none !important; display: inline-flex; flex-direction: column; align-items: center; gap: 20px;
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .sig-text { font-size: 15px; color: rgba(255,255,255,0.5); font-weight: 500; }
-        .sig-brand {
-            font-size: 45px; font-weight: 950;
-            background: linear-gradient(90deg, #fff, #a78bfa, var(--secondary), var(--accent));
+        .brand-hint { font-size: 16px; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: 1px; }
+        .brand-name {
+            font-size: 52px; font-weight: 950;
+            background: linear-gradient(90deg, #fff, #a78bfa, #22d3ee, #d946ef);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            letter-spacing: 2px; filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
-            display: flex; align-items: center; gap: 20px;
+            letter-spacing: 2px; filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.6));
+            display: flex; align-items: center; gap: 25px;
         }
-        .tg-icon {
-            font-size: 55px; color: #229ED9;
+        .brand-tg {
+            font-size: 65px; color: #229ED9;
             -webkit-text-fill-color: #229ED9;
-            filter: drop-shadow(0 0 20px rgba(34, 158, 217, 0.7));
-            transition: 0.4s;
+            filter: drop-shadow(0 0 25px rgba(34, 158, 217, 0.8));
+            transition: 0.5s;
         }
-        .signature-link:hover { transform: scale(1.08); }
-        .signature-link:hover .tg-icon { transform: rotate(-12deg) scale(1.2); }
+        .brand-link:hover { transform: scale(1.1); }
+        .brand-link:hover .brand-tg { transform: rotate(-15deg) scale(1.2); }
+        .brand-link:hover .brand-name { filter: drop-shadow(0 0 45px var(--accent)); }
 
-        /* Chart Customization */
-        canvas { filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 70% { transform: scale(1.3); opacity: 0; } 100% { transform: scale(0.9); opacity: 0; } }
 
-        @media (max-width: 1100px) {
+        @media (max-width: 1200px) {
             .bento-grid { grid-template-columns: 1fr; }
-            .ht-main { font-size: 1.8rem; }
+            .header-title-block h1 { font-size: 2.2rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Space Engine -->
-    <div class="background-engine">
-        <div class="star-field"></div>
-        <div class="nebula-core nc-1"></div>
-        <div class="nebula-core nc-2"></div>
+    <!-- Background Engine -->
+    <div class="quantum-bg">
+        <div class="starfield"></div>
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
     </div>
+    <div class="noise-layer"></div>
 
-    <div class="dashboard-container">
+    <div class="main-wrapper">
         
         <!-- 1. Header -->
-        <header class="header-section">
-            <div>
-                <h1 class="ht-main"><?php echo $greet; ?>، ادمین</h1>
-                <div class="ht-sub">داشبورد فرماندهی سیستم آماده استفاده است.</div>
+        <header class="glass-header animate__animated animate__fadeInDown">
+            <div class="header-title-block">
+                <h1><?php echo $greet; ?>، مدیر ارشد</h1>
+                <p>تمامی پارامترهای عملیاتی در وضعیت کوانتومی و پایدار قرار دارند.</p>
             </div>
-            <div class="hidden md:flex flex-col items-end">
-                <span class="text-white font-bold opacity-90"><?php echo $today; ?></span>
-                <span class="text-[11px] text-cyan-400 font-mono tracking-widest uppercase mt-1">System Online</span>
+            <div class="hidden lg:flex items-center gap-6">
+                <div class="text-right">
+                    <div class="text-white font-black text-lg"><?php echo $today; ?></div>
+                    <div class="system-pill mt-2">
+                        <div class="status-pulse"></div>
+                        <span class="text-[11px] text-emerald-400 font-mono tracking-widest uppercase">Quantum Link Active</span>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- 2. Stats Row -->
-        <section class="stats-grid">
-            <div class="holo-card">
+        <!-- 2. Stats Grid -->
+        <section class="stats-container">
+            <div class="stat-card animate__animated animate__zoomIn" style="animation-delay: 0.1s;">
                 <div>
-                    <div class="hc-val"><?php echo number_format($stats['sales']); ?></div>
-                    <div class="hc-lbl">درآمد کل (تومان)</div>
+                    <div class="val"><?php echo number_format($stats['sales']); ?></div>
+                    <div class="lbl">درآمد ناخالص (تومان)</div>
                 </div>
-                <div class="hc-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="icon-wrap"><i class="fa-solid fa-gem"></i></div>
             </div>
-            <div class="holo-card">
+            <div class="stat-card animate__animated animate__zoomIn" style="animation-delay: 0.2s;">
                 <div>
-                    <div class="hc-val"><?php echo number_format($stats['orders']); ?></div>
-                    <div class="hc-lbl">سفارشات موفق</div>
+                    <div class="val"><?php echo number_format($stats['orders']); ?></div>
+                    <div class="lbl">تراکنش‌های موفقیت‌آمیز</div>
                 </div>
-                <div class="hc-icon" style="color: var(--secondary);"><i class="fa-solid fa-receipt"></i></div>
+                <div class="icon-wrap" style="color: var(--secondary);"><i class="fa-solid fa-bolt"></i></div>
             </div>
-            <div class="holo-card">
+            <div class="stat-card animate__animated animate__zoomIn" style="animation-delay: 0.3s;">
                 <div>
-                    <div class="hc-val"><?php echo number_format($stats['users']); ?></div>
-                    <div class="hc-lbl">کل کاربران</div>
+                    <div class="val"><?php echo number_format($stats['users']); ?></div>
+                    <div class="lbl">جمعیت کل کاربران</div>
                 </div>
-                <div class="hc-icon" style="color: var(--accent);"><i class="fa-solid fa-users"></i></div>
+                <div class="icon-wrap" style="color: var(--accent);"><i class="fa-solid fa-dna"></i></div>
             </div>
-            <div class="holo-card">
+            <div class="stat-card animate__animated animate__zoomIn" style="animation-delay: 0.4s;">
                 <div>
-                    <div class="hc-val"><?php echo number_format($stats['new_users']); ?></div>
-                    <div class="hc-lbl">ثبت‌نام امروز</div>
+                    <div class="val"><?php echo number_format($stats['new_users']); ?></div>
+                    <div class="lbl">جذب کاربر (امروز)</div>
                 </div>
-                <div class="hc-icon" style="color: #fbbf24;"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="icon-wrap" style="color: #fbbf24;"><i class="fa-solid fa-user-astronaut"></i></div>
             </div>
         </section>
 
-        <!-- 3. Main Bento -->
+        <!-- 3. Main Bento Section -->
         <section class="bento-grid">
             <div class="flex flex-col gap-8">
-                <!-- Sales Chart -->
-                <div class="glass-panel">
-                    <div class="panel-title"><i class="fa-solid fa-chart-line"></i> نمودار فروش ۳۰ روز اخیر</div>
-                    <div style="height: 350px;"><canvas id="salesChart"></canvas></div>
+                <!-- Analytics Chart -->
+                <div class="glass-panel animate__animated animate__fadeInLeft">
+                    <div class="panel-head"><i class="fa-solid fa-chart-area"></i> آنالیز فروش و جریانات مالی</div>
+                    <div style="height: 380px;"><canvas id="salesChart"></canvas></div>
                 </div>
 
                 <!-- Navigation Tiles -->
-                <div class="glass-panel">
-                    <div class="panel-title"><i class="fa-solid fa-layer-group"></i> دسترسی سریع به بخش‌ها</div>
-                    <div class="actions-grid">
-                        <a href="users.php" class="nav-tile"><i class="fa-solid fa-users-gear nt-icon"></i><span class="nt-label">کاربران</span></a>
-                        <a href="invoice.php" class="nav-tile"><i class="fa-solid fa-file-invoice nt-icon"></i><span class="nt-label">سفارشات</span></a>
-                        <a href="product.php" class="nav-tile"><i class="fa-solid fa-box-open nt-icon"></i><span class="nt-label">محصولات</span></a>
-                        <a href="service.php" class="nav-tile"><i class="fa-solid fa-server nt-icon"></i><span class="nt-label">سرویس‌ها</span></a>
-                        <a href="payment.php" class="nav-tile"><i class="fa-solid fa-wallet nt-icon"></i><span class="nt-label">مالی</span></a>
-                        <a href="keyboard.php" class="nav-tile"><i class="fa-solid fa-network-wired nt-icon"></i><span class="nt-label">دکمه‌ها</span></a>
-                        <a href="seeting_x_ui.php" class="nav-tile"><i class="fa-solid fa-tower-broadcast nt-icon"></i><span class="nt-label">X-UI</span></a>
-                        <a href="cancelService.php" class="nav-tile" style="border-color: rgba(239,68,68,0.2);"><i class="fa-solid fa-ban nt-icon" style="color: #ef4444;"></i><span class="nt-label">مسدودها</span></a>
+                <div class="glass-panel animate__animated animate__fadeInUp">
+                    <div class="panel-head"><i class="fa-solid fa-compass"></i> هدایت‌گر عملیاتی سیستم</div>
+                    <div class="tiles-grid">
+                        <a href="users.php" class="tile"><i class="fa-solid fa-user-gear"></i><span>کاربران</span></a>
+                        <a href="invoice.php" class="tile"><i class="fa-solid fa-file-shield"></i><span>سفارشات</span></a>
+                        <a href="product.php" class="tile"><i class="fa-solid fa-box-tissue"></i><span>محصولات</span></a>
+                        <a href="service.php" class="tile"><i class="fa-solid fa-microchip"></i><span>سرویس‌ها</span></a>
+                        <a href="payment.php" class="tile"><i class="fa-solid fa-credit-card"></i><span>امور مالی</span></a>
+                        <a href="keyboard.php" class="tile"><i class="fa-solid fa-gamepad"></i><span>دکمه‌ها</span></a>
+                        <a href="seeting_x_ui.php" class="tile"><i class="fa-solid fa-satellite-dish"></i><span>X-UI</span></a>
+                        <a href="cancelService.php" class="tile" style="border-color: rgba(239,68,68,0.2);"><i class="fa-solid fa-shield-slash" style="color: #ef4444;"></i><span>مسدودها</span></a>
                     </div>
                 </div>
             </div>
 
             <div class="flex flex-col gap-8">
                 <!-- Status Doughnut -->
-                <div class="glass-panel text-center">
-                    <div class="panel-title justify-center"><i class="fa-solid fa-chart-pie"></i> وضعیت سرویس‌ها</div>
-                    <div style="position: relative; height: 250px;">
+                <div class="glass-panel text-center animate__animated animate__fadeInRight">
+                    <div class="panel-head justify-center"><i class="fa-solid fa-circle-nodes"></i> یکپارچگی سرویس‌ها</div>
+                    <div style="position: relative; height: 260px;">
                         <canvas id="statusChart"></canvas>
                         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;">
-                            <div style="font-size: 2.2rem; font-weight: 800;"><?php echo $totalStatus; ?></div>
-                            <div style="font-size: 0.7rem; opacity: 0.6; tracking-widest: 2px;">TOTAL</div>
+                            <div style="font-size: 2.8rem; font-weight: 950; text-shadow: 0 0 20px rgba(255,255,255,0.2);"><?php echo $totalStatus; ?></div>
+                            <div style="font-size: 0.75rem; color: #94a3b8; letter-spacing: 3px; font-weight: 700;">NODES</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- User Growth -->
-                <div class="glass-panel">
-                    <div class="panel-title"><i class="fa-solid fa-chart-column"></i> جذب کاربر جدید</div>
-                    <div style="height: 200px;"><canvas id="usersChart"></canvas></div>
+                <!-- User Trend -->
+                <div class="glass-panel animate__animated animate__fadeInUp">
+                    <div class="panel-head"><i class="fa-solid fa-user-plus"></i> روند رشد اکوسیستم</div>
+                    <div style="height: 220px;"><canvas id="usersChart"></canvas></div>
                 </div>
             </div>
         </section>
 
         <!-- 4. Signature -->
-        <div class="killhosein-signature">
-            <a href="https://t.me/KillHosein" class="signature-link" target="_blank">
-                <span class="sig-text">Designed & Developed by</span>
-                <span class="sig-brand">
-                    <i class="fa-brands fa-telegram tg-icon"></i> KillHosein
+        <div class="signature-supreme">
+            <a href="https://t.me/KillHosein" class="brand-link" target="_blank">
+                <span class="brand-hint">Quantum Studio Presenting</span>
+                <span class="brand-name">
+                    <i class="fa-brands fa-telegram brand-tg"></i> KillHosein
                 </span>
             </a>
         </div>
     </div>
 
-    <!-- Super Dock -->
-    <div class="dock-container">
-        <nav class="super-dock">
-            <a href="index.php" class="dock-item active"><i class="fa-solid fa-house"></i></a>
-            <a href="users.php" class="dock-item"><i class="fa-solid fa-users"></i></a>
-            <a href="invoice.php" class="dock-item"><i class="fa-solid fa-receipt"></i></a>
-            <a href="product.php" class="dock-item"><i class="fa-solid fa-box"></i></a>
-            <a href="service.php" class="dock-item"><i class="fa-solid fa-server"></i></a>
-            <a href="settings.php" class="dock-item"><i class="fa-solid fa-gear"></i></a>
-            <a href="login.php" class="dock-item" style="color: #ef4444;"><i class="fa-solid fa-power-off"></i></a>
+    <!-- The Super Dock -->
+    <div class="dock-wrapper">
+        <nav class="quantum-dock">
+            <a href="index.php" class="dock-btn active" data-label="خانه"><i class="fa-solid fa-house-chimney-window"></i></a>
+            <a href="users.php" class="dock-btn" data-label="کاربران"><i class="fa-solid fa-user-astronaut"></i></a>
+            <a href="invoice.php" class="dock-btn" data-label="فاکتورها"><i class="fa-solid fa-receipt"></i></a>
+            <a href="product.php" class="dock-btn" data-label="انبار"><i class="fa-solid fa-box-open"></i></a>
+            <a href="service.php" class="dock-btn" data-label="سرورها"><i class="fa-solid fa-server"></i></a>
+            <a href="settings.php" class="dock-btn" data-label="تنظیمات"><i class="fa-solid fa-sliders"></i></a>
+            <a href="login.php" class="dock-btn" data-label="خروج" style="color: #ef4444;"><i class="fa-solid fa-power-off"></i></a>
         </nav>
     </div>
 
+    <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Chart.js Configuration
+        // Global Chart Defaults
         Chart.defaults.font.family = 'Vazirmatn';
-        Chart.defaults.color = 'rgba(255,255,255,0.4)';
-        Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.03)';
+        Chart.defaults.color = 'rgba(255,255,255,0.5)';
+        Chart.defaults.scale.grid.color = 'rgba(255,255,255,0.04)';
 
         const dSales = { labels: <?php echo json_encode($salesLabels); ?>, values: <?php echo json_encode($salesValues); ?> };
         const dPie = { labels: <?php echo json_encode($pieLabels); ?>, values: <?php echo json_encode($pieValues); ?> };
         const dUsers = { labels: <?php echo json_encode($userLabels); ?>, values: <?php echo json_encode($userValues); ?> };
 
-        // 1. Sales Chart
+        // 1. Sales Analytics (Deep Gradient Area)
         const ctxS = document.getElementById('salesChart').getContext('2d');
-        const gradS = ctxS.createLinearGradient(0, 0, 0, 350);
-        gradS.addColorStop(0, 'rgba(139, 92, 246, 0.4)');
+        const gradS = ctxS.createLinearGradient(0, 0, 0, 380);
+        gradS.addColorStop(0, 'rgba(139, 92, 246, 0.5)');
         gradS.addColorStop(1, 'rgba(139, 92, 246, 0)');
 
         new Chart(ctxS, {
@@ -475,27 +532,30 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             data: {
                 labels: dSales.labels,
                 datasets: [{
-                    label: 'فروش (تومان)',
                     data: dSales.values,
-                    borderColor: '#8b5cf6',
-                    backgroundColor: gradS,
+                    borderColor: '#a78bfa',
                     borderWidth: 4,
-                    pointRadius: 0,
-                    pointHoverRadius: 10,
-                    pointHoverBackgroundColor: '#fff',
+                    backgroundColor: gradS,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.45,
+                    pointRadius: 0,
+                    pointHoverRadius: 12,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderWidth: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { x: { ticks: { display: false }, grid: { display: false } }, y: { display: false } }
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#000', padding: 15, cornerRadius: 15 } },
+                scales: { 
+                    x: { ticks: { display: false }, grid: { display: false } },
+                    y: { border: { display: false }, ticks: { display: false } }
+                }
             }
         });
 
-        // 2. Status Chart
+        // 2. Nodes Doughnut (Quantum Ring)
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
             data: {
@@ -504,9 +564,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     data: dPie.values,
                     backgroundColor: ['#fbbf24', '#10b981', '#64748b', '#ef4444', '#3b82f6', '#d946ef', '#f97316', '#334155'],
                     borderWidth: 0,
-                    hoverOffset: 15,
-                    cutout: '82%',
-                    spacing: 4
+                    hoverOffset: 20,
+                    cutout: '84%',
+                    spacing: 6
                 }]
             },
             options: {
@@ -516,16 +576,17 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             }
         });
 
-        // 3. Users Chart
+        // 3. Growth Histogram
         new Chart(document.getElementById('usersChart'), {
             type: 'bar',
             data: {
                 labels: dUsers.labels,
                 datasets: [{
                     data: dUsers.values,
-                    backgroundColor: '#06b6d4',
-                    borderRadius: 8,
-                    barThickness: 10
+                    backgroundColor: '#22d3ee',
+                    borderRadius: 12,
+                    barThickness: 12,
+                    hoverBackgroundColor: '#fff'
                 }]
             },
             options: {
