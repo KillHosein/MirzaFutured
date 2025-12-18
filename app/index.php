@@ -64,8 +64,9 @@ $config = [
             --bg-dark: #0f172a;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --glass-bg: rgba(15, 23, 42, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.05);
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-glass: rgba(30, 41, 59, 0.4);
         }
 
         * {
@@ -93,23 +94,91 @@ $config = [
             background-attachment: fixed;
         }
 
-        /* Global UI Polish */
+        /* Global UI Polish & Overrides */
+        
+        /* Force transparent backgrounds on main containers to show our gradient */
+        #root > div, .bg-zinc-900, .bg-slate-900, .bg-gray-900, .bg-black {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        /* Glassmorphism Cards */
+        .bg-zinc-800, .bg-slate-800, .bg-gray-800, 
+        .card, [class*="card"], [class*="Card"] {
+            background: var(--card-glass) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+            border-radius: 16px !important;
+        }
+
+        /* Typography Improvements */
+        h1, h2, h3, .text-xl, .text-2xl, .text-3xl {
+            font-weight: 800 !important;
+            letter-spacing: -0.5px !important;
+            color: #fff !important;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        p, .text-gray-400, .text-zinc-400 {
+            color: var(--text-muted) !important;
+            line-height: 1.6 !important;
+        }
+
+        /* Buttons */
         button, .btn {
             font-family: 'Vazirmatn', sans-serif !important;
             letter-spacing: 0.5px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border-radius: 12px !important;
+            font-weight: 600 !important;
         }
+        
         button:active, .btn:active {
             transform: scale(0.96) !important;
         }
 
+        /* Specific Primary Button Style Override */
+        [class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+            box-shadow: 0 4px 15px var(--primary-glow) !important;
+        }
+
+        /* Inputs */
         input, select, textarea {
             transition: all 0.2s ease !important;
             font-family: 'Vazirmatn', sans-serif !important;
+            background: rgba(0, 0, 0, 0.2) !important;
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 12px !important;
+            color: #fff !important;
         }
         input:focus, select:focus, textarea:focus {
             transform: translateY(-1px) !important;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px var(--primary-glow) !important;
+            outline: none !important;
+        }
+
+        /* Bottom Navigation Bar Override */
+        .fixed.bottom-0, nav[class*="fixed"], [class*="bottom-nav"] {
+            background: rgba(15, 23, 42, 0.85) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-top: 1px solid var(--glass-border) !important;
+            padding-bottom: env(safe-area-inset-bottom) !important;
+        }
+
+        /* Progress Bar */
+        [role="progressbar"] > div, [class*="bg-blue-"], [class*="bg-indigo-"] {
+            background: linear-gradient(90deg, #22d3ee, #8b5cf6) !important;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5) !important;
+        }
+
+        /* Icons */
+        i, svg {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
 
         /* App Container */
