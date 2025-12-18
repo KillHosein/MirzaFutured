@@ -10,66 +10,10 @@ window.handlePurchase = async (countryId, serviceId, name, price) => {
         UI.hideLoading();
 
         if (country && (country.is_username || country.is_note)) {
-            // Show custom input modal
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm fade-in';
-            
-            let inputsHtml = '';
-            if (country.is_username) {
-                inputsHtml += `
-                    <div class="mb-4">
-                        <label class="block text-gray-400 text-sm mb-2">نام کاربری دلخواه (انگلیسی)</label>
-                        <input type="text" id="custom-username" class="w-full bg-gray-800 text-white rounded-xl py-3 px-4 border border-gray-700 focus:border-blue-500 focus:outline-none ltr" placeholder="username">
-                    </div>
-                `;
-            }
-            if (country.is_note) {
-                inputsHtml += `
-                    <div class="mb-6">
-                        <label class="block text-gray-400 text-sm mb-2">توضیحات (اختیاری)</label>
-                        <input type="text" id="custom-note" class="w-full bg-gray-800 text-white rounded-xl py-3 px-4 border border-gray-700 focus:border-blue-500 focus:outline-none" placeholder="یادداشت...">
-                    </div>
-                `;
-            }
-
-            modal.innerHTML = `
-                <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl transform scale-100 transition-transform">
-                    <h3 class="text-xl font-bold text-white mb-4">تکمیل خرید</h3>
-                    <p class="text-gray-300 text-sm mb-4">سرویس: ${name}<br>قیمت: ${UI.formatMoney(price)}</p>
-                    ${inputsHtml}
-                    <div class="flex gap-3">
-                        <button id="modal-cancel" class="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-300 font-medium hover:bg-gray-700 transition-colors">انصراف</button>
-                        <button id="modal-confirm" class="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20">خرید نهایی</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            const close = () => {
-                modal.classList.add('opacity-0');
-                setTimeout(() => modal.remove(), 200);
-            };
-
-            modal.querySelector('#modal-cancel').onclick = close;
-            modal.querySelector('#modal-confirm').onclick = async () => {
-                const customUsername = document.getElementById('custom-username')?.value;
-                const customNote = document.getElementById('custom-note')?.value;
-
-                if (country.is_username) {
-                    if (!customUsername) {
-                        UI.toast('لطفا نام کاربری را وارد کنید', 'error');
-                        return;
-                    }
-                    if (!/^[a-zA-Z0-9_]+$/.test(customUsername)) {
-                        UI.toast('نام کاربری فقط می‌تواند شامل حروف انگلیسی، اعداد و زیرخط باشد', 'error');
-                        return;
-                    }
-                }
-
-                close();
+            // Show custom input modal using UI helper
+            UI.promptPurchase('تکمیل خرید', name, price, country, async (customUsername, customNote) => {
                 await executePurchase(countryId, serviceId, customUsername, customNote);
-            };
-
+            });
         } else {
             // Normal confirmation
             UI.confirm('تایید خرید', `آیا از خرید سرویس ${name} با قیمت ${UI.formatMoney(price)} مطمئن هستید؟`, async () => {
@@ -111,7 +55,8 @@ export const Pages = {
     async home(container) {
         UI.showLoading();
         try {
-            const res = await API.request('user_info');
+            // Enable caching for user_info (5 minutes)
+            const res = await API.request('user_info', 'GET', null, true);
             if (!res.status) throw new Error(res.msg);
             const user = res.obj;
 

@@ -30,9 +30,7 @@ $datatextbotget = select("textbot", "*", null, null, "fetchAll");
             'textafterpayibsng' => ''
         );
         foreach ($datatxtbot as $item) {
-            if (isset($datatextbot[$item['id_text']])) {
-                $datatextbot[$item['id_text']] = $item['text'];
-            }
+            $datatextbot[$item['id_text']] = $item['text'];
         }
 if ($method == "GET") {
     $data = array(
