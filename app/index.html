@@ -8,6 +8,9 @@
     <!-- Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Fonts -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,84 +22,100 @@
     <!-- Loader -->
     <div id="loader" class="loader-container">
         <div class="loader"></div>
+        <div class="loader-text">درحال دریافت اطلاعات...</div>
     </div>
+
+    <!-- Error Toast -->
+    <div id="toast" class="toast hidden"></div>
 
     <div class="container">
         <!-- Header -->
         <header>
             <div class="profile-section">
-                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Avatar" class="avatar" id="user-avatar">
+                <img src="assets/img/default-avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'" alt="Avatar" class="avatar" id="user-avatar">
                 <div class="user-info">
-                    <h3 id="user-name">درحال بارگذاری...</h3>
-                    <span id="user-id">کاربر ویژه</span>
+                    <h3 id="user-name">کاربر مهمان</h3>
+                    <span id="user-id">ID: ---</span>
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-outline" style="width: auto; padding: 8px;"><i class="fas fa-bell"></i></button>
+                <button class="btn btn-icon" onclick="location.reload()"><i class="fas fa-sync-alt"></i></button>
             </div>
         </header>
 
         <!-- Home Section -->
         <div id="home" class="page-section">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">موجودی کیف پول</div>
-                    <div class="stat-value" id="user-balance">0 تومان</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">سرویس‌های فعال</div>
-                    <div class="stat-value" id="active-services-count">0</div>
+            <!-- Balance Card -->
+            <div class="card balance-card">
+                <div class="balance-label">موجودی کیف پول</div>
+                <div class="balance-value" id="user-balance">--- تومان</div>
+                <div class="balance-actions">
+                    <button class="btn btn-light btn-sm" onclick="Telegram.WebApp.openLink('https://t.me/Bot?start=charge')">
+                        <i class="fas fa-plus"></i> افزایش موجودی
+                    </button>
                 </div>
             </div>
 
-            <h3 class="section-title">سرویس‌های من</h3>
-            <div class="card" id="my-services-list">
-                <!-- Services will be injected here -->
-            </div>
-            
-            <div class="card" style="background: linear-gradient(45deg, #3b82f6, #2563eb); color: white; border: none;">
-                <div class="service-item" style="border: none;">
-                    <div class="service-details">
-                        <span class="service-name" style="font-size: 16px;">شارژ حساب کاربری</span>
-                        <span class="service-desc" style="color: rgba(255,255,255,0.8);">برای خرید سرویس جدید موجودی خود را افزایش دهید</span>
-                    </div>
-                    <button class="btn" style="background: white; color: #2563eb; width: auto;">شارژ</button>
+            <!-- Stats Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h4>نمودار مصرف</h4>
                 </div>
+                <div style="height: 200px; position: relative;">
+                    <canvas id="usageChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Active Services -->
+            <div class="section-header">
+                <h3>سرویس‌های فعال</h3>
+                <span class="badge" id="active-services-count">0</span>
+            </div>
+            <div class="card-list" id="my-services-list">
+                <div class="empty-state">درحال بارگذاری...</div>
             </div>
         </div>
 
         <!-- Shop Section -->
         <div id="shop" class="page-section" style="display: none;">
             <h3 class="section-title">خرید سرویس جدید</h3>
-            <div id="shop-list">
+            <div class="shop-grid" id="shop-list">
                 <!-- Shop items will be injected here -->
+                 <div class="empty-state">محصولی یافت نشد</div>
+            </div>
+        </div>
+
+        <!-- History Section (New) -->
+        <div id="history" class="page-section" style="display: none;">
+            <h3 class="section-title">تاریخچه تراکنش‌ها</h3>
+            <div class="card-list" id="transactions-list">
+                <div class="empty-state">درحال بارگذاری...</div>
             </div>
         </div>
 
         <!-- Profile Section -->
         <div id="profile" class="page-section" style="display: none;">
             <div class="card">
-                <div class="service-item">
-                    <div class="service-icon"><i class="fas fa-history"></i></div>
-                    <div class="service-details">
-                        <span class="service-name">تاریخچه خرید</span>
+                <div class="list-item" onclick="Telegram.WebApp.openLink('https://t.me/Support')">
+                    <div class="item-icon bg-blue"><i class="fas fa-headset"></i></div>
+                    <div class="item-content">
+                        <span class="item-title">پشتیبانی</span>
+                        <span class="item-subtitle">ارتباط با ادمین</span>
                     </div>
                     <i class="fas fa-chevron-left text-muted"></i>
                 </div>
-                <div class="service-item">
-                    <div class="service-icon"><i class="fas fa-headset"></i></div>
-                    <div class="service-details">
-                        <span class="service-name">پشتیبانی</span>
+                <div class="list-item">
+                    <div class="item-icon bg-purple"><i class="fas fa-shield-alt"></i></div>
+                    <div class="item-content">
+                        <span class="item-title">امنیت</span>
+                        <span class="item-subtitle">تنظیمات امنیتی</span>
                     </div>
                     <i class="fas fa-chevron-left text-muted"></i>
                 </div>
-                <div class="service-item">
-                    <div class="service-icon"><i class="fas fa-cog"></i></div>
-                    <div class="service-details">
-                        <span class="service-name">تنظیمات</span>
-                    </div>
-                    <i class="fas fa-chevron-left text-muted"></i>
-                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p class="text-muted text-sm">نسخه ۱.۰.۰</p>
             </div>
         </div>
     </div>
@@ -110,6 +129,10 @@
         <a href="#shop" class="nav-item">
             <i class="fas fa-shopping-cart"></i>
             <span>فروشگاه</span>
+        </a>
+        <a href="#history" class="nav-item">
+            <i class="fas fa-history"></i>
+            <span>تاریخچه</span>
         </a>
         <a href="#profile" class="nav-item">
             <i class="fas fa-user"></i>

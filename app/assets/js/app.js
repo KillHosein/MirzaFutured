@@ -6,33 +6,17 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand();
     
     // Theme handling
-    document.body.className = 'telegram-web-app'; // trigger CSS vars
-    
-    // Mock Data
-    const user = {
-        name: tg.initDataUnsafe?.user?.first_name || 'کاربر مهمان',
-        username: tg.initDataUnsafe?.user?.username || 'Guest',
-        balance: '۵۰,۰۰۰ تومان',
-        activeServices: 2
-    };
+    document.body.className = 'telegram-web-app'; 
+    if (tg.themeParams) {
+        const root = document.documentElement;
+        if (tg.themeParams.bg_color) root.style.setProperty('--bg-color', tg.themeParams.bg_color);
+        if (tg.themeParams.text_color) root.style.setProperty('--text-primary', tg.themeParams.text_color);
+        if (tg.themeParams.button_color) root.style.setProperty('--accent-color', tg.themeParams.button_color);
+        if (tg.themeParams.button_text_color) root.style.setProperty('--btn-text-color', tg.themeParams.button_text_color);
+        if (tg.themeParams.secondary_bg_color) root.style.setProperty('--card-bg', tg.themeParams.secondary_bg_color);
+    }
 
-    const services = [
-        { id: 1, name: 'سرویس یک ماهه', speed: 'نامحدود', traffic: '۳۰ گیگ', price: '۵۰,۰۰۰ تومان' },
-        { id: 2, name: 'سرویس سه ماهه', speed: 'نامحدود', traffic: '۹۰ گیگ', price: '۱۴۰,۰۰۰ تومان' },
-        { id: 3, name: 'سرویس شش ماهه', speed: 'نامحدود', traffic: '۱۸۰ گیگ', price: '۲۵۰,۰۰۰ تومان' }
-    ];
-
-    const myServices = [
-        { id: 101, name: 'vless-ws-tls', expire: '۱۴ روز مانده', status: 'active' },
-        { id: 102, name: 'vmess-tcp', expire: 'منقضی شده', status: 'expired' }
-    ];
-
-    // Render User Info
-    document.getElementById('user-name').textContent = user.name;
-    document.getElementById('user-balance').textContent = user.balance;
-    document.getElementById('active-services-count').textContent = user.activeServices;
-
-    // Navigation
+    // Navigation Logic
     const navItems = document.querySelectorAll('.nav-item');
     const sections = document.querySelectorAll('.page-section');
 
@@ -41,82 +25,192 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const targetId = item.getAttribute('href').substring(1);
             
-            // Update Nav
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
             
-            // Show Section
             sections.forEach(sec => {
-                sec.style.display = 'none';
                 if(sec.id === targetId) {
                     sec.style.display = 'block';
-                    // Animation
+                    // Simple Fade In
                     sec.style.opacity = 0;
                     setTimeout(() => sec.style.opacity = 1, 50);
+                } else {
+                    sec.style.display = 'none';
                 }
             });
         });
     });
 
-    // Render Shop
-    const shopContainer = document.getElementById('shop-list');
-    services.forEach(service => {
-        const el = document.createElement('div');
-        el.className = 'card service-card';
-        el.innerHTML = `
-            <div class="service-item">
-                <div class="service-icon"><i class="fas fa-rocket"></i></div>
-                <div class="service-details">
-                    <span class="service-name">${service.name}</span>
-                    <span class="service-desc">${service.traffic} | ${service.speed}</span>
-                </div>
-                <div class="service-price">${service.price}</div>
-            </div>
-            <button class="btn btn-primary" onclick="buyService(${service.id})">خرید سرویس</button>
-        `;
-        shopContainer.appendChild(el);
-    });
+    // Fetch Data
+    fetchData();
 
-    // Render My Services
-    const myServicesContainer = document.getElementById('my-services-list');
-    myServices.forEach(srv => {
-        const statusColor = srv.status === 'active' ? 'text-accent' : 'text-danger';
-        const statusText = srv.status === 'active' ? 'فعال' : 'منقضی';
-        
-        const el = document.createElement('div');
-        el.className = 'service-item';
-        el.innerHTML = `
-            <div class="service-icon" style="background: ${srv.status === 'active' ? '' : 'rgba(239, 68, 68, 0.1)'}; color: ${srv.status === 'active' ? '' : '#ef4444'}">
-                <i class="fas fa-shield-alt"></i>
-            </div>
-            <div class="service-details">
-                <span class="service-name">${srv.name}</span>
-                <span class="service-desc ${statusColor}">${srv.expire} • ${statusText}</span>
-            </div>
-            <button class="btn btn-outline" style="width: auto; padding: 5px 10px; font-size: 12px;">مدیریت</button>
-        `;
-        myServicesContainer.appendChild(el);
-    });
+    function fetchData() {
+        const loader = document.getElementById('loader');
+        loader.classList.remove('hidden');
 
-    // Hide Loader
-    setTimeout(() => {
-        document.getElementById('loader').classList.add('hidden');
-    }, 500);
-});
+        const initData = tg.initData;
 
-function buyService(id) {
-    const tg = window.Telegram.WebApp;
-    tg.showPopup({
-        title: 'تایید خرید',
-        message: 'آیا از خرید این سرویس اطمینان دارید؟',
-        buttons: [
-            {id: 'buy', type: 'ok', text: 'بله، خرید'},
-            {id: 'cancel', type: 'cancel', text: 'انصراف'}
-        ]
-    }, (btnId) => {
-        if (btnId === 'buy') {
-            tg.sendData(JSON.stringify({action: 'buy_service', service_id: id}));
-            tg.close();
+        // Mock data for development if no initData (browser testing)
+        if (!initData) {
+            console.warn('No initData found. Using Mock Data.');
+            setTimeout(() => {
+                renderData({
+                    user: { id: 123456, name: 'کاربر تستی', username: 'test_user', balance: '۵۰,۰۰۰ تومان' },
+                    transactions: [
+                        { id: 1, amount: 50000, date: '1402/10/01', description: 'شارژ حساب' },
+                        { id: 2, amount: 100000, date: '1402/09/15', description: 'شارژ حساب' }
+                    ],
+                    services: [
+                        { name: 'سرویس یک ماهه', expire_date: '1402/11/01' }
+                    ]
+                });
+                loader.classList.add('hidden');
+            }, 1000);
+            return;
         }
-    });
-}
+
+        fetch('api/webapp.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                renderData(data);
+            } else {
+                showToast(data.error || 'خطا در دریافت اطلاعات', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('API Error:', err);
+            showToast('خطا در ارتباط با سرور', 'error');
+        })
+        .finally(() => {
+            loader.classList.add('hidden');
+        });
+    }
+
+    function renderData(data) {
+        const user = data.user;
+        const transactions = data.transactions;
+        const services = data.services;
+
+        // User Info
+        document.getElementById('user-name').textContent = user.name;
+        document.getElementById('user-id').textContent = 'ID: ' + user.id;
+        document.getElementById('user-balance').textContent = user.balance;
+        document.getElementById('active-services-count').textContent = services.length;
+        
+        // Avatar
+        if (user.username) {
+            // Placeholder for avatar logic
+        }
+
+        // Services List
+        const servicesContainer = document.getElementById('my-services-list');
+        servicesContainer.innerHTML = '';
+        if (services.length === 0) {
+            servicesContainer.innerHTML = '<div class="empty-state">سرویس فعالی ندارید</div>';
+        } else {
+            services.forEach(srv => {
+                const el = document.createElement('div');
+                el.className = 'list-item service-item';
+                el.innerHTML = `
+                    <div class="item-icon bg-green"><i class="fas fa-rocket"></i></div>
+                    <div class="item-content">
+                        <span class="item-title">${srv.name}</span>
+                        <span class="item-subtitle">انقضا: ${srv.expire_date || 'نامحدود'}</span>
+                    </div>
+                    <div class="item-action">
+                        <span class="badge badge-success">فعال</span>
+                    </div>
+                `;
+                servicesContainer.appendChild(el);
+            });
+        }
+
+        // Transactions List
+        const txContainer = document.getElementById('transactions-list');
+        txContainer.innerHTML = '';
+        if (transactions.length === 0) {
+            txContainer.innerHTML = '<div class="empty-state">تراکنشی یافت نشد</div>';
+        } else {
+            transactions.forEach(tx => {
+                const isPositive = true; // Simplified for now
+                const el = document.createElement('div');
+                el.className = 'list-item';
+                el.innerHTML = `
+                    <div class="item-icon ${isPositive ? 'bg-blue' : 'bg-red'}">
+                        <i class="fas ${isPositive ? 'fa-wallet' : 'fa-arrow-up'}"></i>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-title">${tx.description || 'تراکنش'}</span>
+                        <span class="item-subtitle">${tx.date}</span>
+                    </div>
+                    <div class="item-action">
+                        <span class="tx-amount text-primary">
+                            ${parseInt(tx.amount).toLocaleString()}
+                        </span>
+                    </div>
+                `;
+                txContainer.appendChild(el);
+            });
+        }
+
+        // Chart
+        if (transactions.length > 0) {
+            renderChart(transactions);
+        }
+    }
+
+    function renderChart(transactions) {
+        const ctx = document.getElementById('usageChart').getContext('2d');
+        
+        // Simple logic: last 7 transactions amounts
+        const lastTxs = transactions.slice(0, 7).reverse();
+        const labels = lastTxs.map(t => 'Tx'); // Simplified labels
+        const dataPoints = lastTxs.map(t => t.amount);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'تراکنش‌ها',
+                    data: dataPoints,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#2563eb'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { 
+                        display: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#71717a' }
+                    }
+                }
+            }
+        });
+    }
+
+    function showToast(msg, type = 'info') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => {
+            toast.className = 'toast hidden';
+        }, 3000);
+    }
+});
