@@ -88,10 +88,69 @@ $config = [
             -moz-osx-font-smoothing: grayscale;
             
             /* Professional Gradient Background */
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 40%);
-            background-attachment: fixed;
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a);
+        }
+
+        /* Interactive Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            background: #0f172a;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 0.6s ease-out, visibility 0.6s;
+        }
+        
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #FFF;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        .loader::after {
+            content: '';  
+            box-sizing: border-box;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid;
+            border-color: var(--primary) transparent;
+        }
+        
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .splash-text {
+            margin-top: 20px;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.2s forwards;
         }
 
         /* Global UI Polish & Overrides */
@@ -106,11 +165,11 @@ $config = [
         .bg-zinc-800, .bg-slate-800, .bg-gray-800, 
         .card, [class*="card"], [class*="Card"] {
             background: var(--card-glass) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
             border: 1px solid var(--glass-border) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
-            border-radius: 16px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+            border-radius: 20px !important;
         }
 
         /* Typography Improvements */
@@ -118,12 +177,12 @@ $config = [
             font-weight: 800 !important;
             letter-spacing: -0.5px !important;
             color: #fff !important;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            text-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
         }
         
         p, .text-gray-400, .text-zinc-400 {
             color: var(--text-muted) !important;
-            line-height: 1.6 !important;
+            line-height: 1.7 !important;
         }
 
         /* Buttons */
@@ -131,8 +190,10 @@ $config = [
             font-family: 'Vazirmatn', sans-serif !important;
             letter-spacing: 0.5px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            border-radius: 12px !important;
+            border-radius: 14px !important;
             font-weight: 600 !important;
+            position: relative;
+            overflow: hidden;
         }
         
         button:active, .btn:active {
@@ -143,37 +204,46 @@ $config = [
         [class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
             background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
             box-shadow: 0 4px 15px var(--primary-glow) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+        }
+        
+        [class*="bg-primary"]:hover, .bg-blue-600:hover, .bg-indigo-600:hover {
+             box-shadow: 0 8px 25px var(--primary-glow) !important;
+             transform: translateY(-2px);
         }
 
         /* Inputs */
         input, select, textarea {
-            transition: all 0.2s ease !important;
+            transition: all 0.3s ease !important;
             font-family: 'Vazirmatn', sans-serif !important;
-            background: rgba(0, 0, 0, 0.2) !important;
+            background: rgba(15, 23, 42, 0.6) !important;
             border: 1px solid var(--glass-border) !important;
-            border-radius: 12px !important;
+            border-radius: 14px !important;
             color: #fff !important;
+            backdrop-filter: blur(10px);
         }
         input:focus, select:focus, textarea:focus {
-            transform: translateY(-1px) !important;
+            transform: translateY(-2px) !important;
             border-color: var(--primary) !important;
-            box-shadow: 0 0 0 2px var(--primary-glow) !important;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
             outline: none !important;
+            background: rgba(15, 23, 42, 0.8) !important;
         }
 
         /* Bottom Navigation Bar Override */
         .fixed.bottom-0, nav[class*="fixed"], [class*="bottom-nav"] {
-            background: rgba(15, 23, 42, 0.85) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
-            border-top: 1px solid var(--glass-border) !important;
+            background: rgba(15, 23, 42, 0.7) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border-top: 1px solid rgba(255,255,255,0.05) !important;
             padding-bottom: env(safe-area-inset-bottom) !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.3) !important;
         }
 
         /* Progress Bar */
         [role="progressbar"] > div, [class*="bg-blue-"], [class*="bg-indigo-"] {
             background: linear-gradient(90deg, #22d3ee, #8b5cf6) !important;
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5) !important;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.6) !important;
         }
 
         /* Icons */
@@ -203,42 +273,44 @@ $config = [
             font-size: 0.75rem;
             color: var(--text-muted);
             border-top: 1px solid var(--glass-border);
-            background: linear-gradient(to top, var(--bg-dark), transparent);
+            background: linear-gradient(to top, rgba(15,23,42,0.8), transparent);
+            backdrop-filter: blur(5px);
         }
 
         .brand-link {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             text-decoration: none;
             color: var(--text-muted);
             transition: all 0.3s ease;
-            padding: 6px 12px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 24px;
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid transparent;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         .brand-link:hover {
             color: #fff;
             background: rgba(255, 255, 255, 0.08);
             border-color: var(--glass-border);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
         .brand-name {
-            font-weight: 600;
+            font-weight: 700;
             background: linear-gradient(135deg, #e2e8f0, #a5b4fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         /* Refined Scrollbar */
-        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
         /* Animation */
         @keyframes fadeIn {
@@ -263,6 +335,15 @@ $config = [
     <script src="<?php echo htmlspecialchars($assetPrefix . 'js/ui-enhancer.js', ENT_QUOTES); ?>"></script>
 </head>
 <body>
+    
+    <!-- Canvas Background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <span class="loader"></span>
+        <div class="splash-text">MIRZA PRO</div>
+    </div>
 
     <!-- Application Mounting Point -->
     <div id="root"></div>
