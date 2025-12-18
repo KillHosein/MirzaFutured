@@ -154,6 +154,160 @@
         border-radius: 12px;
       }
 
+      /* --- Premium Vault Card --- */
+      .vault-card-premium {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 24px;
+        border-radius: 28px;
+        margin: 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+      }
+
+      .vault-card-premium::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: linear-gradient(45deg, transparent 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
+        z-index: 0;
+        pointer-events: none;
+      }
+      
+      .vault-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .vault-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+
+      .vault-amount {
+        font-size: 36px;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -1px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      }
+      
+      .vault-currency {
+        font-size: 16px;
+        color: var(--text-secondary);
+        font-weight: 400;
+        margin-right: 4px;
+      }
+
+      .vault-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), #2563eb);
+        color: white;
+        height: 52px;
+        border-radius: 16px;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        font-size: 15px;
+      }
+      
+      .btn-glass {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        border: 1px solid var(--border-light);
+        height: 52px;
+        border-radius: 16px;
+        font-size: 15px;
+      }
+      
+      .btn-glass:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      /* --- List Items Refined --- */
+      .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 0 4px;
+      }
+      
+      .list-title {
+        font-size: 18px;
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+
+      .transaction-item-refined {
+        background: transparent;
+        border-bottom: 1px solid var(--border-light);
+        padding: 16px 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+      }
+      
+      .transaction-item-refined:last-child {
+        border-bottom: none;
+      }
+      
+      .transaction-item-refined:active {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      
+      .tx-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: rgba(16, 185, 129, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #10b981;
+        box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+      }
+      
+      .tx-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0 0 4px 0;
+        color: var(--text-primary);
+      }
+      
+      .tx-date {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin: 0;
+        font-weight: 500;
+      }
+      
+      .tx-amount {
+        font-size: 16px;
+        font-weight: 800;
+        color: #10b981;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+
       /* --- Professional Buttons (Refined) --- */
       .btn {
         border: none;
@@ -191,11 +345,14 @@
 
       .btn-nav.active {
         color: var(--primary-color);
-        background: rgba(59, 130, 246, 0.1);
+        background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.15));
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.1);
       }
       
       .btn-nav.active svg {
-        filter: drop-shadow(0 0 8px var(--primary-glow));
+        filter: drop-shadow(0 0 10px var(--primary-glow));
+        transform: translateY(-2px);
       }
 
       .btn-nav:hover {
@@ -372,18 +529,20 @@
     <div id="root">
         <div id="app-container">
             <!-- کارت موجودی اصلی -->
-            <div class="vault-card stagger-item delay-2" style="background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--border-light); padding: 24px; border-radius: 24px; margin: 20px;">
-                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">کل دارایی قابل برداشت</p>
-                <div class="amount-large" style="font-size: 32px; font-weight: 800; color: var(--text-primary);">۱۵,۲۴۰,۰۰۰ <span style="font-size: 16px; color: var(--text-secondary); font-weight: 400;">تومان</span></div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 30px;">
-                    <button class="btn" style="background: var(--primary-color); color: white; height: 48px; border-radius: 14px; gap: 8px;">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
-                        افزایش
-                    </button>
-                    <button class="btn" style="background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-light); height: 48px; border-radius: 14px;">
-                        تسویه
-                    </button>
+            <div class="vault-card-premium stagger-item delay-2">
+                <div class="vault-content">
+                    <p class="vault-label">کل دارایی قابل برداشت</p>
+                    <div class="vault-amount">۱۵,۲۴۰,۰۰۰ <span class="vault-currency">تومان</span></div>
+                    
+                    <div class="vault-actions">
+                        <button class="btn btn-primary">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
+                            افزایش
+                        </button>
+                        <button class="btn btn-glass">
+                            تسویه
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -417,24 +576,40 @@
 
             <!-- بخش لیست‌ها -->
             <div class="stagger-item delay-3" style="padding: 0 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="font-size: 18px; margin: 0; font-weight: 700;">فعالیت‌های اخیر</h3>
+                <div class="list-header">
+                    <h3 class="list-title">فعالیت‌های اخیر</h3>
                     <button class="btn" style="color: var(--accent-color); font-size: 13px; font-weight: 700; background: none; padding: 0;">مشاهده همه</button>
                 </div>
 
                 <!-- نمونه تراکنش -->
-                <div class="transaction-item" style="background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border-light); padding: 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="transaction-item-refined">
                     <div style="display: flex; gap: 15px; align-items: center;">
-                        <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                        <div class="tx-icon">
                             <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
                         </div>
                         <div>
-                            <p style="font-size: 14px; font-weight: 700; margin: 0 0 4px 0;">پاداش دعوت</p>
-                            <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">امروز، ۱۲:۴۰</p>
+                            <p class="tx-title">پاداش دعوت</p>
+                            <p class="tx-date">امروز، ۱۲:۴۰</p>
                         </div>
                     </div>
                     <div style="text-align: left;">
-                        <p style="font-size: 15px; font-weight: 800; color: #10b981; margin: 0;">+۵۰,۰۰۰</p>
+                        <p class="tx-amount">+۵۰,۰۰۰</p>
+                    </div>
+                </div>
+                
+                <!-- تراکنش دوم (اضافه شده برای زیبایی) -->
+                <div class="transaction-item-refined">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div class="tx-icon" style="color: var(--secondary-color); background: rgba(139, 92, 246, 0.1); box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.2);">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                        </div>
+                        <div>
+                            <p class="tx-title">برداشت وجه</p>
+                            <p class="tx-date">دیروز، ۱۰:۱۵</p>
+                        </div>
+                    </div>
+                    <div style="text-align: left;">
+                        <p class="tx-amount" style="color: var(--text-primary);">-۲۰۰,۰۰۰</p>
                     </div>
                 </div>
             </div>
