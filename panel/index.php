@@ -236,7 +236,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .nav-tile { height: 110px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-decoration: none; color: var(--text-sec); transition: 0.3s; backdrop-filter: blur(10px); }
         .nav-tile:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.4); color: #fff; }
 
-        /* --- SUPER DOCK (RESTORED VERSION) --- */
+        /* --- SUPER DOCK (RESTORED FULL VERSION) --- */
         .dock-container { position: fixed; bottom: 30px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 9999; }
         .super-dock {
             pointer-events: auto;
@@ -254,18 +254,28 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             border-radius: 18px; color: var(--text-sec); font-size: 1.5rem;
             text-decoration: none; position: relative;
             background: transparent;
-            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5); /* فنری بودن ورژن اصلی */
+            /* فنری بودن و انیمیشن روان */
+            transition: all 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.5);
+            border: 1px solid transparent;
         }
+        
+        /* افکت شناور پیشرفته ورژن اصلی */
         .dock-item:hover {
-            width: 65px; height: 65px;
-            margin: 0 5px;
+            width: 65px; height: 65px; /* بزرگ شدن */
+            margin: 0 8px; /* فاصله از بقیه */
             background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
-            border: 1px solid rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.3);
             color: #fff;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-            transform: translateY(-15px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transform: translateY(-18px); /* شناور شدن به سمت بالا */
         }
-        .dock-item.active { color: var(--neon-blue); background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2); }
+        
+        .dock-item.active {
+            color: var(--neon-blue);
+            background: rgba(0, 242, 255, 0.1);
+            border-color: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
         
         /* Tooltips */
         .dock-item::before {
@@ -279,7 +289,12 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .dock-divider { width: 1px; height: 35px; background: rgba(255,255,255,0.1); margin: 0 5px; }
 
         @media (max-width: 1400px) { .bento-wrapper { grid-template-columns: 1fr; } }
-        @media (max-width: 992px) { .actions-grid { grid-template-columns: repeat(2, 1fr); } .stats-row { grid-template-columns: repeat(2, 1fr); } .ht-main { font-size: 2.2rem; } }
+        @media (max-width: 992px) { 
+            .actions-grid { grid-template-columns: repeat(2, 1fr); } 
+            .stats-row { grid-template-columns: repeat(2, 1fr); } 
+            .ht-main { font-size: 2.2rem; }
+            .dock-item:hover { transform: translateY(-10px); width: 54px; height: 54px; margin: 0 4px; } /* در موبایل هاور ساده‌تر */
+        }
     </style>
 </head>
 <body>
@@ -298,7 +313,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         </header>
 
         <section class="stats-row">
-            <div class="holo-card" style="--c: var(--neon-blue);">
+            <div class="holo-card">
                 <div><div class="hc-val"><?php echo number_format($stats['sales']); ?></div><div class="hc-lbl">درآمد (تومان)</div></div>
                 <div class="hc-icon-box" style="color: var(--neon-blue);"><i class="fa-solid fa-sack-dollar"></i></div>
             </div>
@@ -333,7 +348,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         </section>
     </div>
 
-    <!-- The Super Dock (Restored Hover Effects) -->
+    <!-- The Super Dock (Restored to Advanced MacOS Style) -->
     <div class="dock-container">
         <nav class="super-dock">
             <a href="index.php" class="dock-item active" data-tooltip="داشبورد"><i class="fa-solid fa-house"></i></a>
