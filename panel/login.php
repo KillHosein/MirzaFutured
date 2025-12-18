@@ -2,6 +2,7 @@
 /**
  * Login Page - Quantum Glass Edition (Ultimate Supreme)
  * Ultra-Premium Animations, Particle Deep Space & Advanced Glassmorphism
+ * Fully Responsive for Mobile & Tablet
  * Designed & Developed by KillHosein
  */
 
@@ -68,7 +69,7 @@ if (isset($_POST['login'])) {
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ورود به پنل مدیریت حرفه‌ای</title>
 
     <!-- Libraries -->
@@ -89,12 +90,12 @@ if (isset($_POST['login'])) {
         body {
             font-family: 'Vazirmatn', sans-serif;
             background-color: var(--bg-void);
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
             color: #fff;
         }
 
@@ -118,35 +119,38 @@ if (isset($_POST['login'])) {
         }
 
         .nebula-core {
-            position: absolute; border-radius: 50%; filter: blur(150px); opacity: 0.35;
+            position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.35;
             animation: nebulaFlow 40s infinite alternate ease-in-out;
         }
-        .nc-1 { width: 800px; height: 800px; background: var(--primary); top: -25%; left: -15%; }
-        .nc-2 { width: 700px; height: 700px; background: var(--accent); bottom: -15%; right: -15%; animation-delay: -8s; }
+        .nc-1 { width: 80vw; height: 80vw; max-width: 800px; max-height: 800px; background: var(--primary); top: -25%; left: -15%; }
+        .nc-2 { width: 70vw; height: 70vw; max-width: 700px; max-height: 700px; background: var(--accent); bottom: -15%; right: -15%; animation-delay: -8s; }
 
         @keyframes moveStars { from { background-position: 0 0; } to { background-position: 0 4000px; } }
         @keyframes nebulaFlow {
             0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            100% { transform: translate(150px, 80px) scale(1.3) rotate(15deg); }
+            100% { transform: translate(15%, 8%) scale(1.3) rotate(15deg); }
         }
 
         /* --- PREVIEW GLASS CARD --- */
         .card-container {
             position: relative;
             padding: 2px;
-            border-radius: 45px;
+            border-radius: 40px;
             background: linear-gradient(145deg, rgba(255,255,255,0.15), transparent, rgba(255,255,255,0.05));
             animation: fadeInUp 1.2s cubic-bezier(0.22, 1, 0.36, 1);
             z-index: 100;
+            width: 90%;
+            max-width: 520px;
+            margin: 20px auto;
         }
 
         .glass-card {
-            width: 100%; max-width: 520px;
+            width: 100%;
             background: rgba(10, 15, 28, 0.82);
             backdrop-filter: blur(35px) saturate(200%);
             -webkit-backdrop-filter: blur(35px) saturate(200%);
-            border-radius: 43px;
-            padding: 70px 60px;
+            border-radius: 38px;
+            padding: 50px 40px;
             box-shadow: 0 60px 120px -30px rgba(0, 0, 0, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.05);
             position: relative;
@@ -159,67 +163,66 @@ if (isset($_POST['login'])) {
             pointer-events: none;
         }
 
-        /* --- LOGO / AVATAR AREA --- */
+        /* --- LOGO AREA --- */
         .avatar-section {
-            display: flex; justify-content: center; margin-bottom: 45px;
+            display: flex; justify-content: center; margin-bottom: 35px;
         }
         .glowing-circle {
-            width: 120px; height: 120px;
+            width: 100px; height: 100px;
             background: rgba(255,255,255,0.02);
             border: 1.5px solid rgba(255,255,255,0.1);
-            border-radius: 40px;
+            border-radius: 32px;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 60px var(--primary-glow);
+            box-shadow: 0 0 50px var(--primary-glow);
             position: relative;
             animation: floatIcon 6s ease-in-out infinite;
         }
-        .glowing-circle i { font-size: 55px; color: #fff; filter: drop-shadow(0 0 25px var(--primary)); }
+        .glowing-circle i { font-size: 45px; color: #fff; filter: drop-shadow(0 0 20px var(--primary)); }
         
         .glowing-circle::before {
-            content: ''; position: absolute; inset: -10px; border-radius: 48px;
+            content: ''; position: absolute; inset: -8px; border-radius: 40px;
             border: 2px solid var(--primary); opacity: 0.2; animation: pulseRing 4s infinite;
         }
 
-        @keyframes floatIcon { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-25px) rotate(3deg); } }
+        @keyframes floatIcon { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(3deg); } }
         @keyframes pulseRing { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(1.4); opacity: 0; } }
 
         /* --- INPUTS --- */
-        .input-wrap { position: relative; margin-bottom: 30px; }
+        .input-wrap { position: relative; margin-bottom: 25px; }
         .input-item {
             width: 100%;
             background: rgba(255, 255, 255, 0.04);
             border: 1.5px solid rgba(255, 255, 255, 0.1);
-            border-radius: 22px;
-            padding: 20px 60px 20px 24px;
-            color: #fff; font-size: 16px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px;
+            padding: 18px 55px 18px 20px;
+            color: #fff; font-size: 15px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
         }
         .input-item:focus {
             border-color: var(--secondary);
             background: rgba(255, 255, 255, 0.07);
             box-shadow: 0 0 35px rgba(6, 182, 212, 0.25), inset 0 0 15px rgba(6, 182, 212, 0.05);
-            transform: scale(1.02);
         }
         .item-icon {
-            position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
-            color: rgba(255,255,255,0.3); transition: 0.4s; font-size: 20px;
+            position: absolute; right: 22px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.3); transition: 0.4s; font-size: 18px;
         }
-        .input-item:focus + .item-icon { color: var(--secondary); transform: translateY(-50%) scale(1.2); }
+        .input-item:focus + .item-icon { color: var(--secondary); transform: translateY(-50%) scale(1.1); }
 
         /* --- SUPREME BUTTON --- */
         .btn-supreme {
-            width: 100%; padding: 20px;
+            width: 100%; padding: 18px;
             background: linear-gradient(135deg, var(--primary) 0%, #6d28d9 100%);
-            color: #fff; border: none; border-radius: 22px;
-            font-weight: 800; font-size: 18px; cursor: pointer;
+            color: #fff; border: none; border-radius: 20px;
+            font-weight: 800; font-size: 16px; cursor: pointer;
             box-shadow: 0 15px 40px var(--primary-glow);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative; overflow: hidden;
         }
         .btn-supreme:hover {
-            transform: translateY(-8px);
+            transform: translateY(-5px);
             box-shadow: 0 20px 55px var(--primary-glow);
-            filter: brightness(1.25);
+            filter: brightness(1.2);
         }
         .btn-supreme::after {
             content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
@@ -230,36 +233,36 @@ if (isset($_POST['login'])) {
 
         /* --- SUPREME FOOTER (KILLHOSEIN) --- */
         .supreme-footer {
-            margin-top: 55px; text-align: center;
+            margin-top: 45px; text-align: center;
             border-top: 1.5px solid rgba(255,255,255,0.08);
-            padding-top: 35px;
+            padding-top: 30px;
         }
         .developer-info {
-            color: rgba(255,255,255,0.5); font-size: 16px;
+            color: rgba(255,255,255,0.5); font-size: 14px;
             display: flex; flex-direction: column; align-items: center; gap: 10px;
             text-decoration: none; transition: 0.5s;
         }
         .developer-name {
-            font-size: 42px; font-weight: 950;
+            font-size: clamp(24px, 8vw, 42px); font-weight: 950;
             background: linear-gradient(90deg, #fff, #a78bfa, var(--secondary));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            letter-spacing: 2px; filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
-            display: flex; align-items: center; justify-content: center; gap: 18px;
+            letter-spacing: 1px; filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
+            display: flex; align-items: center; justify-content: center; gap: 12px;
         }
         .tg-symbol {
-            font-size: 52px; color: #229ED9; 
-            -webkit-text-fill-color: #229ED9; /* Fix for visibility in gradient parent */
+            font-size: clamp(28px, 10vw, 52px); color: #229ED9; 
+            -webkit-text-fill-color: #229ED9;
             filter: drop-shadow(0 0 20px rgba(34, 158, 217, 0.7));
             transition: 0.4s;
         }
-        .developer-info:hover { transform: scale(1.1); color: #fff; }
-        .developer-info:hover .developer-name { filter: drop-shadow(0 0 35px var(--secondary)); }
-        .developer-info:hover .tg-symbol { transform: rotate(-12deg) scale(1.3); }
+        .developer-info:hover { transform: scale(1.05); color: #fff; }
+        .developer-info:hover .tg-symbol { transform: rotate(-12deg) scale(1.2); }
 
         .contact-hint {
-            font-size: 12px; color: var(--secondary); margin-top: 5px;
+            font-size: 11px; color: var(--secondary); margin-top: 5px;
             font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
             opacity: 0.8; animation: pulse 2s infinite;
+            text-align: center; line-height: 1.6;
         }
 
         @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
@@ -267,17 +270,32 @@ if (isset($_POST['login'])) {
         /* --- SYSTEM ALERTS --- */
         .system-err {
             background: rgba(244, 63, 94, 0.12); border: 1.5px solid rgba(244, 63, 94, 0.35);
-            color: #fda4af; padding: 18px; border-radius: 20px;
-            font-size: 15px; text-align: center; margin-bottom: 30px;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
+            color: #fda4af; padding: 15px; border-radius: 18px;
+            font-size: 13px; text-align: center; margin-bottom: 25px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
             animation: shakeX 1s;
         }
         .ip-key {
             background: rgba(0,0,0,0.6); border: 1.5px solid var(--secondary);
-            padding: 14px 28px; border-radius: 18px; font-family: 'JetBrains Mono', monospace;
-            margin: 25px 0; color: var(--secondary); font-weight: bold; font-size: 20px;
+            padding: 12px 20px; border-radius: 15px; font-family: 'JetBrains Mono', monospace;
+            margin: 15px 0; color: var(--secondary); font-weight: bold; font-size: 16px;
             display: inline-block; box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
-            letter-spacing: 1px;
+            word-break: break-all;
+        }
+
+        /* --- MOBILE REFINEMENTS --- */
+        @media (max-width: 480px) {
+            .glass-card {
+                padding: 40px 25px;
+                border-radius: 32px;
+            }
+            .card-container {
+                width: 95%;
+                border-radius: 34px;
+            }
+            .avatar-section { margin-bottom: 25px; }
+            .developer-name { gap: 8px; }
+            .developer-info { font-size: 12px; }
         }
     </style>
 </head>
@@ -290,7 +308,7 @@ if (isset($_POST['login'])) {
         <div class="nebula-core nc-2"></div>
     </div>
 
-    <div class="px-6 flex items-center justify-center min-h-screen w-full relative">
+    <div class="w-full flex items-center justify-center p-4">
         
         <?php if(!$check_ip): ?>
         <!-- ACCESS CONTROL VIEW -->
@@ -301,8 +319,8 @@ if (isset($_POST['login'])) {
                         <i class="fa-solid fa-user-lock text-rose-500"></i>
                     </div>
                 </div>
-                <h2 class="text-3xl font-black text-white mb-5">دسترسی مسدود شد</h2>
-                <p class="text-slate-400 text-sm leading-8 mb-4">
+                <h2 class="text-2xl sm:text-3xl font-black text-white mb-4">دسترسی مسدود شد</h2>
+                <p class="text-slate-400 text-sm leading-7 mb-4 px-2">
                     شناسه آی‌پی شما در لیست سفید سرور ثبت نشده است.<br>
                     لطفاً برای دسترسی، آی‌پی زیر را فعال نمایید:
                 </p>
@@ -330,8 +348,8 @@ if (isset($_POST['login'])) {
                         </div>
                     </div>
                     
-                    <h2 class="text-center text-4xl font-black text-white mb-2">خوش‌آمدید</h2>
-                    <p class="text-center text-[12px] text-violet-400 uppercase tracking-[6px] mb-12 opacity-80 font-bold">Secured Management Panel</p>
+                    <h2 class="text-center text-3xl sm:text-4xl font-black text-white mb-2">خوش‌آمدید</h2>
+                    <p class="text-center text-[10px] text-violet-400 uppercase tracking-[4px] mb-10 opacity-80 font-bold">Secured Management Panel</p>
 
                     <?php if(!empty($texterrr)): ?>
                     <div class="system-err">
@@ -350,7 +368,7 @@ if (isset($_POST['login'])) {
                     </div>
 
                     <button class="btn-supreme" name="login" type="submit">
-                        تایید و ورود به مدیریت <i class="fa-solid fa-arrow-left-long mr-4"></i>
+                        تایید و ورود به مدیریت <i class="fa-solid fa-arrow-left-long mr-3"></i>
                     </button>
 
                     <div class="supreme-footer">
