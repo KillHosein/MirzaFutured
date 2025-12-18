@@ -30,7 +30,9 @@ $datatextbotget = select("textbot", "*", null, null, "fetchAll");
             'textafterpayibsng' => ''
         );
         foreach ($datatxtbot as $item) {
-            $datatextbot[$item['id_text']] = $item['text'];
+            if (isset($datatextbot[$item['id_text']])) {
+                $datatextbot[$item['id_text']] = $item['text'];
+            }
         }
 if ($method == "GET") {
     $data = array(
@@ -59,32 +61,8 @@ if (!is_array($data)) {
 }
 
 $data = sanitize_recursive($data);
-
-// AUTH BYPASS LOGIC
-$tokencheck = null;
-if (isset($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') !== false) {
-    $tokencheck = explode('Bearer ', $headers['Authorization'])[1];
-}
-
-// Try to find user by ID or Token
-$usercheck = null;
-if (!empty($data['user_id'])) {
-    $usercheck = select('user', "*", "id", $data['user_id'], "select");
-} elseif ($tokencheck) {
-    $usercheck = select('user', "*", "token", $tokencheck, "select");
-}
-
-// Fallback: Get first user if no auth provided (No-Auth Mode)
-if (!$usercheck) {
-    $usercheck = select('user', "*", null, null, "select");
-}
-
-if (!$usercheck) {
-    echo json_encode(['status' => false, 'msg' => "No users in database"]);
-    http_response_code(403);
-    return;
-}
-
+$tokencheck = explode('Bearer ', $headers['Authorization'])[1];
+$usercheck = select('user', "*", "id", $data['user_id'], "select");
 if ($usercheck['User_Status'] == "block") {
     echo json_encode([
         'status' => false,
@@ -93,13 +71,9 @@ if ($usercheck['User_Status'] == "block") {
     http_response_code(402);
     return;
 }
-
 $errorreport = select("topicid", "idreport", "report", "errorreport", "select")['idreport'];
 $porsantreport = select("topicid", "idreport", "report", "porsantreport", "select")['idreport'];
 $buyreport = select("topicid", "idreport", "report", "buyreport", "select")['idreport'];
-
-// Auth check removed
-/*
 if (!$usercheck || $usercheck['token'] != $tokencheck) {
     echo json_encode([
         'status' => false,
@@ -108,7 +82,6 @@ if (!$usercheck || $usercheck['token'] != $tokencheck) {
     http_response_code(403);
     return;
 }
-*/
 switch ($data['actions']) {
     case 'invoices':
         if ($method !== "GET") {
@@ -269,7 +242,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         if ($user_info) {
             if ($user_info['codeInvitation'] == null) {
                 $randomString = bin2hex(random_bytes(4));
@@ -331,7 +304,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         if ($user_info) {
             $stmt = $pdo->prepare("SELECT * FROM marzban_panel WHERE status = 'active' AND (agent = :agent OR agent = 'all') AND type != 'Manualsale'");
             $stmt->bindParam(':agent', $user_info['agent']);
@@ -383,7 +356,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         if ($user_info) {
             $setting = select("setting", "*", null, null, "select");
             if ($setting['statuscategorygenral'] == "offcategorys") {
@@ -438,7 +411,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         if ($user_info) {
             $setting = select("setting", "*", null, null, "select");
             if ($setting['statuscategory'] == "offcategory") {
@@ -581,7 +554,7 @@ switch ($data['actions']) {
             return;
         }
         $product_list = [];
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         if ($user_info) {
             $panel = select("marzban_panel", "*", "code_panel", $data['id_panel'], "select");
             if ($panel == false) {
@@ -641,7 +614,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         if ($user_info) {
             $panel = select("marzban_panel", "*", "code_panel", $data['id_panel'], "select");
             if ($panel == false) {
@@ -713,7 +686,7 @@ switch ($data['actions']) {
             ));
             return;
         }
-        $user_info = $usercheck;
+        $user_info = select("user", "*", "token", $tokencheck, "select");
         $usernameinvoice = select("invoice", "username", null, null, "FETCH_COLUMN");
         if (empty($data['custom_service'])) {
             $product = select("product", "*", "code_product", $data['service_id'], "select");
@@ -846,7 +819,7 @@ switch ($data['actions']) {
                 $config .= "\n" . $link;
             }
         }
-        // error_log(json_encode($datatextbotget));
+        error_log(json_encode($datatextbotget));
         $datatextbot['textafterpay'] = $panel['type'] == "Manualsale" ? $datatextbot['textmanual'] : $datatextbot['textafterpay'];
         $datatextbot['textafterpay'] = $panel['type'] == "WGDashboard" ? $datatextbot['text_wgdashboard'] :  $datatextbot['textafterpay'];
         $datatextbot['textafterpay'] = $panel['type'] == "ibsng" || $panel['type'] == "mikrotik" ? $datatextbot['textafterpayibsng'] : $datatextbot['textafterpay'];
