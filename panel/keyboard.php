@@ -504,7 +504,7 @@ try {
                     'text_extend': '🔄 تمدید سرویس',
                     'text_usertest': '🔥 تست رایگان',
                     'text_wheel_luck': '🎰 گردونه شانس',
-                    'text_Purchased_services': '🎰 سرویس ها من',
+                    'text_Purchased_services': '🛒 سرویس ها من',
                     'accountwallet': '💳 کیف پول',
                     'text_affiliates': '🤝 همکاری',
                     'text_Tariff_list': '📋 تعرفه‌ها',
