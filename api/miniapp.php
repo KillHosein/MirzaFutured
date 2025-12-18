@@ -269,7 +269,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         if ($user_info) {
             if ($user_info['codeInvitation'] == null) {
                 $randomString = bin2hex(random_bytes(4));
@@ -331,7 +331,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         if ($user_info) {
             $stmt = $pdo->prepare("SELECT * FROM marzban_panel WHERE status = 'active' AND (agent = :agent OR agent = 'all') AND type != 'Manualsale'");
             $stmt->bindParam(':agent', $user_info['agent']);
@@ -383,7 +383,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         if ($user_info) {
             $setting = select("setting", "*", null, null, "select");
             if ($setting['statuscategorygenral'] == "offcategorys") {
@@ -438,7 +438,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         if ($user_info) {
             $setting = select("setting", "*", null, null, "select");
             if ($setting['statuscategory'] == "offcategory") {
@@ -581,7 +581,7 @@ switch ($data['actions']) {
             return;
         }
         $product_list = [];
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         if ($user_info) {
             $panel = select("marzban_panel", "*", "code_panel", $data['id_panel'], "select");
             if ($panel == false) {
@@ -641,7 +641,7 @@ switch ($data['actions']) {
             ]);
             return;
         }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         if ($user_info) {
             $panel = select("marzban_panel", "*", "code_panel", $data['id_panel'], "select");
             if ($panel == false) {
@@ -713,7 +713,7 @@ switch ($data['actions']) {
             ));
             return;
         }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
+        $user_info = $usercheck;
         $usernameinvoice = select("invoice", "username", null, null, "FETCH_COLUMN");
         if (empty($data['custom_service'])) {
             $product = select("product", "*", "code_product", $data['service_id'], "select");
