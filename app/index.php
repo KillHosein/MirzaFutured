@@ -1,10 +1,11 @@
 <?php
 /**
- * Telegram Web App - Quantum Supreme Edition
- * Professional TWA Hosting with Cinematic Background
+ * Telegram Web App - Quantum Supreme Edition v2.0
+ * Professional TWA Hosting with Cinematic "Deep Space" Design
  * Designed & Developed by KillHosein
  */
 
+// --- PHP Routing Logic (Keep Intact) ---
 $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
 $scriptDir = str_replace('\\', '/', dirname($scriptName));
 if ($scriptDir === '.' || $scriptDir === '') {
@@ -46,345 +47,278 @@ $config = [
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Mirza Pro</title>
+    <title>Mirza Pro | Quantum Edition</title>
     <base href="<?php echo htmlspecialchars($prefix, ENT_QUOTES); ?>" />
     
-    <!-- Libraries & Assets -->
+    <!-- Libraries -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <script src="<?php echo htmlspecialchars($assetPrefix . 'js/telegram-web-app.js', ENT_QUOTES); ?>"></script>
     
-    <!-- Your Core App Styles -->
+    <!-- Core App Styles -->
     <link rel="stylesheet" crossorigin href="<?php echo htmlspecialchars($assetPrefix . 'assets/index-BoHBsj0Z.css', ENT_QUOTES); ?>">
 
     <style>
         :root {
-            /* --- 1. Color Palette (Harmonious & Modern) --- */
-            --bg-deep: #020617; /* Slate 950 */
-            --bg-surface: #0f172a; /* Slate 900 */
+            /* --- 1. Quantum Color Palette --- */
+            --bg-void: #000000;       /* Absolute Black */
+            --bg-deep: #050511;       /* Deep Space Blue */
             
-            --primary-start: #4f46e5; /* Indigo 600 */
-            --primary-end: #8b5cf6; /* Violet 500 */
-            --primary-glow: rgba(99, 102, 241, 0.5);
+            /* Accents: Neon Cyan & Electric Purple */
+            --primary-glow: #4f46e5;
+            --accent-cyan: #06b6d4;   /* Cyan 500 */
+            --accent-purple: #a855f7; /* Purple 500 */
             
-            --accent-success: #10b981; /* Emerald 500 */
-            --accent-danger: #f43f5e; /* Rose 500 */
-            --accent-warning: #f59e0b; /* Amber 500 */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
             
-            --text-primary: #f8fafc; /* Slate 50 */
-            --text-secondary: #94a3b8; /* Slate 400 */
-            
-            /* --- Glassmorphism Variables --- */
-            --glass-panel: rgba(15, 23, 42, 0.65);
-            --glass-card: rgba(30, 41, 59, 0.4);
+            /* --- Glassmorphism 2.0 --- */
+            --glass-bg: rgba(20, 20, 35, 0.6);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.03);
+            --glass-shine: rgba(255, 255, 255, 0.03);
+            --glass-blur: 24px;
             
-            /* --- Spacing & Radius --- */
-            --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --spacing-container: 20px;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
         }
 
+        /* --- 2. Global Reset & Body --- */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
             outline: none !important;
+            user-select: none; /* App-like feel */
         }
 
-        /* --- 2. Typography & Base Layout --- */
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-deep);
-            margin: 0; 
-            padding: 0;
+            margin: 0; padding: 0;
             min-height: 100vh;
-            color: var(--text-primary);
+            color: var(--text-main);
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
             
-            /* Cinematic Gradient Background */
-            background: radial-gradient(circle at top left, #1e1b4b 0%, #0f172a 40%, #020617 100%);
+            /* Deep Space Gradient */
+            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #020617 60%, #000000 100%);
         }
 
-        /* Interactive Canvas Background */
+        /* Ambient Noise Texture (Adds premium feel) */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Canvas for Starfield */
         #bg-canvas {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.5;
-            pointer-events: none; /* Let clicks pass through */
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            opacity: 0.8;
+            pointer-events: none;
         }
 
-        /* --- 3. Splash Screen (Premium Animation) --- */
+        /* --- 3. Cinematic Splash Screen --- */
         #splash-screen {
             position: fixed;
             inset: 0;
-            background: var(--bg-deep);
+            background: #020617;
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+            transition: opacity 0.6s ease, visibility 0.6s;
         }
-        
-        .loader-ring {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+
+        .splash-logo-container {
             position: relative;
-            background: conic-gradient(from 0deg, transparent 0%, var(--primary-end) 100%);
-            animation: spin 1s linear infinite;
-            box-shadow: 0 0 30px var(--primary-glow);
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .loader-ring::before {
-            content: '';
+
+        .pulse-ring {
             position: absolute;
-            inset: 4px;
-            background: var(--bg-deep);
+            width: 100%; height: 100%;
             border-radius: 50%;
+            border: 2px solid var(--accent-purple);
+            opacity: 0;
+            animation: pulseWave 2s infinite;
         }
-        
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .pulse-ring:nth-child(2) { animation-delay: 0.5s; border-color: var(--accent-cyan); }
+
+        @keyframes pulseWave {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
 
         .splash-text {
-            margin-top: 24px;
-            font-size: 16px;
-            font-weight: 800;
-            letter-spacing: 4px;
-            color: var(--text-primary);
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fadeInUp 0.8s ease-out 0.3s forwards;
-            background: linear-gradient(to right, #fff, #94a3b8);
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #fff, var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(6, 182, 212, 0.5);
+            animation: textGlow 2s ease-in-out infinite alternate;
         }
+        @keyframes textGlow { from { text-shadow: 0 0 10px rgba(6,182,212,0.3); } to { text-shadow: 0 0 25px rgba(6,182,212,0.8); } }
 
-        /* --- 4. Component Overrides (The Core UI Improvements) --- */
+        /* --- 4. Advanced Component Overrides --- */
         
-        /* Transparent Containers */
+        /* Make React App containers transparent */
         #root > div, .bg-zinc-900, .bg-slate-900, .bg-gray-900, .bg-black {
-            background-color: transparent !important;
             background: transparent !important;
         }
 
-        /* Cards & Surfaces (Glassmorphism) */
-        .bg-zinc-800, .bg-slate-800, .bg-gray-800, 
-        .card, [class*="card"], [class*="Card"], .bg-surface {
-            background: var(--glass-card) !important;
-            backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
+        /* Glass Cards */
+        .card, .bg-zinc-800, .bg-slate-800, .bg-surface {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(var(--glass-blur)) !important;
+            -webkit-backdrop-filter: blur(var(--glass-blur)) !important;
             border: 1px solid var(--glass-border) !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
-            border-radius: var(--radius-md) !important;
-            transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-        }
-        
-        /* Card Hover Effect (Desktop/Interaction) */
-        /* Note: On mobile hover can be sticky, so we mostly rely on active states */
-        
-        /* Typography Polish */
-        h1, h2, h3, .font-bold {
-            color: var(--text-primary) !important;
-            letter-spacing: -0.02em !important;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
-        }
-        
-        p, span, .text-sm {
-            color: var(--text-secondary) !important;
-            line-height: 1.6;
-        }
-
-        /* --- 5. Buttons & Interactions --- */
-        button, .btn {
-            font-family: 'Vazirmatn', sans-serif !important;
-            letter-spacing: 0.5px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            border-radius: var(--radius-md) !important;
-            font-weight: 700 !important;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+            border-radius: var(--radius-lg) !important;
             position: relative;
             overflow: hidden;
-            border: none !important;
+        }
+
+        /* Shine Effect on Cards */
+        .card::after, .bg-zinc-800::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--glass-shine), transparent);
+        }
+
+        /* Typography */
+        h1, h2, h3, .font-bold {
+            color: #fff !important;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        p, .text-sm { color: var(--text-muted) !important; }
+
+        /* --- 5. Modern Buttons --- */
+        button, .btn {
+            font-family: 'Vazirmatn', sans-serif !important;
+            font-weight: 700 !important;
+            border-radius: 12px !important;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
             cursor: pointer;
         }
         
-        button:active, .btn:active {
-            transform: scale(0.95) !important;
-        }
+        button:active, .btn:active { transform: scale(0.92) !important; }
 
-        /* Primary Action Buttons */
+        /* Primary Button (Neon Gradient) */
         [class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
-            background: linear-gradient(135deg, var(--primary-start), var(--primary-end)) !important;
-            box-shadow: 0 4px 20px var(--primary-glow) !important;
-            color: #fff !important;
+            background: linear-gradient(135deg, var(--primary-glow), var(--accent-purple)) !important;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4) !important;
             border: 1px solid rgba(255,255,255,0.1) !important;
-        }
-        
-        /* Secondary/Outline Buttons */
-        .bg-transparent, .border {
-             border-color: var(--glass-border) !important;
-             background: rgba(255,255,255,0.03) !important;
+            color: white !important;
         }
 
-        /* --- 6. Form Elements (Inputs) --- */
-        input, select, textarea {
-            transition: all 0.3s ease !important;
-            font-family: 'Vazirmatn', sans-serif !important;
-            background: var(--glass-panel) !important;
+        /* --- 6. Form Inputs --- */
+        input, textarea, select {
+            background: rgba(0, 0, 0, 0.3) !important;
             border: 1px solid var(--glass-border) !important;
-            border-radius: var(--radius-md) !important;
-            color: var(--text-primary) !important;
-            padding: 12px 16px !important;
-            font-size: 14px !important;
+            border-radius: 12px !important;
+            color: white !important;
+            transition: all 0.3s ease !important;
         }
-        
-        input:focus, select:focus, textarea:focus {
-            transform: translateY(-2px) !important;
-            border-color: var(--primary-end) !important;
-            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15) !important;
-            background: rgba(15, 23, 42, 0.9) !important;
-        }
-        
-        ::placeholder {
-            color: rgba(148, 163, 184, 0.5) !important;
+        input:focus {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
+            background: rgba(0, 0, 0, 0.5) !important;
         }
 
-        /* --- 7. Navigation & Layout --- */
-        /* Bottom Navigation Bar */
-        .fixed.bottom-0, nav[class*="fixed"], [class*="bottom-nav"] {
-            background: rgba(15, 23, 42, 0.8) !important;
-            backdrop-filter: blur(25px) !important;
-            -webkit-backdrop-filter: blur(25px) !important;
-            border-top: 1px solid var(--glass-border) !important;
-            padding-bottom: calc(env(safe-area-inset-bottom) + 10px) !important;
-            padding-top: 10px !important;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.4) !important;
-        }
-        
-        /* Active Nav Item Glow */
-        [class*="text-primary"], .text-blue-500, .text-indigo-500 {
-            color: #a78bfa !important; /* Lighter violet for better visibility on dark */
-            text-shadow: 0 0 15px rgba(167, 139, 250, 0.4);
-        }
-
-        /* --- 8. Status & Indicators --- */
-        /* Progress Bar */
-        [role="progressbar"] > div, [class*="bg-blue-"], [class*="bg-indigo-"] {
-            background: linear-gradient(90deg, #38bdf8, #818cf8) !important;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5) !important;
-            border-radius: 10px !important;
-        }
-
-        /* --- 9. App Container Layout --- */
+        /* --- 7. Layout --- */
         #root {
-            flex: 1;
+            position: relative;
             z-index: 10;
-            position: relative;
             width: 100%;
-            max-width: 500px; /* Mobile-first constraint */
+            max-width: 480px; /* Mobile width */
             margin: 0 auto;
-            padding: 20px; /* More breathing room */
-            padding-bottom: 90px; /* Space for bottom nav */
+            padding: 20px;
+            padding-bottom: 100px;
         }
 
-        /* --- 10. Footer --- */
-        .professional-footer {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px 0 30px;
+        /* --- 8. Footer --- */
+        .pro-footer {
+            margin-top: auto;
+            padding: 20px;
             text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            /* border-top: 1px solid var(--glass-border); */ /* Removed for cleaner look */
-            background: transparent;
             position: relative;
-            z-index: 5;
+            z-index: 10;
         }
-
-        .brand-link {
+        .credit-badge {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 50px;
             text-decoration: none;
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
-            padding: 10px 20px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255,255,255,0.03);
-            backdrop-filter: blur(5px);
+            color: var(--text-muted);
+            font-size: 12px;
+            backdrop-filter: blur(10px);
+            transition: 0.3s;
         }
-
-        .brand-link:hover {
+        .credit-badge:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.15);
             color: #fff;
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255,255,255,0.1);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+        .credit-badge i { color: var(--accent-cyan); }
 
-        .brand-name {
-            font-weight: 800;
-            background: linear-gradient(135deg, #fff, #a5b4fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* --- 9. Animations --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-
-        /* Animation Keyframes */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .professional-footer { animation: fadeIn 1s ease-out; }
     </style>
 
     <script>
       window.__APP_CONFIG__ = <?php echo json_encode($config, JSON_UNESCAPED_SLASHES); ?>;
     </script>
     
-    <!-- Your Core App Script -->
+    <!-- React Entry Point -->
     <script type="module" crossorigin src="<?php echo htmlspecialchars($assetPrefix . 'assets/index-C-2a0Dur.js', ENT_QUOTES); ?>"></script>
     <link rel="modulepreload" crossorigin href="<?php echo htmlspecialchars($assetPrefix . 'assets/vendor-CIGJ9g2q.js', ENT_QUOTES); ?>">
     
-    <!-- UI Enhancer (Animations & Effects) -->
+    <!-- UI Enhancer -->
     <script src="<?php echo htmlspecialchars($assetPrefix . 'js/ui-enhancer.js', ENT_QUOTES); ?>"></script>
 </head>
 <body>
     
-    <!-- Canvas Background -->
     <canvas id="bg-canvas"></canvas>
 
-    <!-- Splash Screen -->
+    <!-- Cinematic Splash -->
     <div id="splash-screen">
-        <span class="loader"></span>
+        <div class="splash-logo-container">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring"></div>
+            <i class="fa-solid fa-bolt fa-2x" style="color: #fff; z-index: 2;"></i>
+        </div>
         <div class="splash-text">MIRZA PRO</div>
     </div>
 
-    <!-- Application Mounting Point -->
     <div id="root"></div>
 
-    <!-- Minimal Professional Footer -->
-    <footer class="professional-footer">
-        <a href="https://t.me/KillHosein" class="brand-link" target="_blank">
-            <i class="fa-brands fa-telegram"></i>
-            <span>Designed by</span>
-            <span class="brand-name">KillHosein</span>
+    <footer class="pro-footer">
+        <a href="https://t.me/KillHosein" class="credit-badge" target="_blank">
+            <i class="fa-solid fa-code"></i>
+            <span>Designed by <b>KillHosein</b></span>
         </a>
     </footer>
 

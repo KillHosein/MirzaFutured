@@ -1,46 +1,51 @@
 /**
- * ULTRA PRO UI Enhancer for Mirza Pro Web App
- * Features:
- * - Interactive Particle Background
- * - 3D Tilt & Spotlight Effects (Apple TV Style)
- * - Scroll Reveal Animations
- * - Magnetic Buttons
- * - Haptic Feedback
+ * UI Enhancer v2.0 - "Quantum Edition"
+ * Features: Firefly particles, Haptic Feedback, Smooth Entrance
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- 0. Splash Screen Management ---
+    // --- 0. Cinematic Splash Screen Exit ---
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) {
         setTimeout(() => {
             splashScreen.style.opacity = '0';
-            splashScreen.style.visibility = 'hidden';
+            splashScreen.style.transform = 'scale(1.1)'; // Slight zoom out effect
             setTimeout(() => {
                 splashScreen.remove();
             }, 600);
-        }, 1500);
+        }, 2000); // Allow 2s for brand impression
     }
 
-    // --- 1. Telegram WebApp Integration ---
-    if (window.Telegram && window.Telegram.WebApp) {
-        const webApp = window.Telegram.WebApp;
-        webApp.ready();
-        webApp.setHeaderColor('#1e1b4b'); 
-        webApp.setBackgroundColor('#0f172a');
-        webApp.expand();
+    // --- 1. Telegram WebApp Integration (Pro Features) ---
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.ready();
+        tg.expand();
+        
+        // Theming
+        tg.setHeaderColor('#1e1b4b'); 
+        tg.setBackgroundColor('#000000');
+        
+        // Haptic Feedback Helper
+        window.triggerHaptic = (style = 'light') => {
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred(style);
+            }
+        };
+    } else {
+        window.triggerHaptic = () => {}; // Fallback
     }
 
-    // --- 2. Advanced Particle System ---
+    // --- 2. "Fireflies" Ambient Background (Optimized) ---
     const canvas = document.getElementById('bg-canvas');
     if (canvas) {
         const ctx = canvas.getContext('2d');
         let width, height;
         let particles = [];
-        const particleCount = 50; // Optimized count
-        const connectionDistance = 120;
-        const mouseDistance = 180;
-        let mouse = { x: null, y: null };
+        
+        // Gentle, floating orbs instead of chaotic lines
+        const particleCount = 40; 
 
         const resize = () => {
             width = canvas.width = window.innerWidth;
@@ -49,158 +54,114 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', resize);
         resize();
 
-        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('touchmove', (e) => { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; });
-
-        class Particle {
+        class Firefly {
             constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 0.3;
-                this.vy = (Math.random() - 0.5) * 0.3;
-                this.size = Math.random() * 2 + 0.5;
-                this.baseColor = 'rgba(99, 102, 241, ';
+                this.reset();
+                this.y = Math.random() * height; // Start anywhere
+                this.fadeDelay = Math.random() * 100;
             }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
 
-                if (mouse.x != null) {
-                    let dx = mouse.x - this.x;
-                    let dy = mouse.y - this.y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < mouseDistance) {
-                        const forceDirectionX = dx / distance;
-                        const forceDirectionY = dy / distance;
-                        const force = (mouseDistance - distance) / mouseDistance;
-                        const directionX = forceDirectionX * force * 1.5;
-                        const directionY = forceDirectionY * force * 1.5;
-                        this.vx -= directionX * 0.05;
-                        this.vy -= directionY * 0.05;
-                    }
-                }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + 10; // Start from bottom when resetting
+                this.speed = Math.random() * 0.5 + 0.2; // Very slow upward float
+                this.size = Math.random() * 2 + 0.5;
+                this.alpha = 0;
+                this.phase = Math.random() * Math.PI * 2; // For pulsing
+                this.hue = Math.random() > 0.5 ? 260 : 190; // Purple or Cyan
             }
+
+            update() {
+                this.y -= this.speed;
+                this.phase += 0.05;
+                
+                // Horizontal drift
+                this.x += Math.sin(this.phase) * 0.3;
+
+                // Pulsing opacity
+                this.alpha = (Math.sin(this.phase) + 1) / 2 * 0.8;
+
+                if (this.y < -10) this.reset();
+            }
+
             draw() {
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.baseColor + '0.4)';
+                
+                // Glow effect
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 4);
+                gradient.addColorStop(0, `hsla(${this.hue}, 100%, 70%, ${this.alpha})`);
+                gradient.addColorStop(1, `hsla(${this.hue}, 100%, 70%, 0)`);
+                
+                ctx.fillStyle = gradient;
                 ctx.fill();
             }
         }
 
         function initParticles() {
             particles = [];
-            for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Firefly());
+            }
         }
 
-        function animateParticles() {
+        function animate() {
             ctx.clearRect(0, 0, width, height);
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-                for (let j = i; j < particles.length; j++) {
-                    let dx = particles[i].x - particles[j].x;
-                    let dy = particles[i].y - particles[j].y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < connectionDistance) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = `rgba(139, 92, 246, ${0.1 - distance/connectionDistance * 0.1})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.stroke();
-                    }
-                }
-            }
-            requestAnimationFrame(animateParticles);
+            // Composite operation for glowing effect
+            ctx.globalCompositeOperation = 'screen';
+            
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            
+            ctx.globalCompositeOperation = 'source-over';
+            requestAnimationFrame(animate);
         }
+
         initParticles();
-        animateParticles();
+        animate();
     }
 
-    // --- 3. 3D Tilt & Spotlight Effect (Apple Style) ---
-    const applyTiltEffect = (element) => {
-        element.addEventListener('mousemove', (e) => {
-            const rect = element.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // Spotlight
-            element.style.setProperty('--mouse-x', `${x}px`);
-            element.style.setProperty('--mouse-y', `${y}px`);
-            
-            // Tilt
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -5; // Max 5 deg
-            const rotateY = ((x - centerX) / centerX) * 5;
-            
-            element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
-        });
+    // --- 3. Interaction & Sound Design ---
+    const addRipple = (e) => {
+        // Trigger Haptic
+        window.triggerHaptic('light');
 
-        element.addEventListener('mouseleave', () => {
-            element.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
-            element.style.setProperty('--mouse-x', `-999px`);
-            element.style.setProperty('--mouse-y', `-999px`);
-        });
+        const btn = e.currentTarget;
+        const circle = document.createElement("span");
+        const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+        const radius = diameter / 2;
+        const rect = btn.getBoundingClientRect();
+
+        circle.style.width = circle.style.height = `${diameter}px`;
+        circle.style.left = `${e.clientX - rect.left - radius}px`;
+        circle.style.top = `${e.clientY - rect.top - radius}px`;
+        circle.classList.add("ripple");
+
+        const ripple = btn.querySelector(".ripple");
+        if (ripple) ripple.remove();
+
+        btn.appendChild(circle);
     };
 
-    // --- 4. Magnetic Button Effect ---
-    const applyMagneticEffect = (element) => {
-        element.addEventListener('mousemove', (e) => {
-            const rect = element.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            
-            // Move button slightly towards cursor
-            element.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
-        });
-
-        element.addEventListener('mouseleave', () => {
-            element.style.transform = 'translate(0px, 0px)';
-        });
-    };
-
-    // --- 5. Scroll Reveal Observer ---
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                revealObserver.unobserve(entry.target); // Reveal once
-            }
-        });
-    }, { threshold: 0.1 });
-
-    // --- 6. Mutation Observer (The Orchestrator) ---
+    // --- 4. Observer for Animations & Haptics ---
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) { // Element node
+                if (node.nodeType === 1) {
                     
-                    // Button Ripple & Magnetic
-                    if (node.tagName === 'BUTTON' || node.classList.contains('btn')) {
-                        node.addEventListener('click', addRippleEffect);
-                        applyMagneticEffect(node);
-                    }
-                    node.querySelectorAll('button, .btn').forEach(btn => {
-                        btn.addEventListener('click', addRippleEffect);
-                        applyMagneticEffect(btn);
+                    // Attach effects to buttons
+                    const buttons = node.tagName === 'BUTTON' ? [node] : node.querySelectorAll('button, .btn, a[class*="btn"]');
+                    buttons.forEach(btn => {
+                        btn.addEventListener('click', addRipple);
+                        // Add hover sound logic here if needed
                     });
 
-                    // Card Tilt & Spotlight
+                    // Staggered Entry Animation for Lists/Cards
                     if (node.classList.contains('card') || node.classList.contains('list-item')) {
-                        node.classList.add('glass-spotlight'); // Add class for CSS
-                        applyTiltEffect(node);
-                        revealObserver.observe(node);
-                        node.classList.add('reveal-on-scroll');
-                    }
-                    
-                    // List Items
-                    if (node.tagName === 'LI') {
-                        revealObserver.observe(node);
-                        node.classList.add('reveal-on-scroll');
+                        node.style.opacity = '0';
+                        node.style.animation = 'fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
                     }
                 }
             });
@@ -209,74 +170,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Helper: Ripple Effect
-    function addRippleEffect(e) {
-        const button = e.currentTarget;
-        
-        // Haptic Feedback
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-        }
-
-        const circle = document.createElement("span");
-        const diameter = Math.max(button.clientWidth, button.clientHeight);
-        const radius = diameter / 2;
-        circle.style.width = circle.style.height = `${diameter}px`;
-        circle.style.left = `${e.clientX - button.getBoundingClientRect().left - radius}px`;
-        circle.style.top = `${e.clientY - button.getBoundingClientRect().top - radius}px`;
-        circle.classList.add("ripple");
-        const ripple = button.getElementsByClassName("ripple")[0];
-        if (ripple) ripple.remove();
-        button.appendChild(circle);
-    }
-
-    // --- 7. Inject Advanced Styles ---
+    // Inject Styles for JS-created elements
     const style = document.createElement('style');
     style.innerHTML = `
-        /* Ripple */
         span.ripple {
             position: absolute;
             border-radius: 50%;
             transform: scale(0);
             animation: ripple 0.6s linear;
-            background-color: rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.4);
             pointer-events: none;
         }
-        @keyframes ripple { to { transform: scale(4); opacity: 0; } }
-
-        /* Scroll Reveal */
-        .reveal-on-scroll {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
         }
-        .reveal-on-scroll.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Spotlight Glass Effect */
-        .glass-spotlight {
-            position: relative;
-            overflow: hidden;
-        }
-        .glass-spotlight::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(
-                600px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
-                rgba(255, 255, 255, 0.1),
-                transparent 40%
-            );
-            z-index: 3;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        /* Smooth Page Entry */
-        body { animation: fadeInPage 0.8s ease-out; }
-        @keyframes fadeInPage { from { opacity: 0; } to { opacity: 1; } }
     `;
     document.head.appendChild(style);
 });
