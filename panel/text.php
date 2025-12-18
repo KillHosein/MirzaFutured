@@ -108,10 +108,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         /* --- FLOATING HOVER EFFECT --- */
         .floating-card:hover {
-            transform: translateY(-6px) scale(1.01);
-            border-color: rgba(139, 92, 246, 0.3);
-            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.15);
-            background: rgba(30, 41, 59, 0.6);
+            transform: translateY(-8px) scale(1.015);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(139, 92, 246, 0.2);
+            background: rgba(30, 41, 59, 0.7);
+            z-index: 10;
         }
 
         .sidebar-item {
@@ -155,6 +156,31 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        .category-title {
+            position: relative;
+            padding-right: 20px;
+            margin-bottom: 24px;
+            margin-top: 40px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .category-title::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 24px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-primary);
+        }
     </style>
 </head>
 <body>
@@ -239,9 +265,9 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
-                <div id="editor-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    <!-- Dynamic Rendering -->
+            <div class="flex-1 overflow-y-auto p-10 custom-scrollbar" id="main-viewport">
+                <div id="editor-container" class="space-y-12">
+                    <!-- Categories and Grids will render here -->
                 </div>
             </div>
         </section>
@@ -308,47 +334,82 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 el.classList.add('active');
                 document.getElementById('active-tab-label').innerText = el.innerText.trim();
                 this.render();
+                
+                // Scroll to top of viewport
+                document.getElementById('main-viewport').scrollTop = 0;
             },
 
             render() {
-                const container = document.getElementById('editor-grid');
+                const container = document.getElementById('editor-container');
                 container.innerHTML = '';
                 
+                const categories = {
+                    admin: { title: 'مدیریت (Admin)', icon: 'fa-shield-halved', color: 'rose', data: {} },
+                    user: { title: 'کاربری (User)', icon: 'fa-user-astronaut', color: 'emerald', data: {} },
+                    service: { title: 'سرویس و مالی', icon: 'fa-credit-card', color: 'blue', data: {} },
+                    other: { title: 'سایر موارد', icon: 'fa-ellipsis', color: 'violet', data: {} }
+                };
+
+                // Group data by category
                 Object.entries(this.data).forEach(([section, contents]) => {
                     const category = this.getCategory(section);
-                    if (this.activeTab !== 'all' && this.activeTab !== category) return;
+                    if (this.activeTab === 'all' || this.activeTab === category) {
+                        categories[category].data[section] = contents;
+                    }
+                });
 
-                    const sectionDiv = document.createElement('div');
-                    sectionDiv.className = 'section-container glass-card floating-card overflow-hidden';
-                    
-                    const header = document.createElement('div');
-                    header.className = 'section-header';
-                    const color = category === 'admin' ? 'rose' : (category === 'service' ? 'blue' : 'violet');
-                    
-                    header.innerHTML = `
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-${color}-500/10 flex items-center justify-center text-${color}-400">
-                                <i class="fa-solid fa-folder-open"></i>
-                            </div>
-                            <div>
-                                <span class="block font-black text-slate-200 text-sm">${section}</span>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase">${category} section</span>
-                            </div>
-                        </div>
-                        <i class="fa-solid fa-chevron-down text-slate-700 text-[10px] transition-transform"></i>
-                    `;
-                    header.onclick = () => {
-                        sectionDiv.classList.toggle('active');
-                        header.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
-                    };
+                // Render each category that has data
+                Object.keys(categories).forEach(key => {
+                    const cat = categories[key];
+                    if (Object.keys(cat.data).length > 0) {
+                        const catSection = document.createElement('div');
+                        
+                        // Category Header
+                        const title = document.createElement('div');
+                        title.className = 'category-title';
+                        title.innerHTML = `<i class="fa-solid ${cat.icon} text-${cat.color}-400"></i> ${cat.title}`;
+                        catSection.appendChild(title);
 
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'section-content space-y-6';
-                    this.buildFields(contents, contentDiv, section);
+                        // Category Grid
+                        const grid = document.createElement('div');
+                        grid.className = 'grid grid-cols-1 xl:grid-cols-2 gap-8';
+                        
+                        Object.entries(cat.data).forEach(([section, contents]) => {
+                            const sectionDiv = document.createElement('div');
+                            sectionDiv.className = 'section-container glass-card floating-card overflow-hidden';
+                            
+                            const header = document.createElement('div');
+                            header.className = 'section-header';
+                            
+                            header.innerHTML = `
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-${cat.color}-500/10 flex items-center justify-center text-${cat.color}-400">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block font-black text-slate-200 text-sm">${section}</span>
+                                        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">${Object.keys(contents).length} کلید</span>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-chevron-down text-slate-700 text-[10px] transition-transform"></i>
+                            `;
+                            header.onclick = () => {
+                                sectionDiv.classList.toggle('active');
+                                header.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
+                            };
 
-                    sectionDiv.appendChild(header);
-                    sectionDiv.appendChild(contentDiv);
-                    container.appendChild(sectionDiv);
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'section-content space-y-6';
+                            this.buildFields(contents, contentDiv, section);
+
+                            sectionDiv.appendChild(header);
+                            sectionDiv.appendChild(contentDiv);
+                            grid.appendChild(sectionDiv);
+                        });
+
+                        catSection.appendChild(grid);
+                        container.appendChild(catSection);
+                    }
                 });
                 
                 this.autoResizeAll();
@@ -403,6 +464,13 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         const hasVisible = Array.from(s.querySelectorAll('.field-item')).some(f => f.style.display !== 'none');
                         s.style.display = hasVisible ? 'block' : 'none';
                         if (query.length > 2 && hasVisible) s.classList.add('active');
+                    });
+                    
+                    // Hide category titles if no sections visible in them
+                    document.querySelectorAll('.category-title').forEach(t => {
+                        const nextGrid = t.nextElementSibling;
+                        const hasVisibleGridItems = Array.from(nextGrid.children).some(c => c.style.display !== 'none');
+                        t.style.display = hasVisibleGridItems ? 'flex' : 'none';
                     });
                 };
             },
