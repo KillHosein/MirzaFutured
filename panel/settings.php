@@ -387,9 +387,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <input type="hidden" name="action" value="save_general">
                     <?php foreach($general as $k=>$v){ if($k==='keyboardmain' || $k==='iplogin') continue; 
                         $label = $labelMapGeneral[$k] ?? $k; ?>
-                        <div class="form-group">
+                        <div class="form-group" style="position:relative;">
                             <label><?php echo htmlspecialchars($label); ?></label>
-                            <input type="text" name="general[<?php echo $k; ?>]" class="input-readable" value="<?php echo htmlspecialchars($v); ?>">
+                            <input type="text" name="general[<?php echo $k; ?>]" id="gen_<?php echo $k; ?>" class="input-readable" value="<?php echo htmlspecialchars($v); ?>" style="padding-left: 50px;">
+                            <button type="button" class="btn-copy-field" data-target="gen_<?php echo $k; ?>" title="کپی"><i class="fa-solid fa-copy"></i></button>
                         </div>
                     <?php } ?>
                     <button type="submit" class="btn-act btn-save"><i class="fa-solid fa-save"></i> ذخیره عمومی</button>
@@ -429,9 +430,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <input type="hidden" name="action" value="save_shop">
                     <?php foreach($shop as $k=>$v){ 
                         $label = $labelMapShop[$k] ?? $k; ?>
-                        <div class="form-group">
+                        <div class="form-group" style="position:relative;">
                             <label><?php echo htmlspecialchars($label); ?></label>
-                            <input type="text" name="shop[<?php echo $k; ?>]" class="input-readable" value="<?php echo htmlspecialchars($v); ?>">
+                            <input type="text" name="shop[<?php echo $k; ?>]" id="shop_<?php echo $k; ?>" class="input-readable" value="<?php echo htmlspecialchars($v); ?>" style="padding-left: 50px;">
+                            <button type="button" class="btn-copy-field" data-target="shop_<?php echo $k; ?>" title="کپی"><i class="fa-solid fa-copy"></i></button>
                         </div>
                     <?php } ?>
                     <button type="submit" class="btn-act btn-save"><i class="fa-solid fa-cart-shopping"></i> ذخیره فروشگاه</button>
@@ -550,6 +552,86 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script src="js/bootstrap.min.js"></script>
     
     <script>
+        // Copy Function
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise(function(resolve, reject){
+                try{
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    resolve();
+                }catch(e){ reject(e); }
+            });
+        }
+
+        // Field Copy Buttons
+        document.querySelectorAll('.btn-copy-field').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                var targetId = btn.getAttribute('data-target');
+                var input = document.getElementById(targetId);
+                if(input){
+                    copyToClipboard(input.value).then(function(){
+                        var originalIcon = btn.innerHTML;
+                        btn.innerHTML = '<i class="fa-solid fa-check" style="color:var(--neon-green)"></i>';
+                        setTimeout(function(){ btn.innerHTML = originalIcon; }, 1500);
+                    });
+                }
+            });
+        });
+
+        // Copy All Settings JSON
+        var copySettingsBtn = document.getElementById('copySettingsBtn');
+        if(copySettingsBtn){
+            copySettingsBtn.addEventListener('click', function(){
+                // Fetch current settings via export link logic
+                fetch('settings.php?export=settings')
+                .then(r => r.json())
+                .then(data => {
+                    var jsonStr = JSON.stringify(data, null, 2);
+                    copyToClipboard(jsonStr).then(function(){
+                        var originalHtml = copySettingsBtn.innerHTML;
+                        copySettingsBtn.innerHTML = '<i class="fa-solid fa-check"></i> کپی شد';
+                        copySettingsBtn.style.borderColor = 'var(--neon-green)';
+                        copySettingsBtn.style.color = 'var(--neon-green)';
+                        setTimeout(function(){ 
+                            copySettingsBtn.innerHTML = originalHtml; 
+                            copySettingsBtn.style.borderColor = '';
+                            copySettingsBtn.style.color = '';
+                        }, 2000);
+                    });
+                })
+                .catch(err => alert('خطا در دریافت تنظیمات'));
+            });
+        }
+
+        // Import File Reader
+        var importFile = document.getElementById('importFile');
+        var importArea = document.getElementById('importJsonArea');
+        if(importFile && importArea){
+            importFile.addEventListener('change', function(){
+                var f = importFile.files[0];
+                if(!f) return;
+                var reader = new FileReader();
+                reader.onload = function(e){
+                    importArea.value = e.target.result;
+                    // Optional: Validate JSON visual feedback
+                    try {
+                        JSON.parse(e.target.result);
+                        importArea.style.borderColor = 'var(--neon-green)';
+                    } catch(e) {
+                        importArea.style.borderColor = 'var(--neon-red)';
+                    }
+                };
+                reader.readAsText(f);
+            });
+        }
+
         // Use My IP Logic
         document.getElementById('useMyIp').addEventListener('click', function(){
             var ip = "<?php echo $_SERVER['REMOTE_ADDR']; ?>";

@@ -31,6 +31,14 @@ $user = $query->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) { die("User not found."); }
 
+// --- Export JSON ---
+if(isset($_GET['export']) && $_GET['export'] === 'json'){
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=user-' . $user['id'] . '-' . date('Y-m-d') . '.json');
+    echo json_encode($user, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 $setting = select("setting","*",null,null);
 // Handle potential missing keys gracefully
 $otherservice = isset(select("topicid","idreport","report","otherservice","select")['idreport']) ? select("topicid","idreport","report","otherservice","select")['idreport'] : null;
@@ -115,6 +123,32 @@ if(isset($_GET['textmessage']) && $_GET['textmessage']){
             'text' => $textaddbalance,
             'parse_mode' => "HTML"
         ]);
+    }
+    header("Location: user.php?id={$_GET['id']}");
+    exit;
+}
+
+// Delete User
+if(isset($_GET['delete_user']) && $_GET['delete_user']){
+    $stmt = $pdo->prepare("DELETE FROM user WHERE id=:id");
+    $stmt->execute(['id' => $_GET['id']]);
+    if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        echo 'ok'; exit;
+    }
+    header("Location: users.php");
+    exit;
+}
+
+// Reset Password
+if(isset($_GET['reset_pass']) && $_GET['reset_pass']){
+    $newPass = rand(10000000, 99999999);
+    update("user", "password", $newPass, "id", $_GET['id']);
+    
+    $msg = "🔐 رمز عبور حساب شما توسط مدیریت تغییر یافت.\n\n🔑 رمز عبور جدید: <code>$newPass</code>";
+    sendmessage($_GET['id'], $msg, null, 'HTML');
+    
+    if(isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        echo 'ok'; exit;
     }
     header("Location: user.php?id={$_GET['id']}");
     exit;
@@ -452,6 +486,10 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <span class="info-value" style="font-family: monospace;"><?php echo $user['affiliates'] ?: '---'; ?></span>
                     </li>
                 </ul>
+
+                <button onclick="copyUserInfo()" class="btn-action" style="margin-top: 25px; border-color: var(--neon-blue); color: var(--neon-blue); justify-content: center; width: 100%;">
+                    <i class="fa-solid fa-copy"></i> کپی اطلاعات کامل
+                </button>
             </div>
 
             <!-- Actions (Right) -->

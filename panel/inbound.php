@@ -177,6 +177,24 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
     exit();
 }
 
+// --- Export JSON ---
+if(isset($_GET['export']) && $_GET['export'] === 'json'){
+    if ($dbError !== null || $tableSql === null || $colLocationSql === null || $colProtocolSql === null || $colNameInboundSql === null) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => $dbError ?: 'Database not ready'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+    $exportSql = "SELECT {$colLocationSql} AS location, {$colProtocolSql} AS protocol, {$colNameInboundSql} AS NameInbound FROM {$tableSql}{$whereClause} ORDER BY {$colLocationSql} ASC, {$colProtocolSql} ASC, {$colNameInboundSql} ASC";
+    $exportStmt = $pdo->prepare($exportSql);
+    $exportStmt->execute($params);
+    $exportRows = $exportStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=inbounds-'.date('Y-m-d').'.json');
+    echo json_encode($exportRows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 // --- Stats Calculation ---
 $totalInbounds = $totalRows;
 $protocols = [];
@@ -571,6 +589,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div style="flex:1"></div>
                 
                 <button class="btn-act btn-cyan" id="inbCopyNames"><i class="fa-solid fa-copy"></i> کپی نام‌ها</button>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'json'])); ?>" class="btn-act"><i class="fa-solid fa-file-code"></i> JSON</a>
                 <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act btn-green"><i class="fa-solid fa-file-csv"></i> اکسل</a>
             </div>
 

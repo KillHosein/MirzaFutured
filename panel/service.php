@@ -38,6 +38,46 @@ function getServiceTypeLabel($type) {
     ];
     return $types[$type] ?? ['text' => $type, 'class' => 'badge-other'];
 }
+
+function csvSafeCell($value)
+{
+    $value = (string) $value;
+    $firstChar = $value !== '' ? substr($value, 0, 1) : '';
+    if (in_array($firstChar, ['=', '+', '-', '@'], true)) {
+        return "'" . $value;
+    }
+    return $value;
+}
+
+// --- Export CSV ---
+if(isset($_GET['export']) && $_GET['export']==='csv'){
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=services-'.date('Y-m-d').'.csv');
+    $out = fopen('php://output','w');
+    fputs($out, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+    fputcsv($out, ['ID', 'User ID', 'Username', 'Time', 'Price', 'Type']);
+    foreach($listinvoice as $row){
+        $time = function_exists('jdate') ? jdate('Y/m/d H:i:s', $row['time']) : $row['time'];
+        fputcsv($out, [
+            csvSafeCell($row['id']),
+            csvSafeCell($row['id_user']),
+            csvSafeCell($row['username']),
+            csvSafeCell($time),
+            csvSafeCell($row['price']),
+            csvSafeCell($row['type'])
+        ]);
+    }
+    fclose($out);
+    exit();
+}
+
+// --- Export JSON ---
+if(isset($_GET['export']) && $_GET['export'] === 'json'){
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=services-' . date('Y-m-d') . '.json');
+    echo json_encode($listinvoice, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -137,6 +177,26 @@ function getServiceTypeLabel($type) {
             backdrop-filter: blur(20px); box-shadow: var(--shadow-card);
             min-height: 500px;
         }
+
+        /* Actions Toolbar */
+        .actions-row {
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 25px;
+        }
+        .btn-act {
+            height: 50px; padding: 0 22px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; color: var(--text-sec);
+            font-size: 1.05rem; font-weight: 500; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 10px;
+            transition: 0.3s; text-decoration: none; white-space: nowrap;
+        }
+        .btn-act:hover { background: rgba(255,255,255,0.15); border-color: #fff; color: #fff; transform: translateY(-3px); }
+        
+        .btn-green { color: var(--neon-green); border-color: rgba(0, 255, 163, 0.3); }
+        .btn-green:hover { background: rgba(0, 255, 163, 0.1); box-shadow: 0 0 15px rgba(0, 255, 163, 0.2); border-color: var(--neon-green); }
+        
+        .btn-cyan { color: var(--neon-cyan); border-color: rgba(34, 211, 238, 0.3); }
+        .btn-cyan:hover { background: rgba(34, 211, 238, 0.1); box-shadow: 0 0 15px rgba(34, 211, 238, 0.2); border-color: var(--neon-cyan); }
 
         /* --- Table --- */
         .table-container-flex {
@@ -253,6 +313,20 @@ function getServiceTypeLabel($type) {
         <!-- Main Panel -->
         <div class="glass-panel anim d-1">
             
+            <!-- Action Toolbar -->
+            <div class="actions-row">
+                <span id="selCount" style="color: var(--neon-blue); font-weight: 800; font-size: 1.2rem; margin-left: 20px;">0 انتخاب</span>
+                
+                <button class="btn-act" id="selectAll"><i class="fa-solid fa-check-double"></i> انتخاب همه</button>
+                <button class="btn-act" id="clearSelect"><i class="fa-solid fa-minus"></i> لغو</button>
+                
+                <div style="flex:1"></div>
+                
+                <button class="btn-act btn-cyan" id="copyUsernames"><i class="fa-solid fa-copy"></i> کپی نام‌ها</button>
+                <a href="?export=json" class="btn-act"><i class="fa-solid fa-file-code"></i> JSON</a>
+                <a href="?export=csv" class="btn-act btn-green"><i class="fa-solid fa-file-csv"></i> اکسل</a>
+            </div>
+
             <?php if(empty($listinvoice)): ?>
                 <div style="text-align: center; padding: 80px; color: var(--text-sec); flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
                     <i class="fa-solid fa-clock-rotate-left" style="font-size: 6rem; margin-bottom: 25px; opacity: 0.3;"></i>
@@ -352,6 +426,40 @@ function getServiceTypeLabel($type) {
     <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            // Checkbox handling
+            function updateSelCount() {
+                var count = $('.custom-check:checked').length;
+                $('#selCount').text(count + ' انتخاب');
+            }
+            $(document).on('change', '.custom-check', updateSelCount);
+
+            $('#selectAll').click(function(){
+                $('.custom-check').prop('checked', true);
+                updateSelCount();
+            });
+            $('#clearSelect').click(function(){
+                $('.custom-check').prop('checked', false);
+                updateSelCount();
+            });
+
+            // Copy Usernames
+            $('#copyUsernames').click(function(){
+                let usernames = [];
+                $('.custom-check:checked').closest('tr').find('td:eq(3)').each(function(){
+                    usernames.push($(this).text().trim());
+                });
+                if(usernames.length > 0){
+                    navigator.clipboard.writeText(usernames.join('\n')).then(function() {
+                        alert(usernames.length + ' نام کاربری کپی شد!');
+                    });
+                } else {
+                    alert('هیچ موردی انتخاب نشده است.');
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>

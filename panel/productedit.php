@@ -164,13 +164,13 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         }
 
         /* --- Inputs --- */
-        .form-group { margin-bottom: 25px; }
+        .form-group { margin-bottom: 25px; position: relative; }
         .form-group label { display: block; color: var(--text-sec); font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
         
         .input-readable {
             width: 100%; height: 60px;
             background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
-            color: #fff; padding: 0 20px; border-radius: 16px;
+            color: #fff; padding: 0 20px 0 50px; border-radius: 16px;
             font-family: inherit; font-size: 1.2rem; transition: 0.3s;
         }
         .input-readable:focus { background: rgba(0,0,0,0.5); border-color: var(--neon-blue); outline: none; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
@@ -192,6 +192,14 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         
         .btn-back { border-color: var(--neon-blue); color: var(--neon-blue); }
         .btn-back:hover { background: rgba(0, 242, 255, 0.1); box-shadow: 0 0 20px var(--neon-blue); }
+
+        /* --- Copy Button --- */
+        .btn-copy-field {
+            position: absolute; left: 5px; top: 32px; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 10px;
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-copy-field:hover { background: rgba(255,255,255,0.2); color: var(--neon-blue); }
 
         /* --- Floating Dock (Bigger & Labels Top) --- */
         .dock-container {
@@ -287,28 +295,32 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
                     <div class="form-group">
                         <label>نام محصول</label>
-                        <input type="text" name="name_product" class="input-readable" value="<?php echo htmlspecialchars($product['name_product']); ?>" required>
+                        <input type="text" name="name_product" id="name_product" class="input-readable" value="<?php echo htmlspecialchars($product['name_product']); ?>" required>
+                        <button type="button" class="btn-copy-field" data-target="name_product" title="کپی"><i class="fa-solid fa-copy"></i></button>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
                         <div class="form-group">
                             <label>قیمت (تومان)</label>
-                            <input type="number" name="price_product" class="input-readable" value="<?php echo htmlspecialchars($product['price_product']); ?>" required>
+                            <input type="number" name="price_product" id="price_product" class="input-readable" value="<?php echo htmlspecialchars($product['price_product']); ?>" required>
+                            <button type="button" class="btn-copy-field" data-target="price_product" title="کپی"><i class="fa-solid fa-copy"></i></button>
                         </div>
                         <div class="form-group">
                             <label>حجم (GB)</label>
-                            <input type="number" name="Volume_constraint" class="input-readable" value="<?php echo htmlspecialchars($product['Volume_constraint']); ?>" required>
+                            <input type="number" name="Volume_constraint" id="Volume_constraint" class="input-readable" value="<?php echo htmlspecialchars($product['Volume_constraint']); ?>" required>
+                            <button type="button" class="btn-copy-field" data-target="Volume_constraint" title="کپی"><i class="fa-solid fa-copy"></i></button>
                         </div>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
                         <div class="form-group">
                             <label>زمان (روز)</label>
-                            <input type="number" name="Service_time" class="input-readable" value="<?php echo htmlspecialchars($product['Service_time']); ?>" required>
+                            <input type="number" name="Service_time" id="Service_time" class="input-readable" value="<?php echo htmlspecialchars($product['Service_time']); ?>" required>
+                            <button type="button" class="btn-copy-field" data-target="Service_time" title="کپی"><i class="fa-solid fa-copy"></i></button>
                         </div>
                         <div class="form-group">
                             <label>گروه کاربری</label>
-                            <select name="agent" class="input-readable">
+                            <select name="agent" class="input-readable" style="padding-left: 20px;">
                                 <option value="f" <?php echo $product['agent']==='f'?'selected':''; ?>>کاربر عادی</option>
                                 <option value="n" <?php echo $product['agent']==='n'?'selected':''; ?>>نماینده</option>
                                 <option value="n2" <?php echo $product['agent']==='n2'?'selected':''; ?>>نماینده ارشد</option>
@@ -318,12 +330,14 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
                     <div class="form-group">
                         <label>دسته‌بندی</label>
-                        <input type="text" name="category" class="input-readable" value="<?php echo htmlspecialchars($product['category']); ?>">
+                        <input type="text" name="category" id="category" class="input-readable" value="<?php echo htmlspecialchars($product['category']); ?>">
+                        <button type="button" class="btn-copy-field" data-target="category" title="کپی"><i class="fa-solid fa-copy"></i></button>
                     </div>
 
                     <div class="form-group">
                         <label>توضیحات / یادداشت</label>
-                        <input type="text" name="note" class="input-readable" value="<?php echo htmlspecialchars($product['note']); ?>">
+                        <input type="text" name="note" id="note" class="input-readable" value="<?php echo htmlspecialchars($product['note']); ?>">
+                        <button type="button" class="btn-copy-field" data-target="note" title="کپی"><i class="fa-solid fa-copy"></i></button>
                     </div>
 
                     <button type="submit" class="btn-act btn-green-glow" style="margin-top: 20px;">
@@ -396,6 +410,28 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
-
+    <script>
+        // Copy Button Logic
+        document.querySelectorAll('.btn-copy-field').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                if(input && input.value) {
+                    navigator.clipboard.writeText(input.value).then(() => {
+                        const originalIcon = this.innerHTML;
+                        this.innerHTML = '<i class="fa-solid fa-check"></i>';
+                        this.style.color = '#0f0';
+                        setTimeout(() => {
+                            this.innerHTML = originalIcon;
+                            this.style.color = '';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('خطا در کپی کردن متن');
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>

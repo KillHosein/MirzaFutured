@@ -36,6 +36,44 @@ $listcencel = $query->fetchAll();
 // Stats
 $totalRequests = count($listcencel);
 $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
+
+function csvSafeCell($value)
+{
+    $value = (string) $value;
+    $firstChar = $value !== '' ? substr($value, 0, 1) : '';
+    if (in_array($firstChar, ['=', '+', '-', '@'], true)) {
+        return "'" . $value;
+    }
+    return $value;
+}
+
+// --- Export CSV ---
+if(isset($_GET['export']) && $_GET['export']==='csv'){
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=cancel-requests-'.date('Y-m-d').'.csv');
+    $out = fopen('php://output','w');
+    fputs($out, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+    fputcsv($out, ['ID', 'User ID', 'Username', 'Description', 'Status']);
+    foreach($listcencel as $row){
+        fputcsv($out, [
+            csvSafeCell($row['id']),
+            csvSafeCell($row['id_user']),
+            csvSafeCell($row['username']),
+            csvSafeCell($row['description']),
+            csvSafeCell($row['status'])
+        ]);
+    }
+    fclose($out);
+    exit();
+}
+
+// --- Export JSON ---
+if(isset($_GET['export']) && $_GET['export'] === 'json'){
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=cancel-requests-' . date('Y-m-d') . '.json');
+    echo json_encode($listcencel, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -171,18 +209,30 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         }
 
         /* Buttons */
+        .actions-row {
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 25px;
+        }
         .btn-act {
             height: 50px; padding: 0 25px;
-            background: rgba(255, 7, 58, 0.1); border: 1px solid rgba(255, 7, 58, 0.3);
-            border-radius: 14px; color: var(--neon-red); font-size: 1rem; font-weight: 600;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px; color: var(--text-sec); font-size: 1rem; font-weight: 600;
             cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
             transition: 0.3s; text-decoration: none;
         }
         .btn-act:hover { 
-            background: rgba(255, 7, 58, 0.2); 
-            box-shadow: 0 0 20px rgba(255, 7, 58, 0.2); 
+            background: rgba(255,255,255,0.15); border-color: #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1); 
             transform: translateY(-2px); color: #fff; 
         }
+
+        .btn-green { color: var(--neon-green); border-color: rgba(0, 255, 163, 0.3); }
+        .btn-green:hover { background: rgba(0, 255, 163, 0.1); box-shadow: 0 0 15px rgba(0, 255, 163, 0.2); border-color: var(--neon-green); }
+        
+        .btn-cyan { color: var(--neon-cyan); border-color: rgba(34, 211, 238, 0.3); }
+        .btn-cyan:hover { background: rgba(34, 211, 238, 0.1); box-shadow: 0 0 15px rgba(34, 211, 238, 0.2); border-color: var(--neon-cyan); }
+        
+        .btn-red { color: var(--neon-red); border-color: rgba(255, 42, 109, 0.3); }
+        .btn-red:hover { background: rgba(255, 42, 109, 0.1); box-shadow: 0 0 15px rgba(255, 42, 109, 0.2); border-color: var(--neon-red); }
 
         /* Badges */
         .badge {
@@ -279,6 +329,14 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         <!-- Main Panel -->
         <div class="glass-panel anim d-2">
             
+            <div class="actions-row">
+                <button type="button" id="selAll" class="btn-act"><i class="fa-solid fa-check-double"></i> انتخاب همه</button>
+                <button type="button" id="deselAll" class="btn-act"><i class="fa-solid fa-xmark"></i> لغو انتخاب</button>
+                <button type="button" id="copyIds" class="btn-act btn-cyan"><i class="fa-solid fa-copy"></i> کپی آیدی‌ها</button>
+                <a href="cancelService.php?export=csv" class="btn-act"><i class="fa-solid fa-file-csv"></i> خروجی CSV</a>
+                <a href="cancelService.php?export=json" class="btn-act"><i class="fa-solid fa-file-code"></i> خروجی JSON</a>
+            </div>
+
             <?php if(empty($listcencel)): ?>
                 <div style="text-align: center; padding: 80px; color: var(--text-sec); flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
                     <i class="fa-solid fa-clipboard-check" style="font-size: 6rem; margin-bottom: 25px; opacity: 0.3;"></i>
@@ -381,6 +439,25 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+        // Select All
+        $('#selAll').click(function(){ $('.custom-check').prop('checked', true); });
+        $('#deselAll').click(function(){ $('.custom-check').prop('checked', false); });
 
+        // Copy IDs
+        $('#copyIds').click(function(){
+            let ids = [];
+            $('.custom-check:checked').each(function(){
+                let row = $(this).closest('tr');
+                ids.push(row.find('td').eq(2).text().trim()); // Index 2 is User ID
+            });
+            if(ids.length > 0){
+                navigator.clipboard.writeText(ids.join('\n'));
+                alert(ids.length + ' آیدی کپی شد.');
+            } else {
+                alert('هیچ موردی انتخاب نشده است.');
+            }
+        });
+    </script>
 </body>
 </html>

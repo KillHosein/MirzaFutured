@@ -9,6 +9,13 @@ error_reporting(E_ALL);
 require_once '../config.php';
 require_once '../jdf.php'; // اطمینان از وجود کتابخانه تاریخ شمسی
 
+function csvSafeCell($str){
+    if(in_array(substr($str, 0, 1), ['=','+','-','@'])){
+        return "'" . $str;
+    }
+    return $str;
+}
+
 // بررسی احراز هویت
 $q = $pdo->prepare("SELECT * FROM admin WHERE username=:u");
 $q->bindParam(':u', $_SESSION['user'], PDO::PARAM_STR);
@@ -81,24 +88,44 @@ $query->execute($params);
 $listpayment = $query->fetchAll();
 
 // --- CSV Export ---
-if(isset($_GET['export']) && $_GET['export'] === 'csv'){
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=payments-' . date('Y-m-d') . '.csv');
-    $output = fopen('php://output', 'w');
-    fputs($output, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
-    fputcsv($output, ['ID User', 'Order ID', 'Price', 'Time', 'Method', 'Status']);
-    foreach($listpayment as $row){
-        fputcsv($output, [
-            $row['id_user'],
-            $row['id_order'],
-            $row['price'],
-            $row['time'],
-            isset($methods[$row['Payment_Method']]) ? $methods[$row['Payment_Method']] : $row['Payment_Method'],
-            isset($statuses[$row['payment_Status']]) ? $statuses[$row['payment_Status']]['label'] : $row['payment_Status']
-        ]);
+if(isset($_GET['export']) && ($_GET['export'] === 'csv' || $_GET['export'] === 'json')){
+    $filename = 'payments-' . date('Y-m-d');
+    
+    if($_GET['export'] === 'json'){
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename . '.json');
+        $jsonOut = [];
+        foreach($listpayment as $row){
+            $jsonOut[] = [
+                'id_user' => $row['id_user'],
+                'id_order' => $row['id_order'],
+                'price' => $row['price'],
+                'time' => $row['time'],
+                'method' => isset($methods[$row['Payment_Method']]) ? $methods[$row['Payment_Method']] : $row['Payment_Method'],
+                'status' => isset($statuses[$row['payment_Status']]) ? $statuses[$row['payment_Status']]['label'] : $row['payment_Status']
+            ];
+        }
+        echo json_encode($jsonOut, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit();
+    } else {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=' . $filename . '.csv');
+        $output = fopen('php://output', 'w');
+        fputs($output, $bom = (chr(0xEF) . chr(0xBB) . chr(0xBF)));
+        fputcsv($output, ['ID User', 'Order ID', 'Price', 'Time', 'Method', 'Status']);
+        foreach($listpayment as $row){
+            fputcsv($output, [
+                csvSafeCell($row['id_user']),
+                csvSafeCell($row['id_order']),
+                $row['price'],
+                $row['time'],
+                isset($methods[$row['Payment_Method']]) ? $methods[$row['Payment_Method']] : $row['Payment_Method'],
+                isset($statuses[$row['payment_Status']]) ? $statuses[$row['payment_Status']]['label'] : $row['payment_Status']
+            ]);
+        }
+        fclose($output);
+        exit();
     }
-    fclose($output);
-    exit();
 }
 
 // --- Stats ---
@@ -514,7 +541,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <button class="btn-act btn-blue" onclick="$('#modalBulkStatus').modal('show')"><i class="fa-solid fa-pen-to-square"></i> تغییر وضعیت گروهی</button>
                 <button class="btn-act" id="payCopy"><i class="fa-solid fa-copy"></i> کپی شماره‌ها</button>
                 
-                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> خروجی اکسل</a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> خروجی CSV</a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'json'])); ?>" class="btn-act"><i class="fa-solid fa-file-code"></i> خروجی JSON</a>
             </div>
 
             <!-- Table -->
@@ -669,7 +697,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     ids.push(row.find('td').eq(2).text().trim());
                 });
                 if(ids.length > 0){
-                    navigator.clipboard.writeText(ids.join(', '));
+                    navigator.clipboard.writeText(ids.join('\n'));
                     alert(ids.length + ' شماره سفارش کپی شد.');
                 } else {
                     alert('هیچ موردی انتخاب نشده است.');

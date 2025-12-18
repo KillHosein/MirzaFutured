@@ -116,6 +116,14 @@ if(isset($_GET['export']) && $_GET['export']==='csv'){
     exit();
 }
 
+// JSON Export
+if(isset($_GET['export']) && $_GET['export'] === 'json'){
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=products-' . date('Y-m-d') . '.json');
+    echo json_encode($listinvoice, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 // Stats Calculation
 $totalProducts = count($listinvoice);
 $totalValue = 0;
@@ -441,8 +449,11 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <i class="fa-solid fa-arrow-right-arrow-left"></i> جابجایی
                 </a>
                 
-                <a href="?export=csv" class="btn-act">
-                    <i class="fa-solid fa-file-csv"></i> اکسل
+                <a href="?export=json" class="btn-act">
+                    <i class="fa-solid fa-file-code"></i> JSON
+                </a>
+                <a href="?export=csv" class="btn-act btn-green">
+                    <i class="fa-solid fa-file-csv"></i> CSV
                 </a>
             </div>
 
@@ -671,59 +682,53 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <!-- Scripts -->
     <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    
     <script>
-        $(document).ready(function(){
-            // Quick Search
-            $('#prodQuickSearch').on('keyup', function() {
-                var value = $(this).val().toLowerCase();
-                $("#sample_1 tbody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
-            });
-
-            // Checkbox Logic
-            function updateCount() {
-                let cnt = $('.prod-check:checked').length;
-                $('#prodSelCount').text(cnt + ' انتخاب');
-            }
-            $('#prodSelectAll').click(function(){ $('.prod-check').prop('checked', true); updateCount(); });
-            $('#prodDeselectAll').click(function(){ $('.prod-check').prop('checked', false); updateCount(); });
-            $(document).on('change', '.prod-check', updateCount);
-
-            // Copy IDs
-            $('#prodCopy').click(function(){
-                let ids = [];
-                $('.prod-check:checked').each(function(){ ids.push($(this).val()); });
-                if(ids.length){ navigator.clipboard.writeText(ids.join(',')); alert('کپی شد!'); }
-                else alert('هیچ موردی انتخاب نشده');
-            });
-
-            // Copy Codes
-            $('#prodCopyCodes').click(function(){
-                let codes = [];
-                $('.prod-check:checked').each(function(){ codes.push($(this).data('code')); });
-                if(codes.length){ navigator.clipboard.writeText(codes.join(',')); alert('کدها کپی شد!'); }
-                else alert('هیچ موردی انتخاب نشده');
-            });
-
-            // Bulk Delete with POST
-            $('#prodRemoveBulk').click(function(){
-                let ids = [];
-                $('.prod-check:checked').each(function(){ ids.push($(this).val()); });
-                
-                if(!ids.length) { alert('هیچ محصولی انتخاب نشده است!'); return; }
-                
-                if(!confirm('آیا از حذف گروهی ' + ids.length + ' محصول اطمینان دارید؟')) return;
-                
-                // Set the hidden input value to JSON string of IDs
-                $('#bulkDeleteInput').val(JSON.stringify(ids));
-                
-                // Submit the form
-                $('#bulkDeleteForm').submit();
+        // Search
+        $('#prodQuickSearch').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $("#sample_1 tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
             });
         });
-    </script>
 
+        // Select All
+        $('#prodSelectAll').click(function(){
+            var checked = !$('.custom-check').prop('checked');
+            $('.custom-check').prop('checked', checked);
+        });
+
+        // Copy IDs
+        $('#prodCopyId').click(function(){
+            let ids = [];
+            $('.custom-check:checked').each(function(){
+                let row = $(this).closest('tr');
+                ids.push(row.find('td').eq(1).text().trim()); // Index 1 is ID
+            });
+            if(ids.length > 0){
+                navigator.clipboard.writeText(ids.join('\n'));
+                alert(ids.length + ' آیدی کپی شد.');
+            } else {
+                alert('هیچ محصولی انتخاب نشده است.');
+            }
+        });
+
+        // Bulk Delete
+        $('#prodBulkDel').click(function(){
+            let ids = [];
+            $('.custom-check:checked').each(function(){
+                ids.push($(this).val());
+            });
+            if(ids.length > 0){
+                if(confirm('آیا از حذف ' + ids.length + ' محصول اطمینان دارید؟')){
+                    var form = $('<form method="post" action="product.php"></form>');
+                    form.append('<input type="hidden" name="bulk_delete_ids" value=\'' + JSON.stringify(ids) + '\'>');
+                    $('body').append(form);
+                    form.submit();
+                }
+            } else {
+                alert('هیچ محصولی انتخاب نشده است.');
+            }
+        });
+    </script>
 </body>
 </html>

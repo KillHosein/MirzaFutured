@@ -181,6 +181,14 @@ if(isset($_GET['export']) && $_GET['export'] === 'csv'){
     exit();
 }
 
+// JSON Export
+if(isset($_GET['export']) && $_GET['export'] === 'json'){
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=invoices-' . date('Y-m-d') . '.json');
+    echo json_encode($listinvoice, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 // Stats Calculation
 $totalInvoices = count($listinvoice);
 $activeCount = 0;
@@ -583,6 +591,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <button class="btn-act btn-blue" onclick="$('#modalBulkExtend').modal('show')"><i class="fa-solid fa-calendar-plus"></i> تمدید گروهی</button>
                 <button class="btn-act btn-red" onclick="$('#modalBulkRemove').modal('show')"><i class="fa-solid fa-trash"></i> حذف گروهی</button>
                 
+                <button class="btn-act" id="copyUsernames" title="کپی نام کاربری‌های انتخاب شده"><i class="fa-solid fa-copy"></i> کپی یوزرها</button>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'json'])); ?>" class="btn-act"><i class="fa-solid fa-file-code"></i> خروجی JSON</a>
                 <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> خروجی اکسل</a>
             </div>
 
@@ -821,6 +831,21 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     $('#'+formId).submit();
                 }
             };
+
+            // Copy Usernames
+            $('#copyUsernames').click(function(){
+                let usernames = [];
+                $('.inv-check:checked').closest('tr').find('td:eq(3)').each(function(){
+                    usernames.push($(this).text().trim());
+                });
+                if(usernames.length > 0){
+                    navigator.clipboard.writeText(usernames.join('\n')).then(function() {
+                        alert(usernames.length + ' نام کاربری کپی شد!');
+                    });
+                } else {
+                    alert('هیچ موردی انتخاب نشده است.');
+                }
+            });
         });
     </script>
 

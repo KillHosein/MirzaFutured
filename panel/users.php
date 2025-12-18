@@ -67,6 +67,14 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit();
 }
 
+// --- خروجی JSON ---
+if (isset($_GET['export']) && $_GET['export'] === 'json') {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename=users-' . date('Y-m-d') . '.json');
+    echo json_encode($listusers, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
 // آمارها
 $totalUsers = count($listusers);
 $activeUsers = 0;
@@ -424,9 +432,12 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <button class="btn-act" id="usersClearSelection"><i class="fa-solid fa-minus"></i> لغو</button>
                 <div style="flex:1"></div>
                 <button class="btn-act" id="usersCopy" title="کپی آیدی"><i class="fa-solid fa-copy"></i> کپی ID</button>
+                <button class="btn-act" id="usersResetPass" title="تغییر رمز تصادفی"><i class="fa-solid fa-key"></i> تغییر رمز</button>
                 <button class="btn-act btn-green" id="usersUnblockSel" title="فعال سازی"><i class="fa-solid fa-unlock"></i> فعال‌سازی</button>
                 <button class="btn-act btn-red" id="usersBlockSel" title="مسدود سازی"><i class="fa-solid fa-ban"></i> مسدودسازی</button>
+                <button class="btn-act btn-red" id="usersDeleteSel" style="border-color: var(--neon-red); color: var(--neon-red);" title="حذف کاربر"><i class="fa-solid fa-trash"></i> حذف</button>
                 <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'csv'])); ?>" class="btn-act"><i class="fa-solid fa-file-csv"></i> اکسل</a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['export'=>'json'])); ?>" class="btn-act"><i class="fa-solid fa-code"></i> JSON</a>
             </div>
 
             <div class="actions-row" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 18px;">
@@ -539,7 +550,18 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             var $row = $(this);
             if($row.find('.checkboxes').prop('checked')){ ids.push($row.find('td').eq(1).text().trim()); }
           });
-          if(ids.length){ navigator.clipboard.writeText(ids.join(', ')); showToast(ids.length + ' آیدی کپی شد'); }
+          if(ids.length){ navigator.clipboard.writeText(ids.join('\n')); showToast(ids.length + ' آیدی کپی شد'); }
+          else{ showToast('کاربری انتخاب نشده است'); }
+        });
+
+        $('#usersCopyUsername').on('click', function(e){
+          e.preventDefault();
+          var usernames = [];
+          $('#sample_1 tbody tr').each(function(){
+            var $row = $(this);
+            if($row.find('.checkboxes').prop('checked')){ usernames.push($row.find('td').eq(2).text().trim()); }
+          });
+          if(usernames.length){ navigator.clipboard.writeText(usernames.join('\n')); showToast(usernames.length + ' نام کاربری کپی شد'); }
           else{ showToast('کاربری انتخاب نشده است'); }
         });
 
@@ -561,6 +583,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 if(type === 'add') data.priceadd = val;
                 if(type === 'low') data.pricelow = val;
                 if(type === 'agent') data.agent = val;
+                if(type === 'delete') data.delete_user = val;
+                if(type === 'reset_pass') data.reset_pass = val;
 
                 $.get('user.php', data).always(function(){ 
                     done++; 
@@ -571,6 +595,8 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 
         $('#usersBlockSel').on('click', function(e){ e.preventDefault(); bulkAction('status', 'block'); });
         $('#usersUnblockSel').on('click', function(e){ e.preventDefault(); bulkAction('status', 'active'); });
+        $('#usersDeleteSel').on('click', function(e){ e.preventDefault(); if(confirm('هشدار: عملیات حذف غیرقابل بازگشت است. ادامه می‌دهید؟')) bulkAction('delete', '1'); });
+        $('#usersResetPass').on('click', function(e){ e.preventDefault(); if(confirm('رمز عبور کاربران انتخاب شده ریست شود؟')) bulkAction('reset_pass', '1'); });
         
         $('#usersSendMsg').on('click', function(e){ 
             e.preventDefault(); var t=$('#usersMessage').val(); 

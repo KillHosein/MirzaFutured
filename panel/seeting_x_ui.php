@@ -531,6 +531,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     <div class="tools">
                         <button type="button" class="btn-act btn-small" id="btnValidate"><i class="fa-solid fa-circle-check"></i> اعتبارسنجی</button>
                         <button type="button" class="btn-act btn-small" id="btnFormat"><i class="fa-solid fa-wand-magic-sparkles"></i> فرمت</button>
+                        <button type="button" class="btn-act btn-small" id="btnClear"><i class="fa-solid fa-eraser"></i> پاک کردن</button>
                         <button type="button" class="btn-act btn-small" id="btnCopy"><i class="fa-solid fa-copy"></i> کپی</button>
                         <a class="btn-act btn-small" href="setting_x_ui.php?<?php echo http_build_query(['action'=>'export','namepanel'=>$namepanel]); ?>"><i class="fa-solid fa-download"></i> دانلود</a>
                         <label class="btn-act btn-small" for="jsonFile" style="margin:0;"><i class="fa-solid fa-file-arrow-up"></i> بارگذاری</label>
@@ -726,10 +727,20 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         (function(){
             var validateBtn = document.getElementById('btnValidate');
             var formatBtn = document.getElementById('btnFormat');
+            var clearBtn = document.getElementById('btnClear');
             var copyBtn = document.getElementById('btnCopy');
             var form = document.getElementById('xuiForm');
             var fileInput = document.getElementById('jsonFile');
             var textarea = document.getElementById('settings');
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function(){
+                    if(textarea && confirm('آیا مطمئن هستید که می‌خواهید ویرایشگر را پاک کنید؟')) {
+                        textarea.value = '';
+                        showInlineMessage('success', 'ویرایشگر پاک شد.');
+                    }
+                });
+            }
 
             if (validateBtn) {
                 validateBtn.addEventListener('click', function(){
