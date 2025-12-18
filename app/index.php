@@ -154,160 +154,6 @@
         border-radius: 12px;
       }
 
-      /* --- Premium Vault Card --- */
-      .vault-card-premium {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 24px;
-        border-radius: 28px;
-        margin: 20px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
-      }
-
-      .vault-card-premium::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 100%;
-        background: linear-gradient(45deg, transparent 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
-        z-index: 0;
-        pointer-events: none;
-      }
-      
-      .vault-content {
-        position: relative;
-        z-index: 1;
-      }
-
-      .vault-label {
-        font-size: 13px;
-        color: var(--text-secondary);
-        margin-bottom: 8px;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-      }
-
-      .vault-amount {
-        font-size: 36px;
-        font-weight: 800;
-        color: var(--text-primary);
-        letter-spacing: -1px;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      }
-      
-      .vault-currency {
-        font-size: 16px;
-        color: var(--text-secondary);
-        font-weight: 400;
-        margin-right: 4px;
-      }
-
-      .vault-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-top: 30px;
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, var(--primary-color), #2563eb);
-        color: white;
-        height: 52px;
-        border-radius: 16px;
-        gap: 8px;
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-        font-size: 15px;
-      }
-      
-      .btn-glass {
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--text-primary);
-        border: 1px solid var(--border-light);
-        height: 52px;
-        border-radius: 16px;
-        font-size: 15px;
-      }
-      
-      .btn-glass:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.15);
-      }
-
-      /* --- List Items Refined --- */
-      .list-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-        padding: 0 4px;
-      }
-      
-      .list-title {
-        font-size: 18px;
-        margin: 0;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-      }
-
-      .transaction-item-refined {
-        background: transparent;
-        border-bottom: 1px solid var(--border-light);
-        padding: 16px 4px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: background 0.2s;
-      }
-      
-      .transaction-item-refined:last-child {
-        border-bottom: none;
-      }
-      
-      .transaction-item-refined:active {
-        background: rgba(255, 255, 255, 0.02);
-      }
-      
-      .tx-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 16px;
-        background: rgba(16, 185, 129, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #10b981;
-        box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
-      }
-      
-      .tx-title {
-        font-size: 15px;
-        font-weight: 700;
-        margin: 0 0 4px 0;
-        color: var(--text-primary);
-      }
-      
-      .tx-date {
-        font-size: 11px;
-        color: var(--text-secondary);
-        margin: 0;
-        font-weight: 500;
-      }
-      
-      .tx-amount {
-        font-size: 16px;
-        font-weight: 800;
-        color: #10b981;
-        margin: 0;
-        letter-spacing: -0.5px;
-      }
-
       /* --- Professional Buttons (Refined) --- */
       .btn {
         border: none;
@@ -329,9 +175,8 @@
         gap: 4px;
         background: transparent;
         color: var(--text-secondary);
-        width: 64px;
-        height: auto;
-        padding: 4px 0;
+        width: 60px;
+        height: 60px;
         border-radius: 16px;
         font-size: 10px;
       }
@@ -345,59 +190,15 @@
 
       .btn-nav.active {
         color: var(--primary-color);
-        background: linear-gradient(to bottom, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.15));
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
-        border: 1px solid rgba(59, 130, 246, 0.1);
+        background: rgba(59, 130, 246, 0.1);
       }
       
       .btn-nav.active svg {
-        filter: drop-shadow(0 0 10px var(--primary-glow));
-        transform: translateY(-2px);
+        filter: drop-shadow(0 0 8px var(--primary-glow));
       }
 
       .btn-nav:hover {
         color: var(--text-primary);
-      }
-
-      /* --- Feature Buttons (Grid) --- */
-      .btn-feature {
-        flex-direction: column;
-        gap: 8px;
-        background: transparent;
-        color: var(--text-secondary);
-        width: 100%;
-        height: auto;
-        font-size: 11px;
-        font-weight: 500;
-      }
-
-      .btn-feature .icon-box {
-        width: 52px;
-        height: 52px;
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .btn-feature .icon-box::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: currentColor;
-        opacity: 0.1;
-      }
-
-      .btn-feature:hover .icon-box {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px -10px currentColor;
-      }
-      
-      .btn-feature:active .icon-box {
-        transform: scale(0.92);
       }
 
       /* --- Floating Bottom Bar --- */
@@ -499,164 +300,89 @@
     <link rel="stylesheet" crossorigin href="/app/assets/index-BoHBsj0Z.css">
   </head>
   <body>
-    <!-- Animated Mesh Background -->
-    <div class="mesh-background">
-      <div class="mesh-blob blob-1"></div>
-      <div class="mesh-blob blob-2"></div>
-      <div class="mesh-blob blob-3"></div>
-    </div>
 
-    <!-- Glass Header -->
-    <header class="glass-header">
-      <div class="header-actions">
-        <button class="btn btn-icon">
-          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        </button>
-      </div>
-      
-      <div class="app-brand">
-        <span class="brand-title">میرزا پرو</span>
-        <div class="brand-logo">
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="white">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-      </div>
-    </header>
+    <!-- لودینگ اختصاصی -->
+    <div id="mirza-preloader" class="preloader">
+        <div class="loader-circle"></div>
+        <p style="margin-top: 20px; font-weight: 900; letter-spacing: 2px; color: var(--text-mid);">MIRZA</p>
+    </div>
 
     <div id="root">
         <div id="app-container">
-            <!-- کارت موجودی اصلی -->
-            <div class="vault-card-premium stagger-item delay-2">
-                <div class="vault-content">
-                    <p class="vault-label">کل دارایی قابل برداشت</p>
-                    <div class="vault-amount">۱۵,۲۴۰,۰۰۰ <span class="vault-currency">تومان</span></div>
-                    
-                    <div class="vault-actions">
-                        <button class="btn btn-primary">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
-                            افزایش
-                        </button>
-                        <button class="btn btn-glass">
-                            تسویه
-                        </button>
+            <!-- هدر -->
+            <header class="header stagger-item delay-1">
+                <div class="profile-zone">
+                    <div class="avatar">M</div>
+                    <div>
+                        <h4 style="margin:0; font-size: 16px;">میرزا پنل</h4>
+                        <p style="font-size: 12px; color: var(--text-muted);">حساب ویژه پریمیوم</p>
                     </div>
                 </div>
-            </div>
+                <div style="background: var(--glass-bg); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                </div>
+            </header>
 
-            <!-- بخش دکمه‌های ابزار (جدید) -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 20px; margin-bottom: 24px; justify-items: center;">
-                <button class="btn btn-feature">
-                    <div class="icon-box" style="color: var(--primary-color);">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                    </div>
-                    <span>تبدیل</span>
-                </button>
-                <button class="btn btn-feature">
-                    <div class="icon-box" style="color: var(--secondary-color);">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <span>وام</span>
-                </button>
-                <button class="btn btn-feature">
-                    <div class="icon-box" style="color: var(--accent-color);">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-                    </div>
-                    <span>قبوض</span>
-                </button>
-                <button class="btn btn-feature">
-                    <div class="icon-box" style="color: var(--text-secondary);">
-                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
-                    </div>
-                    <span>بیشتر</span>
-                </button>
+            <!-- کارت موجودی اصلی -->
+            <div class="vault-card stagger-item delay-2">
+                <p style="font-size: 13px; color: var(--text-mid); margin-bottom: 8px;">کل دارایی قابل برداشت</p>
+                <div class="amount-large">۱۵,۲۴۰,۰۰۰ <span style="font-size: 16px; color: var(--text-low);">تومان</span></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 30px;">
+                    <button class="btn-action">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
+                        افزایش
+                    </button>
+                    <button class="btn-action" style="background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: none;">
+                        تسویه
+                    </button>
+                </div>
             </div>
 
             <!-- بخش لیست‌ها -->
-            <div class="stagger-item delay-3" style="padding: 0 20px;">
-                <div class="list-header">
-                    <h3 class="list-title">فعالیت‌های اخیر</h3>
-                    <button class="btn" style="color: var(--accent-color); font-size: 13px; font-weight: 700; background: none; padding: 0;">مشاهده همه</button>
+            <div class="stagger-item delay-3">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-size: 18px; margin: 0;">فعالیت‌های اخیر</h3>
+                    <a href="#" style="color: var(--accent); font-size: 13px; text-decoration: none; font-weight: 700;">مشاهده همه</a>
                 </div>
 
                 <!-- نمونه تراکنش -->
-                <div class="transaction-item-refined">
+                <div class="transaction-item">
                     <div style="display: flex; gap: 15px; align-items: center;">
-                        <div class="tx-icon">
+                        <div style="width: 48px; height: 48px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: #10b981;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
                         </div>
                         <div>
-                            <p class="tx-title">پاداش دعوت</p>
-                            <p class="tx-date">امروز، ۱۲:۴۰</p>
+                            <p style="font-size: 14px; font-weight: 700; margin-bottom: 2px;">پاداش دعوت</p>
+                            <p style="font-size: 11px; color: var(--text-low);">امروز، ۱۲:۴۰</p>
                         </div>
                     </div>
                     <div style="text-align: left;">
-                        <p class="tx-amount">+۵۰,۰۰۰</p>
-                    </div>
-                </div>
-                
-                <!-- تراکنش دوم (اضافه شده برای زیبایی) -->
-                <div class="transaction-item-refined">
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <div class="tx-icon" style="color: var(--secondary-color); background: rgba(139, 92, 246, 0.1); box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.2);">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-                        </div>
-                        <div>
-                            <p class="tx-title">برداشت وجه</p>
-                            <p class="tx-date">دیروز، ۱۰:۱۵</p>
-                        </div>
-                    </div>
-                    <div style="text-align: left;">
-                        <p class="tx-amount" style="color: var(--text-primary);">-۲۰۰,۰۰۰</p>
+                        <p style="font-size: 15px; font-weight: 900; color: #10b981;">+۵۰,۰۰۰</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Enhanced Loading Screen -->
-    <div class="loader-container" id="appLoader">
-      <div class="loader-logo">
-        <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="white">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
-      <div class="loader-bar">
-        <div class="loader-progress"></div>
-      </div>
-    </div>
-
-    <!-- Floating Bottom Navigation -->
-    <nav class="bottom-nav">
-      <button class="btn btn-nav active">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        <span>خانه</span>
-      </button>
-      
-      <button class="btn btn-nav">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-        </svg>
-        <span>فروشگاه</span>
-      </button>
-
-      <button class="btn btn-nav">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-        </svg>
-        <span>کیف پول</span>
-      </button>
-
-      <button class="btn btn-nav">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-        <span>پروفایل</span>
-      </button>
+    <!-- نوار ناوبری داک -->
+    <nav class="dock">
+        <a href="#" class="dock-item active">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <span>خانه</span>
+        </a>
+        <a href="#" class="dock-item">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+            <span>آمار</span>
+        </a>
+        <a href="#" class="dock-item">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12z" /></svg>
+            <span>جوایز</span>
+        </a>
+        <a href="#" class="dock-item">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            <span>پروفایل</span>
+        </a>
     </nav>
 
     <script>
@@ -665,8 +391,8 @@
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-        tg.setHeaderColor('#0f172a');
-        tg.setBackgroundColor('#0f172a');
+        tg.setHeaderColor('#000000');
+        tg.setBackgroundColor('#000000');
         
         // ایجاد لرزش ملایم هنگام کلیک (اگر دستگاه پشتیبانی کند)
         document.querySelectorAll('button, a').forEach(btn => {
@@ -676,15 +402,15 @@
         });
       }
 
-      // Remove loader when app is ready (simulated)
+      // حذف لودینگ پس از بارگذاری کامل
       window.addEventListener('load', () => {
+        const loader = document.getElementById('mirza-preloader');
         setTimeout(() => {
-          const loader = document.getElementById('appLoader');
-          loader.classList.add('fade-out');
-          setTimeout(() => {
-            loader.style.display = 'none';
-          }, 500);
-        }, 1500); // Simulated delay
+            loader.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+            loader.style.opacity = '0';
+            loader.style.filter = 'blur(20px)';
+            setTimeout(() => loader.remove(), 600);
+        }, 1500);
       });
     </script>
   </body>
