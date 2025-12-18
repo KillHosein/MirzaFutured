@@ -53,10 +53,17 @@ function fetchXuiPanelRow($codepanel)
 {
     global $pdo;
     try {
-        $stmt = $pdo->prepare("SELECT x_ui.codepanel, x_ui.setting, marzban_panel.name_panel 
-            FROM x_ui 
-            LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
-            WHERE x_ui.codepanel = :codepanel
+        if ($codepanel === 'all_panels') {
+            $stmt = $pdo->prepare("SELECT 'all_panels' as codepanel, setting, 'همه پنل ها' as name_panel FROM x_ui WHERE codepanel = 'all_panels' LIMIT 1");
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ?: ['codepanel' => 'all_panels', 'setting' => '', 'name_panel' => 'همه پنل ها'];
+        }
+
+        $stmt = $pdo->prepare("SELECT marzban_panel.code_panel as codepanel, x_ui.setting, marzban_panel.name_panel 
+            FROM marzban_panel 
+            LEFT JOIN x_ui ON marzban_panel.code_panel = x_ui.codepanel
+            WHERE marzban_panel.code_panel = :codepanel
             LIMIT 1");
         $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
         $stmt->execute();
@@ -72,7 +79,27 @@ function saveXuiPanelSetting($codepanel, $normalizedJson)
 {
     global $pdo;
     try {
-        $stmt = $pdo->prepare("UPDATE x_ui SET setting = :setting WHERE codepanel = :codepanel");
+        if ($codepanel === 'all_panels') {
+            // Save for 'all_panels' special entry
+            $stmt = $pdo->prepare("INSERT INTO x_ui (codepanel, setting) VALUES ('all_panels', :setting) ON DUPLICATE KEY UPDATE setting = :setting");
+            $stmt->bindParam(':setting', $normalizedJson, PDO::PARAM_STR);
+            $stmt->execute();
+
+            // Propagate to ALL existing panels in marzban_panel
+            $panelsStmt = $pdo->query("SELECT code_panel FROM marzban_panel");
+            $panels = $panelsStmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            $updateStmt = $pdo->prepare("INSERT INTO x_ui (codepanel, setting) VALUES (:codepanel, :setting) ON DUPLICATE KEY UPDATE setting = :setting");
+            $updateStmt->bindParam(':setting', $normalizedJson, PDO::PARAM_STR);
+            
+            foreach ($panels as $pCode) {
+                $updateStmt->bindValue(':codepanel', $pCode, PDO::PARAM_STR);
+                $updateStmt->execute();
+            }
+            return true;
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO x_ui (codepanel, setting) VALUES (:codepanel, :setting) ON DUPLICATE KEY UPDATE setting = :setting");
         $stmt->bindParam(':setting', $normalizedJson, PDO::PARAM_STR);
         $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
         $stmt->execute();
@@ -85,10 +112,9 @@ function saveXuiPanelSetting($codepanel, $normalizedJson)
 
 // --- Fetch X-UI Panels ---
 try {
-    $panelsStmt = $pdo->query("SELECT x_ui.codepanel, marzban_panel.name_panel
-        FROM x_ui
-        LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
-        ORDER BY COALESCE(marzban_panel.name_panel, x_ui.codepanel) ASC");
+    $panelsStmt = $pdo->query("SELECT code_panel as codepanel, name_panel
+        FROM marzban_panel
+        ORDER BY name_panel ASC");
     $resultpanel = $panelsStmt ? ($panelsStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
 } catch (Throwable $e) {
     error_log('XUI list panels error: ' . $e->getMessage());
@@ -451,6 +477,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <div class="form-group">
                             <select name="namepanel" class="input-readable" required>
                                 <option value="">پنل را انتخاب کنید...</option>
+                                <option value="all_panels" <?php echo ($selectedPanel === 'all_panels') ? 'selected' : ''; ?>>همه پنل ها (All Panels)</option>
                                 <?php
                                 if(count($resultpanel) > 0){
                                     foreach($resultpanel as $panel){
