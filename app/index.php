@@ -10,252 +10,288 @@
 
     <style>
       :root {
-        /* پالت رنگی فوق‌تیره و لوکس */
-        --bg-deep: #000000;
-        --bg-surface: #0a0a0c;
-        --accent: #6366f1;
-        --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        --accent-glow: rgba(99, 102, 241, 0.4);
+        /* Color Palette - Modern Deep Space */
+        --primary-color: #3b82f6;
+        --primary-glow: rgba(59, 130, 246, 0.5);
+        --secondary-color: #8b5cf6;
+        --accent-color: #06b6d4; /* Cyan */
         
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.08);
+        --bg-deep: #0f172a;
+        --bg-surface: rgba(30, 41, 59, 0.7);
+        --bg-glass: rgba(15, 23, 42, 0.6);
         
-        --text-high: #ffffff;
-        --text-mid: #a1a1aa;
-        --text-low: #52525b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
         
-        --safe-bottom: env(safe-area-inset-bottom);
-        --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-        outline: none;
+        --border-light: rgba(255, 255, 255, 0.08);
+        
+        --font-family: 'Vazirmatn', 'Vazir', sans-serif;
+        
+        /* Telegram Overrides */
+        --tg-theme-bg-color: #0f172a !important;
+        --tg-theme-text-color: #f8fafc !important;
+        --tg-theme-button-color: #3b82f6 !important;
+        --tg-theme-button-text-color: #ffffff !important;
       }
 
       body {
-        font-family: 'Vazirmatn', sans-serif;
-        background-color: var(--bg-deep);
-        background-image: 
-            radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
-            radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
-        color: var(--text-high);
         margin: 0;
         padding: 0;
+        font-family: var(--font-family);
+        background-color: var(--bg-deep);
+        color: var(--text-primary);
+        direction: rtl;
         overflow-x: hidden;
-        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        padding-top: 70px; /* Header space */
+        padding-bottom: 100px; /* Bottom bar space */
       }
 
-      /* انیمیشن ورود پله‌ای برای اجزای صفحه */
-      .stagger-item {
-        opacity: 0;
-        transform: translateY(20px);
-        animation: slideUp 0.8s var(--ease-premium) forwards;
+      /* --- Animated Mesh Background --- */
+      .mesh-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -1;
+        overflow: hidden;
+        background: var(--bg-deep);
       }
 
-      .delay-1 { animation-delay: 0.1s; }
-      .delay-2 { animation-delay: 0.2s; }
-      .delay-3 { animation-delay: 0.3s; }
-
-      @keyframes slideUp {
-        to { opacity: 1; transform: translateY(0); }
+      .mesh-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        animation: float 20s infinite alternate;
       }
 
-      /* کانتینر اصلی */
-      #app-container {
-        padding: 20px 16px calc(110px + var(--safe-bottom));
+      .blob-1 {
+        top: -10%;
+        left: -10%;
+        width: 50vw;
+        height: 50vw;
+        background: var(--primary-color);
+        animation-duration: 25s;
+      }
+      .blob-2 {
+        bottom: -10%;
+        right: -10%;
+        width: 60vw;
+        height: 60vw;
+        background: var(--secondary-color);
+        animation-duration: 30s;
+        animation-delay: -5s;
+      }
+      .blob-3 {
+        top: 40%;
+        left: 40%;
+        width: 40vw;
+        height: 40vw;
+        background: var(--accent-color);
+        animation-duration: 20s;
+        animation-delay: -10s;
+        opacity: 0.2;
       }
 
-      /* هدر حرفه‌ای */
-      .header {
+      @keyframes float {
+        0% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0, 0) scale(1); }
+      }
+
+      /* --- Glass Header --- */
+      .glass-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background: var(--bg-glass);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border-light);
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
-        padding: 10px 5px;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 1000;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
       }
 
-      .profile-zone {
+      .app-brand {
         display: flex;
         align-items: center;
         gap: 12px;
       }
-
-      .avatar {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        background: var(--accent-gradient);
+      
+      .brand-logo {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 900;
-        box-shadow: 0 0 20px var(--accent-glow);
+        box-shadow: 0 0 15px var(--primary-glow);
       }
-
-      /* کارت موجودی شیشه‌ای (Vault Style) */
-      .vault-card {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 32px;
-        padding: 30px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 24px;
-      }
-
-      .vault-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.05), transparent);
-        animation: rotateGlow 10s linear infinite;
-      }
-
-      @keyframes rotateGlow {
-        to { transform: rotate(360deg); }
-      }
-
-      /* سیستم دکمه‌های تراز اول */
-      .btn-action {
-        background: var(--accent-gradient);
-        color: white;
-        border: none;
-        padding: 16px;
-        border-radius: 20px;
-        font-size: 16px;
-        font-weight: 800;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        transition: all 0.3s var(--ease-premium);
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-      }
-
-      .btn-action:active {
-        transform: scale(0.95);
-      }
-
-      /* لیست تراکنش‌های لوکس */
-      .transaction-item {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 20px;
-        padding: 16px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border: 1px solid transparent;
-        transition: var(--ease-premium);
-      }
-
-      .transaction-item:hover {
-        background: rgba(255, 255, 255, 0.04);
-        border-color: var(--glass-border);
-      }
-
-      /* نوار ناوبری معلق (Floating Dock) */
-      .dock {
-        position: fixed;
-        bottom: calc(25px + var(--safe-bottom));
-        left: 50%;
-        transform: translateX(-50%);
-        width: 92%;
-        max-width: 420px;
-        height: 76px;
-        background: rgba(18, 18, 22, 0.85);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 38px;
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        z-index: 9999;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
-      }
-
-      .dock-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        color: var(--text-low);
-        text-decoration: none;
-        transition: all 0.4s var(--ease-premium);
-        position: relative;
-        width: 60px;
-      }
-
-      .dock-item svg {
-        width: 24px;
-        height: 24px;
-        transition: all 0.4s var(--ease-premium);
-      }
-
-      .dock-item span {
-        font-size: 10px;
+      
+      .brand-title {
+        font-size: 18px;
         font-weight: 700;
-        margin-top: 4px;
-        opacity: 0;
-        transform: translateY(5px);
-        transition: all 0.4s var(--ease-premium);
-      }
-
-      .dock-item.active {
-        color: var(--accent);
-      }
-
-      .dock-item.active svg {
-        transform: translateY(-8px);
-        filter: drop-shadow(0 0 10px var(--accent-glow));
-      }
-
-      .dock-item.active span {
-        opacity: 1;
-        transform: translateY(-5px);
-      }
-
-      /* لودینگ اولیه سفارشی */
-      .preloader {
-        position: fixed;
-        inset: 0;
-        background: var(--bg-deep);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10000;
-      }
-
-      .loader-circle {
-        width: 64px;
-        height: 64px;
-        border: 2px solid rgba(255,255,255,0.05);
-        border-top: 2px solid var(--accent);
-        border-radius: 50%;
-        animation: spin 1s var(--ease-premium) infinite;
-      }
-
-      @keyframes spin { to { transform: rotate(360deg); } }
-
-      /* تایپوگرافی پلاس */
-      .amount-large {
-        font-size: 38px;
-        font-weight: 900;
-        background: linear-gradient(to bottom, #fff, #a1a1aa);
+        background: linear-gradient(to right, #fff, #94a3b8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
 
+      .header-actions .btn-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        border-radius: 12px;
+      }
+
+      /* --- Professional Buttons (Refined) --- */
+      .btn {
+        border: none;
+        outline: none;
+        cursor: pointer;
+        font-family: var(--font-family);
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+
+      .btn:active { transform: scale(0.95); }
+
+      .btn-nav {
+        flex-direction: column;
+        gap: 4px;
+        background: transparent;
+        color: var(--text-secondary);
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        font-size: 10px;
+      }
+      
+      .btn-nav svg {
+        width: 24px;
+        height: 24px;
+        stroke-width: 2px;
+        transition: all 0.3s ease;
+      }
+
+      .btn-nav.active {
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.1);
+      }
+      
+      .btn-nav.active svg {
+        filter: drop-shadow(0 0 8px var(--primary-glow));
+      }
+
+      .btn-nav:hover {
+        color: var(--text-primary);
+      }
+
+      /* --- Floating Bottom Bar --- */
+      .bottom-nav {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(30, 41, 59, 0.85);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--border-light);
+        padding: 8px 16px;
+        border-radius: 24px;
+        display: flex;
+        gap: 8px;
+        z-index: 1000;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+
+      /* --- Loading Screen --- */
+      .loader-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg-deep);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease;
+      }
+      
+      .loader-logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 20px;
+        margin-bottom: 24px;
+        animation: pulse 2s infinite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 30px var(--primary-glow);
+      }
+
+      .loader-bar {
+        width: 150px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      
+      .loader-progress {
+        width: 100%;
+        height: 100%;
+        background: var(--primary-color);
+        transform: translateX(-100%);
+        animation: loading 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+        70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+      }
+      
+      @keyframes loading {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(0); }
+        100% { transform: translateX(100%); }
+      }
+
+      /* --- Utility --- */
+      .fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      #root {
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
+        animation-delay: 0.2s;
+      }
+
+      @keyframes slideUp {
+        to { opacity: 1; transform: translateY(0); }
+      }
     </style>
 
     <script src="/app/js/telegram-web-app.js"></script>
