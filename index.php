@@ -1,4 +1,5 @@
 <?php
+file_put_contents('debug_bot.log', "Request received at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
 $configFile = __DIR__ . '/config.php';
 $installerPath = __DIR__ . '/installer/index.php';
 $needsInstallation = false;
@@ -24,10 +25,12 @@ if (!file_exists($configFile)) {
 }
 
 if ($needsInstallation && file_exists($installerPath)) {
+    file_put_contents('debug_bot.log', "Exiting: Needs installation\n", FILE_APPEND);
     header("Location: installer/");
     exit;
 }
 if ($needsConfiguration) {
+    file_put_contents('debug_bot.log', "Exiting: Needs configuration\n", FILE_APPEND);
     header('Content-Type: text/html; charset=utf-8');
     echo '
     <!DOCTYPE html>
