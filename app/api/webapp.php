@@ -2,61 +2,70 @@
 require_once '../../config.php';
 require_once '../../function.php';
 
-// Headers
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
 
-// Helper to validate WebApp Data
-function validateWebAppData($initData, $botToken) {
-    if (!$initData) return false;
-    
-    parse_str($initData, $data);
-    
-    if (!isset($data['hash'])) return false;
-    
-    $hash = $data['hash'];
-    unset($data['hash']);
-    
-    $data_check_arr = [];
-    foreach ($data as $key => $value) {
-        $data_check_arr[] = $key . '=' . $value;
-    }
-    sort($data_check_arr);
-    $data_check_string = implode("\n", $data_check_arr);
-    
-    $secret_key = hash_hmac('sha256', $botToken, "WebAppData", true);
-    $hash_check = hash_hmac('sha256', $data_check_string, $secret_key);
-    
-    if (strcmp($hash, $hash_check) !== 0) {
+function sendJson($payload, $statusCode = 200)
+{
+    http_response_code($statusCode);
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function validateWebAppData($initData, $botToken)
+{
+    if (!is_string($initData) || trim($initData) === '') {
         return false;
     }
-    
-    // Check if data is outdated (optional but recommended)
-    if (isset($data['auth_date'])) {
-        if (time() - $data['auth_date'] > 86400) return false;
+
+    parse_str($initData, $data);
+    if (!is_array($data) || !isset($data['hash']) || !is_string($data['hash'])) {
+        return false;
     }
-    
+
+    $hash = $data['hash'];
+    unset($data['hash']);
+
+    $dataCheckArr = [];
+    foreach ($data as $key => $value) {
+        if (!is_string($key) || (!is_string($value) && !is_numeric($value))) {
+            continue;
+        }
+        $dataCheckArr[] = $key . '=' . $value;
+    }
+    sort($dataCheckArr, SORT_STRING);
+    $dataCheckString = implode("\n", $dataCheckArr);
+
+    $secretKey = hash_hmac('sha256', 'WebAppData', $botToken, true);
+    $hashCheck = hash_hmac('sha256', $dataCheckString, $secretKey);
+
+    if (!hash_equals($hashCheck, $hash)) {
+        return false;
+    }
+
+    if (isset($data['auth_date']) && is_numeric($data['auth_date'])) {
+        if (time() - (int) $data['auth_date'] > 3600) {
+            return false;
+        }
+    }
+
     return $data;
 }
 
-// Main Logic
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+    sendJson(['ok' => false, 'error' => 'Method not allowed'], 405);
+}
+
 $input = json_decode(file_get_contents('php://input'), true);
 $initData = $input['initData'] ?? '';
 
-// Debug: If no initData provided (e.g. testing in browser), we might want to skip validation OR fail.
-// For production, we must fail.
 if (!$initData) {
-    echo json_encode(['ok' => false, 'error' => 'No authentication data provided']);
-    exit;
+    sendJson(['ok' => false, 'error' => 'No authentication data provided'], 401);
 }
 
 $validatedData = validateWebAppData($initData, $APIKEY);
 
 if (!$validatedData) {
-    echo json_encode(['ok' => false, 'error' => 'Invalid authentication data']);
-    exit;
+    sendJson(['ok' => false, 'error' => 'Invalid authentication data'], 401);
 }
 
 $userJson = $validatedData['user'] ?? '{}';
@@ -64,16 +73,14 @@ $tgUser = json_decode($userJson, true);
 $userId = $tgUser['id'] ?? 0;
 
 if ($userId == 0) {
-    echo json_encode(['ok' => false, 'error' => 'Invalid user ID']);
-    exit;
+    sendJson(['ok' => false, 'error' => 'Invalid user ID'], 400);
 }
 
 // Fetch User Data from DB
 $dbUser = select("user", "*", "id", $userId, "select");
 
 if (!$dbUser) {
-    echo json_encode(['ok' => false, 'error' => 'User not found in database']);
-    exit;
+    sendJson(['ok' => false, 'error' => 'User not found'], 404);
 }
 
 // Fetch Transactions (Payment_report)
@@ -87,7 +94,7 @@ if ($transactionsRaw && is_array($transactionsRaw)) {
             'amount' => $tx['price'] ?? 0,
             'status' => $tx['payment_status'] ?? 'unknown',
             'date' => $tx['date'] ?? '',
-            'description' => 'شارژ حساب' // Can be customized
+            'description' => $tx['description'] ?? 'شارژ حساب'
         ];
     }
     // Sort by ID or Date (assuming higher ID is newer)
@@ -102,11 +109,12 @@ $invoicesRaw = select("invoice", "*", "id_user", $userId, "fetchAll");
 $services = [];
 if ($invoicesRaw && is_array($invoicesRaw)) {
     foreach ($invoicesRaw as $inv) {
+        $status = $inv['status'] ?? 'active';
         $services[] = [
             'id' => $inv['id_invoice'] ?? $inv['id'] ?? uniqid(),
-            'name' => $inv['service_name'] ?? 'سرویس VPN', // Adjust column name if needed
-            'expire_date' => $inv['expire_date'] ?? '',
-            'status' => 'active', // You might need to check expiration
+            'name' => $inv['service_name'] ?? $inv['name_product'] ?? 'سرویس VPN',
+            'expire_date' => $inv['expire_date'] ?? $inv['expire'] ?? '',
+            'status' => $status,
             'traffic_usage' => $inv['traffic'] ?? '0'
         ];
     }
@@ -116,14 +124,13 @@ $response = [
     'ok' => true,
     'user' => [
         'id' => $dbUser['id'],
-        'username' => $dbUser['username'],
-        'balance' => number_format($dbUser['Balance']) . ' تومان',
-        'raw_balance' => $dbUser['Balance'],
-        'name' => $dbUser['namecustom'] !== 'none' ? $dbUser['namecustom'] : ($tgUser['first_name'] . ' ' . ($tgUser['last_name'] ?? '')),
+        'username' => $dbUser['username'] ?? '',
+        'balance' => number_format((int) ($dbUser['Balance'] ?? 0)) . ' تومان',
+        'raw_balance' => (int) ($dbUser['Balance'] ?? 0),
+        'name' => (isset($dbUser['namecustom']) && $dbUser['namecustom'] !== 'none' && $dbUser['namecustom'] !== '') ? $dbUser['namecustom'] : trim(($tgUser['first_name'] ?? '') . ' ' . ($tgUser['last_name'] ?? '')),
     ],
     'transactions' => array_slice($transactions, 0, 20),
     'services' => array_slice($services, 0, 10)
 ];
 
-echo json_encode($response);
-?>
+sendJson($response);

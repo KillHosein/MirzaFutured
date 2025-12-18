@@ -4,36 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VPN Dashboard</title>
-    
-    <!-- Telegram WebApp -->
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Fonts -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <!-- Loader -->
     <div id="loader" class="loader-container">
         <div class="loader"></div>
         <div class="loader-text">درحال دریافت اطلاعات...</div>
     </div>
 
-    <!-- Error Toast -->
     <div id="toast" class="toast hidden"></div>
 
     <div class="container">
-        <!-- Header -->
         <header id="main-header">
             <div class="profile-section">
                 <div class="avatar-container">
-                    <img src="assets/img/default-avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff'" alt="Avatar" class="avatar" id="user-avatar">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='14' fill='%2318181b'/%3E%3Cpath d='M22 22c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6Zm0 3c-5 0-10 2.5-10 5.5V34h20v-3.5C32 27.5 27 25 22 25Z' fill='%233b82f6'/%3E%3C/svg%3E" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff'" alt="Avatar" class="avatar" id="user-avatar">
                 </div>
                 <div class="user-info">
                     <h3 id="user-name" class="user-name">کاربر مهمان</h3>
@@ -41,26 +32,26 @@
                 </div>
             </div>
             <div class="actions">
-                <button class="btn btn-icon" onclick="location.reload()">
+                <button id="reload-btn" class="btn btn-icon" type="button" aria-label="بارگذاری مجدد">
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Home Section -->
         <div id="home" class="page-section">
-            <!-- Balance Card -->
             <div class="card balance-card">
+                <button id="privacy-toggle" class="btn btn-icon balance-privacy" type="button" aria-label="نمایش یا مخفی‌سازی اطلاعات حساس">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
                 <div class="balance-label">موجودی کیف پول</div>
-                <div class="balance-value" id="user-balance">--- تومان</div>
+                <div class="balance-value"><span id="user-balance" class="sensitive">--- تومان</span></div>
                 <div class="balance-actions">
-                    <button class="btn btn-glass btn-sm w-full" onclick="Telegram.WebApp.openLink('https://t.me/Bot?start=charge')">
+                    <button id="charge-btn" class="btn btn-glass btn-sm w-full" type="button" aria-label="افزایش موجودی">
                         <i class="fas fa-plus-circle"></i> افزایش موجودی
                     </button>
                 </div>
             </div>
 
-            <!-- Stats Chart -->
             <div class="card">
                 <div class="card-header">
                     <h4>نمودار مصرف</h4>
@@ -71,7 +62,6 @@
                 </div>
             </div>
 
-            <!-- Active Services -->
             <div class="section-header">
                 <h3>سرویس‌های فعال</h3>
                 <span class="badge badge-success" id="active-services-count">0</span>
@@ -81,31 +71,41 @@
             </div>
         </div>
 
-        <!-- Shop Section -->
         <div id="shop" class="page-section" style="display: none;">
             <div class="section-header">
                 <h3>خرید سرویس جدید</h3>
             </div>
             <div class="card-list" id="shop-list">
-                <!-- Shop items will be injected here -->
                  <div class="empty-state">محصولی یافت نشد</div>
             </div>
         </div>
 
-        <!-- History Section -->
         <div id="history" class="page-section" style="display: none;">
             <div class="section-header">
                 <h3>تاریخچه تراکنش‌ها</h3>
+            </div>
+            <div class="card search-card">
+                <div class="search-input">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <input id="tx-search" class="search-field" type="search" inputmode="search" placeholder="جستجو در تراکنش‌ها..." autocomplete="off" aria-label="جستجو در تراکنش‌ها">
+                    <button id="tx-clear" class="btn btn-icon btn-icon-sm" type="button" aria-label="پاک کردن جستجو">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="chip-row" role="tablist" aria-label="فیلتر تراکنش‌ها">
+                    <button class="chip active" type="button" data-filter="all" role="tab" aria-selected="true">همه</button>
+                    <button class="chip" type="button" data-filter="charge" role="tab" aria-selected="false">شارژ</button>
+                    <button class="chip" type="button" data-filter="buy" role="tab" aria-selected="false">خرید</button>
+                </div>
             </div>
             <div class="card-list" id="transactions-list">
                 <div class="empty-state">درحال بارگذاری...</div>
             </div>
         </div>
 
-        <!-- Profile Section -->
         <div id="profile" class="page-section" style="display: none;">
             <div class="card">
-                <div class="list-item" onclick="Telegram.WebApp.openLink('https://t.me/Support')">
+                <div id="support-item" class="list-item" role="button" tabindex="0" aria-label="پشتیبانی">
                     <div class="item-icon bg-blue"><i class="fas fa-headset"></i></div>
                     <div class="item-content">
                         <span class="item-title">پشتیبانی</span>
@@ -113,7 +113,7 @@
                     </div>
                     <i class="fas fa-chevron-left text-muted"></i>
                 </div>
-                <div class="list-item">
+                <div class="list-item" role="button" tabindex="0" aria-label="امنیت">
                     <div class="item-icon bg-purple"><i class="fas fa-shield-alt"></i></div>
                     <div class="item-content">
                         <span class="item-title">امنیت</span>
@@ -121,7 +121,7 @@
                     </div>
                     <i class="fas fa-chevron-left text-muted"></i>
                 </div>
-                 <div class="list-item">
+                 <div class="list-item" role="button" tabindex="0" aria-label="راهنما">
                     <div class="item-icon bg-orange"><i class="fas fa-question-circle"></i></div>
                     <div class="item-content">
                         <span class="item-title">راهنما</span>
@@ -137,21 +137,20 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="#home" class="nav-item active">
+        <a href="#home" class="nav-item active" aria-label="خانه">
             <i class="fas fa-home"></i>
             <span>خانه</span>
         </a>
-        <a href="#shop" class="nav-item">
+        <a href="#shop" class="nav-item" aria-label="فروشگاه">
             <i class="fas fa-shopping-bag"></i>
             <span>فروشگاه</span>
         </a>
-        <a href="#history" class="nav-item">
+        <a href="#history" class="nav-item" aria-label="تاریخچه">
             <i class="fas fa-history"></i>
             <span>تاریخچه</span>
         </a>
-        <a href="#profile" class="nav-item">
+        <a href="#profile" class="nav-item" aria-label="پروفایل">
             <i class="fas fa-user"></i>
             <span>پروفایل</span>
         </a>
@@ -159,7 +158,6 @@
 
     <script src="assets/js/app.js"></script>
     <script>
-        // Header Scroll Effect
         window.addEventListener('scroll', () => {
             const header = document.getElementById('main-header');
             if (window.scrollY > 10) {
