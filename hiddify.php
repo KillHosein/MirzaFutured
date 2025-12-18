@@ -92,16 +92,21 @@ function getinbounds_hiddify($location)
 {
     $marzban_list_get = select("marzban_panel", "*", "name_panel", $location,"select");
     $url =  $marzban_list_get['url_panel'].'/api/v2/admin/proxy/';
-    $headers = array(
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         'Accept: application/json',
         'Hiddify-API-Key: '.$marzban_list_get['secret_code']
-    );
-    $req = new CurlRequest($url);
-    $req->setHeaders($headers);
-    $response = $req->get();
+    ));
     
-    if(isset($response['body'])) {
-        return json_decode($response['body'], true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    if($response) {
+        $body = json_decode($response, true);
+        return $body ? $body : [];
     }
     return [];
 }

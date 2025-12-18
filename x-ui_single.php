@@ -45,12 +45,17 @@ function getinbounds_xui($namepanel)
 
     foreach ($endpoints as $endpoint) {
         $url = $marzban_list_get['url_panel'] . $endpoint;
-        $req = new CurlRequest($url);
-        $req->setHeaders($headers);
-        $req->setCookie('cookie.txt');
-        $response = $req->get();
         
-        $body = isset($response['body']) ? json_decode($response['body'], true) : null;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_COOKIEFILE, 'cookie.txt');
+        
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        $body = isset($response) ? json_decode($response, true) : null;
         if ($body && isset($body['success']) && $body['success'] && isset($body['obj'])) {
              if (is_file('cookie.txt')) @unlink('cookie.txt');
              return $body['obj'];

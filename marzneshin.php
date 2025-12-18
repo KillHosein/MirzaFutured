@@ -186,26 +186,20 @@ function getinbounds_marzneshin($location)
     $marzban_list_get = select("marzban_panel", "*", "name_panel", $location,"select");
     $Check_token = token_panelm($marzban_list_get['code_panel']);
     $url =  $marzban_list_get['url_panel'].'/api/services';
-    $headers = array(
-            'accept: application/json'
-    );
-    $req = new CurlRequest($url);
-    $req->setHeaders($headers);
-    $req->setBearerToken($Check_token['access_token']);
-    $response = $req->get();
     
-    // If response is a JSON string (CurlRequest usually returns array with 'body'), decode it.
-    // Marzban.php's CurlRequest wrapper usage:
-    // $response = $req->get(); -> returns array likely.
-    // But looking at Marzban.php getinbounds:
-    // It uses raw curl.
-    // Let's use raw curl to be safe and consistent with Marzban.php's getinbounds, 
-    // or use CurlRequest if we are sure.
-    // Marzneshin.php uses CurlRequest in other functions.
-    // Let's use CurlRequest but handle the response.
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'accept: application/json',
+        'Authorization: Bearer ' . $Check_token['access_token']
+    ));
     
-    if(isset($response['body'])) {
-        return json_decode($response['body'], true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    if($response) {
+        return json_decode($response, true);
     }
     return [];
 }
