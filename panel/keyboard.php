@@ -1,7 +1,7 @@
 <?php
 /**
- * Keyboard Editor - Aurora Pro Edition (Ultimate UI)
- * Features: Advanced Glassmorphism, Animated Backgrounds, Neon Accents
+ * Keyboard Editor - Cosmic Glass Edition (Ultimate UI)
+ * Features: Premium Glassmorphism, Neon Glows, Smooth Animations
  */
 
 session_start();
@@ -102,7 +102,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استودیو طراحی کیبورد | فوق حرفه‌ای</title>
+    <title>استودیو طراحی کیبورد | نسخه کیهانی</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -113,65 +113,61 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* --- THEME VARIABLES --- */
+        /* --- THEME CONFIG --- */
         :root {
-            --bg-void: #030712;
-            --primary: #6366f1;
-            --primary-light: #818cf8;
-            --accent: #d946ef; /* Fuchsia */
+            --bg-deep: #020617;
+            --accent-primary: #8b5cf6; /* Violet */
+            --accent-glow: rgba(139, 92, 246, 0.5);
+            --accent-secondary: #06b6d4; /* Cyan */
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-surface: rgba(17, 24, 39, 0.6);
-            --text-main: #f8fafc;
+            --glass-panel: rgba(15, 23, 42, 0.6);
+            --text-main: #f1f5f9;
             --text-muted: #94a3b8;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-void);
+            background-color: var(--bg-deep);
             color: var(--text-main);
             height: 100vh; overflow: hidden;
             display: flex; flex-direction: column;
+            selection-background-color: var(--accent-primary);
+            selection-color: white;
         }
 
-        /* --- ANIMATED BACKGROUND --- */
-        .aurora-container {
-            position: fixed; inset: 0; z-index: -2; overflow: hidden;
-            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 60%);
+        /* --- COSMIC BACKGROUND --- */
+        .cosmic-bg {
+            position: fixed; inset: 0; z-index: -2;
+            background: radial-gradient(circle at 50% 120%, #2e1065, #020617 50%);
         }
-        .orb {
-            position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4;
-            animation: float 20s infinite ease-in-out;
+        .star-field {
+            position: fixed; inset: 0; z-index: -1; opacity: 0.4;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+                radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+                radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+                radial-gradient(2px 2px at 90px 40px, #fff, transparent),
+                radial-gradient(2px 2px at 130px 80px, #fff, transparent);
+            background-size: 200px 200px;
+            animation: starMove 100s linear infinite;
         }
-        .orb-1 { width: 400px; height: 400px; background: var(--primary); top: -100px; left: 20%; animation-delay: 0s; }
-        .orb-2 { width: 300px; height: 300px; background: var(--accent); bottom: -50px; right: 10%; animation-delay: -5s; }
-        .grid-overlay {
-            position: fixed; inset: 0; z-index: -1; opacity: 0.15;
-            background-image: linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
-            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-        }
+        @keyframes starMove { from { background-position: 0 0; } to { background-position: 0 1000px; } }
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(20px, 40px); }
-        }
-
-        /* --- LAYOUT --- */
+        /* --- LAYOUT GRID --- */
         .app-layout {
             display: grid; 
-            grid-template-columns: 360px 1fr 320px; 
-            height: calc(100vh - 76px);
+            grid-template-columns: 380px 1fr 340px; 
+            height: calc(100vh - 80px);
         }
 
         /* --- PANELS --- */
-        .panel { display: flex; flex-direction: column; position: relative; }
+        .panel { display: flex; flex-direction: column; position: relative; transition: 0.3s; }
         
         .panel-preview {
-            background: rgba(3, 7, 18, 0.4);
+            background: rgba(2, 6, 23, 0.3);
             border-left: 1px solid var(--glass-border);
             align-items: center; justify-content: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
         }
         
         .panel-editor {
@@ -180,182 +176,196 @@ try {
         }
         
         .panel-stash {
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(15, 23, 42, 0.4);
             border-right: 1px solid var(--glass-border);
             backdrop-filter: blur(20px);
             padding: 30px;
-        }
-
-        /* --- GLASSMOPHISM CARDS --- */
-        .glass-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4));
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(5px);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
         }
 
         /* --- ROW WRAPPER --- */
         .row-wrapper {
             background: rgba(30, 41, 59, 0.3);
             border: 1px solid var(--glass-border);
-            border-radius: 20px; padding: 16px; margin-bottom: 20px;
-            min-height: 90px;
-            display: flex; flex-wrap: wrap; gap: 12px;
-            position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 24px; padding: 20px; margin-bottom: 24px;
+            min-height: 100px;
+            display: flex; flex-wrap: wrap; gap: 14px;
+            position: relative; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .row-wrapper:hover {
-            border-color: rgba(99, 102, 241, 0.4);
+            border-color: rgba(139, 92, 246, 0.3);
             background: rgba(30, 41, 59, 0.6);
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
-            transform: translateY(-2px);
+            box-shadow: 0 20px 50px -12px rgba(0,0,0,0.5);
+            transform: translateY(-4px);
         }
 
         .drag-handle {
-            position: absolute; left: -36px; top: 50%; transform: translateY(-50%);
-            padding: 8px; cursor: grab; color: #475569; font-size: 1.2rem;
-            opacity: 0; transition: 0.2s;
+            position: absolute; left: -40px; top: 50%; transform: translateY(-50%);
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; background: rgba(255,255,255,0.05);
+            color: #64748b; cursor: grab; opacity: 0; transition: 0.2s;
         }
-        .row-wrapper:hover .drag-handle { opacity: 0.6; left: -32px; }
-        .drag-handle:hover { opacity: 1 !important; color: #a5b4fc; }
+        .row-wrapper:hover .drag-handle { opacity: 0.6; left: -35px; }
+        .drag-handle:hover { opacity: 1 !important; background: var(--accent-primary); color: white; }
 
-        /* --- KEY BUTTONS (NEON CHIPS) --- */
+        /* --- NEON KEY BUTTONS --- */
         .key-btn {
             flex: 1 0 130px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-            border: 1px solid rgba(255,255,255,0.06);
-            border-top: 1px solid rgba(255,255,255,0.1); /* Highlight top */
-            border-radius: 14px; padding: 14px 16px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.005) 100%);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px; padding: 14px 18px;
             cursor: grab; position: relative; overflow: hidden;
             display: flex; flex-direction: column; justify-content: center;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        .key-btn:hover {
-            border-color: var(--primary-light);
-            background: rgba(99, 102, 241, 0.08);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), inset 0 0 0 1px rgba(99, 102, 241, 0.2);
-            transform: translateY(-2px) scale(1.02);
-            z-index: 10;
+        /* Gradient Border Trick */
+        .key-btn::before {
+            content: ''; position: absolute; inset: 0; padding: 1px; border-radius: 16px;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none; opacity: 0.5; transition: 0.3s;
         }
         
-        .key-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #818cf8; letter-spacing: 0.5px; opacity: 0.8; margin-bottom: 4px; }
-        .key-label { font-size: 14px; font-weight: 600; color: #f1f5f9; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .key-btn:hover {
+            background: rgba(139, 92, 246, 0.08);
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.15), inset 0 0 0 1px rgba(139, 92, 246, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            z-index: 10;
+        }
+        .key-btn:hover::before { opacity: 1; background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary)); }
+        
+        .key-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a78bfa; letter-spacing: 0.5px; opacity: 0.9; margin-bottom: 5px; }
+        .key-label { font-size: 14px; font-weight: 600; color: #f8fafc; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
         .btn-actions {
             position: absolute; inset: 0;
-            background: rgba(3, 7, 18, 0.8); backdrop-filter: blur(4px);
+            background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(5px);
             display: flex; align-items: center; justify-content: center; gap: 12px;
-            opacity: 0; transition: 0.2s;
+            opacity: 0; transition: 0.2s; transform: translateY(10px);
         }
-        .key-btn:hover .btn-actions { opacity: 1; }
+        .key-btn:hover .btn-actions { opacity: 1; transform: translateY(0); }
 
         .action-icon {
-            width: 34px; height: 34px; border-radius: 10px;
+            width: 36px; height: 36px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 13px; color: white;
+            cursor: pointer; font-size: 14px; color: white;
             transition: 0.2s; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
         }
-        .action-icon:hover { transform: scale(1.1); }
-        .act-edit { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .act-del { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .action-icon:hover { transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+        .act-edit { color: #60a5fa; border-color: #60a5fa; }
+        .act-edit:hover { background: #60a5fa; color: white; }
+        .act-del { color: #f87171; border-color: #f87171; }
+        .act-del:hover { background: #f87171; color: white; }
 
         /* --- STASH AREA --- */
         .stash-container {
             flex: 1; overflow-y: auto;
-            border: 2px dashed rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.08);
             background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-            border-radius: 20px; padding: 16px;
-            margin-top: 20px;
-            display: flex; flex-direction: column; gap: 10px;
+            background-size: 24px 24px;
+            border-radius: 24px; padding: 20px;
+            margin-top: 24px;
+            display: flex; flex-direction: column; gap: 12px;
             transition: 0.2s;
         }
-        .stash-container:hover { border-color: rgba(99,102,241,0.4); background-color: rgba(0,0,0,0.2); }
+        .stash-container:hover { border-color: var(--accent-primary); background-color: rgba(0,0,0,0.2); }
         
         .stash-item {
-            background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px; padding: 12px 16px; cursor: grab;
+            background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 14px 18px; cursor: grab;
             display: flex; justify-content: space-between; align-items: center;
-            transition: 0.2s;
+            transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .stash-item:hover { border-color: var(--primary-light); background: rgba(30, 41, 59, 1); }
+        .stash-item:hover { 
+            border-color: var(--accent-primary); background: rgba(30, 41, 59, 1); 
+            transform: translateX(-5px);
+        }
 
         /* --- PHONE MOCKUP --- */
         .mockup {
-            width: 320px; height: 720px;
-            background: #000; border-radius: 54px;
+            width: 340px; height: 740px;
+            background: #000; border-radius: 56px;
             box-shadow: 
-                0 0 0 6px #27272a, /* Inner Frame */
-                0 0 0 10px #52525b, /* Outer Frame */
-                0 50px 100px -20px rgba(0,0,0,0.7); /* Deep Shadow */
+                0 0 0 6px #333, /* Inner Bezel */
+                0 0 0 10px #555, /* Outer Frame */
+                0 40px 100px -20px rgba(0,0,0,0.8); /* Depth */
             display: flex; flex-direction: column; overflow: hidden; position: relative;
         }
-        .mockup::before { /* Reflection */
-            content: ''; position: absolute; top: 0; right: 0; width: 50%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.05));
+        /* Glossy Reflection */
+        .mockup::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,0.05) 0%, transparent 40%, rgba(255,255,255,0.02) 100%);
             pointer-events: none; z-index: 50;
         }
+        
         .dynamic-island {
-            width: 120px; height: 32px; background: #000;
-            border-radius: 20px; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+            width: 126px; height: 34px; background: #000;
+            border-radius: 20px; position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
             z-index: 60;
         }
 
         .tg-header {
-            background: #212121; padding: 52px 16px 14px; color: white;
-            display: flex; align-items: center; border-bottom: 1px solid #000; z-index: 10;
+            background: #212121; padding: 56px 20px 16px; color: white;
+            display: flex; align-items: center; border-bottom: 1px solid #111; z-index: 10;
         }
         .tg-body {
             flex: 1; background: #0f0f0f;
-            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h2v2H1V1zm4 4h2v2H5V5zm4 4h2v2H9V9zm4 4h2v2h-2v-2zm4 4h2v2h-2v-2z' fill='%231a1a1a' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h2v2H1V1zm4 4h2v2H5V5zm4 4h2v2H9V9zm4 4h2v2h-2v-2zm4 4h2v2h-2v-2z' fill='%23222' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
             display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 12px;
         }
         .tg-kb-area {
-            background: #1c1c1e; padding: 8px; min-height: 230px;
+            background: #1c1c1e; padding: 10px; min-height: 240px;
             border-top: 1px solid #000; z-index: 20;
         }
         .tg-btn {
-            background: linear-gradient(180deg, #363638 0%, #2c2c2e 100%);
+            background: linear-gradient(180deg, #38383a 0%, #2c2c2e 100%);
             color: #fff; border-radius: 8px; padding: 12px 4px; margin: 3px;
             font-size: 13px; text-align: center; flex: 1;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             border: 1px solid transparent;
         }
 
         /* --- UI COMPONENTS --- */
         .btn-header {
-            height: 42px; border-radius: 12px; padding: 0 20px;
-            font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+            height: 46px; border-radius: 14px; padding: 0 24px;
+            font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px;
             transition: all 0.2s; cursor: pointer;
         }
         .btn-primary-glow {
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
-            color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            background: linear-gradient(135deg, var(--accent-primary), #6366f1);
+            color: white; box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        .btn-primary-glow:hover { box-shadow: 0 0 30px rgba(99, 102, 241, 0.6); transform: translateY(-1px); }
+        .btn-primary-glow:hover { 
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); 
+            transform: translateY(-2px); 
+            filter: brightness(1.1);
+        }
         .btn-primary-glow:disabled { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .btn-glass {
-            background: rgba(255,255,255,0.05); color: var(--text-muted);
+            background: rgba(255,255,255,0.03); color: var(--text-muted);
             border: 1px solid rgba(255,255,255,0.05);
         }
-        .btn-glass:hover { background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.1); }
+        .btn-glass:hover { background: rgba(255,255,255,0.08); color: white; border-color: rgba(255,255,255,0.1); }
 
         /* --- Scrollbars --- */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
         @media (max-width: 1400px) {
-            .app-layout { grid-template-columns: 0 1fr 320px; }
+            .app-layout { grid-template-columns: 0 1fr 340px; }
             .panel-preview { display: none; }
         }
         @media (max-width: 900px) {
             .app-layout { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
-            .panel-stash { height: 260px; border-right: none; border-top: 1px solid var(--glass-border); order: 2; width: 100%; }
+            .panel-stash { height: 280px; border-right: none; border-top: 1px solid var(--glass-border); order: 2; width: 100%; }
             .panel-editor { order: 1; padding: 20px; }
         }
     </style>
@@ -363,38 +373,35 @@ try {
 <body>
 
     <!-- Background Effects -->
-    <div class="aurora-container">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-    </div>
-    <div class="grid-overlay"></div>
+    <div class="cosmic-bg"></div>
+    <div class="star-field"></div>
 
     <!-- Header -->
-    <header class="h-[76px] px-8 flex items-center justify-between z-50 border-b border-white/5 bg-[#030712]/70 backdrop-blur-xl">
-        <div class="flex items-center gap-4">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-white/10 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-                <i class="fa-solid fa-cube text-indigo-400 text-xl"></i>
+    <header class="h-[80px] px-8 flex items-center justify-between z-50 border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl sticky top-0">
+        <div class="flex items-center gap-5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center border border-white/10 shadow-[0_0_25px_rgba(139,92,246,0.25)]">
+                <i class="fa-solid fa-layer-group text-violet-400 text-xl"></i>
             </div>
             <div>
-                <h1 class="font-bold text-white text-lg tracking-tight">Keyboard <span class="text-indigo-400">Studio</span></h1>
-                <div class="flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                    <span class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">Online Mode</span>
+                <h1 class="font-bold text-white text-xl tracking-tight">Keyboard <span class="text-violet-400">Editor</span></h1>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-[11px] text-slate-400 font-mono tracking-widest uppercase">System Ready</span>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
             <a href="index.php" class="btn-header btn-glass">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
                 <span class="hidden sm:inline">خروج</span>
             </a>
-            <a href="keyboard.php?action=reset" onclick="return confirm('تنظیمات به حالت پیش‌فرض برگردد؟')" class="w-11 h-[42px] rounded-xl btn-glass flex items-center justify-center text-red-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-300" title="بازنشانی">
-                <i class="fa-solid fa-rotate-left"></i>
+            <a href="keyboard.php?action=reset" onclick="return confirm('آیا مطمئن هستید؟ همه تغییرات حذف خواهند شد.')" class="w-12 h-[46px] rounded-xl btn-glass flex items-center justify-center text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-300 transition" title="بازنشانی">
+                <i class="fa-solid fa-rotate-left text-lg"></i>
             </a>
-            <div class="w-px h-8 bg-white/10 mx-2"></div>
+            <div class="w-px h-10 bg-white/10 mx-2"></div>
             <button onclick="App.save()" id="btn-save" class="btn-header btn-primary-glow" disabled>
-                <i class="fa-regular fa-floppy-disk"></i>
+                <i class="fa-regular fa-floppy-disk text-lg"></i>
                 <span>ذخیره تغییرات</span>
             </button>
         </div>
@@ -405,7 +412,7 @@ try {
         
         <!-- Right: Preview -->
         <div class="panel panel-preview">
-            <div class="mb-6 flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-bold text-indigo-300 uppercase tracking-widest backdrop-blur-sm">
+            <div class="mb-8 flex items-center gap-2 px-5 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 text-[11px] font-bold text-violet-300 uppercase tracking-widest backdrop-blur-sm shadow-[0_0_15px_rgba(139,92,246,0.15)]">
                 Live Preview
             </div>
             
@@ -413,15 +420,15 @@ try {
                 <div class="dynamic-island"></div>
                 <div class="tg-header">
                     <i class="fa-solid fa-arrow-right text-gray-400 ml-2"></i>
-                    <div class="flex-1 mr-2">
+                    <div class="flex-1 mr-3">
                         <div class="text-sm font-bold">ربات تلگرام</div>
-                        <div class="text-[10px] text-blue-400">bot</div>
+                        <div class="text-[11px] text-blue-400">bot</div>
                     </div>
                     <i class="fa-solid fa-ellipsis-vertical text-gray-400"></i>
                 </div>
                 <div class="tg-body">
-                    <div class="bg-[#2b5278] text-white p-3 rounded-2xl rounded-tr-none text-sm max-w-[85%] shadow-lg mr-auto ml-4 mb-2 relative">
-                        کیبورد شما به این صورت نمایش داده می‌شود 👇
+                    <div class="bg-[#2b5278] text-white p-3.5 rounded-2xl rounded-tr-none text-sm max-w-[85%] shadow-lg mr-auto ml-5 mb-3 relative">
+                        منوی ربات شما به این شکل خواهد بود 👇
                     </div>
                 </div>
                 <div id="preview-render" class="tg-kb-area flex flex-col justify-end" dir="ltr"></div>
@@ -431,42 +438,44 @@ try {
         <!-- Center: Editor -->
         <div class="panel panel-editor custom-scrollbar">
             <div class="max-w-4xl mx-auto pb-48">
-                <div class="flex justify-between items-end mb-8 sticky top-0 z-40 py-4 -mt-4 bg-[#030712]/80 backdrop-blur-md">
+                <div class="flex justify-between items-end mb-10 sticky top-0 z-40 py-4 -mt-4 bg-[#020617]/90 backdrop-blur-md border-b border-transparent">
                     <div>
-                        <h2 class="text-2xl font-bold text-white mb-2">چیدمان دکمه‌ها</h2>
+                        <h2 class="text-3xl font-bold text-white mb-2">چیدمان دکمه‌ها</h2>
                         <p class="text-sm text-slate-400">برای تغییر ترتیب، دکمه‌ها را بکشید و رها کنید.</p>
                     </div>
-                    <button onclick="App.addRow()" class="h-10 px-5 rounded-xl border border-dashed border-indigo-500/40 text-indigo-300 text-xs font-bold hover:bg-indigo-500/10 hover:border-indigo-400 transition flex items-center gap-2">
-                        <i class="fa-solid fa-plus text-sm"></i> سطر جدید
+                    <button onclick="App.addRow()" class="h-11 px-6 rounded-xl border border-dashed border-violet-500/40 text-violet-300 text-sm font-bold hover:bg-violet-500/10 hover:border-violet-400 hover:text-white transition flex items-center gap-2 group">
+                        <span class="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center group-hover:bg-violet-500 group-hover:text-white transition"><i class="fa-solid fa-plus text-xs"></i></span>
+                        سطر جدید
                     </button>
                 </div>
 
                 <div id="editor-render" class="flex flex-col gap-6"></div>
                 
                 <!-- Bottom Decoration -->
-                <div class="mt-16 flex flex-col items-center justify-center text-slate-700 gap-2">
-                   <i class="fa-solid fa-grip-lines text-2xl opacity-50"></i>
-                   <span class="text-xs font-mono opacity-50">End of Keyboard</span>
+                <div class="mt-20 flex flex-col items-center justify-center text-slate-700 gap-3 opacity-60">
+                   <div class="h-12 w-px bg-gradient-to-b from-transparent via-slate-700 to-transparent"></div>
+                   <span class="text-xs font-mono tracking-widest uppercase">End of Keyboard</span>
                 </div>
             </div>
         </div>
 
         <!-- Left: Stash -->
         <div class="panel panel-stash">
-            <div class="flex items-center gap-4 mb-6 text-slate-200">
-                <div class="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-indigo-400 border border-slate-700 shadow-inner">
-                    <i class="fa-solid fa-box-archive text-xl"></i>
+            <div class="flex items-center gap-4 mb-8 text-slate-200">
+                <div class="w-14 h-14 rounded-2xl bg-slate-800/80 flex items-center justify-center text-violet-400 border border-slate-700 shadow-inner">
+                    <i class="fa-solid fa-box-archive text-2xl"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-base">انبار دکمه‌ها</h3>
-                    <p class="text-[11px] text-slate-400 mt-0.5">محل نگهداری موقت</p>
+                    <h3 class="font-bold text-lg">انبار دکمه‌ها</h3>
+                    <p class="text-xs text-slate-400 mt-1">محل نگهداری موقت</p>
                 </div>
             </div>
             
-            <div class="bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/10 mb-2">
-                <p class="text-xs text-indigo-200/80 leading-relaxed">
-                    <i class="fa-regular fa-lightbulb ml-1 text-indigo-400"></i>
-                    دکمه‌هایی که لازم ندارید را اینجا بیندازید تا حذف نشوند.
+            <div class="bg-violet-500/5 p-5 rounded-2xl border border-violet-500/10 mb-2 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-16 h-16 bg-violet-500/10 blur-xl rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <p class="text-xs text-violet-200/90 leading-relaxed relative z-10">
+                    <i class="fa-regular fa-lightbulb ml-2 text-violet-400 text-sm"></i>
+                    دکمه‌هایی که فعلاً لازم ندارید را اینجا بیندازید تا بعداً استفاده کنید.
                 </p>
             </div>
             
@@ -510,10 +519,10 @@ try {
                 
                 this.swal = Swal.mixin({
                     background: '#0f172a', color: '#f8fafc',
-                    confirmButtonColor: '#6366f1', cancelButtonColor: '#ef4444',
+                    confirmButtonColor: '#8b5cf6', cancelButtonColor: '#ef4444',
                     customClass: { 
-                        popup: 'rounded-2xl border border-indigo-500/20 shadow-2xl',
-                        input: 'bg-slate-900 border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500'
+                        popup: 'rounded-3xl border border-violet-500/20 shadow-2xl',
+                        input: 'bg-slate-900 border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-violet-500 px-4 py-2'
                     }
                 });
 
@@ -533,10 +542,15 @@ try {
 
                 if (this.data.keyboard.length === 0) {
                     editor.innerHTML = `
-                        <div class="flex flex-col items-center justify-center py-24 opacity-50 text-indigo-300 border-2 border-dashed border-indigo-500/20 rounded-3xl bg-indigo-500/5">
-                            <i class="fa-solid fa-layer-group text-6xl mb-6 opacity-80"></i>
-                            <p class="text-lg font-bold">هنوز سطری اضافه نکرده‌اید</p>
-                            <button onclick="App.addRow()" class="mt-4 text-sm text-indigo-400 hover:text-white transition underline decoration-dashed">ایجاد اولین سطر</button>
+                        <div class="flex flex-col items-center justify-center py-32 opacity-60 text-violet-300 border-2 border-dashed border-violet-500/20 rounded-[30px] bg-violet-500/5">
+                            <div class="w-20 h-20 rounded-full bg-violet-500/10 flex items-center justify-center mb-6">
+                                <i class="fa-solid fa-layer-group text-4xl opacity-80"></i>
+                            </div>
+                            <p class="text-xl font-bold">هنوز سطری اضافه نکرده‌اید</p>
+                            <button onclick="App.addRow()" class="mt-4 text-sm text-violet-400 hover:text-white transition flex items-center gap-2 group">
+                                <span class="border-b border-dashed border-violet-400 group-hover:border-white pb-0.5">ایجاد اولین سطر</span>
+                                <i class="fa-solid fa-arrow-left group-hover:-translate-x-1 transition"></i>
+                            </button>
                         </div>`;
                     return;
                 }
@@ -546,24 +560,26 @@ try {
                     rowEl.className = 'row-wrapper group';
                     rowEl.dataset.rowIdx = rIdx;
                     
-                    rowEl.innerHTML = `<i class="fa-solid fa-grip-vertical drag-handle row-handle"></i>`;
+                    rowEl.innerHTML = `<div class="drag-handle row-handle"><i class="fa-solid fa-grip-vertical"></i></div>`;
 
                     row.forEach((btn, bIdx) => {
                         rowEl.appendChild(this.createKeyElement(btn, rIdx, bIdx, 'main'));
                     });
 
+                    // Add Button Logic
                     if (row.length < 8) {
                         const addBtn = document.createElement('div');
-                        addBtn.className = 'w-12 h-auto min-h-[50px] rounded-xl border-2 border-dashed border-slate-600 flex items-center justify-center text-slate-500 hover:text-indigo-400 hover:border-indigo-400 hover:bg-indigo-400/5 cursor-pointer transition opacity-50 hover:opacity-100';
-                        addBtn.innerHTML = '<i class="fa-solid fa-plus text-lg"></i>';
+                        addBtn.className = 'w-14 h-auto min-h-[60px] rounded-2xl border-2 border-dashed border-slate-600 flex items-center justify-center text-slate-500 hover:text-violet-400 hover:border-violet-400 hover:bg-violet-400/5 cursor-pointer transition opacity-50 hover:opacity-100';
+                        addBtn.innerHTML = '<i class="fa-solid fa-plus text-xl"></i>';
                         addBtn.onclick = () => this.addKeyToRow(rIdx);
                         rowEl.appendChild(addBtn);
                     }
 
+                    // Delete Row Logic
                     if (row.length === 0) {
                         const delBtn = document.createElement('div');
-                        delBtn.className = 'w-full text-center text-xs text-red-400 py-4 cursor-pointer border border-dashed border-red-500/20 rounded-xl bg-red-500/5 hover:bg-red-500/10 transition flex items-center justify-center gap-2';
-                        delBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i> حذف سطر خالی';
+                        delBtn.className = 'w-full text-center text-xs text-rose-400 py-5 cursor-pointer border border-dashed border-rose-500/20 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 transition flex items-center justify-center gap-2 font-bold';
+                        delBtn.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i> حذف این سطر';
                         delBtn.onclick = () => this.deleteRow(rIdx);
                         rowEl.appendChild(delBtn);
                     }
@@ -594,9 +610,9 @@ try {
                 
                 if (this.data.stash.length === 0) {
                     stash.innerHTML = `
-                        <div class="text-center py-12 opacity-30 text-xs text-slate-400 flex flex-col items-center select-none">
-                            <i class="fa-solid fa-ghost text-3xl mb-3"></i>
-                            انبار خالی است
+                        <div class="text-center py-16 opacity-30 text-xs text-slate-400 flex flex-col items-center select-none">
+                            <i class="fa-solid fa-ghost text-4xl mb-4 text-violet-300"></i>
+                            <span class="font-medium">انبار خالی است</span>
                         </div>`;
                 }
 
@@ -619,21 +635,21 @@ try {
                     el.dataset.text = btn.text;
                     el.innerHTML = `
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <div class="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 text-sm border border-indigo-500/20 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 text-sm border border-violet-500/20 shadow-sm">
                                 <i class="fa-solid fa-terminal"></i>
                             </div>
                             <div class="flex flex-col overflow-hidden">
-                                <span class="text-xs text-slate-200 truncate font-bold">${label}</span>
-                                <span class="text-[10px] text-slate-500 truncate font-mono opacity-70">${btn.text}</span>
+                                <span class="text-xs text-slate-200 truncate font-bold mb-0.5">${label}</span>
+                                <span class="text-[10px] text-slate-500 truncate font-mono opacity-80">${btn.text}</span>
                             </div>
                         </div>
-                        <div class="flex gap-1.5 opacity-0 hover:opacity-100 transition-opacity">
-                            <button onclick="App.editKey('${type}', ${rIdx}, ${bIdx})" class="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-xs text-white shadow-lg"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="App.deleteKey('${type}', ${rIdx}, ${bIdx})" class="w-7 h-7 rounded-lg bg-red-600 hover:bg-red-500 flex items-center justify-center text-xs text-white shadow-lg"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                            <button onclick="App.editKey('${type}', ${rIdx}, ${bIdx})" class="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-xs text-white shadow-lg transition hover:scale-110"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="App.deleteKey('${type}', ${rIdx}, ${bIdx})" class="w-8 h-8 rounded-lg bg-rose-600 hover:bg-rose-500 flex items-center justify-center text-xs text-white shadow-lg transition hover:scale-110"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     `;
-                    el.onmouseenter = () => el.querySelector('.flex.gap-1\\.5').classList.remove('opacity-0');
-                    el.onmouseleave = () => el.querySelector('.flex.gap-1\\.5').classList.add('opacity-0');
+                    el.onmouseenter = () => el.querySelector('.flex.gap-2').classList.remove('opacity-0');
+                    el.onmouseleave = () => el.querySelector('.flex.gap-2').classList.add('opacity-0');
                 } else {
                     el.className = 'key-btn';
                     el.dataset.text = btn.text;
@@ -692,12 +708,14 @@ try {
                 
                 if (isDirty) {
                     saveBtn.disabled = false;
-                    saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> ذخیره تغییرات';
+                    saveBtn.innerHTML = '<i class="fa-solid fa-check text-lg"></i> <span class="text-sm">ذخیره تغییرات</span>';
                     saveBtn.classList.add('animate-pulse');
+                    saveBtn.classList.remove('grayscale');
                 } else {
                     saveBtn.disabled = true;
-                    saveBtn.innerHTML = '<i class="fa-regular fa-floppy-disk"></i> ذخیره شد';
+                    saveBtn.innerHTML = '<i class="fa-regular fa-floppy-disk text-lg"></i> <span class="text-sm">ذخیره شد</span>';
                     saveBtn.classList.remove('animate-pulse');
+                    saveBtn.classList.add('grayscale');
                 }
             },
 
@@ -750,7 +768,7 @@ try {
             save() {
                 const { saveBtn } = this.dom;
                 const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ...';
+                saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-xl"></i>';
                 saveBtn.disabled = true;
 
                 fetch('keyboard.php', {
@@ -768,7 +786,7 @@ try {
                         this.checkChanges();
                         const Toast = Swal.mixin({
                             toast: true, position: 'top-end', showConfirmButton: false, 
-                            timer: 3000, background: '#10b981', color: '#fff'
+                            timer: 3000, background: '#020617', color: '#fff'
                         });
                         Toast.fire({icon: 'success', title: 'تنظیمات ذخیره شد'});
                     }
