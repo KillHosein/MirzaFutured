@@ -138,6 +138,8 @@ function applyTheme(mode,custom){
   const useDark=resolvedMode==="dark"||(resolvedMode==="telegram"&&tgScheme==="dark");
 
   root.classList.toggle("dark",useDark);
+  root.setAttribute("data-tg-ui-mode",resolvedMode);
+  root.setAttribute("data-tg-ui-scheme",useDark?"dark":"light");
 
   if(resolvedMode==="telegram"&&tg){
     const p=tg.themeParams||{};
@@ -287,6 +289,25 @@ function openSupport(link){
   window.open(url,"_blank","noopener,noreferrer");
 }
 
+function tgHaptic(type,style){
+  const tg=getTelegramWebApp();
+  try{
+    if(!tg||!tg.HapticFeedback)return;
+    if(type==="impact"&&typeof tg.HapticFeedback.impactOccurred==="function"){
+      tg.HapticFeedback.impactOccurred(style||"light");
+    }else if(type==="notification"&&typeof tg.HapticFeedback.notificationOccurred==="function"){
+      tg.HapticFeedback.notificationOccurred(style||"success");
+    }
+  }catch{}
+}
+
+function createSettingsIcon(){
+  const svg=createEl("svg",{width:"20",height:"20",viewBox:"0 0 24 24",fill:"none","aria-hidden":"true"});
+  svg.appendChild(createEl("path",{d:"M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round","stroke-linejoin":"round"}));
+  svg.appendChild(createEl("path",{d:"M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2.2 2.2 0 0 1-1.56 3.76 2.2 2.2 0 0 1-1.56-.64l-.05-.05a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.08 1.65V21a2.2 2.2 0 0 1-4.4 0v-.07a1.8 1.8 0 0 0-1.08-1.65 1.8 1.8 0 0 0-1.98.36l-.05.05a2.2 2.2 0 1 1-3.12-3.12l.05-.05A1.8 1.8 0 0 0 3 15a1.8 1.8 0 0 0-1.65-1.08H1.3a2.2 2.2 0 0 1 0-4.4h.05A1.8 1.8 0 0 0 3 8.44a1.8 1.8 0 0 0-.36-1.98l-.05-.05A2.2 2.2 0 1 1 5.71 3.3l.05.05A1.8 1.8 0 0 0 7.74 3a1.8 1.8 0 0 0 1.08-1.65V1.3a2.2 2.2 0 0 1 4.4 0v.05A1.8 1.8 0 0 0 14.3 3a1.8 1.8 0 0 0 1.98-.36l.05-.05A2.2 2.2 0 1 1 19.45 5.7l-.05.05A1.8 1.8 0 0 0 19 7.74c0 .7.42 1.32 1.08 1.65h.07a2.2 2.2 0 0 1 0 4.4h-.07A1.8 1.8 0 0 0 19.4 15Z",stroke:"currentColor","stroke-width":"2","stroke-linecap":"round","stroke-linejoin":"round"}));
+  return svg;
+}
+
 function showSettingsUI(){
   if(activeDialogCleanup){
     activeDialogCleanup();
@@ -299,9 +320,11 @@ function showSettingsUI(){
 
   const close=()=>{
     document.body.style.overflow=previousOverflow;
+    document.documentElement.removeAttribute("data-tg-ui-dialog");
     backdrop.remove();
     window.removeEventListener("keydown",onKeyDown);
     activeDialogCleanup=null;
+    tgHaptic("impact","light");
     if(prevFocus&&prevFocus.focus)prevFocus.focus();
   };
 
@@ -467,6 +490,8 @@ function showSettingsUI(){
   backdrop.appendChild(panel);
   document.body.appendChild(backdrop);
   document.body.style.overflow="hidden";
+  document.documentElement.setAttribute("data-tg-ui-dialog","1");
+  tgHaptic("impact","medium");
 
   const focusableSelector=[
     'button:not([disabled])',
@@ -546,7 +571,7 @@ function boot(){
   const skip=createEl("a",{href:"#root",class:"tg-ui-skip-link",text:"پرش به محتوا"});
   document.body.appendChild(skip);
 
-  const btn=createEl("button",{type:"button",class:"tg-ui-fab","aria-label":"تنظیمات رابط کاربری",onClick:showSettingsUI},["⚙"]);
+  const btn=createEl("button",{type:"button",class:"tg-ui-fab","aria-label":"تنظیمات رابط کاربری",onClick:showSettingsUI},[createSettingsIcon()]);
   document.body.appendChild(btn);
 }
 
