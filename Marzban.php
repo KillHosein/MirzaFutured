@@ -152,6 +152,11 @@ function getinbounds($location)
 {
     $marzban_list_get = select("marzban_panel", "*", "name_panel", $location,"select");
     $Check_token = token_panel($marzban_list_get['code_panel']);
+    
+    if (!isset($Check_token['access_token'])) {
+        return [];
+    }
+
     $url =  $marzban_list_get['url_panel'].'/api/inbounds';
     $header_value = 'Bearer ';
 
@@ -167,7 +172,7 @@ function getinbounds($location)
     $output = curl_exec($ch);
     curl_close($ch);
     $inbounds = json_decode($output, true);
-    return $inbounds;
+    return is_array($inbounds) ? $inbounds : [];
 }
 #-----------------------------#
 function ResetUserDataUsage($username_account,$location)
