@@ -627,7 +627,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <div class="dock-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                 <span class="dock-label">سفارشات</span>
             </a>
-            <a href="user.php" class="dock-item">
+            <a href="users.php" class="dock-item">
                 <div class="dock-icon"><i class="fa-solid fa-users"></i></div>
                 <span class="dock-label">کاربران</span>
             </a>
