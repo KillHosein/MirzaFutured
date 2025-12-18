@@ -11,7 +11,8 @@ app/
 ├── static/              # Static Assets (Optimized)
 │   ├── css/             # Stylesheets
 │   │   ├── style.css    # Core Application Styles
-│   │   └── theme.css    # Modern Theme & Dark Mode Variables
+│   │   ├── theme.css    # Modern Theme & Dark Mode Variables
+│   │   └── custom.css   # User-specific Style Overrides
 │   ├── js/              # JavaScript Modules
 │   │   ├── main.js      # Application Entry Point
 │   │   ├── vendor.js    # Third-party Dependencies
@@ -21,6 +22,10 @@ app/
 ├── index.php            # Main Entry Point (SPA)
 ├── .htaccess            # Server Configuration (Caching & Routing)
 └── README.md            # Documentation
+
+tests/                   # Automated Tests
+├── SmokeTest.php        # PHP Integrity Tests
+└── run_tests.ps1        # PowerShell Test Runner
 ```
 
 ## 🚀 Key Features
@@ -36,9 +41,10 @@ app/
 - **Caching**: `.htaccess` configured for aggressive caching of static assets (1 Year).
 - **Minified Assets**: JavaScript and CSS files are optimized for production.
 
-### 3. Clean Code
+### 3. Clean Code & Architecture
 - **Standard Naming**: File names are descriptive (e.g., `account.js` instead of hashed names).
 - **Modular Structure**: Features are separated into distinct modules.
+- **Automated Testing**: Scripts to verify deployment integrity.
 
 ## 🛠 Installation & Usage
 
@@ -46,21 +52,30 @@ app/
 2. **Server Requirements**: Apache with `mod_rewrite` and `mod_expires` enabled.
 3. **Access**: Navigate to `https://yourdomain.com/app`.
 
+## 🧪 Testing
+
+To ensure the integrity of the installation, run the provided test scripts:
+
+**PowerShell (Windows):**
+```powershell
+.\tests\run_tests.ps1
+```
+
+**PHP (Linux/Mac/Windows):**
+```bash
+php tests/SmokeTest.php
+```
+
 ## 🎨 Theme Customization
 
-To modify the color palette, edit `app/static/css/theme.css`:
+1. **Colors**: Edit `app/static/css/theme.css` to change the main color palette.
+2. **Overrides**: Add custom CSS to `app/static/css/custom.css` (create this file if needed) to override specific styles without touching the core files.
 
 ```css
+/* app/static/css/theme.css */
 :root {
-  /* Light Mode Colors */
   --primary: hsl(250, 95%, 60%);
   --background: hsl(0, 0%, 98%);
-}
-
-.dark {
-  /* Dark Mode Colors */
-  --primary: hsl(250, 95%, 65%);
-  --background: hsl(222, 47%, 4%);
 }
 ```
 
