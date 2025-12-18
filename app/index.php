@@ -46,7 +46,7 @@ $config = [
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Professional Web App</title>
+    <title>Mirza Pro</title>
     <base href="<?php echo htmlspecialchars($prefix, ENT_QUOTES); ?>" />
     
     <!-- Libraries & Assets -->
@@ -59,112 +59,127 @@ $config = [
 
     <style>
         :root {
-            --primary: #8b5cf6;
-            --secondary: #06b6d4;
-            --bg-void: #000;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --bg-dark: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-void);
-            margin: 0; padding: 0;
+            background-color: var(--bg-dark);
+            margin: 0; 
+            padding: 0;
             min-height: 100vh;
-            color: #fff;
+            color: var(--text-main);
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
-        }
-
-        /* --- SUPREME VIDEO BACKGROUND --- */
-        .video-background {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10; overflow: hidden;
-        }
-        .video-background video {
-            width: 100%; height: 100%; object-fit: cover;
-            filter: brightness(0.45) contrast(1.1);
-        }
-        .video-overlay {
-            position: absolute; inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%);
-        }
-
-        .star-layer {
-            position: fixed; inset: 0; z-index: -9;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            
+            /* Professional Gradient Background */
             background-image: 
-                radial-gradient(1px 1px at 20px 30px, #fff, transparent), 
-                radial-gradient(1.5px 1.5px at 150px 150px, #fff, transparent);
-            background-size: 300px 300px;
-            animation: moveStars 180s linear infinite;
-            opacity: 0.3;
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
         }
-        @keyframes moveStars { from { background-position: 0 0; } to { background-position: 0 4000px; } }
 
-        /* --- CONTENT MOUNT POINT --- */
+        /* Global UI Polish */
+        button, .btn {
+            font-family: 'Vazirmatn', sans-serif !important;
+            letter-spacing: 0.5px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        button:active, .btn:active {
+            transform: scale(0.96) !important;
+        }
+
+        input, select, textarea {
+            transition: all 0.2s ease !important;
+            font-family: 'Vazirmatn', sans-serif !important;
+        }
+        input:focus, select:focus, textarea:focus {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2) !important;
+        }
+
+        /* App Container */
         #root {
             flex: 1;
             z-index: 10;
             position: relative;
-            /* این تنظیم باعث می‌شود اپلیکیشن شما روی پس‌زمینه متحرک شناور باشد */
+            width: 100%;
+            /* Center on desktop but keep full width on mobile */
+            max-width: 500px;
+            margin: 0 auto;
+            padding-bottom: 20px;
         }
 
-        /* --- SUPREME SIGNATURE (KILLHOSEIN) --- */
-        .supreme-footer {
-            padding: 60px 20px 40px;
+        /* Modern Minimal Footer */
+        .professional-footer {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 15px 0 25px;
             text-align: center;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-            border-top: 1px solid rgba(255,255,255,0.05);
-            z-index: 20;
-            position: relative;
-            backdrop-filter: blur(10px);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--glass-border);
+            background: linear-gradient(to top, var(--bg-dark), transparent);
         }
-        .brand-link {
-            text-decoration: none !important;
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .brand-hint {
-            font-size: 12px;
-            color: rgba(255,255,255,0.4);
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        .brand-name {
-            font-size: clamp(28px, 8vw, 42px);
-            font-weight: 950;
-            background: linear-gradient(90deg, #fff, #a78bfa, #22d3ee, #d946ef);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            letter-spacing: 1px;
-            filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.6));
-            display: flex; align-items: center; justify-content: center; gap: 15px;
-        }
-        .brand-tg {
-            font-size: clamp(32px, 10vw, 55px);
-            color: #229ED9;
-            -webkit-text-fill-color: #229ED9;
-            filter: drop-shadow(0 0 20px rgba(34, 158, 217, 0.8));
-            transition: 0.5s;
-        }
-        .brand-link:hover { transform: scale(1.1); }
-        .brand-link:hover .brand-tg { transform: rotate(-15deg) scale(1.2); }
-        
-        .contact-cta {
-            font-size: 11px;
-            color: var(--secondary);
-            margin-top: 8px;
-            font-weight: 600;
-            opacity: 0.7;
-            animation: pulseFade 3s infinite;
-        }
-        @keyframes pulseFade { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
 
-        /* Scrollbar */
+        .brand-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+        }
+
+        .brand-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--glass-border);
+            transform: translateY(-1px);
+        }
+
+        .brand-name {
+            font-weight: 600;
+            background: linear-gradient(135deg, #e2e8f0, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Refined Scrollbar */
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .professional-footer {
+            animation: fadeIn 0.8s ease-out;
+        }
     </style>
 
     <script>
@@ -177,26 +192,15 @@ $config = [
 </head>
 <body>
 
-    <!-- Space Engine Background -->
-    <div class="video-background">
-        <video autoplay muted loop playsinline poster="https://assets.mixkit.co/videos/preview/mixkit-flying-through-stars-in-space-23214-large.mp4">
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-flying-through-stars-in-space-23214-large.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-    </div>
-    <div class="star-layer"></div>
-
     <!-- Application Mounting Point -->
     <div id="root"></div>
 
-    <!-- Supreme Footer: Branding KillHosein -->
-    <footer class="supreme-footer">
+    <!-- Minimal Professional Footer -->
+    <footer class="professional-footer">
         <a href="https://t.me/KillHosein" class="brand-link" target="_blank">
-            <span class="brand-hint">Designed & Developed by</span>
-            <span class="brand-name">
-                <i class="fa-brands fa-telegram brand-tg"></i> KillHosein
-            </span>
-            <span class="contact-cta">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
+            <i class="fa-brands fa-telegram"></i>
+            <span>Designed by</span>
+            <span class="brand-name">KillHosein</span>
         </a>
     </footer>
 
