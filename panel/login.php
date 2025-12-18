@@ -141,7 +141,7 @@ if (isset($_POST['login'])) {
         }
 
         .glass-card {
-            width: 100%; max-width: 520px; /* Enhanced width */
+            width: 100%; max-width: 520px;
             background: rgba(10, 15, 28, 0.82);
             backdrop-filter: blur(35px) saturate(200%);
             -webkit-backdrop-filter: blur(35px) saturate(200%);
@@ -236,24 +236,33 @@ if (isset($_POST['login'])) {
         }
         .developer-info {
             color: rgba(255,255,255,0.5); font-size: 16px;
-            display: flex; flex-direction: column; align-items: center; gap: 15px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
             text-decoration: none; transition: 0.5s;
         }
         .developer-name {
-            font-size: 40px; font-weight: 950; /* Ultra Bold & Large */
-            background: linear-gradient(90deg, #fff, #a78bfa, var(--secondary), var(--accent));
+            font-size: 42px; font-weight: 950;
+            background: linear-gradient(90deg, #fff, #a78bfa, var(--secondary));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             letter-spacing: 2px; filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
             display: flex; align-items: center; justify-content: center; gap: 18px;
         }
         .tg-symbol {
-            font-size: 48px; color: #229ED9; 
-            filter: drop-shadow(0 0 15px rgba(34, 158, 217, 0.6));
+            font-size: 52px; color: #229ED9; 
+            -webkit-text-fill-color: #229ED9; /* Fix for visibility in gradient parent */
+            filter: drop-shadow(0 0 20px rgba(34, 158, 217, 0.7));
             transition: 0.4s;
         }
         .developer-info:hover { transform: scale(1.1); color: #fff; }
         .developer-info:hover .developer-name { filter: drop-shadow(0 0 35px var(--secondary)); }
         .developer-info:hover .tg-symbol { transform: rotate(-12deg) scale(1.3); }
+
+        .contact-hint {
+            font-size: 12px; color: var(--secondary); margin-top: 5px;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            opacity: 0.8; animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
 
         /* --- SYSTEM ALERTS --- */
         .system-err {
@@ -305,6 +314,7 @@ if (isset($_POST['login'])) {
                         <span class="developer-name">
                             <i class="fa-brands fa-telegram tg-symbol"></i> KillHosein
                         </span>
+                        <span class="contact-hint">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
                     </a>
                 </div>
             </div>
@@ -349,6 +359,7 @@ if (isset($_POST['login'])) {
                             <span class="developer-name">
                                 <i class="fa-brands fa-telegram tg-symbol"></i> KillHosein
                             </span>
+                            <span class="contact-hint">جهت ارتباط و پشتیبانی در تلگرام کلیک کنید</span>
                         </a>
                     </div>
                 </form>
