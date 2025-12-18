@@ -59,36 +59,56 @@ $config = [
 
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.4);
-            --bg-dark: #0f172a;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --glass-bg: rgba(15, 23, 42, 0.6);
+            /* --- 1. Color Palette (Harmonious & Modern) --- */
+            --bg-deep: #020617; /* Slate 950 */
+            --bg-surface: #0f172a; /* Slate 900 */
+            
+            --primary-start: #4f46e5; /* Indigo 600 */
+            --primary-end: #8b5cf6; /* Violet 500 */
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            
+            --accent-success: #10b981; /* Emerald 500 */
+            --accent-danger: #f43f5e; /* Rose 500 */
+            --accent-warning: #f59e0b; /* Amber 500 */
+            
+            --text-primary: #f8fafc; /* Slate 50 */
+            --text-secondary: #94a3b8; /* Slate 400 */
+            
+            /* --- Glassmorphism Variables --- */
+            --glass-panel: rgba(15, 23, 42, 0.65);
+            --glass-card: rgba(30, 41, 59, 0.4);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --card-glass: rgba(30, 41, 59, 0.4);
+            --glass-highlight: rgba(255, 255, 255, 0.03);
+            
+            /* --- Spacing & Radius --- */
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --spacing-container: 20px;
         }
 
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            outline: none !important;
         }
 
+        /* --- 2. Typography & Base Layout --- */
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-deep);
             margin: 0; 
             padding: 0;
             min-height: 100vh;
-            color: var(--text-main);
+            color: var(--text-primary);
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             
-            /* Professional Gradient Background */
-            background: radial-gradient(circle at top left, #1e1b4b, #0f172a);
+            /* Cinematic Gradient Background */
+            background: radial-gradient(circle at top left, #1e1b4b 0%, #0f172a 40%, #020617 100%);
         }
 
         /* Interactive Canvas Background */
@@ -99,228 +119,239 @@ $config = [
             width: 100%;
             height: 100%;
             z-index: -1;
-            opacity: 0.6;
+            opacity: 0.5;
+            pointer-events: none; /* Let clicks pass through */
         }
 
-        /* Splash Screen */
+        /* --- 3. Splash Screen (Premium Animation) --- */
         #splash-screen {
             position: fixed;
             inset: 0;
-            background: #0f172a;
+            background: var(--bg-deep);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            transition: opacity 0.6s ease-out, visibility 0.6s;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
         }
         
-        .loader {
-            width: 48px;
-            height: 48px;
-            border: 3px solid #FFF;
+        .loader-ring {
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            display: inline-block;
             position: relative;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
+            background: conic-gradient(from 0deg, transparent 0%, var(--primary-end) 100%);
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 30px var(--primary-glow);
         }
-        .loader::after {
-            content: '';  
-            box-sizing: border-box;
+        .loader-ring::before {
+            content: '';
             position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
+            inset: 4px;
+            background: var(--bg-deep);
             border-radius: 50%;
-            border: 3px solid;
-            border-color: var(--primary) transparent;
         }
         
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         .splash-text {
-            margin-top: 20px;
-            font-size: 14px;
-            letter-spacing: 2px;
-            color: var(--text-muted);
+            margin-top: 24px;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: var(--text-primary);
             opacity: 0;
-            animation: fadeInUp 0.8s ease-out 0.2s forwards;
+            transform: translateY(10px);
+            animation: fadeInUp 0.8s ease-out 0.3s forwards;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Global UI Polish & Overrides */
+        /* --- 4. Component Overrides (The Core UI Improvements) --- */
         
-        /* Force transparent backgrounds on main containers to show our gradient */
+        /* Transparent Containers */
         #root > div, .bg-zinc-900, .bg-slate-900, .bg-gray-900, .bg-black {
             background-color: transparent !important;
             background: transparent !important;
         }
 
-        /* Glassmorphism Cards */
+        /* Cards & Surfaces (Glassmorphism) */
         .bg-zinc-800, .bg-slate-800, .bg-gray-800, 
-        .card, [class*="card"], [class*="Card"] {
-            background: var(--card-glass) !important;
-            backdrop-filter: blur(16px) !important;
-            -webkit-backdrop-filter: blur(16px) !important;
+        .card, [class*="card"], [class*="Card"], .bg-surface {
+            background: var(--glass-card) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
             border: 1px solid var(--glass-border) !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
-            border-radius: 20px !important;
-        }
-
-        /* Typography Improvements */
-        h1, h2, h3, .text-xl, .text-2xl, .text-3xl {
-            font-weight: 800 !important;
-            letter-spacing: -0.5px !important;
-            color: #fff !important;
-            text-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+            border-radius: var(--radius-md) !important;
+            transition: transform 0.3s ease, box-shadow 0.3s ease !important;
         }
         
-        p, .text-gray-400, .text-zinc-400 {
-            color: var(--text-muted) !important;
-            line-height: 1.7 !important;
+        /* Card Hover Effect (Desktop/Interaction) */
+        /* Note: On mobile hover can be sticky, so we mostly rely on active states */
+        
+        /* Typography Polish */
+        h1, h2, h3, .font-bold {
+            color: var(--text-primary) !important;
+            letter-spacing: -0.02em !important;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+        
+        p, span, .text-sm {
+            color: var(--text-secondary) !important;
+            line-height: 1.6;
         }
 
-        /* Buttons */
+        /* --- 5. Buttons & Interactions --- */
         button, .btn {
             font-family: 'Vazirmatn', sans-serif !important;
             letter-spacing: 0.5px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            border-radius: 14px !important;
-            font-weight: 600 !important;
+            border-radius: var(--radius-md) !important;
+            font-weight: 700 !important;
             position: relative;
             overflow: hidden;
+            border: none !important;
+            cursor: pointer;
         }
         
         button:active, .btn:active {
-            transform: scale(0.96) !important;
+            transform: scale(0.95) !important;
         }
 
-        /* Specific Primary Button Style Override */
+        /* Primary Action Buttons */
         [class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-            box-shadow: 0 4px 15px var(--primary-glow) !important;
+            background: linear-gradient(135deg, var(--primary-start), var(--primary-end)) !important;
+            box-shadow: 0 4px 20px var(--primary-glow) !important;
+            color: #fff !important;
             border: 1px solid rgba(255,255,255,0.1) !important;
         }
         
-        [class*="bg-primary"]:hover, .bg-blue-600:hover, .bg-indigo-600:hover {
-             box-shadow: 0 8px 25px var(--primary-glow) !important;
-             transform: translateY(-2px);
+        /* Secondary/Outline Buttons */
+        .bg-transparent, .border {
+             border-color: var(--glass-border) !important;
+             background: rgba(255,255,255,0.03) !important;
         }
 
-        /* Inputs */
+        /* --- 6. Form Elements (Inputs) --- */
         input, select, textarea {
             transition: all 0.3s ease !important;
             font-family: 'Vazirmatn', sans-serif !important;
-            background: rgba(15, 23, 42, 0.6) !important;
+            background: var(--glass-panel) !important;
             border: 1px solid var(--glass-border) !important;
-            border-radius: 14px !important;
-            color: #fff !important;
-            backdrop-filter: blur(10px);
+            border-radius: var(--radius-md) !important;
+            color: var(--text-primary) !important;
+            padding: 12px 16px !important;
+            font-size: 14px !important;
         }
+        
         input:focus, select:focus, textarea:focus {
             transform: translateY(-2px) !important;
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
-            outline: none !important;
-            background: rgba(15, 23, 42, 0.8) !important;
+            border-color: var(--primary-end) !important;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15) !important;
+            background: rgba(15, 23, 42, 0.9) !important;
+        }
+        
+        ::placeholder {
+            color: rgba(148, 163, 184, 0.5) !important;
         }
 
-        /* Bottom Navigation Bar Override */
+        /* --- 7. Navigation & Layout --- */
+        /* Bottom Navigation Bar */
         .fixed.bottom-0, nav[class*="fixed"], [class*="bottom-nav"] {
-            background: rgba(15, 23, 42, 0.7) !important;
-            backdrop-filter: blur(20px) !important;
-            -webkit-backdrop-filter: blur(20px) !important;
-            border-top: 1px solid rgba(255,255,255,0.05) !important;
-            padding-bottom: env(safe-area-inset-bottom) !important;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.3) !important;
+            background: rgba(15, 23, 42, 0.8) !important;
+            backdrop-filter: blur(25px) !important;
+            -webkit-backdrop-filter: blur(25px) !important;
+            border-top: 1px solid var(--glass-border) !important;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 10px) !important;
+            padding-top: 10px !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.4) !important;
+        }
+        
+        /* Active Nav Item Glow */
+        [class*="text-primary"], .text-blue-500, .text-indigo-500 {
+            color: #a78bfa !important; /* Lighter violet for better visibility on dark */
+            text-shadow: 0 0 15px rgba(167, 139, 250, 0.4);
         }
 
+        /* --- 8. Status & Indicators --- */
         /* Progress Bar */
         [role="progressbar"] > div, [class*="bg-blue-"], [class*="bg-indigo-"] {
-            background: linear-gradient(90deg, #22d3ee, #8b5cf6) !important;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.6) !important;
+            background: linear-gradient(90deg, #38bdf8, #818cf8) !important;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5) !important;
+            border-radius: 10px !important;
         }
 
-        /* Icons */
-        i, svg {
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-        }
-
-        /* App Container */
+        /* --- 9. App Container Layout --- */
         #root {
             flex: 1;
             z-index: 10;
             position: relative;
             width: 100%;
-            /* Center on desktop but keep full width on mobile */
-            max-width: 500px;
+            max-width: 500px; /* Mobile-first constraint */
             margin: 0 auto;
-            padding-bottom: 20px;
+            padding: 20px; /* More breathing room */
+            padding-bottom: 90px; /* Space for bottom nav */
         }
 
-        /* Modern Minimal Footer */
+        /* --- 10. Footer --- */
         .professional-footer {
             width: 100%;
             max-width: 500px;
             margin: 0 auto;
-            padding: 15px 0 25px;
+            padding: 20px 0 30px;
             text-align: center;
             font-size: 0.75rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--glass-border);
-            background: linear-gradient(to top, rgba(15,23,42,0.8), transparent);
-            backdrop-filter: blur(5px);
+            color: var(--text-secondary);
+            /* border-top: 1px solid var(--glass-border); */ /* Removed for cleaner look */
+            background: transparent;
+            position: relative;
+            z-index: 5;
         }
 
         .brand-link {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             text-decoration: none;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255,255,255,0.05);
+            padding: 10px 20px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255,255,255,0.03);
+            backdrop-filter: blur(5px);
         }
 
         .brand-link:hover {
             color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--glass-border);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .brand-name {
-            font-weight: 700;
-            background: linear-gradient(135deg, #e2e8f0, #a5b4fc);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Refined Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
-        /* Animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Animation Keyframes */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        .professional-footer {
-            animation: fadeIn 0.8s ease-out;
-        }
+        .professional-footer { animation: fadeIn 1s ease-out; }
     </style>
 
     <script>

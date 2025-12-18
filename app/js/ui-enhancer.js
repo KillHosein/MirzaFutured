@@ -223,9 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         /* Fade In Up Animation */
         .fade-in-up {
-            animation: fadeInUp 0.5s ease-out forwards;
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* More natural easing */
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
         }
 
         @keyframes fadeInUp {
@@ -233,6 +233,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+        
+        /* Hover lift effect for cards */
+        .card:hover, .list-item:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
         }
         
         /* Smooth Page Transition */
