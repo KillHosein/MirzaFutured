@@ -275,6 +275,24 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         }
         .btn-act:hover { transform: translateY(-2px); }
         
+        /* Back Button Style (Consistent with text.php) */
+        .btn-back-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #94a3b8;
+            padding: 8px 16px; border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.9rem;
+            text-decoration: none;
+        }
+        .btn-back-panel:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 25px -10px rgba(139, 92, 246, 0.4);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: #fff;
+            background: rgba(139, 92, 246, 0.15);
+        }
+        
         .btn-save { background: var(--neon-blue); color: #000; border: none; }
         .btn-save:hover { box-shadow: 0 0 20px var(--neon-blue); }
         
@@ -287,6 +305,32 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         .btn-ip { 
             position: absolute; left: 5px; top: 32px; height: 40px; 
             background: rgba(255,255,255,0.1); border:none; color:#fff; border-radius:10px;
+            padding: 0 15px; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-ip:hover { background: rgba(255,255,255,0.2); }
+
+        .btn-copy-field {
+            position: absolute; left: 5px; top: 32px; height: 40px; width: 40px;
+            background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 10px;
+            cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-copy-field:hover { background: rgba(255,255,255,0.2); color: var(--neon-green); }
+
+        /* File Input Style */
+        .file-input-wrapper {
+            position: relative; overflow: hidden; display: inline-block; width: 100%;
+            margin-bottom: 10px;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer;
+        }
+        .file-input-btn {
+            background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2);
+            color: #aaa; padding: 10px; border-radius: 12px; text-align: center;
+            width: 100%; transition: 0.3s; cursor: pointer;
+        }
+        .file-input-wrapper:hover .file-input-btn {
+            border-color: var(--neon-blue); color: #fff; background: rgba(0, 242, 255, 0.05);
         }
 
         /* --- Color Pickers --- */
@@ -360,9 +404,15 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                     پیکربندی کلی، فروشگاه و شخصی‌سازی
                 </p>
             </div>
-            <div class="info-pill">
-                <i class="fa-regular fa-calendar"></i>
-                <span><?php echo $todayDate; ?></span>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <a href="index.php" class="btn-back-panel" title="بازگشت به داشبورد">
+                    <i class="fa-solid fa-house"></i>
+                    <span style="margin-right:5px;">پنل اصلی</span>
+                </a>
+                <div class="info-pill">
+                    <i class="fa-regular fa-calendar"></i>
+                    <span><?php echo $todayDate; ?></span>
+                </div>
             </div>
         </header>
 
@@ -484,7 +534,15 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <p style="color:#aaa; margin-bottom:15px;">بازگردانی تنظیمات از فایل JSON:</p>
                         <form method="post">
                             <input type="hidden" name="action" value="import_settings">
-                            <textarea name="import_json" class="input-readable" style="height: 50px; padding-top:12px; margin-bottom:10px;" placeholder="کد JSON را اینجا جایگذاری کنید..."></textarea>
+                            
+                            <div class="file-input-wrapper">
+                                <div class="file-input-btn">
+                                    <i class="fa-solid fa-file-import"></i> انتخاب فایل JSON برای آپلود
+                                </div>
+                                <input type="file" id="importFile" accept=".json">
+                            </div>
+                            
+                            <textarea name="import_json" id="importJsonArea" class="input-readable" style="height: 100px; padding-top:12px; margin-bottom:10px;" placeholder="کد JSON را اینجا جایگذاری کنید..."></textarea>
                             <button type="submit" class="btn-act btn-danger-glow"><i class="fa-solid fa-upload"></i> بازگردانی</button>
                         </form>
                     </div>
