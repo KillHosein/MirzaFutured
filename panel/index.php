@@ -561,9 +561,9 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                         <i class="fa-solid fa-users-gear nt-icon"></i>
                         <span class="nt-label">کاربران</span>
                     </a>
-                    <a href="invoice.php" class="nav-tile">
+                    <a href="text.php" class="nav-tile">
                         <i class="fa-solid fa-file-invoice nt-icon"></i>
-                        <span class="nt-label">سفارشات</span>
+                        <span class="nt-label">تغییر متن های ربات</span>
                     </a>
                     <a href="product.php" class="nav-tile">
                         <i class="fa-solid fa-box-open nt-icon"></i>
