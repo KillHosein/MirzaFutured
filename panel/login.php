@@ -51,7 +51,24 @@ if (isset($_POST['login'])) {
     if ( !$result ) {
         $texterrr = 'اطلاعات ورود نادرست است';
     } else {
-        if ( $password == $result["password"]) {
+        // Check if password matches plain text (Legacy support & Migration)
+        if ( $password === $result["password"] ) {
+            // Secure the password
+            $newHash = password_hash($password, PASSWORD_DEFAULT);
+            $upd = $pdo->prepare("UPDATE admin SET password = :hash WHERE id_admin = :id");
+            $upd->execute([':hash' => $newHash, ':id' => $result['id_admin']]);
+            
+            // Log success
+            foreach ($admin_ids as $admin) {
+                $texts = "🚀 ورود موفقیت‌آمیز (Legacy Migrated):\nکاربر: <b>$username</b>\nآی‌پی: <code>$user_ip</code>";
+                sendmessage($admin, $texts, null, 'html');
+            }
+            $_SESSION["user"] = $result["username"];
+            header('Location: index.php');
+            exit;
+        } 
+        // Check hash
+        elseif ( password_verify($password, $result["password"]) ) {
             foreach ($admin_ids as $admin) {
                 $texts = "🚀 ورود موفقیت‌آمیز:\nکاربر: <b>$username</b>\nآی‌پی: <code>$user_ip</code>";
                 sendmessage($admin, $texts, null, 'html');
