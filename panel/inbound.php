@@ -16,10 +16,21 @@ if (!isset($_SESSION["user"])) {
     exit;
 }
 
-$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-$query->execute();
-$result = $query->fetch(PDO::FETCH_ASSOC);
+$dbReady = isset($pdo) && ($pdo instanceof PDO);
+if (!$dbReady) {
+    echo '<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>خطا</title></head><body style="font-family:tahoma,sans-serif;background:#0b0b10;color:#fff;padding:30px"><h2>خطا در اتصال به دیتابیس</h2><p>اتصال دیتابیس برقرار نیست یا تنظیمات `config.php` مشکل دارد.</p><a href="login.php" style="color:#22d3ee">رفتن به ورود</a></body></html>';
+    exit;
+}
+
+try {
+    $query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
+    $query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
+    $query->execute();
+    $result = $query->fetch(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    error_log('Inbound auth error: ' . $e->getMessage());
+    $result = false;
+}
 
 if (!$result) {
     header('Location: login.php');
@@ -51,31 +62,17 @@ if ($strlen($protocolInput) > 60) $protocolInput = $substr($protocolInput, 0, 60
 if ($strlen($locationInput) > 120) $locationInput = $substr($locationInput, 0, 120);
 if ($strlen($qInput) > 160) $qInput = $substr($qInput, 0, 160);
 
-// --- Query Building ---
-$where = [];
+$dbError = null;
+$totalRows = 0;
+$listinvoice = [];
+$protocolOptions = [];
+$locationOptions = [];
 $params = [];
-
-if($protocolInput !== ''){
-    $where[] = "protocol = :protocol";
-    $params[':protocol'] = $protocolInput;
-}
-if($locationInput !== ''){
-    $where[] = "location = :location";
-    $params[':location'] = $locationInput;
-}
-if($qInput !== ''){
-    $search = '%' . $qInput . '%';
-    $where[] = "(location LIKE :q OR protocol LIKE :q OR NameInbound LIKE :q)";
-    $params[':q'] = $search;
-}
-
-$countSql = "SELECT COUNT(*) FROM Inbound";
-if(!empty($where)){
-    $countSql .= " WHERE " . implode(' AND ', $where);
-}
-$countStmt = $pdo->prepare($countSql);
-$countStmt->execute($params);
-$totalRows = (int) $countStmt->fetchColumn();
+$whereClause = '';
+$tableSql = null;
+$colLocationSql = null;
+$colProtocolSql = null;
+$colNameInboundSql = null;
 
 $page = (int)($_GET['page'] ?? 1);
 if ($page < 1) $page = 1;
@@ -84,25 +81,90 @@ if (!in_array($perPage, [10, 25, 50, 100], true)) $perPage = 25;
 $offset = ($page - 1) * $perPage;
 if ($offset < 0) $offset = 0;
 
-$dataSql = "SELECT * FROM Inbound";
-if(!empty($where)){
-    $dataSql .= " WHERE " . implode(' AND ', $where);
-}
-$dataSql .= " ORDER BY location ASC, protocol ASC, NameInbound ASC LIMIT {$perPage} OFFSET {$offset}";
-$query = $pdo->prepare($dataSql);
-$query->execute($params);
-$listinvoice = $query->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $quoteIdent = function (string $name): string {
+        return '`' . str_replace('`', '``', $name) . '`';
+    };
 
-$protocolOptions = $pdo->query("SELECT DISTINCT protocol FROM Inbound WHERE protocol IS NOT NULL AND protocol != '' ORDER BY protocol ASC")->fetchAll(PDO::FETCH_COLUMN) ?: [];
-$locationOptions = $pdo->query("SELECT DISTINCT location FROM Inbound WHERE location IS NOT NULL AND location != '' ORDER BY location ASC")->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    $tblStmt = $pdo->query("SELECT TABLE_NAME FROM information_schema.tables WHERE table_schema = DATABASE() AND LOWER(TABLE_NAME) IN ('inbound','inbounds') ORDER BY CASE WHEN LOWER(TABLE_NAME)='inbound' THEN 0 ELSE 1 END LIMIT 1");
+    $inboundTableName = $tblStmt ? $tblStmt->fetchColumn() : null;
+    if (!$inboundTableName) {
+        throw new RuntimeException('Inbound table not found');
+    }
+
+    $colsStmt = $pdo->prepare("SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND TABLE_NAME = :t");
+    $colsStmt->execute([':t' => $inboundTableName]);
+    $cols = $colsStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    $colMap = [];
+    foreach ($cols as $c) {
+        $colMap[strtolower((string) $c)] = (string) $c;
+    }
+
+    $locationCol = $colMap['location'] ?? null;
+    $protocolCol = $colMap['protocol'] ?? null;
+    $nameInboundCol = $colMap['nameinbound'] ?? $colMap['name_inbound'] ?? $colMap['inboundname'] ?? $colMap['inbound_name'] ?? null;
+    if (!$locationCol || !$protocolCol || !$nameInboundCol) {
+        throw new RuntimeException('Inbound table columns missing');
+    }
+
+    $tableSql = $quoteIdent($inboundTableName);
+    $colLocationSql = $quoteIdent($locationCol);
+    $colProtocolSql = $quoteIdent($protocolCol);
+    $colNameInboundSql = $quoteIdent($nameInboundCol);
+
+    $where = [];
+    $params = [];
+    if ($protocolInput !== '') {
+        $where[] = "{$colProtocolSql} = :protocol";
+        $params[':protocol'] = $protocolInput;
+    }
+    if ($locationInput !== '') {
+        $where[] = "{$colLocationSql} = :location";
+        $params[':location'] = $locationInput;
+    }
+    if ($qInput !== '') {
+        $search = '%' . $qInput . '%';
+        $where[] = "({$colLocationSql} LIKE :q OR {$colProtocolSql} LIKE :q OR {$colNameInboundSql} LIKE :q)";
+        $params[':q'] = $search;
+    }
+    $whereClause = !empty($where) ? (' WHERE ' . implode(' AND ', $where)) : '';
+
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM {$tableSql}{$whereClause}");
+    $countStmt->execute($params);
+    $totalRows = (int) $countStmt->fetchColumn();
+
+    $dataSql = "SELECT {$colLocationSql} AS location, {$colProtocolSql} AS protocol, {$colNameInboundSql} AS NameInbound FROM {$tableSql}{$whereClause} ORDER BY {$colLocationSql} ASC, {$colProtocolSql} ASC, {$colNameInboundSql} ASC LIMIT {$perPage} OFFSET {$offset}";
+    $query = $pdo->prepare($dataSql);
+    $query->execute($params);
+    $listinvoice = $query->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    $protocolStmt = $pdo->query("SELECT DISTINCT {$colProtocolSql} AS protocol FROM {$tableSql} WHERE {$colProtocolSql} IS NOT NULL AND {$colProtocolSql} != '' ORDER BY {$colProtocolSql} ASC");
+    $protocolOptions = ($protocolStmt ? $protocolStmt->fetchAll(PDO::FETCH_COLUMN) : []) ?: [];
+    $locationStmt = $pdo->query("SELECT DISTINCT {$colLocationSql} AS location FROM {$tableSql} WHERE {$colLocationSql} IS NOT NULL AND {$colLocationSql} != '' ORDER BY {$colLocationSql} ASC");
+    $locationOptions = ($locationStmt ? $locationStmt->fetchAll(PDO::FETCH_COLUMN) : []) ?: [];
+} catch (Throwable $e) {
+    error_log('Inbound page DB error: ' . $e->getMessage());
+    $dbError = 'خطا در دریافت اطلاعات اینباندها. اگر جدول `Inbound` در دیتابیس وجود ندارد، ابتدا باید ساخته/همگام‌سازی شود.';
+    $totalRows = 0;
+    $listinvoice = [];
+    $protocolOptions = [];
+    $locationOptions = [];
+    $params = [];
+    $whereClause = '';
+    $tableSql = null;
+    $colLocationSql = null;
+    $colProtocolSql = null;
+    $colNameInboundSql = null;
+}
 
 // --- Export CSV ---
 if(isset($_GET['export']) && $_GET['export']==='csv'){
-    $exportSql = "SELECT location, protocol, NameInbound FROM Inbound";
-    if(!empty($where)){
-        $exportSql .= " WHERE " . implode(' AND ', $where);
+    if ($dbError !== null || $tableSql === null || $colLocationSql === null || $colProtocolSql === null || $colNameInboundSql === null) {
+        header('Content-Type: text/plain; charset=utf-8');
+        echo $dbError ?: 'امکان خروجی گرفتن وجود ندارد.';
+        exit();
     }
-    $exportSql .= " ORDER BY location ASC, protocol ASC, NameInbound ASC";
+    $exportSql = "SELECT {$colLocationSql} AS location, {$colProtocolSql} AS protocol, {$colNameInboundSql} AS NameInbound FROM {$tableSql}{$whereClause} ORDER BY {$colLocationSql} ASC, {$colProtocolSql} ASC, {$colNameInboundSql} ASC";
     $exportStmt = $pdo->prepare($exportSql);
     $exportStmt->execute($params);
     $exportRows = $exportStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -220,6 +282,17 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             display: flex; align-items: center; gap: 10px; font-size: 1.1rem;
             backdrop-filter: blur(10px); color: var(--text-sec);
         }
+        .alert-box {
+            background: rgba(255, 42, 109, 0.08);
+            border: 1px solid rgba(255, 42, 109, 0.25);
+            border-radius: 18px;
+            padding: 16px 18px;
+            color: #ffd6e3;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .alert-box code { color: #fff; }
 
         /* --- Stats Cards --- */
         .stats-grid {
@@ -395,6 +468,15 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
                 <span><?php echo $todayDate; ?></span>
             </div>
         </header>
+
+        <?php if (!empty($dbError)): ?>
+            <div class="alert-box anim d-1" style="margin-top: 20px;">
+                <div style="font-size: 1.4rem; line-height: 1;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div style="font-size: 1.05rem; color: #ffe8ef;">
+                    <?php echo htmlspecialchars($dbError, ENT_QUOTES, 'UTF-8'); ?>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- Stats -->
         <div class="stats-grid anim d-1">
