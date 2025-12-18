@@ -226,48 +226,116 @@ $config = [
         }
         p, .text-sm { color: var(--text-muted) !important; }
 
-        /* --- 5. Modern Buttons --- */
+        /* --- 5. Modern Buttons (Neumorphic Glass) --- */
         button, .btn {
             font-family: 'Vazirmatn', sans-serif !important;
             font-weight: 700 !important;
-            border-radius: 12px !important;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            border-radius: 16px !important; /* Softer corners */
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
         }
         
-        button:active, .btn:active { transform: scale(0.92) !important; }
-
-        /* Primary Button (Neon Gradient) */
-        [class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
-            background: linear-gradient(135deg, var(--primary-glow), var(--accent-purple)) !important;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4) !important;
-            border: 1px solid rgba(255,255,255,0.1) !important;
-            color: white !important;
+        button:active, .btn:active { 
+            transform: scale(0.94) translateY(2px) !important; 
         }
 
-        /* --- 6. Form Inputs --- */
+        /* Primary Button (Neon Gradient + Inner Glow) */
+        [class*="bg-primary"], .bg-blue-600, .bg-indigo-600 {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.9), rgba(168, 85, 247, 0.9)) !important;
+            box-shadow: 
+                0 4px 15px rgba(79, 70, 229, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 5px rgba(0, 0, 0, 0.2) !important;
+            border: 1px solid rgba(255,255,255,0.15) !important;
+            color: white !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        [class*="bg-primary"]:hover, .bg-blue-600:hover {
+            box-shadow: 
+                0 8px 25px rgba(79, 70, 229, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Secondary/Ghost Buttons */
+        .bg-transparent, .border {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: var(--text-muted) !important;
+        }
+        .bg-transparent:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border-color: var(--accent-cyan) !important;
+        }
+
+        /* --- 6. Form Inputs (Animated Borders) --- */
         input, textarea, select {
-            background: rgba(0, 0, 0, 0.3) !important;
+            background: rgba(15, 23, 42, 0.6) !important;
             border: 1px solid var(--glass-border) !important;
-            border-radius: 12px !important;
+            border-radius: 16px !important;
             color: white !important;
             transition: all 0.3s ease !important;
+            padding: 14px 16px !important;
+            font-size: 15px !important;
         }
-        input:focus {
+        input:focus, textarea:focus, select:focus {
             border-color: var(--accent-cyan) !important;
-            box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2) !important;
-            background: rgba(0, 0, 0, 0.5) !important;
+            box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15) !important;
+            background: rgba(15, 23, 42, 0.9) !important;
+            transform: translateY(-2px);
         }
 
-        /* --- 7. Layout --- */
-        #root {
+        /* --- 7. Floating Bottom Navigation (Island Dock) --- */
+        .fixed.bottom-0, nav[class*="fixed"], [class*="bottom-nav"] {
+            /* Reset default full-width styles */
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            bottom: 20px !important; /* Floating effect */
+            width: 90% !important;
+            max-width: 400px !important;
+            border-radius: 24px !important;
+            
+            /* Glassmorphism */
+            background: rgba(10, 10, 20, 0.75) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            
+            /* Glow & Shadow */
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(255,255,255,0.05) !important;
+                
+            padding: 10px 20px !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            align-items: center !important;
+            z-index: 999 !important;
+        }
+        
+        /* Active Nav Item */
+        [class*="text-primary"], .text-blue-500, .text-indigo-500 {
+            color: var(--accent-cyan) !important;
             position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 480px; /* Mobile width */
-            margin: 0 auto;
-            padding: 20px;
-            padding-bottom: 100px;
+        }
+        /* Active Indicator Dot */
+        [class*="text-primary"]::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-cyan);
         }
 
         /* --- 8. Footer --- */
