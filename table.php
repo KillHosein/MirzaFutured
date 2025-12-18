@@ -1462,6 +1462,42 @@ try {
     file_put_contents('error_log', $e->getMessage());
 }
 
+//----------------------- [ Inbound & X-UI ] --------------------- //
+try {
+    $result = $connect->query("SHOW TABLES LIKE 'Inbound'");
+    $table_exists = ($result->num_rows > 0);
+    if (!$table_exists) {
+        $result = $connect->query("CREATE TABLE Inbound (
+            id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            location VARCHAR(200) NULL,
+            protocol VARCHAR(50) NULL,
+            nameinbound VARCHAR(200) NULL,
+            setting TEXT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci");
+        if (!$result) {
+             echo "table Inbound" . mysqli_error($connect);
+        }
+    }
+} catch (Exception $e) {
+    file_put_contents('error_log Inbound', $e->getMessage());
+}
+
+try {
+    $result = $connect->query("SHOW TABLES LIKE 'x_ui'");
+    $table_exists = ($result->num_rows > 0);
+    if (!$table_exists) {
+        $result = $connect->query("CREATE TABLE x_ui (
+            codepanel VARCHAR(200) PRIMARY KEY,
+            setting TEXT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci");
+        if (!$result) {
+             echo "table x_ui" . mysqli_error($connect);
+        }
+    }
+} catch (Exception $e) {
+    file_put_contents('error_log x_ui', $e->getMessage());
+}
+
 
 
 $balancemain = json_decode(select("PaySetting", "ValuePay", "NamePay", "maxbalance", "select")['ValuePay'], true);
