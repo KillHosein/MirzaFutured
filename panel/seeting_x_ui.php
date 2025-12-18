@@ -30,6 +30,12 @@ try {
     exit;
 }
 
+$dbReady = isset($pdo) && ($pdo instanceof PDO);
+if (!$dbReady) {
+    echo '<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>خطا</title></head><body style="font-family:tahoma,sans-serif;background:#0b0b10;color:#fff;padding:30px"><h2>خطا در اتصال به دیتابیس</h2><p>اتصال دیتابیس برقرار نیست یا تنظیمات `config.php` مشکل دارد.</p><a href="login.php" style="color:#22d3ee">رفتن به ورود</a></body></html>';
+    exit;
+}
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -54,15 +60,20 @@ function isValidCsrfToken($token)
 function fetchXuiPanelRow($codepanel)
 {
     global $pdo;
-    $stmt = $pdo->prepare("SELECT x_ui.codepanel, x_ui.setting, marzban_panel.name_panel 
-        FROM x_ui 
-        LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
-        WHERE x_ui.codepanel = :codepanel
-        LIMIT 1");
-    $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
-    $stmt->execute();
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row ?: null;
+    try {
+        $stmt = $pdo->prepare("SELECT x_ui.codepanel, x_ui.setting, marzban_panel.name_panel 
+            FROM x_ui 
+            LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
+            WHERE x_ui.codepanel = :codepanel
+            LIMIT 1");
+        $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    } catch (Throwable $e) {
+        error_log('XUI fetch row error: ' . $e->getMessage());
+        return null;
+    }
 }
 
 /**
@@ -73,18 +84,29 @@ function fetchXuiPanelRow($codepanel)
 function saveXuiPanelSetting($codepanel, $normalizedJson)
 {
     global $pdo;
-    $stmt = $pdo->prepare("UPDATE x_ui SET setting = :setting WHERE codepanel = :codepanel");
-    $stmt->bindParam(':setting', $normalizedJson, PDO::PARAM_STR);
-    $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
-    $stmt->execute();
+    try {
+        $stmt = $pdo->prepare("UPDATE x_ui SET setting = :setting WHERE codepanel = :codepanel");
+        $stmt->bindParam(':setting', $normalizedJson, PDO::PARAM_STR);
+        $stmt->bindParam(':codepanel', $codepanel, PDO::PARAM_STR);
+        $stmt->execute();
+        return true;
+    } catch (Throwable $e) {
+        error_log('XUI save setting error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 // --- Fetch X-UI Panels ---
-$panelsStmt = $pdo->query("SELECT x_ui.codepanel, marzban_panel.name_panel
-    FROM x_ui
-    LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
-    ORDER BY COALESCE(marzban_panel.name_panel, x_ui.codepanel) ASC");
-$resultpanel = $panelsStmt ? ($panelsStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+try {
+    $panelsStmt = $pdo->query("SELECT x_ui.codepanel, marzban_panel.name_panel
+        FROM x_ui
+        LEFT JOIN marzban_panel ON marzban_panel.code_panel = x_ui.codepanel
+        ORDER BY COALESCE(marzban_panel.name_panel, x_ui.codepanel) ASC");
+    $resultpanel = $panelsStmt ? ($panelsStmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+} catch (Throwable $e) {
+    error_log('XUI list panels error: ' . $e->getMessage());
+    $resultpanel = [];
+}
 
 $action = isset($_GET['action']) ? (string) $_GET['action'] : '';
 $alert = null;
@@ -151,9 +173,12 @@ if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $alert = ['type' => 'danger', 'message' => 'ذخیره‌سازی JSON با خطا مواجه شد.'];
                     $action = 'change';
                 } else {
-                    saveXuiPanelSetting($selectedPanel, $normalized);
-                    header('Location: setting_x_ui.php?action=change&namepanel=' . rawurlencode($selectedPanel) . '&saved=1');
-                    exit;
+                    if (saveXuiPanelSetting($selectedPanel, $normalized)) {
+                        header('Location: setting_x_ui.php?action=change&namepanel=' . rawurlencode($selectedPanel) . '&saved=1');
+                        exit;
+                    }
+                    $alert = ['type' => 'danger', 'message' => 'ذخیره‌سازی با خطا مواجه شد.'];
+                    $action = 'change';
                 }
             }
         }
