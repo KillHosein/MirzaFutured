@@ -5,6 +5,9 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error_log.txt');
 error_reporting(E_ALL);
 
+// تنظیم منطقه زمانی برای حل مشکل تاریخ
+date_default_timezone_set('Asia/Tehran');
+
 session_start();
 
 // --- لایه وابستگی‌ها ---
@@ -14,7 +17,8 @@ if (file_exists('../jdf.php')) require_once '../jdf.php';
 $isConnected = isset($pdo) && ($pdo instanceof PDO);
 
 // --- تنظیمات زمانی ---
-$dateYesterday = time() - 86400;
+// تغییر از ۲۴ ساعت گذشته به "بامداد امروز" برای دقت بیشتر در آمار روزانه
+$startOfToday = strtotime('today'); 
 $filterFrom = isset($_GET['from']) ? $_GET['from'] : null;
 $filterTo = isset($_GET['to']) ? $_GET['to'] : null;
 $filterStatus = isset($_GET['status']) ? $_GET['status'] : [];
@@ -71,8 +75,9 @@ if ($isConnected) {
 
         $stats['users'] = $pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
 
+        // اصلاح: شمارش کاربران از ابتدای امروز (ساعت ۰۰:۰۰)
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM user WHERE register >= :ts AND register != 'none'");
-        $stmt->execute([':ts' => $dateYesterday]);
+        $stmt->execute([':ts' => $startOfToday]);
         $stats['new_users'] = $stmt->fetchColumn();
 
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM invoice WHERE $whereSql AND status != 'unpaid'");
@@ -171,7 +176,7 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         :root {
             /* Theme Core: Deep Void & Electric Accents */
             --bg-body: #050509;
-            --bg-card: rgba(15, 15, 20, 0.7); /* کمی شفاف‌تر برای دیده شدن بهتر پس‌زمینه */
+            --bg-card: rgba(15, 15, 20, 0.7); 
             --bg-card-hover: rgba(35, 35, 45, 0.85);
             
             /* Neons */
@@ -200,7 +205,6 @@ $today = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
         body {
-            /* تنظیم پس‌زمینه متحرک */
             background-color: var(--bg-body);
             background-image: linear-gradient(rgba(5, 5, 9, 0.6), rgba(5, 5, 9, 0.6)), url('https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzcXV2dzN2N2J2ZjFmNHJndXIzcXV2dzN2N2J2ZjFmNHJndXImZXA9djFfaW50ZXJuYWxfZ2lmX2J5X2lkJmN0PWc/3o7TKVUn7iM8FMEU24/giphy.gif');
             background-size: cover;
