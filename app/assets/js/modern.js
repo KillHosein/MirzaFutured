@@ -38,13 +38,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             API.setToken(token);
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
+            Router.init();
         } else {
-             // Show Auth Error if we really can't find it
-             // But Router.init() will trigger Pages.home() which calls API.request()
-             // API.request() will try to find token again or fail.
+             // Show Login Modal
+             UI.showLogin((token) => {
+                 API.setToken(token);
+                 location.reload();
+             });
         }
+    } else {
+        // Initialize Router
+        Router.init();
     }
-
-    // Initialize Router
-    Router.init();
 });

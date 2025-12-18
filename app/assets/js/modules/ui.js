@@ -136,5 +136,48 @@ export const UI = {
             close();
             onConfirm(customUsername, customNote);
         };
+    },
+
+    showLogin(onLogin) {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md fade-in';
+        modal.innerHTML = `
+            <div class="bg-gray-800 border border-gray-700 rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center mx-auto mb-4">
+                        <i class="ph ph-lock-key text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-2">احراز هویت</h2>
+                    <p class="text-gray-400 text-sm">لطفا توکن دسترسی خود را وارد کنید</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <input type="text" id="login-token" 
+                            class="w-full bg-gray-900 text-white text-center tracking-wider font-mono rounded-xl py-3 px-4 border border-gray-700 focus:border-blue-500 focus:outline-none transition-colors" 
+                            placeholder="Example: 123456789...">
+                    </div>
+                    <button id="login-submit" class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20">
+                        ورود به پنل
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const submit = () => {
+            const token = document.getElementById('login-token').value.trim();
+            if (token) {
+                onLogin(token);
+                modal.remove();
+            } else {
+                this.toast('لطفا توکن را وارد کنید', 'error');
+            }
+        };
+
+        document.getElementById('login-submit').onclick = submit;
+        document.getElementById('login-token').onkeypress = (e) => {
+            if (e.key === 'Enter') submit();
+        };
     }
 };

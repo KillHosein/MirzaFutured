@@ -68,6 +68,16 @@ export const API = {
             // Handle 401/403 (Auth failed)
             if (res.status === 401 || res.status === 403) {
                 console.error('Authentication failed');
+                localStorage.removeItem('app_token');
+                // We rely on modern.js init logic to show login on reload,
+                // OR we can throw error and let UI handle it. 
+                // But simple reload is safest to reset state.
+                // However, reload might cause loop if server always returns 401.
+                // So let's throw, and rely on caller to show error, or redirect.
+                // Better: Just clear token and let user know.
+                
+                // If we are in the main app flow, we might want to trigger login.
+                // For now, let's just throw, but ensure token is gone.
                 throw new Error('Unauthorized');
             }
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
