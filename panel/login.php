@@ -1,7 +1,8 @@
 <?php
 /**
- * Login Page - Cosmic Glass Edition (Ultimate)
- * Professional Animations & Centered Layout
+ * Login Page - Nebula Pro Edition
+ * Professional Animations, Moving Background & Glassmorphism Pro
+ * Designed for MirzaBot Studio
  */
 
 ini_set('session.cookie_httponly', true);
@@ -50,9 +51,8 @@ if (isset($_POST['login'])) {
         $texterrr = 'نام کاربری یا رمزعبور اشتباه است';
     } else {
         if ( $password == $result["password"]) {
-            // Send Notification
             foreach ($admin_ids as $admin) {
-                $texts = "⚠️ هشدار امنیتی:\nکاربری با نام <b>$username</b> و آی‌پی <code>$user_ip</code> وارد پنل مدیریت شد.";
+                $texts = "🔐 ورود به پنل:\nمدیر: <b>$username</b>\nآی‌پی: <code>$user_ip</code>";
                 sendmessage($admin, $texts, null, 'html');
             }
             $_SESSION["user"] = $result["username"];
@@ -69,239 +69,243 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ورود به پنل مدیریت | MirzaBot</title>
+    <title>ورود به مدیریت | MirzaBot</title>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
     <style>
         :root {
-            --bg-deep: #0f172a;
-            --primary: #6366f1; /* Indigo 500 */
-            --primary-glow: rgba(99, 102, 241, 0.6);
-            --accent: #d946ef; /* Fuchsia 500 */
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-surface: rgba(15, 23, 42, 0.7);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --secondary: #d946ef;
+            --secondary-glow: rgba(217, 70, 239, 0.3);
+            --bg-dark: #020617;
+            --text-silver: #e2e8f0;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-deep);
-            color: var(--text-main);
+            background-color: var(--bg-dark);
             height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; margin: 0;
-            position: relative;
-        }
-
-        /* --- ADVANCED ANIMATED BACKGROUND --- */
-        .universe {
-            position: fixed; inset: 0; z-index: -2;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
-        }
-        
-        /* Floating Orbs Animation */
-        .orb {
-            position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6;
-            animation: floatOrb 10s infinite ease-in-out alternate;
-        }
-        .orb-1 { width: 400px; height: 400px; background: var(--primary); top: -100px; left: -100px; animation-delay: 0s; }
-        .orb-2 { width: 300px; height: 300px; background: var(--accent); bottom: -50px; right: -50px; animation-delay: -2s; }
-        .orb-3 { width: 200px; height: 200px; background: #3b82f6; top: 40%; left: 40%; opacity: 0.3; animation: pulseOrb 8s infinite; }
-
-        @keyframes floatOrb {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(30px, 50px); }
-        }
-        @keyframes pulseOrb {
-            0%, 100% { transform: scale(1); opacity: 0.3; }
-            50% { transform: scale(1.2); opacity: 0.5; }
+            color: var(--text-silver);
         }
 
-        /* --- LOGIN CARD --- */
-        .glass-card {
-            width: 100%; max-width: 400px;
-            background: rgba(17, 25, 40, 0.75);
-            backdrop-filter: blur(16px) saturate(180%);
-            -webkit-backdrop-filter: blur(16px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.125);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            position: relative; z-index: 10;
-            animation: zoomIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-            transform-style: preserve-3d;
-        }
-        
-        /* Gradient Border Trick */
-        .glass-card::before {
-            content: ''; position: absolute; inset: 0; border-radius: 24px; padding: 1px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+        /* --- ADVANCED NEBULA BACKGROUND --- */
+        .background-container {
+            position: fixed; inset: 0; z-index: -10;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
         }
 
-        .logo-container {
-            display: flex; justify-content: center; margin-bottom: 25px;
+        .nebula {
+            position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.25;
+            animation: moveNebula 25s infinite alternate ease-in-out;
         }
-        .logo-circle {
-            width: 90px; height: 90px;
+        .nebula-1 { width: 600px; height: 600px; background: var(--primary); top: -10%; left: -10%; }
+        .nebula-2 { width: 500px; height: 500px; background: var(--secondary); bottom: -10%; right: -10%; animation-delay: -5s; }
+        .nebula-3 { width: 400px; height: 400px; background: #3b82f6; top: 40%; left: 30%; animation-delay: -10s; }
+
+        @keyframes moveNebula {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 80px) scale(1.1); }
+        }
+
+        .stars {
+            position: absolute; inset: 0;
+            background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+            opacity: 0.3; animation: starTwinkle 100s linear infinite;
+        }
+        @keyframes starTwinkle { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
+
+        /* --- GLASSMOPHISM PRO CARD --- */
+        .glass-box {
+            width: 100%; max-width: 410px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            border-radius: 30px;
+            padding: 45px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.6),
+                inset 0 0 1px 1px rgba(255, 255, 255, 0.1);
+            position: relative;
+            animation: zoomIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 50;
+        }
+
+        .logo-glow-container {
+            display: flex; justify-content: center; margin-bottom: 30px;
+        }
+        .logo-main {
+            width: 95px; height: 95px;
             background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(217,70,239,0.2));
-            border-radius: 50%; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 28px; border: 1px solid rgba(255,255,255,0.1);
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 40px var(--primary-glow);
-            animation: floatLogo 6s ease-in-out infinite;
+            box-shadow: 0 0 35px var(--primary-glow);
+            animation: float 6s ease-in-out infinite;
         }
-        .logo-circle i { font-size: 40px; color: #fff; text-shadow: 0 0 15px var(--primary); }
+        .logo-main i { font-size: 42px; color: #fff; filter: drop-shadow(0 0 12px var(--primary)); }
 
-        @keyframes floatLogo {
+        @keyframes float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-12px); }
         }
 
-        /* --- INPUTS --- */
-        .input-box { position: relative; margin-bottom: 20px; }
-        .input-field {
+        /* --- INPUT STYLING --- */
+        .field-group { position: relative; margin-bottom: 22px; }
+        .input-item {
             width: 100%;
-            background: rgba(30, 41, 59, 0.5);
-            border: 2px solid rgba(255,255,255,0.05);
-            border-radius: 14px;
-            padding: 14px 45px 14px 15px;
-            color: white; font-family: inherit; font-size: 14px;
-            transition: all 0.3s; outline: none;
+            background: rgba(2, 6, 23, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 15px 48px 15px 16px;
+            color: #fff; font-family: inherit; font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
         }
-        .input-field:focus {
-            background: rgba(30, 41, 59, 0.8);
+        .input-item:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+            background: rgba(2, 6, 23, 0.7);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), inset 0 0 5px rgba(255,255,255,0.05);
+            transform: scale(1.01);
         }
-        .field-icon {
-            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-            color: var(--text-muted); transition: 0.3s;
+        .item-icon {
+            position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); transition: 0.3s; pointer-events: none;
         }
-        .input-field:focus + .field-icon { color: var(--primary); }
+        .input-item:focus + .item-icon { color: var(--primary); transform: translateY(-50%) scale(1.1); }
 
         /* --- BUTTON --- */
-        .btn-submit {
-            width: 100%; padding: 14px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            color: white; border: none; border-radius: 14px;
-            font-weight: 700; font-size: 15px; cursor: pointer;
-            box-shadow: 0 5px 20px rgba(99, 102, 241, 0.4);
-            transition: all 0.3s; margin-top: 10px;
+        .btn-modern {
+            width: 100%; padding: 15px;
+            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            color: #fff; border: none; border-radius: 18px;
+            font-weight: 800; font-size: 16px; cursor: pointer;
+            box-shadow: 0 8px 25px var(--primary-glow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative; overflow: hidden;
         }
-        .btn-submit::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: 0.5s;
+        .btn-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 35px var(--primary-glow);
+            filter: brightness(1.1);
         }
-        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(99, 102, 241, 0.6); }
-        .btn-submit:hover::after { left: 100%; }
+        .btn-modern:active { transform: translateY(-1px) scale(0.98); }
+        .btn-modern::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.6s; transform: skewX(-25deg);
+        }
+        .btn-modern:hover::before { left: 150%; }
 
-        /* --- CREDIT --- */
-        .credit-link {
-            display: block; text-align: center; margin-top: 25px;
-            font-size: 11px; color: rgba(255,255,255,0.4);
-            transition: 0.3s; text-decoration: none;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 15px;
+        /* --- CREDITS --- */
+        .dev-footer {
+            margin-top: 35px; text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 20px;
         }
-        .credit-link:hover { color: white; text-shadow: 0 0 10px white; }
-        .credit-link i { margin-left: 4px; color: #0088cc; }
+        .dev-link {
+            text-decoration: none; color: rgba(255,255,255,0.4);
+            font-size: 11px; transition: 0.3s; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .dev-link:hover { color: var(--text-silver); text-shadow: 0 0 8px white; }
+        .dev-link strong { color: var(--primary); }
 
-        /* --- ERROR & IP --- */
-        .err-msg {
-            background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5; padding: 12px; border-radius: 12px;
-            font-size: 13px; text-align: center; margin-bottom: 20px;
-            animation: headShake 0.8s;
+        /* --- ERROR & IP ALERTS --- */
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5; padding: 12px; border-radius: 14px;
+            font-size: 13px; text-align: center; margin-bottom: 22px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            animation: headShake 0.6s;
         }
-        .ip-display {
-            background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2);
-            padding: 10px; border-radius: 10px; font-family: monospace; letter-spacing: 1px;
-            margin-top: 10px; color: #a5b4fc; display: inline-block;
+        .ip-box {
+            background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,255,255,0.15);
+            padding: 10px 20px; border-radius: 12px; font-family: monospace; letter-spacing: 1.5px;
+            margin-top: 15px; color: #67e8f9; font-weight: bold; display: inline-block;
         }
     </style>
 </head>
-
 <body>
 
-    <!-- Background Elements -->
-    <div class="universe">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
+    <!-- Background Layers -->
+    <div class="background-container">
+        <div class="stars"></div>
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+        <div class="nebula nebula-3"></div>
     </div>
 
-    <div class="container mx-auto px-4 flex justify-center items-center h-full">
+    <!-- Main Wrapper -->
+    <div class="px-6 flex items-center justify-center min-h-screen w-full relative">
         
-        <!-- BLOCK VIEW -->
         <?php if(!$check_ip): ?>
-        <div class="glass-card text-center">
-            <div class="logo-container">
-                <div class="logo-circle" style="border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.1); box-shadow: 0 0 30px rgba(239,68,68,0.4);">
-                    <i class="fa-solid fa-shield-halved text-red-400"></i>
+        <!-- RESTRICTED ACCESS -->
+        <div class="glass-box text-center">
+            <div class="logo-glow-container">
+                <div class="logo-main" style="border-color: rgba(239,68,68,0.3); box-shadow: 0 0 35px rgba(239,68,68,0.3);">
+                    <i class="fa-solid fa-user-shield text-rose-400"></i>
                 </div>
             </div>
-            
-            <h2 class="text-2xl font-bold text-white mb-2 animate__animated animate__fadeInDown">دسترسی محدود شده</h2>
-            <p class="text-slate-400 text-sm mb-6 leading-6 animate__animated animate__fadeIn">
-                دسترسی آی‌پی شما به پنل مدیریت مسدود است.<br>
-                برای رفع این مشکل، وارد ربات شده و آی‌پی زیر را در بخش تنظیمات تایید کنید.
+            <h2 class="text-2xl font-bold text-white mb-3">دسترسی محدود</h2>
+            <p class="text-slate-400 text-sm leading-7 mb-6">
+                آی‌پی شما در لیست سفید قرار ندارد.<br>
+                لطفاً آی‌پی زیر را در تنظیمات ربات ثبت کنید:
             </p>
-            
-            <div class="ip-display animate__animated animate__pulse animate__infinite" dir="ltr"><?php echo $user_ip; ?></div>
-            
-            <a href="https://t.me/KillHosein" class="credit-link">
-                طراحی شده توسط <i class="fa-brands fa-telegram"></i> KillHosein
-            </a>
+            <div class="ip-box animate__animated animate__pulse animate__infinite"><?php echo $user_ip; ?></div>
+            <div class="dev-footer">
+                <a href="https://t.me/KillHosein" class="dev-link" target="_blank">
+                    Developed by <i class="fa-brands fa-telegram text-sky-500"></i> <strong>KillHosein</strong>
+                </a>
+            </div>
         </div>
-        <?php endif; ?>
-
-        <!-- LOGIN VIEW -->
-        <?php if($check_ip): ?>
-        <div class="glass-card">
+        <?php else: ?>
+        <!-- LOGIN FORM -->
+        <div class="glass-box">
             <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-                <div class="logo-container">
-                    <div class="logo-circle">
-                        <i class="fa-solid fa-fingerprint"></i>
+                <div class="logo-glow-container">
+                    <div class="logo-main">
+                        <i class="fa-solid fa-lock-open"></i>
                     </div>
                 </div>
                 
-                <h2 class="text-center text-2xl font-bold text-white mb-1">خوش‌آمدید</h2>
-                <p class="text-center text-xs text-indigo-300 mb-6 uppercase tracking-[3px] opacity-70">Admin Panel</p>
+                <h2 class="text-center text-2xl font-black text-white mb-1">ورود به پنل</h2>
+                <p class="text-center text-[10px] text-indigo-400 uppercase tracking-[4px] mb-8 opacity-80">MirzaBot Management</p>
 
                 <?php if(!empty($texterrr)): ?>
-                <div class="err-msg">
-                    <i class="fa-solid fa-triangle-exclamation ml-1"></i> <?php echo $texterrr; ?>
+                <div class="alert-error">
+                    <i class="fa-solid fa-circle-exclamation"></i> <?php echo $texterrr; ?>
                 </div>
                 <?php endif; ?>
 
-                <div class="input-box">
-                    <input type="text" name="username" class="input-field" placeholder="نام کاربری" required autofocus autocomplete="off">
-                    <i class="fa-regular fa-user field-icon"></i>
+                <div class="field-group">
+                    <input type="text" name="username" class="input-item" placeholder="نام کاربری" required autofocus autocomplete="off">
+                    <i class="fa-solid fa-user-ninja item-icon"></i>
                 </div>
 
-                <div class="input-box">
-                    <input type="password" name="password" class="input-field" placeholder="رمز عبور" required>
-                    <i class="fa-solid fa-lock field-icon"></i>
+                <div class="field-group">
+                    <input type="password" name="password" class="input-item" placeholder="رمز عبور" required>
+                    <i class="fa-solid fa-key item-icon"></i>
                 </div>
 
-                <button class="btn-submit" name="login" type="submit">
-                    ورود به پنل <i class="fa-solid fa-arrow-left mr-2"></i>
+                <button class="btn-modern" name="login" type="submit">
+                    تایید و ورود <i class="fa-solid fa-arrow-left-long mr-2"></i>
                 </button>
 
-                <a href="https://t.me/KillHosein" class="credit-link" target="_blank">
-                    طراحی و توسعه توسط <span class="font-bold text-indigo-400">KillHosein</span>
-                    <i class="fa-brands fa-telegram"></i>
-                </a>
+                <div class="dev-footer">
+                    <a href="https://t.me/KillHosein" class="dev-link" target="_blank">
+                        طراحی و توسعه توسط <i class="fa-brands fa-telegram text-sky-500"></i> <strong>KillHosein</strong>
+                    </a>
+                </div>
             </form>
         </div>
         <?php endif; ?>
