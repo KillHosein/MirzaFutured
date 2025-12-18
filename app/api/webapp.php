@@ -1,136 +1,157 @@
 <?php
-require_once '../../config.php';
-require_once '../../function.php';
+// Ensure we are in the API directory context but can access root files
+chdir(__DIR__);
 
-header('Content-Type: application/json');
+// Fix for relative paths in required files
+// We need to move up to the root directory to include config and function properly
+// Because function.php uses relative paths like 'vendor/autoload.php' assuming it's in root
+chdir('../../');
 
-function sendJson($payload, $statusCode = 200)
-{
-    http_response_code($statusCode);
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
-}
+// Now we are in the project root
+require_once 'config.php';
+require_once 'function.php';
 
-function validateWebAppData($initData, $botToken)
-{
-    if (!is_string($initData) || trim($initData) === '') {
-        return false;
-    }
+// Return to API directory if needed (optional, but good practice if we output relative links)
+// chdir('app/api'); 
 
+// Headers
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Helper to validate WebApp Data
+function validateWebAppData($initData, $botToken) {
+    if (!$initData) return false;
+    
     parse_str($initData, $data);
-    if (!is_array($data) || !isset($data['hash']) || !is_string($data['hash'])) {
-        return false;
-    }
-
+    
+    if (!isset($data['hash'])) return false;
+    
     $hash = $data['hash'];
     unset($data['hash']);
-
-    $dataCheckArr = [];
+    
+    $data_check_arr = [];
     foreach ($data as $key => $value) {
-        if (!is_string($key) || (!is_string($value) && !is_numeric($value))) {
-            continue;
-        }
-        $dataCheckArr[] = $key . '=' . $value;
+        $data_check_arr[] = $key . '=' . $value;
     }
-    sort($dataCheckArr, SORT_STRING);
-    $dataCheckString = implode("\n", $dataCheckArr);
-
-    $secretKey = hash_hmac('sha256', 'WebAppData', $botToken, true);
-    $hashCheck = hash_hmac('sha256', $dataCheckString, $secretKey);
-
-    if (!hash_equals($hashCheck, $hash)) {
+    sort($data_check_arr);
+    $data_check_string = implode("\n", $data_check_arr);
+    
+    $secret_key = hash_hmac('sha256', $botToken, "WebAppData", true);
+    $hash_check = hash_hmac('sha256', $data_check_string, $secret_key);
+    
+    if (!hash_equals($hash, $hash_check)) {
         return false;
     }
-
-    if (isset($data['auth_date']) && is_numeric($data['auth_date'])) {
-        if (time() - (int) $data['auth_date'] > 3600) {
-            return false;
-        }
+    
+    // Check if data is outdated (1 hour)
+    if (isset($data['auth_date'])) {
+        if (time() - $data['auth_date'] > 3600) return false;
     }
-
+    
     return $data;
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
-    sendJson(['ok' => false, 'error' => 'Method not allowed'], 405);
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
-$initData = $input['initData'] ?? '';
-
-if (!$initData) {
-    sendJson(['ok' => false, 'error' => 'No authentication data provided'], 401);
-}
-
-$validatedData = validateWebAppData($initData, $APIKEY);
-
-if (!$validatedData) {
-    sendJson(['ok' => false, 'error' => 'Invalid authentication data'], 401);
-}
-
-$userJson = $validatedData['user'] ?? '{}';
-$tgUser = json_decode($userJson, true);
-$userId = $tgUser['id'] ?? 0;
-
-if ($userId == 0) {
-    sendJson(['ok' => false, 'error' => 'Invalid user ID'], 400);
-}
-
-// Fetch User Data from DB
-$dbUser = select("user", "*", "id", $userId, "select");
-
-if (!$dbUser) {
-    sendJson(['ok' => false, 'error' => 'User not found'], 404);
-}
-
-// Fetch Transactions (Payment_report)
-$transactionsRaw = select("Payment_report", "*", "id_user", $userId, "fetchAll");
-$transactions = [];
-if ($transactionsRaw && is_array($transactionsRaw)) {
-    // Normalize and sort
-    foreach ($transactionsRaw as $tx) {
-        $transactions[] = [
-            'id' => $tx['id_order'] ?? $tx['id'] ?? uniqid(),
-            'amount' => $tx['price'] ?? 0,
-            'status' => $tx['payment_status'] ?? 'unknown',
-            'date' => $tx['date'] ?? '',
-            'description' => $tx['description'] ?? 'شارژ حساب'
-        ];
+// Error Handling to prevent HTML output on fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && ($error['type'] === E_ERROR || $error['type'] === E_PARSE || $error['type'] === E_COMPILE_ERROR)) {
+        header('HTTP/1.1 500 Internal Server Error');
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => false, 'error' => 'Internal Server Error: ' . $error['message']]);
+        exit;
     }
-    // Sort by ID or Date (assuming higher ID is newer)
-    usort($transactions, function($a, $b) {
-        return $b['id'] <=> $a['id'];
-    });
-}
+});
 
-// Fetch Active Services (invoice)
-// Assuming 'invoice' table holds purchased services
-$invoicesRaw = select("invoice", "*", "id_user", $userId, "fetchAll");
-$services = [];
-if ($invoicesRaw && is_array($invoicesRaw)) {
-    foreach ($invoicesRaw as $inv) {
-        $status = $inv['status'] ?? 'active';
-        $services[] = [
-            'id' => $inv['id_invoice'] ?? $inv['id'] ?? uniqid(),
-            'name' => $inv['service_name'] ?? $inv['name_product'] ?? 'سرویس VPN',
-            'expire_date' => $inv['expire_date'] ?? $inv['expire'] ?? '',
-            'status' => $status,
-            'traffic_usage' => $inv['traffic'] ?? '0'
-        ];
+// Main Logic
+try {
+    $inputJSON = file_get_contents('php://input');
+    $input = json_decode($inputJSON, true);
+    $initData = $input['initData'] ?? '';
+
+    if (!$initData) {
+        // If testing without initData, return mock error or handle gracefully
+        echo json_encode(['ok' => false, 'error' => 'No authentication data provided']);
+        exit;
     }
+
+    $validatedData = validateWebAppData($initData, $APIKEY);
+
+    if (!$validatedData) {
+        echo json_encode(['ok' => false, 'error' => 'Invalid authentication data']);
+        exit;
+    }
+
+    $userJson = $validatedData['user'] ?? '{}';
+    $tgUser = json_decode($userJson, true);
+    $userId = $tgUser['id'] ?? 0;
+
+    if ($userId == 0) {
+        echo json_encode(['ok' => false, 'error' => 'Invalid user ID']);
+        exit;
+    }
+
+    // Fetch User Data from DB
+    $dbUser = select("user", "*", "id", $userId, "select");
+
+    if (!$dbUser) {
+        // Optional: Auto-register user if not found?
+        // For now, return error
+        echo json_encode(['ok' => false, 'error' => 'User not found. Please start the bot first.']);
+        exit;
+    }
+
+    // Fetch Transactions (Payment_report)
+    $transactionsRaw = select("Payment_report", "*", "id_user", $userId, "fetchAll");
+    $transactions = [];
+    if ($transactionsRaw && is_array($transactionsRaw)) {
+        foreach ($transactionsRaw as $tx) {
+            $transactions[] = [
+                'id' => $tx['id_order'] ?? $tx['id'] ?? uniqid(),
+                'amount' => $tx['price'] ?? 0,
+                'status' => $tx['payment_status'] ?? 'unknown',
+                'date' => $tx['date'] ?? '',
+                'description' => 'شارژ حساب'
+            ];
+        }
+        usort($transactions, function($a, $b) {
+            return $b['id'] <=> $a['id'];
+        });
+    }
+
+    // Fetch Active Services
+    $invoicesRaw = select("invoice", "*", "id_user", $userId, "fetchAll");
+    $services = [];
+    if ($invoicesRaw && is_array($invoicesRaw)) {
+        foreach ($invoicesRaw as $inv) {
+            $services[] = [
+                'id' => $inv['id_invoice'] ?? $inv['id'] ?? uniqid(),
+                'name' => $inv['service_name'] ?? 'سرویس VPN',
+                'expire_date' => $inv['expire_date'] ?? '',
+                'status' => 'active', 
+                'traffic_usage' => $inv['traffic'] ?? '0'
+            ];
+        }
+    }
+
+    $response = [
+        'ok' => true,
+        'user' => [
+            'id' => $dbUser['id'],
+            'username' => $dbUser['username'],
+            'balance' => number_format($dbUser['Balance']) . ' تومان',
+            'raw_balance' => (float)$dbUser['Balance'],
+            'name' => $dbUser['namecustom'] !== 'none' ? $dbUser['namecustom'] : ($tgUser['first_name'] . ' ' . ($tgUser['last_name'] ?? '')),
+        ],
+        'transactions' => array_slice($transactions, 0, 50),
+        'services' => array_slice($services, 0, 20)
+    ];
+
+    echo json_encode($response);
+
+} catch (Exception $e) {
+    header('HTTP/1.1 500 Internal Server Error');
+    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
 }
-
-$response = [
-    'ok' => true,
-    'user' => [
-        'id' => $dbUser['id'],
-        'username' => $dbUser['username'] ?? '',
-        'balance' => number_format((int) ($dbUser['Balance'] ?? 0)) . ' تومان',
-        'raw_balance' => (int) ($dbUser['Balance'] ?? 0),
-        'name' => (isset($dbUser['namecustom']) && $dbUser['namecustom'] !== 'none' && $dbUser['namecustom'] !== '') ? $dbUser['namecustom'] : trim(($tgUser['first_name'] ?? '') . ' ' . ($tgUser['last_name'] ?? '')),
-    ],
-    'transactions' => array_slice($transactions, 0, 20),
-    'services' => array_slice($services, 0, 10)
-];
-
-sendJson($response);
+?>
