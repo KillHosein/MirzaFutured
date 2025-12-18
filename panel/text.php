@@ -10,12 +10,7 @@ require_once '../function.php';
 if (file_exists('../jdf.php')) require_once '../jdf.php';
 
 // Auth
-$query = $pdo->prepare("SELECT * FROM admin WHERE username=:username");
-$query->bindParam("username", $_SESSION["user"], PDO::PARAM_STR);
-$query->execute();
-$result = $query->fetch(PDO::FETCH_ASSOC);
-
-if (!isset($_SESSION["user"]) || !$result) {
+if (!isset($_SESSION["user"])) {
     header('Location: login.php');
     exit;
 }
@@ -25,6 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $jsonData = file_get_contents('php://input');
     $dataArray = json_decode($jsonData, true);
     if (json_last_error() === JSON_ERROR_NONE) {
+        // Backup before save (optional but good practice)
+        // copy('../text.json', '../text.json.bak');
+        
         file_put_contents('../text.json', json_encode($dataArray, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         header('Content-Type: application/json');
         echo json_encode(['status' => 'success']);
@@ -55,7 +53,7 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل مدیریت محتوای Cosmic</title>
+    <title>مدیریت متن‌ها | Mirza Panel</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet"/>
@@ -65,7 +63,6 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
         :root {
             --bg-deep: #020617;
             --accent-primary: #8b5cf6;
-            --accent-glow: rgba(139, 92, 246, 0.4);
             --glass-panel: rgba(15, 23, 42, 0.6);
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #f1f5f9;
@@ -81,81 +78,75 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
             display: flex; flex-direction: column;
         }
 
-        /* --- COSMIC BACKGROUND --- */
+        /* --- BACKGROUND --- */
         .cosmic-bg {
             position: fixed; inset: 0; z-index: -2;
-            background: radial-gradient(circle at 50% 120%, #2e1065, #020617 50%);
+            background: radial-gradient(circle at 50% 120%, #2e1065, #020617 60%);
         }
         .star-field {
             position: fixed; inset: 0; z-index: -1; opacity: 0.3;
-            background-image: 
-                radial-gradient(1px 1px at 20px 30px, #fff, transparent),
-                radial-gradient(1px 1px at 50px 160px, #fff, transparent),
-                radial-gradient(2px 2px at 90px 40px, #fff, transparent);
-            background-size: 250px 250px;
-            animation: starMove 120s linear infinite;
-        }
-        @keyframes starMove { from { background-position: 0 0; } to { background-position: 0 1000px; } }
-
-        /* --- FLOATING ANIMATION --- */
-        .floating-card {
-            background: var(--glass-panel);
-            backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .floating-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: rgba(139, 92, 246, 0.4);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 25px rgba(139, 92, 246, 0.2);
-            background: rgba(30, 41, 59, 0.7);
+            background-image: radial-gradient(1px 1px at 20px 30px, #fff, transparent), radial-gradient(2px 2px at 90px 40px, #fff, transparent);
+            background-size: 300px 300px;
         }
 
+        /* --- SIDEBAR --- */
         .sidebar-item {
             cursor: pointer; padding: 14px 20px; border-radius: 16px;
-            transition: all 0.3s; display: flex; align-items: center; gap: 12px;
-            margin-bottom: 8px; color: var(--text-muted); font-weight: 700;
+            transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+            margin-bottom: 6px; color: var(--text-muted); font-weight: 600; font-size: 0.9rem;
         }
-        .sidebar-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        .sidebar-item:hover { background: rgba(255, 255, 255, 0.03); color: #fff; }
         .sidebar-item.active {
-            background: linear-gradient(to left, rgba(139, 92, 246, 0.2), transparent);
-            border: 1px solid rgba(139, 92, 246, 0.3); color: #fff;
-            box-shadow: 10px 0 20px -10px var(--accent-primary);
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: #fff;
+        }
+        .sidebar-count {
+            margin-right: auto; background: rgba(0,0,0,0.2);
+            padding: 2px 8px; border-radius: 8px; font-size: 0.75rem; opacity: 0.7;
         }
 
+        /* --- CARDS & INPUTS --- */
+        .floating-card {
+            background: var(--glass-panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        
         .text-input {
-            width: 100%; background: rgba(2, 6, 23, 0.5);
+            width: 100%; background: rgba(2, 6, 23, 0.4);
             border: 1px solid var(--glass-border); border-radius: 12px;
             padding: 12px; color: #fff; transition: all 0.2s;
-            font-size: 0.85rem; line-height: 1.6; resize: none;
+            font-size: 0.9rem; line-height: 1.6; resize: none;
+            min-height: 50px;
         }
         .text-input:focus {
             outline: none; border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            background: rgba(2, 6, 23, 0.8);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
         }
 
-        .section-header {
-            padding: 18px 22px; display: flex; align-items: center; justify-content: space-between;
-            background: rgba(255, 255, 255, 0.03); border-radius: 20px;
+        .field-group {
+            background: rgba(255,255,255,0.02);
+            border-radius: 16px; padding: 16px;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .field-group:hover {
+            border-color: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.04);
         }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
-        @keyframes pageIn { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .page-animation { animation: pageIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-
-        .stat-badge {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            padding: 8px 16px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
     </style>
 </head>
 <body>
@@ -163,119 +154,83 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <div class="cosmic-bg"></div>
     <div class="star-field"></div>
 
-    <!-- Top Navigation -->
-    <header class="h-[80px] border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl flex items-center justify-between px-10 z-[100] sticky top-0">
-        <div class="flex items-center gap-5">
-            <div class="w-12 h-12 rounded-2xl bg-violet-600/20 flex items-center justify-center border border-violet-500/25 shadow-lg shadow-violet-500/10">
-                <i class="fa-solid fa-feather-pointed text-violet-400 text-xl"></i>
+    <!-- Header -->
+    <header class="h-[70px] border-b border-white/5 bg-[#020617]/80 backdrop-blur-xl flex items-center justify-between px-6 z-50">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center border border-violet-500/20">
+                <i class="fa-solid fa-language text-violet-400"></i>
             </div>
             <div>
-                <h1 class="text-xl font-black text-white leading-none tracking-tight">پنل مدیریت <span class="text-violet-400">محتوا</span></h1>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Robot Intelligence Core</p>
+                <h1 class="font-bold text-lg text-white">مدیریت متن‌ها</h1>
+                <p class="text-[11px] text-slate-500">ویرایشگر پیشرفته JSON</p>
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
-            <div class="hidden md:flex stat-badge">
-                <i class="fa-regular fa-clock text-violet-400 text-xs"></i>
-                <span class="text-xs text-slate-300 font-bold"><?php echo $todayDate; ?></span>
-            </div>
-            <div class="w-px h-8 bg-white/10 mx-2"></div>
-            <button onclick="App.save()" id="btn-save" class="h-11 px-8 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-black shadow-xl shadow-violet-600/30 disabled:opacity-20 transition-all hover:scale-105 active:scale-95" disabled>
-                <i class="fa-solid fa-cloud-arrow-up ml-2"></i> ذخیره تغییرات
+        <div class="flex-1 max-w-xl mx-8 relative group">
+            <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-violet-400 transition-colors"></i>
+            <input type="text" id="searchInput" placeholder="جستجو در کل متن‌ها..." 
+                   class="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pr-12 pl-4 text-sm focus:outline-none focus:border-violet-500/50 transition-all">
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="App.openRaw()" class="h-10 px-4 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 text-xs font-bold transition-all" title="ویرایش خام">
+                <i class="fa-solid fa-code"></i>
+            </button>
+            <button onclick="App.export()" class="h-10 px-4 rounded-xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 text-xs font-bold transition-all" title="خروجی JSON">
+                <i class="fa-solid fa-download"></i>
+            </button>
+            <button onclick="App.save()" id="btn-save" class="h-10 px-6 rounded-xl bg-violet-600 text-white text-sm font-bold hover:bg-violet-500 shadow-lg shadow-violet-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-save ml-2"></i> ذخیره
             </button>
         </div>
     </header>
 
     <main class="flex-1 flex overflow-hidden">
-        
-        <!-- Sidebar Navigation -->
-        <aside class="w-[300px] border-l border-white/5 p-8 flex flex-col bg-[#020617]/30">
-            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] mb-6 px-4">منوی ناوبری</h3>
-            <nav id="sidebar-nav" class="flex-1 overflow-y-auto custom-scrollbar">
-                <div class="sidebar-item active" onclick="App.switchPage('all', this)">
-                    <i class="fa-solid fa-grid-2 text-blue-400"></i>
-                    <span class="text-sm">همه پیام‌ها</span>
-                </div>
-                <div class="sidebar-item" onclick="App.switchPage('admin', this)">
-                    <i class="fa-solid fa-shield-halved text-rose-400"></i>
-                    <span class="text-sm">مدیریت (Admin)</span>
-                </div>
-                <div class="sidebar-item" onclick="App.switchPage('user', this)">
-                    <i class="fa-solid fa-user-astronaut text-emerald-400"></i>
-                    <span class="text-sm">کاربری (User)</span>
-                </div>
-                <div class="sidebar-item" onclick="App.switchPage('service', this)">
-                    <i class="fa-solid fa-credit-card text-blue-400"></i>
-                    <span class="text-sm">سرویس و مالی</span>
-                </div>
-                <div class="sidebar-item" onclick="App.switchPage('other', this)">
-                    <i class="fa-solid fa-ellipsis text-slate-400"></i>
-                    <span class="text-sm">سایر موارد</span>
-                </div>
+        <!-- Sidebar -->
+        <aside class="w-[280px] flex flex-col border-l border-white/5 bg-[#020617]/30 backdrop-blur-sm">
+            <div class="p-6 pb-2">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">دسته‌بندی‌ها</span>
+            </div>
+            <nav id="sidebarList" class="flex-1 overflow-y-auto p-4 pt-2 custom-scrollbar space-y-1">
+                <!-- Categories will be injected here -->
             </nav>
-
-            <div class="mt-8 space-y-3">
-                <button onclick="App.openRaw()" class="w-full py-3.5 rounded-xl bg-white/5 border border-white/5 text-slate-400 text-xs font-black hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-code"></i> ویرایش خام JSON
-                </button>
-                <button onclick="App.export()" class="w-full py-3.5 rounded-xl bg-white/5 border border-white/5 text-slate-400 text-xs font-black hover:bg-white/10 transition-all flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-download"></i> خروجی پشتیبان
-                </button>
+            <div class="p-4 border-t border-white/5">
+                <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                    <div class="flex justify-between text-xs mb-2">
+                        <span class="text-slate-400">کلیدهای بارگذاری شده</span>
+                        <span class="text-white font-bold" id="totalKeys">0</span>
+                    </div>
+                    <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-violet-500 w-full opacity-50"></div>
+                    </div>
+                </div>
             </div>
         </aside>
 
-        <!-- Main Viewport -->
-        <section class="flex-1 flex flex-col overflow-hidden bg-slate-900/10">
-            
-            <!-- Context Header -->
-            <div class="px-10 py-6 border-b border-white/5 flex items-center justify-between bg-slate-950/20">
-                <div class="flex items-center gap-8">
-                    <div>
-                        <span id="page-title" class="text-2xl font-black text-white tracking-tight">تمامی متن‌ها</span>
-                        <p id="page-desc" class="text-xs text-slate-500 mt-1">مدیریت متمرکز تمامی پاسخ‌های ربات</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="relative w-[300px]">
-                        <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-600"></i>
-                        <input type="text" id="searchField" placeholder="جستجو در این صفحه..." class="w-full bg-slate-900/40 border border-white/5 rounded-xl py-2.5 pr-11 pl-4 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all">
-                    </div>
-                    <div class="w-px h-8 bg-white/10 mx-2"></div>
-                    <div class="text-left">
-                        <span class="block text-[9px] text-slate-500 font-black uppercase tracking-widest">موجودی مخزن</span>
-                        <span id="stat-keys" class="text-xs text-violet-400 font-black">0 کلید</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Content Area -->
-            <div class="flex-1 overflow-y-auto p-10 custom-scrollbar" id="main-content">
-                <div id="editor-container" class="page-animation grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-8">
-                    <!-- Dynamic sections will render here -->
+        <!-- Content -->
+        <section class="flex-1 flex flex-col bg-slate-900/10 relative">
+            <!-- Scrollable Area -->
+            <div id="contentArea" class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div id="fieldsContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-6 max-w-7xl mx-auto">
+                    <!-- Fields will be injected here -->
                 </div>
             </div>
         </section>
-
     </main>
 
-    <!-- Raw Data Modal -->
-    <div id="rawModal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-10 bg-black/95 backdrop-blur-2xl">
-        <div class="floating-card w-full max-w-6xl h-[80vh] flex flex-col overflow-hidden shadow-[0_0_100px_rgba(139,92,246,0.1)]">
-            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-terminal text-emerald-400"></i>
-                    <h3 class="font-black">ویرایش مستقیم پایگاه داده JSON</h3>
-                </div>
-                <button onclick="App.closeRaw()" class="w-10 h-10 rounded-full hover:bg-white/10 transition-all text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Raw Editor Modal -->
+    <div id="rawModal" class="fixed inset-0 z-[100] hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+        <div class="bg-[#0f172a] border border-white/10 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-white/5 flex justify-between items-center">
+                <h3 class="font-bold text-white">ویرایشگر خام (JSON)</h3>
+                <button onclick="App.closeRaw()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <div class="flex-1 bg-slate-950 p-6">
-                <textarea id="rawTextarea" class="w-full h-full bg-transparent border-none font-mono text-sm text-blue-300 outline-none resize-none custom-scrollbar" dir="ltr" spellcheck="false"></textarea>
+            <div class="flex-1 p-0 relative">
+                <textarea id="rawTextarea" class="w-full h-full bg-[#020617] text-emerald-400 font-mono text-sm p-6 outline-none resize-none" spellcheck="false"></textarea>
             </div>
-            <div class="p-6 border-t border-white/5 flex justify-end gap-4">
-                <button onclick="App.closeRaw()" class="px-6 py-2.5 text-slate-500 text-sm font-bold">لغو</button>
-                <button onclick="App.applyRaw()" class="px-10 py-2.5 bg-emerald-600 text-white text-sm font-black rounded-xl transition-all">به‌روزرسانی مخزن</button>
+            <div class="p-4 border-t border-white/5 flex justify-end gap-3 bg-slate-900/50">
+                <button onclick="App.closeRaw()" class="px-6 py-2 rounded-lg text-slate-400 hover:text-white text-sm font-bold">انصراف</button>
+                <button onclick="App.applyRaw()" class="px-6 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-500">اعمال تغییرات</button>
             </div>
         </div>
     </div>
@@ -284,202 +239,250 @@ $todayDate = function_exists('jdate') ? jdate('l، j F Y') : date('Y-m-d');
     <script>
         const App = {
             data: {},
-            original: '',
-            activeTab: 'all',
-            
+            originalStr: '',
+            categories: {},
+            currentCategory: 'all',
+            searchQuery: '',
+
             init() {
-                this.load();
-                this.setupSearch();
+                this.loadData();
+                
+                // Search Listener
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchQuery = e.target.value.toLowerCase();
+                    this.renderFields();
+                });
+
+                // Auto-save check (optional visual cue)
+                setInterval(() => {
+                    const currentStr = JSON.stringify(this.data);
+                    const btn = document.getElementById('btn-save');
+                    if (currentStr !== this.originalStr) {
+                        btn.disabled = false;
+                        btn.classList.add('animate-pulse');
+                    } else {
+                        btn.disabled = true;
+                        btn.classList.remove('animate-pulse');
+                    }
+                }, 1000);
             },
 
-            async load() {
+            async loadData() {
                 try {
                     const res = await fetch('text.php?action=get_json&v=' + Date.now());
                     this.data = await res.json();
-                    this.original = JSON.stringify(this.data);
-                    this.render();
-                    this.updateStats();
-                } catch (e) { console.error("Critical: Cannot fetch database"); }
-            },
-
-            updateStats() {
-                let count = 0;
-                const counter = (o) => Object.values(o).forEach(v => typeof v === 'object' ? counter(v) : count++);
-                counter(this.data);
-                document.getElementById('stat-keys').innerText = count + " کلید فعال";
-            },
-
-            getCategory(section) {
-                const s = section.toLowerCase();
-                if (s.includes('admin') || s.includes('panel') || s.includes('broadcast') || s.includes('backup')) return 'admin';
-                if (s.includes('sell') || s.includes('buy') || s.includes('money') || s.includes('wallet') || s.includes('tariff')) return 'service';
-                if (s.includes('user') || s.includes('profile') || s.includes('welcome') || s.includes('help') || s.includes('support')) return 'user';
-                return 'other';
-            },
-
-            switchPage(tab, el) {
-                this.activeTab = tab;
-                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-                el.classList.add('active');
-                
-                // Update UI Headings
-                const titles = { all: 'تمامی متن‌ها', admin: 'مدیریت و امنیت', user: 'ارتباطات کاربری', service: 'سرویس و مالی', other: 'سایر موارد' };
-                const descs = { all: 'مدیریت متمرکز تمامی پاسخ‌های ربات', admin: 'تنظیمات پیام‌های ادمین و سیستم', user: 'پاسخ‌های خودکار و خوش‌آمدگویی کاربران', service: 'پیام‌های تراکنش، خرید و تمدید سرویس', other: 'تنظیمات متفرقه و کلیدهای عمومی' };
-                
-                document.getElementById('page-title').innerText = titles[tab];
-                document.getElementById('page-desc').innerText = descs[tab];
-
-                // Re-render with animation
-                const container = document.getElementById('editor-container');
-                container.classList.remove('page-animation');
-                void container.offsetWidth;
-                container.classList.add('page-animation');
-                
-                this.render();
-                document.getElementById('main-content').scrollTop = 0;
-            },
-
-            render() {
-                const container = document.getElementById('editor-container');
-                container.innerHTML = '';
-                
-                let found = 0;
-                Object.entries(this.data).forEach(([section, contents]) => {
-                    const category = this.getCategory(section);
-                    if (this.activeTab !== 'all' && this.activeTab !== category) return;
-                    found++;
-
-                    const sectionDiv = document.createElement('div');
-                    sectionDiv.className = 'floating-card overflow-hidden flex flex-col h-fit';
+                    this.originalStr = JSON.stringify(this.data);
                     
-                    const header = document.createElement('div');
-                    header.className = 'section-header';
-                    const iconColor = category === 'admin' ? 'rose' : (category === 'service' ? 'blue' : 'emerald');
+                    this.categorizeData();
+                    this.renderSidebar();
+                    this.renderFields();
                     
-                    header.innerHTML = `
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-${iconColor}-500/10 flex items-center justify-center text-${iconColor}-400 border border-${iconColor}-500/10 shadow-inner">
-                                <i class="fa-solid fa-folder-tree"></i>
-                            </div>
-                            <div>
-                                <span class="block font-black text-slate-200 text-sm tracking-tight">${section}</span>
-                                <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">${Object.keys(contents).length} ورودی</span>
-                            </div>
-                        </div>
-                    `;
+                    // Update total count
+                    let count = 0;
+                    const countRec = (obj) => Object.values(obj).forEach(v => typeof v === 'object' ? countRec(v) : count++);
+                    countRec(this.data);
+                    document.getElementById('totalKeys').innerText = count;
 
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'p-6 space-y-6 flex-1';
-                    this.buildFields(contents, contentDiv, section);
-
-                    sectionDiv.appendChild(header);
-                    sectionDiv.appendChild(contentDiv);
-                    container.appendChild(sectionDiv);
-                });
-
-                if (found === 0) {
-                    container.innerHTML = `
-                        <div class="col-span-full py-20 flex flex-col items-center justify-center opacity-30">
-                            <i class="fa-solid fa-box-open text-6xl mb-4"></i>
-                            <span class="font-bold">در این صفحه متنی یافت نشد</span>
-                        </div>`;
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('خطا', 'عدم توانایی در دریافت اطلاعات', 'error');
                 }
+            },
+
+            categorizeData() {
+                // Reset categories
+                this.categories = {
+                    'all': { label: 'همه موارد', icon: 'fa-layer-group', keys: [] },
+                    'general': { label: 'عمومی', icon: 'fa-globe', keys: [] },
+                    'button': { label: 'دکمه‌ها', icon: 'fa-stop', keys: [] },
+                    'message': { label: 'پیام‌ها', icon: 'fa-message', keys: [] },
+                    'error': { label: 'خطاها', icon: 'fa-triangle-exclamation', keys: [] },
+                    'admin': { label: 'مدیریت', icon: 'fa-shield-halved', keys: [] },
+                    'finance': { label: 'مالی', icon: 'fa-credit-card', keys: [] },
+                    'other': { label: 'سایر', icon: 'fa-ellipsis', keys: [] }
+                };
+
+                // Flatten keys for categorization if nested, or just iterate if flat
+                // We'll support 1 level of nesting visualization, but categorize by top-level key or prefix
                 
-                this.autoResizeAll();
-            },
+                const processKey = (key, value, path) => {
+                    const fullPath = path ? `${path}.${key}` : key;
+                    const item = { key: fullPath, value: value, path: fullPath };
+                    
+                    this.categories.all.keys.push(item);
 
-            buildFields(obj, parent, path) {
-                Object.entries(obj).forEach(([key, val]) => {
-                    const fullPath = `${path}.${key}`;
-                    if (typeof val === 'object' && val !== null) {
-                        const sub = document.createElement('div');
-                        sub.className = 'mr-4 border-r-2 border-white/5 pr-4 mt-2 mb-4';
-                        sub.innerHTML = `<div class="text-[9px] font-black uppercase text-violet-400/60 mb-3 flex items-center gap-2"><i class="fa-solid fa-caret-down"></i> ${key}</div>`;
-                        this.buildFields(val, sub, fullPath);
-                        parent.appendChild(sub);
-                    } else {
-                        const field = document.createElement('div');
-                        field.className = 'field-item group';
-                        field.dataset.search = (fullPath + ' ' + val).toLowerCase();
-                        field.innerHTML = `
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center justify-between">
-                                    <label class="text-[10px] font-mono text-slate-500 group-hover:text-violet-400 transition-colors" dir="ltr">${key}</label>
-                                    <button onclick="App.copy('${fullPath}')" class="text-[10px] text-slate-700 hover:text-white transition-opacity opacity-0 group-hover:opacity-100"><i class="fa-regular fa-clone"></i></button>
-                                </div>
-                                <textarea class="text-input custom-scrollbar" oninput="App.update('${fullPath}', this.value)" rows="1">${val}</textarea>
-                            </div>`;
-                        parent.appendChild(field);
-                    }
-                });
-            },
+                    // Auto-detect category based on key name
+                    const k = fullPath.toLowerCase();
+                    if (k.includes('btn') || k.includes('button') || k.includes('keyboard')) this.categories.button.keys.push(item);
+                    else if (k.includes('err') || k.includes('fail')) this.categories.error.keys.push(item);
+                    else if (k.includes('msg') || k.includes('text') || k.includes('desc')) this.categories.message.keys.push(item);
+                    else if (k.includes('admin') || k.includes('panel')) this.categories.admin.keys.push(item);
+                    else if (k.includes('price') || k.includes('pay') || k.includes('card')) this.categories.finance.keys.push(item);
+                    else if (k.includes('title') || k.includes('name')) this.categories.general.keys.push(item);
+                    else this.categories.other.keys.push(item);
+                };
 
-            update(path, value) {
-                const keys = path.split('.');
-                let current = this.data;
-                for (let i = 0; i < keys.length - 1; i++) current = current[keys[i]];
-                current[keys[keys.length - 1]] = value;
-                this.checkChanges();
-            },
-
-            checkChanges() {
-                const isChanged = JSON.stringify(this.data) !== this.original;
-                document.getElementById('btn-save').disabled = !isChanged;
-            },
-
-            setupSearch() {
-                document.getElementById('searchField').oninput = (e) => {
-                    const query = e.target.value.toLowerCase();
-                    document.querySelectorAll('.field-item').forEach(f => {
-                        f.style.display = f.dataset.search.includes(query) ? 'block' : 'none';
-                    });
-                    document.querySelectorAll('.floating-card').forEach(s => {
-                        const hasVisible = Array.from(s.querySelectorAll('.field-item')).some(f => f.style.display !== 'none');
-                        s.style.display = hasVisible ? 'flex' : 'none';
+                const traverse = (obj, path = '') => {
+                    Object.entries(obj).forEach(([k, v]) => {
+                        if (typeof v === 'object' && v !== null) {
+                            traverse(v, path ? `${path}.${k}` : k);
+                        } else {
+                            processKey(k, v, path);
+                        }
                     });
                 };
+
+                traverse(this.data);
             },
 
-            async save() {
+            renderSidebar() {
+                const nav = document.getElementById('sidebarList');
+                nav.innerHTML = '';
+                
+                Object.entries(this.categories).forEach(([id, cat]) => {
+                    if (cat.keys.length === 0 && id !== 'all') return;
+                    
+                    const el = document.createElement('div');
+                    el.className = `sidebar-item ${this.currentCategory === id ? 'active' : ''}`;
+                    el.onclick = () => {
+                        this.currentCategory = id;
+                        this.renderSidebar(); // Re-render to update active class
+                        this.renderFields();
+                    };
+                    
+                    el.innerHTML = `
+                        <i class="fa-solid ${cat.icon} w-5 text-center ${this.currentCategory === id ? 'text-violet-400' : 'opacity-50'}"></i>
+                        <span>${cat.label}</span>
+                        <span class="sidebar-count">${cat.keys.length}</span>
+                    `;
+                    nav.appendChild(el);
+                });
+            },
+
+            renderFields() {
+                const container = document.getElementById('fieldsContainer');
+                container.innerHTML = '';
+                
+                const catData = this.categories[this.currentCategory];
+                if (!catData) return;
+
+                let visibleCount = 0;
+
+                catData.keys.forEach(item => {
+                    // Search Filter
+                    if (this.searchQuery && !item.key.toLowerCase().includes(this.searchQuery) && !String(item.value).toLowerCase().includes(this.searchQuery)) {
+                        return;
+                    }
+                    visibleCount++;
+
+                    // Create Field Card
+                    const card = document.createElement('div');
+                    card.className = 'field-group animate-in';
+                    
+                    // Label formatting (remove dots for cleaner look)
+                    const labelDisplay = item.key.split('.').map(s => `<span class="opacity-50 text-[10px] mx-1">/</span>${s}`).join('').replace(/^<span.*?\/span>/, '');
+
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-mono text-violet-300 break-all" dir="ltr">${item.key}</label>
+                            <button onclick="App.copy('${item.key}')" class="text-slate-500 hover:text-white transition-colors" title="کپی کلید">
+                                <i class="fa-regular fa-copy text-xs"></i>
+                            </button>
+                        </div>
+                        <textarea class="text-input custom-scrollbar" rows="${String(item.value).length > 60 ? 3 : 1}"
+                            oninput="App.updateValue('${item.key}', this.value)">${item.value}</textarea>
+                    `;
+                    container.appendChild(card);
+                });
+
+                if (visibleCount === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full flex flex-col items-center justify-center py-20 opacity-30">
+                            <i class="fa-solid fa-wind text-5xl mb-4"></i>
+                            <span>موردی یافت نشد</span>
+                        </div>
+                    `;
+                }
+            },
+
+            updateValue(path, value) {
+                const keys = path.split('.');
+                let current = this.data;
+                for (let i = 0; i < keys.length - 1; i++) {
+                    current = current[keys[i]];
+                }
+                current[keys[keys.length - 1]] = value;
+            },
+
+            copy(text) {
+                navigator.clipboard.writeText(text);
+                const toast = Swal.mixin({
+                    toast: true, position: 'bottom-start',
+                    showConfirmButton: false, timer: 1500,
+                    background: '#1e293b', color: '#fff'
+                });
+                toast.fire({ icon: 'success', title: 'کپی شد' });
+            },
+
+            save() {
                 const btn = document.getElementById('btn-save');
                 btn.disabled = true;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin ml-2"></i> در حال همگام‌سازی...';
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-2"></i> در حال ذخیره...';
 
-                try {
-                    const res = await fetch('text.php', { method: 'POST', body: JSON.stringify(this.data) });
-                    const result = await res.json();
-                    if (result.status === 'success') {
-                        this.original = JSON.stringify(this.data);
-                        this.checkChanges();
-                        Swal.fire({ icon: 'success', title: 'تغییرات با موفقیت ذخیره شد', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#020617', color: '#fff' });
+                fetch('text.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.data)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.originalStr = JSON.stringify(this.data);
+                        Swal.fire({
+                            icon: 'success', title: 'ذخیره شد',
+                            text: 'تغییرات با موفقیت اعمال گردید',
+                            background: '#020617', color: '#fff',
+                            showConfirmButton: false, timer: 2000
+                        });
+                    } else {
+                        Swal.fire('خطا', 'مشکلی پیش آمد', 'error');
                     }
-                } finally { btn.innerHTML = originalText; }
+                })
+                .catch(() => Swal.fire('خطا', 'عدم ارتباط با سرور', 'error'))
+                .finally(() => {
+                    btn.innerHTML = '<i class="fa-solid fa-save ml-2"></i> ذخیره';
+                });
             },
 
             openRaw() {
                 document.getElementById('rawTextarea').value = JSON.stringify(this.data, null, 4);
                 document.getElementById('rawModal').classList.remove('hidden');
             },
-            closeRaw() { document.getElementById('rawModal').classList.add('hidden'); },
+            closeRaw() {
+                document.getElementById('rawModal').classList.add('hidden');
+            },
             applyRaw() {
                 try {
-                    this.data = JSON.parse(document.getElementById('rawTextarea').value);
-                    this.render(); this.updateStats(); this.closeRaw(); this.checkChanges();
-                } catch (e) { Swal.fire({ icon: 'error', title: 'خطا در ساختار JSON' }); }
+                    const raw = document.getElementById('rawTextarea').value;
+                    const parsed = JSON.parse(raw);
+                    this.data = parsed;
+                    this.categorizeData();
+                    this.renderSidebar();
+                    this.renderFields();
+                    this.closeRaw();
+                    Swal.fire({ icon: 'success', title: 'بروزرسانی شد', toast: true, position: 'bottom-end', timer: 2000, showConfirmButton: false });
+                } catch (e) {
+                    Swal.fire('خطا', 'فرمت JSON نامعتبر است', 'error');
+                }
             },
             export() {
-                const blob = new Blob([JSON.stringify(this.data, null, 4)], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = 'robot_text_backup.json'; a.click();
-            },
-            copy(text) { navigator.clipboard.writeText(text); },
-            autoResizeAll() {
-                document.querySelectorAll('textarea.text-input').forEach(t => {
-                    t.style.height = 'auto';
-                    t.style.height = (t.scrollHeight) + 'px';
-                    t.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px'; });
-                });
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data, null, 2));
+                const node = document.createElement('a');
+                node.setAttribute("href", dataStr);
+                node.setAttribute("download", "text_backup.json");
+                document.body.appendChild(node);
+                node.click();
+                node.remove();
             }
         };
 
