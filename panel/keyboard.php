@@ -236,7 +236,16 @@ try {
         }
         .key-btn:hover::before { opacity: 1; background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary)); }
         
-        .key-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a78bfa; letter-spacing: 0.5px; opacity: 0.9; margin-bottom: 5px; }
+        .key-code { 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 11px; 
+            color: #a78bfa; 
+            letter-spacing: 0.5px; 
+            opacity: 0.9; 
+            margin-bottom: 5px; 
+            direction: ltr; /* Fix for code direction */
+            text-align: center; /* Fix for code alignment */
+        }
         .key-label { font-size: 14px; font-weight: 600; color: #f8fafc; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 
         .btn-actions {
@@ -627,7 +636,8 @@ try {
             },
 
             createKeyElement(btn, rIdx, bIdx, type) {
-                const label = this.data.labels[btn.text] || 'دکمه سفارشی';
+                // If label doesn't exist, show the button text (code) itself, better than "Custom Button"
+                const label = this.data.labels[btn.text] || btn.text;
                 const el = document.createElement('div');
                 
                 if (type === 'stash') {
@@ -640,7 +650,7 @@ try {
                             </div>
                             <div class="flex flex-col overflow-hidden">
                                 <span class="text-xs text-slate-200 truncate font-bold mb-0.5">${label}</span>
-                                <span class="text-[10px] text-slate-500 truncate font-mono opacity-80">${btn.text}</span>
+                                <span class="text-[10px] text-slate-500 truncate font-mono opacity-80" dir="ltr">${btn.text}</span>
                             </div>
                         </div>
                         <div class="flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
