@@ -1,8 +1,8 @@
 <?php
 /**
- * Login Page - Nebula Pro Edition
- * Professional Animations, Moving Background & Glassmorphism Pro
- * Designed for Professional Management Studio
+ * Login Page - Quantum Glass Edition
+ * Ultra-Premium Animations, Dynamic Deep Space & Advanced Glassmorphism
+ * Designed & Developed by KillHosein
  */
 
 ini_set('session.cookie_httponly', true);
@@ -48,18 +48,18 @@ if (isset($_POST['login'])) {
     $result = $query->fetch(PDO::FETCH_ASSOC);
 
     if ( !$result ) {
-        $texterrr = 'نام کاربری یا رمزعبور اشتباه است';
+        $texterrr = 'اطلاعات ورود نادرست است';
     } else {
         if ( $password == $result["password"]) {
             foreach ($admin_ids as $admin) {
-                $texts = "🔐 ورود به پنل:\nمدیر: <b>$username</b>\nآی‌پی: <code>$user_ip</code>";
+                $texts = "🚀 ورود موفقیت‌آمیز:\nکاربر: <b>$username</b>\nآی‌پی: <code>$user_ip</code>";
                 sendmessage($admin, $texts, null, 'html');
             }
             $_SESSION["user"] = $result["username"];
             header('Location: index.php');
             exit;
         } else {
-            $texterrr = 'رمز عبور صحیح نمی‌باشد';
+            $texterrr = 'رمز عبور اشتباه است';
         }
     }
 }
@@ -69,7 +69,7 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ورود به مدیریت</title>
+    <title>ورود به پنل مدیریت حرفه‌ای</title>
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -80,233 +80,262 @@ if (isset($_POST['login'])) {
     <style>
         :root {
             --primary: #6366f1;
-            --primary-glow: rgba(99, 102, 241, 0.4);
+            --primary-glow: rgba(99, 102, 241, 0.5);
             --secondary: #d946ef;
-            --secondary-glow: rgba(217, 70, 239, 0.3);
-            --bg-dark: #020617;
-            --text-silver: #e2e8f0;
+            --accent: #00f2ff;
+            --bg-void: #02040a;
         }
 
         body {
             font-family: 'Vazirmatn', sans-serif;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-void);
             height: 100vh;
             margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            color: var(--text-silver);
+            color: #fff;
         }
 
-        /* --- ADVANCED NEBULA BACKGROUND --- */
-        .background-container {
+        /* --- QUANTUM BACKGROUND --- */
+        .space-engine {
             position: fixed; inset: 0; z-index: -10;
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            background: radial-gradient(circle at 50% 50%, #0f172a 0%, #02040a 100%);
         }
 
         .nebula {
-            position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.25;
-            animation: moveNebula 25s infinite alternate ease-in-out;
+            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.3;
+            animation: nebulaDrift 30s infinite alternate ease-in-out;
         }
-        .nebula-1 { width: 600px; height: 600px; background: var(--primary); top: -10%; left: -10%; }
-        .nebula-2 { width: 500px; height: 500px; background: var(--secondary); bottom: -10%; right: -10%; animation-delay: -5s; }
-        .nebula-3 { width: 400px; height: 400px; background: #3b82f6; top: 40%; left: 30%; animation-delay: -10s; }
+        .n-1 { width: 700px; height: 700px; background: var(--primary); top: -20%; left: -10%; }
+        .n-2 { width: 600px; height: 600px; background: var(--secondary); bottom: -10%; right: -10%; animation-delay: -7s; }
+        .n-3 { width: 500px; height: 500px; background: var(--accent); top: 30%; left: 20%; opacity: 0.15; animation-delay: -15s; }
 
-        @keyframes moveNebula {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(50px, 80px) scale(1.1); }
+        @keyframes nebulaDrift {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            100% { transform: translate(100px, 50px) scale(1.2) rotate(10deg); }
         }
 
-        .stars {
+        .stars-container {
             position: absolute; inset: 0;
-            background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
-            opacity: 0.3; animation: starTwinkle 100s linear infinite;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 40px 70px, #fff, transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(2px 2px at 150px 150px, #fff, transparent);
+            background-size: 300px 300px;
+            animation: starsTwinkle 150s linear infinite;
+            opacity: 0.4;
         }
-        @keyframes starTwinkle { from { background-position: 0 0; } to { background-position: 1000px 1000px; } }
+        @keyframes starsTwinkle { from { background-position: 0 0; } to { background-position: 1000px 2000px; } }
 
-        /* --- GLASSMOPHISM PRO CARD --- */
-        .glass-box {
-            width: 100%; max-width: 410px;
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(20px) saturate(160%);
-            -webkit-backdrop-filter: blur(20px) saturate(160%);
-            border-radius: 30px;
-            padding: 45px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.6),
-                inset 0 0 1px 1px rgba(255, 255, 255, 0.1);
+        /* --- PREVIEW GLASS CARD --- */
+        .glass-container {
             position: relative;
-            animation: zoomIn 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 50;
+            padding: 3px;
+            border-radius: 35px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent, rgba(255,255,255,0.1));
+            animation: cardEntrance 1s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .logo-glow-container {
-            display: flex; justify-content: center; margin-bottom: 30px;
+        .glass-card {
+            width: 100%; max-width: 420px;
+            background: rgba(10, 15, 28, 0.8);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: 32px;
+            padding: 50px 45px;
+            box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 100;
         }
-        .logo-main {
-            width: 95px; height: 95px;
-            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(217,70,239,0.2));
-            border-radius: 28px; border: 1px solid rgba(255,255,255,0.1);
+
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* --- LOGO FX --- */
+        .logo-wrapper {
+            display: flex; justify-content: center; margin-bottom: 35px;
+        }
+        .shield-icon {
+            width: 100px; height: 100px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 35px var(--primary-glow);
-            animation: float 6s ease-in-out infinite;
+            box-shadow: 0 0 40px var(--primary-glow);
+            position: relative;
+            animation: floatIcon 6s ease-in-out infinite;
         }
-        .logo-main i { font-size: 42px; color: #fff; filter: drop-shadow(0 0 12px var(--primary)); }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-12px); }
+        .shield-icon i { font-size: 45px; color: #fff; filter: drop-shadow(0 0 15px var(--primary)); }
+        
+        .shield-icon::after {
+            content: ''; position: absolute; inset: -5px; border-radius: 35px;
+            border: 1px solid var(--primary); opacity: 0.3; animation: pulseRing 3s infinite;
         }
 
-        /* --- INPUT STYLING --- */
-        .field-group { position: relative; margin-bottom: 22px; }
-        .input-item {
+        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes pulseRing { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(1.2); opacity: 0; } }
+
+        /* --- INPUTS --- */
+        .input-group { position: relative; margin-bottom: 25px; }
+        .input-field {
             width: 100%;
-            background: rgba(2, 6, 23, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 18px;
-            padding: 15px 48px 15px 16px;
-            color: #fff; font-family: inherit; font-size: 14px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            outline: none;
+            padding: 16px 52px 16px 18px;
+            color: #fff; font-size: 14px; transition: all 0.4s; outline: none;
         }
-        .input-item:focus {
-            border-color: var(--primary);
-            background: rgba(2, 6, 23, 0.7);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2), inset 0 0 5px rgba(255,255,255,0.05);
-            transform: scale(1.01);
+        .input-field:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.15), inset 0 0 10px rgba(0, 242, 255, 0.05);
         }
-        .item-icon {
-            position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
-            color: var(--text-muted); transition: 0.3s; pointer-events: none;
+        .input-icon {
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.3); transition: 0.4s;
         }
-        .input-item:focus + .item-icon { color: var(--primary); transform: translateY(-50%) scale(1.1); }
+        .input-field:focus + .input-icon { color: var(--accent); transform: translateY(-50%) scale(1.2); }
 
-        /* --- BUTTON --- */
-        .btn-modern {
-            width: 100%; padding: 15px;
+        /* --- SUBMIT BUTTON --- */
+        .btn-quantum {
+            width: 100%; padding: 16px;
             background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
             color: #fff; border: none; border-radius: 18px;
             font-weight: 800; font-size: 16px; cursor: pointer;
-            box-shadow: 0 8px 25px var(--primary-glow);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px var(--primary-glow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative; overflow: hidden;
         }
-        .btn-modern:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 35px var(--primary-glow);
-            filter: brightness(1.1);
+        .btn-quantum:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--primary-glow);
+            filter: brightness(1.2);
         }
-        .btn-modern:active { transform: translateY(-1px) scale(0.98); }
-        .btn-modern::before {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.6s; transform: skewX(-25deg);
+        .btn-quantum::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
         }
-        .btn-modern:hover::before { left: 150%; }
+        .btn-quantum:hover::before { left: 100%; }
 
-        /* --- CREDITS --- */
-        .dev-footer {
-            margin-top: 35px; text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            padding-top: 20px;
+        /* --- SIGNATURE / CREDITS --- */
+        .killhosein-footer {
+            margin-top: 40px; text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 25px;
         }
-        .dev-link {
-            text-decoration: none; color: rgba(255,255,255,0.6);
-            font-size: 15px; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px;
+        .signature-text {
+            color: rgba(255,255,255,0.5); font-size: 13px;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            text-decoration: none; transition: 0.4s;
         }
-        .dev-link:hover { color: var(--text-silver); text-shadow: 0 0 15px var(--primary); transform: scale(1.05); }
-        .dev-link strong { color: var(--primary); font-size: 18px; }
+        .killhosein-brand {
+            font-size: 22px; font-weight: 900;
+            background: linear-gradient(90deg, #fff, var(--primary), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 1px; filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.3));
+        }
+        .signature-text:hover { transform: scale(1.05); color: #fff; }
+        .signature-text:hover .killhosein-brand { filter: drop-shadow(0 0 15px var(--accent)); }
 
-        /* --- ERROR & IP ALERTS --- */
-        .alert-error {
-            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #fca5a5; padding: 12px; border-radius: 14px;
-            font-size: 13px; text-align: center; margin-bottom: 22px;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+        /* --- ALERTS --- */
+        .err-glow {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5; padding: 14px; border-radius: 16px;
+            font-size: 13px; text-align: center; margin-bottom: 25px;
             animation: headShake 0.6s;
         }
-        .ip-box {
-            background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,255,255,0.15);
-            padding: 10px 20px; border-radius: 12px; font-family: monospace; letter-spacing: 1.5px;
-            margin-top: 15px; color: #67e8f9; font-weight: bold; display: inline-block;
+        .ip-token {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--accent);
+            padding: 10px 20px; border-radius: 14px; font-family: monospace;
+            margin: 20px 0; color: var(--accent); font-weight: bold; font-size: 16px;
+            display: inline-block; box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
         }
     </style>
 </head>
 <body>
 
-    <!-- Background Layers -->
-    <div class="background-container">
-        <div class="stars"></div>
-        <div class="nebula nebula-1"></div>
-        <div class="nebula nebula-2"></div>
-        <div class="nebula nebula-3"></div>
+    <!-- Space Background -->
+    <div class="space-engine">
+        <div class="stars-container"></div>
+        <div class="nebula n-1"></div>
+        <div class="nebula n-2"></div>
+        <div class="nebula n-3"></div>
     </div>
 
-    <!-- Main Wrapper -->
     <div class="px-6 flex items-center justify-center min-h-screen w-full relative">
         
         <?php if(!$check_ip): ?>
-        <!-- RESTRICTED ACCESS -->
-        <div class="glass-box text-center">
-            <div class="logo-glow-container">
-                <div class="logo-main" style="border-color: rgba(239,68,68,0.3); box-shadow: 0 0 35px rgba(239,68,68,0.3);">
-                    <i class="fa-solid fa-user-shield text-rose-400"></i>
+        <!-- ACCESS DENIED -->
+        <div class="glass-container">
+            <div class="glass-card text-center">
+                <div class="logo-wrapper">
+                    <div class="shield-icon" style="border-color: rgba(239,68,68,0.5); box-shadow: 0 0 40px rgba(239,68,68,0.3);">
+                        <i class="fa-solid fa-shield-virus text-rose-500"></i>
+                    </div>
                 </div>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-3">دسترسی محدود</h2>
-            <p class="text-slate-400 text-sm leading-7 mb-6">
-                آی‌پی شما در لیست سفید قرار ندارد.<br>
-                لطفاً آی‌پی زیر را در تنظیمات ربات ثبت کنید:
-            </p>
-            <div class="ip-box animate__animated animate__pulse animate__infinite"><?php echo $user_ip; ?></div>
-            <div class="dev-footer">
-                <a href="https://t.me/KillHosein" class="dev-link" target="_blank">
-                    طراحی و توسعه توسط <i class="fa-brands fa-telegram text-sky-500"></i> <strong>KillHosein</strong>
-                </a>
+                <h2 class="text-3xl font-black text-white mb-4">دسترسی مسدود</h2>
+                <p class="text-slate-400 text-sm leading-8 mb-4">
+                    شناسه آی‌پی شما مجاز به ورود نیست.<br>
+                    لطفاً آی‌پی زیر را برای ادمین کل ارسال کنید:
+                </p>
+                <div class="ip-token animate__animated animate__pulse animate__infinite"><?php echo $user_ip; ?></div>
+                
+                <div class="killhosein-footer">
+                    <a href="https://t.me/KillHosein" class="signature-text" target="_blank">
+                        <span>طراحی و توسعه توسط</span>
+                        <span class="killhosein-brand">KillHosein</span>
+                    </a>
+                </div>
             </div>
         </div>
         <?php else: ?>
         <!-- LOGIN FORM -->
-        <div class="glass-box">
-            <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-                <div class="logo-glow-container">
-                    <div class="logo-main">
-                        <i class="fa-solid fa-lock-open"></i>
+        <div class="glass-container">
+            <div class="glass-card">
+                <form method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+                    <div class="logo-wrapper">
+                        <div class="shield-icon">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                        </div>
                     </div>
-                </div>
-                
-                <h2 class="text-center text-2xl font-black text-white mb-1">ورود به پنل</h2>
-                <p class="text-center text-[10px] text-indigo-400 uppercase tracking-[4px] mb-8 opacity-80">Management Admin Studio</p>
+                    
+                    <h2 class="text-center text-3xl font-black text-white mb-2">خوش‌آمدید</h2>
+                    <p class="text-center text-[11px] text-indigo-300 uppercase tracking-[5px] mb-10 opacity-70">Secured Access Only</p>
 
-                <?php if(!empty($texterrr)): ?>
-                <div class="alert-error">
-                    <i class="fa-solid fa-circle-exclamation"></i> <?php echo $texterrr; ?>
-                </div>
-                <?php endif; ?>
+                    <?php if(!empty($texterrr)): ?>
+                    <div class="err-glow">
+                        <i class="fa-solid fa-triangle-exclamation mr-2"></i> <?php echo $texterrr; ?>
+                    </div>
+                    <?php endif; ?>
 
-                <div class="field-group">
-                    <input type="text" name="username" class="input-item" placeholder="نام کاربری" required autofocus autocomplete="off">
-                    <i class="fa-solid fa-user-ninja item-icon"></i>
-                </div>
+                    <div class="input-group">
+                        <input type="text" name="username" class="input-field" placeholder="نام کاربری" required autofocus autocomplete="off">
+                        <i class="fa-solid fa-user-shield input-icon"></i>
+                    </div>
 
-                <div class="field-group">
-                    <input type="password" name="password" class="input-item" placeholder="رمز عبور" required>
-                    <i class="fa-solid fa-key item-icon"></i>
-                </div>
+                    <div class="input-group">
+                        <input type="password" name="password" class="input-field" placeholder="رمز عبور" required>
+                        <i class="fa-solid fa-unlock-keyhole input-icon"></i>
+                    </div>
 
-                <button class="btn-modern" name="login" type="submit">
-                    تایید و ورود <i class="fa-solid fa-arrow-left-long mr-2"></i>
-                </button>
+                    <button class="btn-quantum" name="login" type="submit">
+                        ورود به پنل مدیریت <i class="fa-solid fa-arrow-left-long mr-3"></i>
+                    </button>
 
-                <div class="dev-footer">
-                    <a href="https://t.me/KillHosein" class="dev-link" target="_blank">
-                        طراحی و توسعه توسط <i class="fa-brands fa-telegram text-sky-500 text-lg"></i> <strong>KillHosein</strong>
-                    </a>
-                </div>
-            </form>
+                    <div class="killhosein-footer">
+                        <a href="https://t.me/KillHosein" class="signature-text" target="_blank">
+                            <span>طراحی و توسعه توسط</span>
+                            <span class="killhosein-brand">KillHosein</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
         <?php endif; ?>
 
