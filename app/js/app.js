@@ -659,6 +659,7 @@ const WebApp = {
                 }, 1000);
             } else if (data.card_number) {
                 // Show Card Info
+                setTimeout(() => {
                 WebApp.openModal('پرداخت کارت به کارت', `
                     <div class="text-center space-y-4">
                         <div class="p-4 bg-white/5 rounded-xl border border-white/10">
@@ -678,6 +679,7 @@ const WebApp = {
                         </button>
                     </div>
                 `);
+                }, 300);
             }
         } else {
             WebApp.showToast(data ? data.error : 'خطا در ایجاد تراکنش', 'error');
