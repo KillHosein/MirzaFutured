@@ -98,14 +98,40 @@
         flex-direction: column;
       }
 
-      /* Button Enhancements (Targeting common Tailwind classes or generic button) */
+      /* Button Enhancements */
       button {
         cursor: pointer;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative;
+        overflow: hidden;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--tg-theme-button-color), transparent 70%);
       }
       button:active {
-        transform: scale(0.96);
+        transform: scale(0.96) translateY(0);
         opacity: 0.9;
+        box-shadow: none;
+      }
+      /* Ripple effect (optional, simple CSS version) */
+      button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10.01%);
+        transform: translate(-50%, -50%) scale(0);
+        transition: transform 0.5s, opacity 0.5s;
+        opacity: 0;
+        pointer-events: none;
+      }
+      button:active::after {
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 1;
+        transition: 0s;
       }
 
       /* Card/Container Enhancements (Generic) */
@@ -134,11 +160,64 @@
         background-color: color-mix(in srgb, var(--tg-theme-button-color), transparent 70%);
         color: var(--tg-theme-text-color);
       }
+
+      /* Custom Loader */
+      .app-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        background-color: var(--tg-theme-bg-color);
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+      }
+      .app-loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid color-mix(in srgb, var(--tg-theme-button-color), transparent 80%);
+        border-top: 4px solid var(--tg-theme-button-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Glassmorphism Utilities */
+      .glass-effect {
+        background: color-mix(in srgb, var(--tg-theme-bg-color), transparent 20%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid color-mix(in srgb, var(--tg-theme-text-color), transparent 95%);
+      }
     </style>
   </head>
   <body>
+    <!-- Initial Loading Screen -->
+    <div id="app-loader" class="app-loader">
+      <div class="spinner"></div>
+    </div>
+
     <div id="root"></div>
     <script>
+      // Remove loader when app is ready (simulated or actual)
+      window.addEventListener('load', () => {
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+          const loader = document.getElementById('app-loader');
+          if (loader) loader.classList.add('hidden');
+        }, 300);
+      });
+
       // Initialize Telegram Web App features
       if (window.Telegram && window.Telegram.WebApp) {
         var webApp = window.Telegram.WebApp;
