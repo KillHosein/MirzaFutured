@@ -575,6 +575,29 @@ const WebApp = {
 
     // --- Specific Modals ---
     openDepositModal: () => {
+        let methodsHtml = '';
+        
+        if (WebApp.paymentMethods && WebApp.paymentMethods.length > 0) {
+            methodsHtml = '<div class="grid grid-cols-1 gap-2 mb-4">';
+            WebApp.paymentMethods.forEach((m, index) => {
+                const checked = index === 0 ? 'checked' : '';
+                methodsHtml += `
+                    <label class="relative flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="payment_method" value="${m.id}" class="w-4 h-4 text-blue-500 bg-gray-700 border-gray-600 focus:ring-blue-500" ${checked}>
+                            <span class="text-sm font-bold text-white">${m.name}</span>
+                        </div>
+                        ${m.id === 'card' ? '<svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>' : ''}
+                        ${m.id === 'zarinpal' ? '<svg class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' : ''}
+                        ${m.id === 'nowpayments' ? '<svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' : ''}
+                    </label>
+                `;
+            });
+            methodsHtml += '</div>';
+        } else {
+             methodsHtml = '<p class="text-red-400 text-xs text-center mb-4">هیچ روش پرداختی فعال نیست</p>';
+        }
+
         WebApp.openModal('افزایش موجودی', `
             <div class="space-y-6">
                 <div class="grid grid-cols-2 gap-3">
@@ -588,6 +611,12 @@ const WebApp = {
                     <input type="number" id="amount-input" placeholder="0" class="modern-input text-center text-2xl font-bold tracking-widest">
                     <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">تومان</span>
                 </div>
+                
+                <div class="border-t border-white/10 pt-4">
+                    <p class="text-xs text-gray-400 mb-2">انتخاب روش پرداخت:</p>
+                    ${methodsHtml}
+                </div>
+
                 <button onclick="WebApp.submitDeposit()" class="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 font-bold shadow-lg shadow-blue-500/30 ripple-btn text-lg">
                     پرداخت آنلاین
                 </button>
