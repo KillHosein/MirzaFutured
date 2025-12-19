@@ -5,10 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mirza Web App</title>
-    <script src="/app/js/telegram-web-app.js"></script>
-    <script type="module" crossorigin src="/app/assets/index-C-2a0Dur.js"></script>
-    <link rel="modulepreload" crossorigin href="/app/assets/vendor-CIGJ9g2q.js">
-    <link rel="stylesheet" crossorigin href="/app/assets/index-BoHBsj0Z.css">
+    <script src="/app/js/telegram-web-app.js?v=2"></script>
+    <script type="module" crossorigin src="/app/assets/index-C-2a0Dur.js?v=2"></script>
+    <link rel="modulepreload" crossorigin href="/app/assets/vendor-CIGJ9g2q.js?v=2">
+    <link rel="stylesheet" crossorigin href="/app/assets/index-BoHBsj0Z.css?v=2">
     <style>
       /* Custom Beautification for Mirza Web App */
       
@@ -214,8 +214,9 @@
   </head>
   <body>
     <!-- Initial Loading Screen -->
-    <div id="app-loader" class="app-loader">
+    <div id="app-loader" class="app-loader" style="z-index: 2147483647 !important;">
       <div class="spinner"></div>
+      <div style="position: absolute; bottom: 20px; font-size: 10px; opacity: 0.5;">v2.0 Loaded</div>
     </div>
 
     <div id="root"></div>
