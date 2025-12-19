@@ -1,0 +1,112 @@
+/* Custom CSS for Mirza Web App */
+
+/* Import Fonts */
+@font-face {
+  font-family: 'Vazir';
+  src: url('../fonts/Vazir-Medium.woff2') format('woff2'),
+       url('../fonts/Vazir-Medium.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Vazir';
+  src: url('../fonts/Vazir-Bold.woff2') format('woff2'),
+       url('../fonts/Vazir-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Vazir';
+  src: url('../fonts/Vazir-Light.woff2') format('woff2'),
+       url('../fonts/Vazir-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+}
+
+:root {
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #999999;
+  --tg-theme-link-color: #2481cc;
+  --tg-theme-button-color: #2481cc;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f0f0f0;
+  
+  --primary-color: var(--tg-theme-button-color, #3b82f6);
+  --bg-color: var(--tg-theme-bg-color, #ffffff);
+  --text-color: var(--tg-theme-text-color, #1f2937);
+  --card-bg: var(--tg-theme-secondary-bg-color, #f3f4f6);
+}
+
+body {
+  font-family: 'Vazir', sans-serif !important;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Improve Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--tg-theme-hint-color);
+  border-radius: 4px;
+}
+
+/* General Button Styling */
+button {
+  font-family: 'Vazir', sans-serif !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* Modern Card Styling (Generic override attempt) */
+/* We target divs with specific border/bg classes if we can guess them, 
+   but for now let's try to soften the look of everything */
+
+input, select, textarea {
+  font-family: 'Vazir', sans-serif !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--tg-theme-hint-color) !important;
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  padding: 10px !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-color) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#root > div {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold !important;
+}
+
+/* Links */
+a {
+  color: var(--tg-theme-link-color) !important;
+  text-decoration: none;
+}
