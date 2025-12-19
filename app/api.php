@@ -459,6 +459,7 @@ try {
                 
                 if ($cardNum && $cardNum !== '0') {
                      $response['ok'] = true;
+                     $cardNum = convertPersianToEnglish($cardNum);
                      $response['card_number'] = preg_replace('/\D/', '', $cardNum);
                      $response['card_name'] = $cardName;
                      
