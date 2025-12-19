@@ -144,6 +144,22 @@
 
     </main>
 
+    <!-- Modals -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300" onclick="WebApp.closeModal()"></div>
+    
+    <div id="modal-container" class="fixed bottom-0 left-0 w-full bg-[#1e293b] rounded-t-2xl z-50 transform translate-y-full transition-transform duration-300 max-h-[90vh] overflow-y-auto border-t border-white/10">
+        <div class="p-4">
+            <div class="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-6"></div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-[100] transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none flex items-center gap-2 border border-white/10">
+        <span id="toast-icon"></span>
+        <span id="toast-message" class="text-sm font-medium"></span>
+    </div>
+
     <!-- Scripts -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="js/app.js?v=<?php echo time(); ?>"></script>
