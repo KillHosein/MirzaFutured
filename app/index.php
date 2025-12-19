@@ -39,6 +39,11 @@
         <div class="loading-text">MIRZA PRO</div>
     </div>
 
+    <!-- Pull to Refresh Spinner -->
+    <div id="ptr-spinner">
+        <div class="ptr-icon"></div>
+    </div>
+
     <!-- Main Content -->
     <main id="main-app" class="opacity-0 transition-opacity duration-500 p-4 pb-24">
         
@@ -51,7 +56,11 @@
                 </div>
                 <div>
                     <h1 id="user-name" class="text-sm font-bold leading-tight">بارگذاری...</h1>
-                    <p id="user-id" class="text-[10px] text-gray-400 font-mono">ID: ---</p>
+                    <div class="flex items-center gap-1 cursor-pointer" onclick="WebApp.copyToClipboard(document.getElementById('user-id-raw').innerText)">
+                         <p id="user-id" class="text-[10px] text-gray-400 font-mono">ID: ---</p>
+                         <span id="user-id-raw" class="hidden"></span>
+                         <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
                 </div>
             </div>
             <button onclick="WebApp.loadDashboard()" class="p-2 rounded-full glass-panel text-gray-300 hover:text-white transition-colors ripple-btn">
@@ -66,16 +75,29 @@
             <div id="view-dashboard" class="view-section active">
                 <!-- Balance Card -->
                 <section class="mb-8">
-                    <div class="glass-panel p-6 relative overflow-hidden animate-float">
-                        <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-primary/20 blur-3xl rounded-full pointer-events-none"></div>
-                        <div class="relative z-10 text-center">
-                            <p class="text-xs text-gray-400 mb-1">موجودی کیف پول</p>
-                            <h2 class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-                                <span id="user-balance">0</span> <span class="text-base font-normal text-gray-500">تومان</span>
-                            </h2>
-                            <div class="mt-4 flex justify-center gap-3">
-                                <button onclick="WebApp.openDepositModal()" class="px-6 py-2 rounded-xl bg-primary/20 border border-primary/50 text-primary text-sm font-bold hover:bg-primary/30 transition-all ripple-btn shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    <div class="credit-card-bg p-6 rounded-2xl relative overflow-hidden animate-float shadow-2xl shadow-blue-900/20">
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">موجودی کیف پول</p>
+                                    <h2 class="text-3xl font-black tracking-tight text-white drop-shadow-lg">
+                                        <span id="user-balance">0</span> <span class="text-sm font-normal text-gray-300">تومان</span>
+                                    </h2>
+                                </div>
+                                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button onclick="WebApp.openDepositModal()" class="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-all ripple-btn shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                     افزایش موجودی
+                                </button>
+                                <button onclick="WebApp.switchView('orders')" class="px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-bold hover:bg-white/20 transition-all ripple-btn backdrop-blur-sm">
+                                    تراکنش‌ها
                                 </button>
                             </div>
                         </div>
