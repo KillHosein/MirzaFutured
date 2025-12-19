@@ -484,7 +484,13 @@ try {
             if ($zarinpalMerchant && $zarinpalMerchant !== '0' && strlen($zarinpalMerchant) > 10) {
                 // Initiate Zarinpal Payment
                 $orderId = bin2hex(random_bytes(10));
-                $callbackUrl = "https://" . $domainhosts . "/payment/zarinpal.php";
+                
+                // Determine Host
+                $host = $_SERVER['HTTP_HOST'];
+                if ($domainhosts && $domainhosts !== '{domain_name}') {
+                    $host = $domainhosts;
+                }
+                $callbackUrl = "https://" . $host . "/payment/zarinpal.php";
                 
                 $data = [
                     "merchant_id" => $zarinpalMerchant,
