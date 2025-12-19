@@ -690,6 +690,56 @@ const WebApp = {
         }
     },
 
+    handleReceiptSelect: (input) => {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            document.getElementById('receipt-btn-text').textContent = 'تغییر تصویر: ' + file.name.substring(0, 15) + '...';
+            document.getElementById('send-receipt-btn').classList.remove('hidden');
+        }
+    },
+
+    uploadReceipt: async (orderId) => {
+        const input = document.getElementById('receipt-file');
+        if (!input.files || !input.files[0]) {
+            WebApp.showToast('لطفا تصویر رسید را انتخاب کنید', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('send-receipt-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="spinner w-5 h-5 border-2 mx-auto"></div>';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('action', 'upload_receipt');
+        formData.append('initData', tg.initData);
+        formData.append('order_id', orderId);
+        formData.append('receipt', input.files[0]);
+
+        try {
+            const response = await fetch('api.php', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data && data.ok) {
+                WebApp.showToast('رسید با موفقیت ارسال شد', 'success');
+                WebApp.closeModal();
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                WebApp.showToast(data ? data.error : 'خطا در ارسال رسید', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            WebApp.showToast('خطای شبکه', 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    },
+
     openSupportModal: () => {
         WebApp.openModal('پشتیبانی', `
             <div class="text-center space-y-6 py-4">

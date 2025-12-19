@@ -458,10 +458,12 @@ try {
                 $cardName = getPaySettingValue('namecard');
                 
                 if ($cardNum && $cardNum !== '0') {
-                     $response['card_number'] = $cardNum;
+                     $response['ok'] = true;
+                     $response['card_number'] = preg_replace('/\D/', '', $cardNum);
                      $response['card_name'] = $cardName;
                      
                      $randomString = bin2hex(random_bytes(5));
+                     $response['order_id'] = $randomString;
                      $dateacc = date('Y/m/d H:i:s');
                      
                      $stmt = $pdo->prepare("INSERT INTO Payment_report (id_user,id_order,time,price,payment_Status,Payment_Method,id_invoice,bottype) VALUES (:uid,:oid,:time,:price,'Unpaid','cart to cart','0 | 0', 'webapp')");
@@ -581,6 +583,68 @@ try {
             }
             break;
 
+
+        case 'upload_receipt':
+            $orderId = $_POST['order_id'] ?? '';
+            
+            if (!$orderId || !isset($_FILES['receipt'])) {
+                $response['ok'] = false;
+                $response['error'] = 'اطلاعات ناقص است';
+                break;
+            }
+
+            $file = $_FILES['receipt'];
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $response['ok'] = false;
+                $response['error'] = 'خطا در آپلود فایل';
+                break;
+            }
+
+            // Validate file type
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!in_array($file['type'], $allowedTypes)) {
+                $response['ok'] = false;
+                $response['error'] = 'فرمت فایل مجاز نیست (فقط تصویر)';
+                break;
+            }
+
+            // Save to temp and send to admin
+            $tmpPath = $file['tmp_name'];
+            
+            // Get Admin ID from config or DB
+            if (!isset($adminnumber) || empty($adminnumber)) {
+                // Try to fetch from DB if not in config scope (though it should be via config.php)
+                 $stmtAdmin = $pdo->query("SELECT id_admin FROM admin LIMIT 1");
+                 $adminRow = $stmtAdmin->fetch(PDO::FETCH_ASSOC);
+                 $adminnumber = $adminRow['id_admin'] ?? null;
+            }
+
+            if ($adminnumber) {
+                // Send to Admin via Bot API
+                $caption = "🧾 رسید پرداخت جدید (WebApp)\n\n👤 کاربر: $userId\n🔖 شناسه سفارش: $orderId\n💰 مبلغ: (بررسی کنید)";
+                
+                // Use botapi.php function
+                $res = telegram('sendPhoto', [
+                    'chat_id' => $adminnumber,
+                    'photo' => new CURLFile($tmpPath),
+                    'caption' => $caption
+                ]);
+                
+                if ($res['ok']) {
+                    // Update Payment_report status or just log
+                    $stmt = $pdo->prepare("UPDATE Payment_report SET payment_Status = 'Reviewing' WHERE id_order = :oid AND id_user = :uid");
+                    $stmt->execute([':oid' => $orderId, ':uid' => $userId]);
+                    
+                    $response['ok'] = true;
+                } else {
+                    $response['ok'] = false;
+                    $response['error'] = 'خطا در ارسال به مدیریت: ' . ($res['description'] ?? 'Unknown');
+                }
+            } else {
+                $response['ok'] = false;
+                $response['error'] = 'خطای سیستم (عدم یافتن مدیر)';
+            }
+            break;
 
         default:
             $response['ok'] = false;
