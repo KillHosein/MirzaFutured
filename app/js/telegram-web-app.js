@@ -3329,10 +3329,11 @@
 
 /**
  * -------------------------------------------------------------------------
- *  PREMIUM FINTECH UI EXTENSIONS v2.0
+ *  PREMIUM FINTECH UI EXTENSIONS v3.0 (Mirza Pro)
  * -------------------------------------------------------------------------
  *  Enhances the standard Telegram WebApp SDK with professional UI behaviors,
- *  automatic haptic feedback, immersive mode, and deep theme integration.
+ *  automatic haptic feedback, immersive mode, deep theme integration,
+ *  and visual ripple effects.
  */
 (function() {
   if (!window.Telegram || !window.Telegram.WebApp) return;
@@ -3346,7 +3347,6 @@
     initPremium: function() {
       try {
         // 1. Theme Synchronization (Deep Navy Enterprise)
-        // Matches the #0B0E14 background from custom.css
         var themeColor = '#0B0E14';
         WebApp.setHeaderColor(themeColor);
         WebApp.setBackgroundColor(themeColor);
@@ -3357,77 +3357,122 @@
 
         // 2. Immersive Mode & Safety
         WebApp.expand();
-        WebApp.enableClosingConfirmation(); // Prevent accidental exit
+        WebApp.enableClosingConfirmation(); 
         
         if (WebApp.isVersionAtLeast('7.7')) {
-            WebApp.disableVerticalSwipes(); // Prevent swipe-to-close for native app feel
+            WebApp.disableVerticalSwipes();
         }
 
-        // 3. Smart Haptic Feedback Engine 2.0
-        // Automatically adds tactile feedback to all interactive elements
+        // 3. Smart Haptic Feedback Engine
         var hapticHandler = function(e) {
-          // Find closest interactive element
           var target = e.target.closest('button, a, [role="button"], .btn, input, select, textarea, .card');
           if (!target || target.dataset.noHaptics) return;
 
-          // Determine feedback style based on element type
           if (target.classList.contains('btn-primary') || target.type === 'submit') {
-             WebApp.HapticFeedback.impactOccurred('medium'); // Stronger for primary actions
+             WebApp.HapticFeedback.impactOccurred('medium');
           } else if (target.classList.contains('btn-danger') || target.classList.contains('text-red-500')) {
-             WebApp.HapticFeedback.notificationOccurred('warning'); // Warning for destructive
+             WebApp.HapticFeedback.notificationOccurred('warning');
           } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-             WebApp.HapticFeedback.selectionChanged(); // Subtle for inputs
+             WebApp.HapticFeedback.selectionChanged();
           } else if (target.classList.contains('card')) {
-             WebApp.HapticFeedback.impactOccurred('light'); // Very subtle for cards
+             WebApp.HapticFeedback.impactOccurred('light');
           } else {
-             WebApp.HapticFeedback.impactOccurred('light'); // Default
+             WebApp.HapticFeedback.impactOccurred('light');
           }
         };
 
-        // Attach listeners (touchstart for instant response, click for fallback)
+        // 4. Visual Ripple Effect Engine
+        var rippleHandler = function(e) {
+          var button = e.target.closest('button, .btn, [role="button"]');
+          if (!button) return;
+
+          // Ensure relative positioning
+          var computedStyle = window.getComputedStyle(button);
+          if (computedStyle.position === 'static') {
+            button.style.position = 'relative';
+          }
+
+          var ripple = document.createElement('span');
+          ripple.classList.add('ripple');
+          
+          var rect = button.getBoundingClientRect();
+          var size = Math.max(rect.width, rect.height);
+          
+          // Get coordinates
+          var clientX = e.clientX;
+          var clientY = e.clientY;
+          
+          // Handle touch events
+          if (e.type === 'touchstart' && e.touches.length > 0) {
+             clientX = e.touches[0].clientX;
+             clientY = e.touches[0].clientY;
+          }
+
+          var x = clientX - rect.left - size / 2;
+          var y = clientY - rect.top - size / 2;
+
+          ripple.style.width = ripple.style.height = size + 'px';
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+          
+          button.appendChild(ripple);
+          
+          setTimeout(function() {
+            ripple.remove();
+          }, 600);
+        };
+
+        // Attach Listeners
         document.addEventListener('touchstart', function(e) {
-            // Only trigger for buttons/interactive on touch start to feel responsive
+            // Haptics + Ripple on touch
             if(e.target.closest('button, .btn, a')) {
                 hapticHandler(e);
+                rippleHandler(e);
             }
         }, {passive: true});
 
         document.addEventListener('click', function(e) {
-            // Avoid double triggering if touchstart already fired (simple check)
-            // Ideally we'd debounce, but for now just handle non-buttons or desktop clicks
+            // Haptics + Ripple on click (for desktop/fallback)
+            // We use a flag to prevent double-firing if touch already handled it
             if(!e.target.closest('button, .btn, a')) {
+                // If it's not a button (handled by touchstart), maybe it's another interactive
                 hapticHandler(e);
+            } else {
+                // It is a button, but maybe it was a mouse click?
+                // Simple ripple for mouse clicks
+                if (e.detail > 0) { // e.detail > 0 usually means mouse click, 0 is often programmatic/touch
+                    rippleHandler(e);
+                }
             }
         });
 
-        // 4. Viewport Stabilization
-        // Prevents the "jumpy" scrolling effect on iOS
+        // 5. Viewport Stabilization
         WebApp.onEvent('viewportChanged', function() {
           if (!WebApp.isExpanded) WebApp.expand();
           document.documentElement.style.setProperty('--tg-viewport-height', WebApp.viewportHeight + 'px');
         });
 
-        // 5. Main Button Professional Setup Helper
+        // 6. Main Button Professional Setup Helper
         WebApp.ui.setMainButton = function(text, callback, isVisible) {
             if (isVisible === undefined) isVisible = true;
             WebApp.MainButton.setText(text.toUpperCase());
             WebApp.MainButton.onClick(callback);
             WebApp.MainButton.setParams({
-                color: '#3b82f6', // Matches CSS --primary
+                color: '#3b82f6',
                 text_color: '#ffffff'
             });
             if (isVisible) WebApp.MainButton.show();
             else WebApp.MainButton.hide();
         };
 
-        console.log('[Telegram.WebApp] Premium Fintech UI v2.0 Initialized');
+        console.log('[Telegram.WebApp] Premium Fintech UI v3.0 Initialized');
       } catch (e) {
         console.warn('[Telegram.WebApp] Premium Init Error:', e);
       }
     }
   };
 
-  // Auto-initialize when the script loads
+  // Auto-initialize
   WebApp.ui.initPremium();
   WebApp.ready();
 })();

@@ -120,6 +120,8 @@ input[type="submit"],
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
   transition: all 0.2s ease !important;
   letter-spacing: 0.3px;
+  position: relative; /* For Ripple */
+  overflow: hidden; /* For Ripple */
 }
 
 button:hover,
@@ -201,7 +203,7 @@ p, span, div {
   color: var(--text-secondary) !important;
 }
 
-/* Status Badges (if any) */
+/* Status Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -251,4 +253,37 @@ hr, .border-b, .border-t {
 ::selection {
   background: rgba(59, 130, 246, 0.2);
   color: white;
+}
+
+/* 🌊 Ripple Effect */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  background-color: rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* 🖱️ Floating Animation Utility */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Refined Focus Ring */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
