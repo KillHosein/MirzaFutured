@@ -1,4 +1,4 @@
-/* Custom CSS for Mirza Web App */
+/* Custom CSS for Mirza Web App - Modern Glass Dark Theme */
 
 /* Import Fonts */
 @font-face {
@@ -17,96 +17,138 @@
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'Vazir';
-  src: url('../fonts/Vazir-Light.woff2') format('woff2'),
-       url('../fonts/Vazir-Light.woff') format('woff');
-  font-weight: 300;
-  font-style: normal;
-}
-
+/* Root Variables Override */
 :root {
-  --tg-theme-bg-color: #ffffff;
-  --tg-theme-text-color: #000000;
-  --tg-theme-hint-color: #999999;
-  --tg-theme-link-color: #2481cc;
-  --tg-theme-button-color: #2481cc;
-  --tg-theme-button-text-color: #ffffff;
-  --tg-theme-secondary-bg-color: #f0f0f0;
-  
-  --primary-color: var(--tg-theme-button-color, #3b82f6);
-  --bg-color: var(--tg-theme-bg-color, #ffffff);
-  --text-color: var(--tg-theme-text-color, #1f2937);
-  --card-bg: var(--tg-theme-secondary-bg-color, #f3f4f6);
+  --primary-color: #3b82f6;
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  --glass-bg: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
 }
 
+/* Global Reset & Body */
 body {
   font-family: 'Vazir', sans-serif !important;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-gradient) !important;
+  color: var(--text-main) !important;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
 }
 
-/* Improve Scrollbar */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--tg-theme-hint-color);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
 }
 
-/* General Button Styling */
-button {
-  font-family: 'Vazir', sans-serif !important;
+/* Glassmorphism Cards */
+/* Targeting common Tailwind background classes for cards */
+div[class*="bg-gray-900"], 
+div[class*="bg-slate-900"], 
+div[class*="bg-zinc-900"],
+div[class*="bg-neutral-900"],
+div[class*="bg-black"],
+.card, 
+[class*="card"] {
+  background-color: var(--glass-bg) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: 16px !important;
+}
+
+/* Text Overrides */
+.text-primary, [class*="text-primary"] {
+  color: #60a5fa !important;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+p, span, div {
+  /* Don't override everything, but ensure contrast */
+}
+
+/* Buttons */
+button, 
+[role="button"], 
+input[type="submit"], 
+input[type="button"],
+.btn {
+  background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
   border-radius: 12px !important;
-  transition: all 0.2s ease-in-out !important;
+  padding: 12px 20px !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
 }
 
-button:active {
-  transform: scale(0.96);
+button:active, [role="button"]:active {
+  transform: scale(0.95);
 }
 
-/* Modern Card Styling (Generic override attempt) */
-/* We target divs with specific border/bg classes if we can guess them, 
-   but for now let's try to soften the look of everything */
-
-input, select, textarea {
-  font-family: 'Vazir', sans-serif !important;
+/* Inputs */
+input[type="text"], 
+input[type="number"], 
+input[type="email"], 
+input[type="password"], 
+select, 
+textarea {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
   border-radius: 12px !important;
-  border: 1px solid var(--tg-theme-hint-color) !important;
-  background-color: var(--bg-color) !important;
-  color: var(--text-color) !important;
-  padding: 10px !important;
+  padding: 12px !important;
+  outline: none !important;
+  transition: all 0.3s ease;
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: var(--primary-color) !important;
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2) !important;
+  background: rgba(15, 23, 42, 0.8) !important;
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Bottom Navigation Bar */
+.fixed.bottom-0, 
+[class*="fixed"][class*="bottom-0"] {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-#root > div {
-  animation: fadeIn 0.4s ease-out;
+/* Progress Bar */
+[role="progressbar"], .progress-bar {
+  background-color: rgba(255,255,255,0.1) !important;
+}
+[role="progressbar"] > div, .progress-bar > div {
+  background: linear-gradient(90deg, #60a5fa, #a78bfa) !important;
 }
 
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: bold !important;
-}
-
-/* Links */
-a {
-  color: var(--tg-theme-link-color) !important;
-  text-decoration: none;
+/* Icons */
+svg {
+  filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
 }
