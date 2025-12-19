@@ -48,6 +48,17 @@
         --tg-theme-secondary-bg-color: #f4f4f5;
       }
 
+      /* Mobile & Pro UX Optimizations */
+      * {
+        -webkit-tap-highlight-color: transparent;
+        box-sizing: border-box;
+      }
+      
+      html {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+
       body {
         font-family: 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
         background-color: var(--tg-theme-bg-color);
@@ -55,7 +66,17 @@
         transition: background-color 0.3s ease, color 0.3s ease;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        overflow-x: hidden; /* Prevent horizontal scroll */
+        overflow-x: hidden;
+        
+        /* Safe Area Support for Notch Devices */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+
+        /* Modern Typography */
+        letter-spacing: -0.015em;
+        line-height: 1.6;
       }
 
       /* Subtle Background Pattern/Gradient */
@@ -66,9 +87,9 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle at 50% 0%, 
-          color-mix(in srgb, var(--tg-theme-button-color), transparent 92%) 0%, 
-          transparent 70%);
+        background: 
+          radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--tg-theme-button-color), transparent 96%) 0%, transparent 40%),
+          radial-gradient(circle at 85% 85%, color-mix(in srgb, var(--tg-theme-button-color), transparent 96%) 0%, transparent 40%);
         pointer-events: none;
         z-index: -1;
       }
@@ -142,51 +163,41 @@
       /* Input Enhancements */
       input, select, textarea {
         font-family: inherit;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid color-mix(in srgb, var(--tg-theme-text-color), transparent 85%);
       }
       input:focus, select:focus, textarea:focus {
         outline: none;
         border-color: var(--tg-theme-button-color) !important;
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--tg-theme-button-color), transparent 85%) !important;
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--tg-theme-button-color), transparent 90%) !important;
+        transform: translateY(-1px);
       }
 
-      @keyframes pageFadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
+      /* Premium Double-Ring Spinner */
+      .spinner {
+        width: 48px;
+        height: 48px;
+        position: relative;
       }
-
-      /* Selection Color */
-      ::selection {
-        background-color: color-mix(in srgb, var(--tg-theme-button-color), transparent 70%);
-        color: var(--tg-theme-text-color);
-      }
-
-      /* Custom Loader */
-      .app-loader {
-        position: fixed;
+      .spinner::before, .spinner::after {
+        content: "";
+        position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        background-color: var(--tg-theme-bg-color);
-        transition: opacity 0.5s ease, visibility 0.5s ease;
-      }
-      .app-loader.hidden {
-        opacity: 0;
-        visibility: hidden;
-      }
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid color-mix(in srgb, var(--tg-theme-button-color), transparent 80%);
-        border-top: 4px solid var(--tg-theme-button-color);
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        border: 3px solid transparent;
+        border-top-color: var(--tg-theme-button-color);
       }
+      .spinner::before {
+        z-index: 100;
+        animation: spin 1s infinite;
+      }
+      .spinner::after {
+        border: 3px solid color-mix(in srgb, var(--tg-theme-button-color), transparent 85%);
+      }
+
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
