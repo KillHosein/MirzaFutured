@@ -146,28 +146,69 @@ const WebApp = {
 
     // --- Data Loading ---
     loadDashboard: async () => {
-        const data = await WebApp.callApi('dashboard');
-        if (!data || !data.ok) return;
+        try {
+            const data = await WebApp.callApi('dashboard');
+            
+            if (!data || !data.ok) {
+                // Show error state inside preloader
+                const errorMsg = data ? (data.error || 'خطای نامشخص') : 'خطای ارتباط با سرور';
+                
+                // Handle "is_new" user (User not found in DB)
+                if (data && data.is_new) {
+                    document.getElementById('app-preloader').innerHTML = `
+                        <div class="text-center text-white px-6">
+                            <div class="mb-4 text-blue-500 animate-bounce">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold mb-2">خوش آمدید!</h3>
+                            <p class="text-sm text-gray-400 mb-6">برای استفاده از وب‌اپلیکیشن، ابتدا باید ربات را استارت کنید.</p>
+                            <button onclick="tg.close()" class="px-6 py-2 bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors font-bold">بازگشت به ربات</button>
+                        </div>
+                    `;
+                    return;
+                }
 
-        WebApp.user = data.user;
-        const stats = data.stats;
+                document.getElementById('app-preloader').innerHTML = `
+                    <div class="text-center text-white px-6">
+                        <div class="mb-4 text-red-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">خطا در بارگذاری</h3>
+                        <p class="text-sm text-gray-400 mb-6">${errorMsg}</p>
+                        <button onclick="location.reload()" class="px-6 py-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors">تلاش مجدد</button>
+                    </div>
+                `;
+                return;
+            }
 
-        // Populate User Info
-        document.getElementById('user-name').textContent = WebApp.user.username || WebApp.user.first_name || 'کاربر';
-        document.getElementById('user-id').textContent = `ID: ${WebApp.user.id}`;
-        document.getElementById('user-balance').textContent = WebApp.user.balance;
-        document.getElementById('active-services').textContent = stats.active_services;
-        document.getElementById('total-spent').textContent = stats.total_spent;
-        if (WebApp.user.photo_url) document.getElementById('user-avatar').src = WebApp.user.photo_url;
+            WebApp.user = data.user;
+            const stats = data.stats;
 
-        // Render Dashboard Products
-        WebApp.renderProductList(data.products, 'products-list');
+            // Populate User Info
+            document.getElementById('user-name').textContent = WebApp.user.username || WebApp.user.first_name || 'کاربر';
+            document.getElementById('user-id').textContent = `ID: ${WebApp.user.id}`;
+            document.getElementById('user-balance').textContent = WebApp.user.balance;
+            document.getElementById('active-services').textContent = stats.active_services;
+            document.getElementById('total-spent').textContent = stats.total_spent;
+            if (WebApp.user.photo_url) document.getElementById('user-avatar').src = WebApp.user.photo_url;
 
-        // Hide Preloader
-        setTimeout(() => {
-            document.getElementById('app-preloader').classList.add('hidden-preloader');
-            document.getElementById('main-app').classList.remove('opacity-0');
-        }, 500);
+            // Render Dashboard Products
+            WebApp.renderProductList(data.products, 'products-list');
+
+            // Hide Preloader
+            setTimeout(() => {
+                document.getElementById('app-preloader').classList.add('hidden-preloader');
+                document.getElementById('main-app').classList.remove('opacity-0');
+            }, 500);
+            
+        } catch (e) {
+            console.error(e);
+            document.getElementById('app-preloader').innerHTML = '<div class="text-white text-center p-4">خطای سیستمی رخ داد.<br><button onclick="location.reload()" class="mt-4 px-4 py-2 bg-white/10 rounded">تلاش مجدد</button></div>';
+        }
     },
 
     loadOrdersView: async () => {
