@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+require_once '../function.php';
 
 header('Content-Type: application/json');
 
@@ -35,18 +36,6 @@ function validateTelegramAuth($initData, $botToken) {
     }
     
     return $data;
-}
-
-function getPaySetting($name) {
-    global $pdo;
-    try {
-        $stmt = $pdo->prepare("SELECT ValuePay FROM PaySetting WHERE NamePay = :name LIMIT 1");
-        $stmt->execute([':name' => $name]);
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $res ? $res['ValuePay'] : null;
-    } catch (PDOException $e) {
-        return null;
-    }
 }
 
 // 2. Get initData from POST
@@ -176,6 +165,29 @@ try {
             ];
             $response['bot_username'] = $usernamebot; // Send bot username for referral link
             $response['products'] = $products;
+
+            // Determine active payment methods
+            $methods = [];
+            
+            // Check Zarinpal
+            $zarinpalMerchant = getPaySettingValue('merchant_zarinpal');
+            if ($zarinpalMerchant && $zarinpalMerchant !== '0' && strlen($zarinpalMerchant) > 10) {
+                $methods[] = ['id' => 'zarinpal', 'name' => 'پرداخت ریالی (زرین‌پال)'];
+            }
+            
+            // Check NowPayments
+            $nowPaymentsKey = getPaySettingValue('marchent_tronseller');
+            if ($nowPaymentsKey && $nowPaymentsKey !== '0') {
+                $methods[] = ['id' => 'nowpayments', 'name' => 'پرداخت ارزی (NowPayments)'];
+            }
+            
+            // Check Card to Card
+            $cardNum = getPaySettingValue('cardnumber');
+            if ($cardNum && $cardNum !== '0') {
+                $methods[] = ['id' => 'card', 'name' => 'کارت به کارت'];
+            }
+            
+            $response['payment_methods'] = $methods;
             break;
 
         case 'get_products':
@@ -247,15 +259,172 @@ try {
 
         case 'deposit':
             $amount = intval($input['amount'] ?? 0);
+            $method = $input['method'] ?? 'zarinpal';
+
             if ($amount < 1000) {
                 $response['ok'] = false;
                 $response['error'] = 'حداقل مبلغ ۱۰۰۰ تومان است';
                 break;
             }
 
-            // Check PaySetting for Card
-            $cardNum = getPaySetting('cardnumber');
-            $cardName = getPaySetting('namecard');
+            if ($method === 'nowpayments') {
+                // NowPayments
+                $nowPaymentsKey = getPaySettingValue('marchent_tronseller');
+                if (!$nowPaymentsKey || $nowPaymentsKey === '0') {
+                     $response['ok'] = false;
+                     $response['error'] = 'درگاه پرداخت ارزی فعال نیست';
+                     break;
+                }
+            
+                // Convert Amount
+                $rates = tronratee();
+                if (!$rates['ok']) {
+                     $response['ok'] = false;
+                     $response['error'] = 'خطا در دریافت نرخ ارز';
+                     break;
+                }
+                $usdRate = $rates['result']['USD'];
+                if (!$usdRate) {
+                     $response['ok'] = false;
+                     $response['error'] = 'خطا در محاسبه نرخ ارز';
+                     break;
+                }
+
+                $usdAmount = round($amount / $usdRate, 2);
+                if ($usdAmount < 1) {
+                    // Force min 1 USD or handled by NP
+                    // Let's just warn if very low
+                }
+            
+                $orderId = bin2hex(random_bytes(10));
+                $desc = "Charge Account: $userId";
+                
+                // Call nowPayments
+                $npResult = nowPayments('invoice', $usdAmount, $orderId, $desc);
+                
+                if (isset($npResult['invoice_url'])) {
+                    $paymentUrl = $npResult['invoice_url'];
+                    $npId = $npResult['id'];
+                    
+                    $dateacc = date('Y/m/d H:i:s');
+                    $stmt = $pdo->prepare("INSERT INTO Payment_report (id_user, id_order, time, price, payment_Status, Payment_Method, id_invoice, bottype, dec_not_confirmed) VALUES (:uid, :oid, :time, :price, 'Unpaid', 'nowpayment', '0 | 0', 'webapp', :auth)");
+                    $stmt->execute([
+                        ':uid' => $userId,
+                        ':oid' => $orderId,
+                        ':time' => $dateacc,
+                        ':price' => $amount, // Store Toman amount
+                        ':auth' => $npId
+                    ]);
+                    
+                    $response['ok'] = true;
+                    $response['url'] = $paymentUrl;
+                } else {
+                    $response['ok'] = false;
+                    $response['error'] = 'NowPayments Error: ' . ($npResult['message'] ?? 'Unknown');
+                }
+                break;
+            }
+
+            if ($method === 'card') {
+                // Card to Card
+                $cardNum = getPaySettingValue('cardnumber');
+                $cardName = getPaySettingValue('namecard');
+                
+                if ($cardNum && $cardNum !== '0') {
+                     $response['card_number'] = $cardNum;
+                     $response['card_name'] = $cardName;
+                     
+                     $randomString = bin2hex(random_bytes(5));
+                     $dateacc = date('Y/m/d H:i:s');
+                     
+                     $stmt = $pdo->prepare("INSERT INTO Payment_report (id_user,id_order,time,price,payment_Status,Payment_Method,id_invoice,bottype) VALUES (:uid,:oid,:time,:price,'Unpaid','cart to cart','0 | 0', 'webapp')");
+                     $stmt->execute([
+                         ':uid' => $userId,
+                         ':oid' => $randomString,
+                         ':time' => $dateacc,
+                         ':price' => $amount
+                     ]);
+                } else {
+                     $response['ok'] = false;
+                     $response['error'] = 'اطلاعات کارت تنظیم نشده است';
+                }
+                break;
+            }
+
+            // Default: Zarinpal
+            $zarinpalMerchant = getPaySettingValue('merchant_zarinpal');
+            
+            if ($zarinpalMerchant && $zarinpalMerchant !== '0' && strlen($zarinpalMerchant) > 10) {
+                // Initiate Zarinpal Payment
+                $orderId = bin2hex(random_bytes(10));
+                $callbackUrl = "https://" . $domainhosts . "/payment/zarinpal.php";
+                
+                $data = [
+                    "merchant_id" => $zarinpalMerchant,
+                    "currency" => "IRT",
+                    "amount" => $amount,
+                    "callback_url" => $callbackUrl,
+                    "description" => "Charge Account: " . $userId,
+                    "metadata" => [
+                        "order_id" => $orderId
+                    ]
+                ];
+
+                $curl = curl_init();
+                curl_setopt_array($curl, array(
+                    CURLOPT_URL => 'https://api.zarinpal.com/pg/v4/payment/request.json',
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 30,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => 'POST',
+                    CURLOPT_POSTFIELDS => json_encode($data),
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: application/json',
+                        'Accept: application/json'
+                    ),
+                ));
+
+                $result = curl_exec($curl);
+                $err = curl_error($curl);
+                curl_close($curl);
+
+                if ($err) {
+                    $response['ok'] = false;
+                    $response['error'] = 'Curl Error: ' . $err;
+                } else {
+                    $json = json_decode($result, true);
+                    if (isset($json['data']['code']) && $json['data']['code'] == 100) {
+                        $authority = $json['data']['authority'];
+                        $paymentUrl = 'https://www.zarinpal.com/pg/StartPay/' . $authority;
+                        
+                        // Insert into DB
+                        $dateacc = date('Y/m/d H:i:s');
+                        $stmt = $pdo->prepare("INSERT INTO Payment_report (id_user, id_order, time, price, payment_Status, Payment_Method, id_invoice, bottype, dec_not_confirmed) VALUES (:uid, :oid, :time, :price, 'Unpaid', 'zarinpal', '0 | 0', 'webapp', :auth)");
+                        $stmt->execute([
+                            ':uid' => $userId,
+                            ':oid' => $orderId,
+                            ':time' => $dateacc,
+                            ':price' => $amount,
+                            ':auth' => $authority
+                        ]);
+                        
+                        $response['ok'] = true;
+                        $response['url'] = $paymentUrl;
+                    } else {
+                         // Fallback or Error
+                         $response['ok'] = false;
+                         $response['error'] = 'Zarinpal Error: ' . ($json['errors']['message'] ?? 'Unknown error');
+                    }
+                }
+                break;
+            }
+
+            // Fallback to Card if Zarinpal failed or not set
+            $cardNum = getPaySettingValue('cardnumber');
+            $cardName = getPaySettingValue('namecard');
             
             if ($cardNum && $cardNum !== '0') {
                  $response['card_number'] = $cardNum;

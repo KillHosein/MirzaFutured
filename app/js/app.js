@@ -170,6 +170,7 @@ const WebApp = {
 
             WebApp.user = data.user;
             WebApp.botUsername = data.bot_username;
+            WebApp.paymentMethods = data.payment_methods || [];
             const stats = data.stats;
             WebApp.user.referrals = stats.referrals;
 
@@ -409,13 +410,16 @@ const WebApp = {
             return;
         }
 
+        const methodInput = document.querySelector('input[name="payment_method"]:checked');
+        const method = methodInput ? methodInput.value : 'zarinpal';
+
         const btn = document.querySelector('#modal-content button.bg-gradient-to-r');
         if(btn) {
             btn.innerHTML = '<div class="spinner w-5 h-5 border-2 mx-auto"></div>';
             btn.disabled = true;
         }
 
-        const data = await WebApp.callApi('deposit', { amount: amount });
+        const data = await WebApp.callApi('deposit', { amount: amount, method: method });
         
         if (data && data.ok) {
             WebApp.closeModal();
