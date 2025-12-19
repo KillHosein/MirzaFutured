@@ -203,36 +203,163 @@ const WebApp = {
         
         const data = await WebApp.callApi('get_orders');
         
-        if (data && data.ok) {
+        if (data && data.ok !== false) {
             let html = '';
             
-            // Services
+            // Services (Invoices)
             if (data.services && data.services.length > 0) {
                  data.services.forEach((s, index) => {
                      const delay = index * 0.05;
+                     const statusColors = {
+                         'active': 'bg-green-500/10 text-green-400 border-green-500/20',
+                         'expired': 'bg-red-500/10 text-red-400 border-red-500/20',
+                         'limited': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+                         'disabled': 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                     };
+                     const statusText = {
+                         'active': 'فعال',
+                         'expired': 'منقضی',
+                         'limited': 'محدود',
+                         'disabled': 'غیرفعال'
+                     };
+                     
+                     const badgeClass = statusColors[s.Status] || statusColors['active'];
+                     const badgeText = statusText[s.Status] || s.Status || 'فعال';
+                     const date = s.time_sell ? new Date(s.time_sell * 1000).toLocaleDateString('fa-IR') : '-';
+
                      html += `
-                        <div class="glass-panel p-4 rounded-xl flex justify-between items-center mb-3 fade-in-up" style="animation-delay: ${delay}s">
+                        <div onclick="WebApp.openServiceDetails(${s.id})" class="glass-panel p-4 rounded-xl flex justify-between items-center mb-3 fade-in-up ripple-btn cursor-pointer" style="animation-delay: ${delay}s">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                 </div>
                                 <div>
-                                    <div class="text-sm font-bold text-white">سرویس #${s.id}</div>
-                                    <div class="text-xs text-gray-400">${new Date(s.date * 1000).toLocaleDateString('fa-IR')}</div>
+                                    <div class="text-sm font-bold text-white">${s.name_product || 'سرویس نامشخص'}</div>
+                                    <div class="text-xs text-gray-400">${s.username || ''} | ${date}</div>
                                 </div>
                             </div>
-                            <span class="px-2 py-1 rounded bg-green-500/10 text-green-400 text-xs border border-green-500/20">فعال</span>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="px-2 py-0.5 rounded ${badgeClass} text-[10px] border">${badgeText}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </div>
                         </div>
                      `;
                  });
             } else {
-                html += '<div class="text-center text-gray-500 py-4 text-sm">سرویس فعالی ندارید</div>';
+                html += '<div class="text-center text-gray-500 py-10 text-sm">سرویس فعالی ندارید</div>';
             }
             
             container.innerHTML = html;
+        } else {
+            container.innerHTML = '<div class="text-center text-red-400 py-4">خطا در دریافت لیست سرویس‌ها</div>';
         }
+    },
+
+    openServiceDetails: async (id) => {
+        WebApp.openModal('جزئیات سرویس', `
+            <div class="flex justify-center py-10"><div class="spinner"></div></div>
+        `);
+        
+        const data = await WebApp.callApi('get_service_details', { service_id: id });
+        
+        if(data && data.ok !== false && data.data) {
+            const s = data.data;
+            const total = s.total_traffic || 1;
+            const used = s.used_traffic || 0;
+            const remaining = total - used;
+            const percent = Math.min(100, (used / total) * 100);
+            
+            const totalGB = (total / (1024*1024*1024)).toFixed(2);
+            const usedGB = (used / (1024*1024*1024)).toFixed(2);
+            const remainingGB = (remaining / (1024*1024*1024)).toFixed(2);
+            
+            const expireDate = s.expire_date ? new Date(s.expire_date * 1000).toLocaleDateString('fa-IR') : 'نامحدود';
+            
+            const content = `
+                <div class="space-y-6">
+                    <!-- Header -->
+                    <div class="text-center">
+                        <h4 class="text-xl font-bold text-white mb-1">${s.name_product}</h4>
+                        <p class="text-sm text-gray-400 font-mono" dir="ltr">@${s.username}</p>
+                    </div>
+
+                    <!-- Usage Circle/Bar -->
+                    <div class="glass-panel p-5 rounded-xl">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-400">مصرف شده</span>
+                            <span class="text-white font-bold" dir="ltr">${usedGB} / ${totalGB} GB</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-1000" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <div class="text-center">
+                                <div class="text-xs text-gray-500">باقی‌مانده</div>
+                                <div class="text-lg font-bold text-green-400" dir="ltr">${remainingGB} GB</div>
+                            </div>
+                             <div class="w-px h-8 bg-white/10"></div>
+                            <div class="text-center">
+                                <div class="text-xs text-gray-500">انقضا</div>
+                                <div class="text-lg font-bold text-yellow-400">${expireDate}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="relative">
+                            <input type="text" readonly value="${s.subscription_url}" class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-xs text-gray-400 font-mono text-left" id="sub-link-${s.id}">
+                            <button onclick="WebApp.copyText('${s.subscription_url}')" class="absolute left-2 top-1/2 transform -translate-y-1/2 p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <button onclick="WebApp.openQRCode('${s.subscription_url}')" class="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold transition-colors flex items-center justify-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                            نمایش QR Code
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            WebApp.openModal('جزئیات سرویس', content);
+        } else {
+             WebApp.showToast('خطا در دریافت اطلاعات سرویس', 'error');
+             WebApp.closeModal();
+        }
+    },
+
+    copyText: (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            WebApp.showToast('کپی شد');
+        }).catch(() => {
+             WebApp.showToast('خطا در کپی', 'error');
+        });
+    },
+
+    openQRCode: (url) => {
+         // Simple QR Code generation using API or library if available. 
+         // Since we don't have a library, we can use a public API or just show the link.
+         // Using goqr.me API for simplicity in this context
+         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+         
+         WebApp.openModal('QR Code', `
+            <div class="text-center py-4">
+                <div class="bg-white p-4 rounded-xl inline-block mx-auto mb-4">
+                    <img src="${qrUrl}" alt="QR Code" class="w-48 h-48">
+                </div>
+                <p class="text-sm text-gray-400 break-all px-4">${url.substring(0, 30)}...</p>
+                <button onclick="WebApp.closeModal()" class="mt-6 w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 font-bold">بستن</button>
+            </div>
+         `);
     },
 
     loadProfileView: () => {
@@ -292,6 +419,79 @@ const WebApp = {
         
         const countEl = document.getElementById('ref-count');
         if(countEl) countEl.textContent = WebApp.user.referrals || 0;
+        
+        // History Button
+        const historyBtnId = 'profile-history-btn';
+        if (!document.getElementById(historyBtnId)) {
+            const btn = document.createElement('button');
+            btn.id = historyBtnId;
+            btn.onclick = WebApp.openTransactionsHistory;
+            btn.className = 'w-full py-4 rounded-xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 transition-colors ripple-btn flex items-center justify-between px-4 mb-3';
+            btn.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <span class="text-white text-sm">تاریخچه تراکنش‌ها</span>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            `;
+            if (referralCard && referralCard.parentNode) {
+                 referralCard.parentNode.insertBefore(btn, referralCard.nextSibling);
+            }
+        }
+    },
+
+    openTransactionsHistory: async () => {
+        WebApp.openModal('تاریخچه تراکنش‌ها', `
+            <div class="flex justify-center py-10"><div class="spinner"></div></div>
+        `);
+        
+        const data = await WebApp.callApi('get_transactions');
+        
+        if (data && data.ok !== false && data.transactions) {
+            let html = '<div class="space-y-3">';
+            
+            if (data.transactions.length > 0) {
+                data.transactions.forEach(t => {
+                     const isPaid = t.payment_Status === 'paid';
+                     const statusColor = isPaid ? 'text-green-400' : 'text-red-400';
+                     const iconColor = isPaid ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
+                     const statusText = isPaid ? 'موفق' : 'ناموفق';
+                     const method = t.Payment_Method || 'نامشخص';
+                     const date = t.time ? t.time : '-';
+                     
+                     html += `
+                        <div class="glass-panel p-3 rounded-xl flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg ${iconColor} flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${isPaid ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'}" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-white">${Number(t.price).toLocaleString()} تومان</div>
+                                    <div class="text-xs text-gray-400">${method} | ${date}</div>
+                                </div>
+                            </div>
+                            <span class="text-xs ${statusColor}">${statusText}</span>
+                        </div>
+                     `;
+                });
+            } else {
+                html += '<div class="text-center text-gray-500 py-6">تراکنشی یافت نشد</div>';
+            }
+            html += '</div>';
+            
+            WebApp.openModal('تاریخچه تراکنش‌ها', html);
+        } else {
+            WebApp.showToast('خطا در دریافت تاریخچه', 'error');
+            WebApp.closeModal();
+        }
     },
 
     copyReferralLink: () => {

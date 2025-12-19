@@ -1,6 +1,7 @@
 <?php
 require_once '../config.php';
 require_once '../function.php';
+require_once '../panels.php';
 
 header('Content-Type: application/json');
 
@@ -196,18 +197,72 @@ try {
             break;
 
         case 'get_orders':
-            // Fetch invoices
+            // Fetch invoices (Main Services)
             $stmtInvoices = $pdo->prepare("SELECT * FROM invoice WHERE id_user = :id ORDER BY id DESC LIMIT 50");
             $stmtInvoices->execute([':id' => $userId]);
             $invoices = $stmtInvoices->fetchAll(PDO::FETCH_ASSOC);
             
-            // Fetch Services
-            $stmtServices = $pdo->prepare("SELECT * FROM service_other WHERE id_user = :id ORDER BY id DESC LIMIT 50");
-            $stmtServices->execute([':id' => $userId]);
-            $services = $stmtServices->fetchAll(PDO::FETCH_ASSOC);
+            // Fetch Service Extensions/Others (Optional, usually log entries)
+            // $stmtServices = $pdo->prepare("SELECT * FROM service_other WHERE id_user = :id ORDER BY id DESC LIMIT 50");
+            // $stmtServices->execute([':id' => $userId]);
+            // $services = $stmtServices->fetchAll(PDO::FETCH_ASSOC);
 
-            $response['invoices'] = $invoices;
-            $response['services'] = $services;
+            // We return invoices as 'services' for the frontend
+            $response['services'] = $invoices; 
+            break;
+
+        case 'get_service_details':
+            $id = $input['service_id'] ?? 0;
+            $stmt = $pdo->prepare("SELECT * FROM invoice WHERE id = :id AND id_user = :uid");
+            $stmt->execute([':id' => $id, ':uid' => $userId]);
+            $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$invoice) {
+                $response['ok'] = false;
+                $response['error'] = 'Service not found';
+                break;
+            }
+
+            // Fetch Real-time Data
+            $ManagePanel = new ManagePanel();
+            $panelName = $invoice['Service_location'];
+            $username = $invoice['username'];
+            
+            $realtimeData = $ManagePanel->DataUser($panelName, $username);
+            
+            if ($realtimeData['status'] == 'Unsuccessful') {
+                 // Fallback to database info if panel is unreachable
+                 $response['data'] = [
+                     'id' => $invoice['id'],
+                     'name_product' => $invoice['name_product'],
+                     'username' => $invoice['username'],
+                     'status' => $invoice['Status'],
+                     'expire_date' => $invoice['time_sell'] + ($invoice['Service_time'] * 86400), // Approx
+                     'total_traffic' => $invoice['Volume'] * 1024 * 1024 * 1024,
+                     'used_traffic' => 0, // Unknown
+                     'subscription_url' => $invoice['user_info'],
+                     'is_offline' => true
+                 ];
+            } else {
+                 $response['data'] = [
+                     'id' => $invoice['id'],
+                     'name_product' => $invoice['name_product'],
+                     'username' => $invoice['username'],
+                     'status' => $realtimeData['status'],
+                     'expire_date' => $realtimeData['expire'],
+                     'total_traffic' => $realtimeData['data_limit'],
+                     'used_traffic' => $realtimeData['used_traffic'],
+                     'subscription_url' => $realtimeData['subscription_url'],
+                     'is_offline' => false
+                 ];
+            }
+            break;
+
+        case 'get_transactions':
+            $stmt = $pdo->prepare("SELECT * FROM Payment_report WHERE id_user = :id ORDER BY id DESC LIMIT 50");
+            $stmt->execute([':id' => $userId]);
+            $trans = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $response['transactions'] = $trans;
             break;
 
         case 'buy_product':
