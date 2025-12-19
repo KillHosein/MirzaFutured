@@ -37,6 +37,18 @@ function validateTelegramAuth($initData, $botToken) {
     return $data;
 }
 
+function getPaySetting($name) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT ValuePay FROM PaySetting WHERE NamePay = :name LIMIT 1");
+        $stmt->execute([':name' => $name]);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ? $res['ValuePay'] : null;
+    } catch (PDOException $e) {
+        return null;
+    }
+}
+
 // 2. Get initData from POST
 $input = json_decode(file_get_contents('php://input'), true);
 $initData = $input['initData'] ?? '';
@@ -175,6 +187,41 @@ try {
                 $response['error'] = 'موجودی کافی نیست';
             }
             break;
+
+        case 'deposit':
+            $amount = intval($input['amount'] ?? 0);
+            if ($amount < 1000) {
+                $response['ok'] = false;
+                $response['error'] = 'حداقل مبلغ ۱۰۰۰ تومان است';
+                break;
+            }
+
+            // Check PaySetting for Card
+            $cardNum = getPaySetting('cardnumber');
+            $cardName = getPaySetting('namecard');
+            
+            if ($cardNum && $cardNum !== '0') {
+                 $response['card_number'] = $cardNum;
+                 $response['card_name'] = $cardName;
+                 
+                 // Record the request
+                 $randomString = bin2hex(random_bytes(5));
+                 $dateacc = date('Y/m/d H:i:s');
+                 
+                 // Ensure table Payment_report exists (should exist)
+                 $stmt = $pdo->prepare("INSERT INTO Payment_report (id_user,id_order,time,price,payment_Status,Payment_Method,id_invoice,bottype) VALUES (:uid,:oid,:time,:price,'Unpaid','cart to cart','0 | 0', 'webapp')");
+                 $stmt->execute([
+                     ':uid' => $userId,
+                     ':oid' => $randomString,
+                     ':time' => $dateacc,
+                     ':price' => $amount
+                 ]);
+            } else {
+                 $response['ok'] = false;
+                 $response['error'] = 'درگاه پرداخت تنظیم نشده است. لطفا با پشتیبانی تماس بگیرید.';
+            }
+            break;
+
 
         default:
             $response['ok'] = false;
