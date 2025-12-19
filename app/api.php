@@ -67,6 +67,15 @@ if (!$validatedData) {
     exit;
 }
 
+// Extract User Info
+$telegramUser = isset($validatedData['user']) ? json_decode($validatedData['user'], true) : null;
+$userId = $telegramUser['id'] ?? 0;
+
+if (!$userId) {
+    echo json_encode(['ok' => false, 'error' => 'Invalid User ID']);
+    exit;
+}
+
 // 4. Handle Actions
 $action = $input['action'] ?? 'dashboard';
 
