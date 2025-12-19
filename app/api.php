@@ -86,13 +86,59 @@ try {
     $stmt->execute([':id' => $userId]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // Auto-Register if user doesn't exist
     if (!$user) {
-         echo json_encode([
-            'ok' => true,
-            'is_new' => true,
-            'user' => $telegramUser
-        ]);
-        exit;
+        try {
+            // Get Settings
+            $stmtSetting = $pdo->query("SELECT * FROM setting LIMIT 1");
+            $setting = $stmtSetting->fetch(PDO::FETCH_ASSOC);
+            
+            // Default values
+            $limit_usertest = $setting['limit_usertest_all'] ?? 0;
+            $showcard = $setting['showcard'] ?? 'off';
+            $verifystart = $setting['verifystart'] ?? 'off';
+            $valueverify = ($verifystart != "onverify") ? 1 : 0;
+            $date = time();
+            $randomString = bin2hex(random_bytes(6));
+            
+            // Handle Referral
+            $inviterId = 0;
+            $startParam = $validatedData['start_param'] ?? '';
+            
+            if ($startParam) {
+                $stmtInviter = $pdo->prepare("SELECT id FROM user WHERE codeInvitation = :code LIMIT 1");
+                $stmtInviter->execute([':code' => $startParam]);
+                $inviter = $stmtInviter->fetch(PDO::FETCH_ASSOC);
+                if ($inviter) {
+                    $inviterId = $inviter['id'];
+                    // Update inviter stats
+                    $pdo->prepare("UPDATE user SET affiliatescount = affiliatescount + 1 WHERE id = :id")->execute([':id' => $inviterId]);
+                }
+            }
+
+            $sql = "INSERT IGNORE INTO user (id, step, limit_usertest, User_Status, number, Balance, pagenumber, username, agent, message_count, last_message_time, affiliates, affiliatescount, cardpayment, number_username, namecustom, register, verify, codeInvitation, pricediscount, maxbuyagent, joinchannel, score, status_cron) VALUES (:id, 'none', :limit, 'Active', 'none', '0', '1', :username, 'f', '0', '0', :affiliates, '0', :showcard, '100', 'none', :date, :verify, :code, '0', '0', '0', '0', '1')";
+            
+            $stmtIns = $pdo->prepare($sql);
+            $stmtIns->execute([
+                ':id' => $userId,
+                ':limit' => $limit_usertest,
+                ':username' => $telegramUser['username'] ?? '',
+                ':affiliates' => $inviterId,
+                ':showcard' => $showcard,
+                ':date' => $date,
+                ':verify' => $valueverify,
+                ':code' => $randomString
+            ]);
+            
+            // Fetch newly created user
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+        } catch (Exception $e) {
+            // If registration fails, return error
+             echo json_encode(['ok' => false, 'error' => 'Registration failed: ' . $e->getMessage()]);
+             exit;
+        }
     }
 
     $response = ['ok' => true];
@@ -125,8 +171,10 @@ try {
             $response['stats'] = [
                 'active_services' => $serviceStats['count'] ?? 0,
                 'total_spent' => number_format($serviceStats['total_spent'] ?? 0),
-                'unpaid_invoices' => $unpaidInvoices['count'] ?? 0
+                'unpaid_invoices' => $unpaidInvoices['count'] ?? 0,
+                'referrals' => $user['affiliatescount'] ?? 0
             ];
+            $response['bot_username'] = $usernamebot; // Send bot username for referral link
             $response['products'] = $products;
             break;
 

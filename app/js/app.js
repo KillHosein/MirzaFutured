@@ -153,23 +153,6 @@ const WebApp = {
                 // Show error state inside preloader
                 const errorMsg = data ? (data.error || 'خطای نامشخص') : 'خطای ارتباط با سرور';
                 
-                // Handle "is_new" user (User not found in DB)
-                if (data && data.is_new) {
-                    document.getElementById('app-preloader').innerHTML = `
-                        <div class="text-center text-white px-6">
-                            <div class="mb-4 text-blue-500 animate-bounce">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-bold mb-2">خوش آمدید!</h3>
-                            <p class="text-sm text-gray-400 mb-6">برای استفاده از وب‌اپلیکیشن، ابتدا باید ربات را استارت کنید.</p>
-                            <button onclick="tg.close()" class="px-6 py-2 bg-blue-500 rounded-xl hover:bg-blue-600 transition-colors font-bold">بازگشت به ربات</button>
-                        </div>
-                    `;
-                    return;
-                }
-
                 document.getElementById('app-preloader').innerHTML = `
                     <div class="text-center text-white px-6">
                         <div class="mb-4 text-red-500">
@@ -186,7 +169,9 @@ const WebApp = {
             }
 
             WebApp.user = data.user;
+            WebApp.botUsername = data.bot_username;
             const stats = data.stats;
+            WebApp.user.referrals = stats.referrals;
 
             // Populate User Info
             document.getElementById('user-name').textContent = WebApp.user.username || WebApp.user.first_name || 'کاربر';
@@ -257,6 +242,64 @@ const WebApp = {
         document.getElementById('profile-id').textContent = WebApp.user.id;
         document.getElementById('profile-joined').textContent = WebApp.user.joined_at;
         if (WebApp.user.photo_url) document.getElementById('profile-avatar-large').src = WebApp.user.photo_url;
+
+        // Referral Section
+        const referralId = 'profile-referral-card';
+        let referralCard = document.getElementById(referralId);
+        
+        if (!referralCard) {
+            referralCard = document.createElement('div');
+            referralCard.id = referralId;
+            referralCard.className = 'glass-panel p-4 rounded-xl mb-4 fade-in-up';
+            referralCard.innerHTML = `
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-white">دعوت از دوستان</h4>
+                        <p class="text-xs text-gray-400">با دعوت دوستان خود پاداش بگیرید</p>
+                    </div>
+                </div>
+                <div class="bg-black/20 rounded-lg p-3 flex items-center justify-between gap-2 mb-3 border border-white/5">
+                    <div class="text-xs font-mono text-gray-300 truncate" id="ref-link">...</div>
+                    <button onclick="WebApp.copyReferralLink()" class="p-2 rounded bg-primary/20 text-primary hover:bg-primary/30 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span>تعداد دعوت شده‌ها:</span>
+                    <span class="text-white font-bold" id="ref-count">0</span>
+                </div>
+            `;
+            
+            const profileView = document.getElementById('view-profile');
+            const profileInfo = profileView.querySelector('.glass-panel'); 
+            if (profileInfo && profileInfo.parentNode) {
+                 profileInfo.parentNode.insertBefore(referralCard, profileInfo.nextSibling);
+            }
+        }
+        
+        const botName = WebApp.botUsername || 'YourBot';
+        const refLink = `https://t.me/${botName}?start=${WebApp.user.code_invitation}`;
+        const linkEl = document.getElementById('ref-link');
+        if(linkEl) linkEl.textContent = refLink;
+        
+        const countEl = document.getElementById('ref-count');
+        if(countEl) countEl.textContent = WebApp.user.referrals || 0;
+    },
+
+    copyReferralLink: () => {
+        const link = document.getElementById('ref-link').textContent;
+        navigator.clipboard.writeText(link).then(() => {
+            WebApp.showToast('لینک دعوت کپی شد');
+        }).catch(() => {
+             WebApp.showToast('خطا در کپی لینک', 'error');
+        });
     },
 
     renderProductList: (products, containerId) => {
