@@ -1,4 +1,4 @@
-/* Custom CSS for Mirza Web App - Ultimate Future Tech Theme */
+/* Custom CSS for Mirza Web App - Premium Fintech Theme */
 
 /* Import Fonts */
 @font-face {
@@ -28,55 +28,51 @@
   font-display: swap;
 }
 
-/* 🎨 Palette: Deep Space & Cyberpunk Accents */
+/* 🎨 Palette: Premium Dark Mode (Linear/Stripe inspired) */
 :root {
-  --bg-deep: #030712;
-  --bg-surface: rgba(17, 24, 39, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-core: #0B0E14; /* Deepest Navy/Black */
+  --bg-card: rgba(22, 27, 34, 0.7);
+  --bg-card-hover: rgba(27, 33, 41, 0.8);
   
-  --primary-glow: #3b82f6;
-  --secondary-glow: #8b5cf6;
-  --accent-cyan: #06b6d4;
+  --primary: #3b82f6; /* Classic Blue */
+  --primary-gradient: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0) 100%);
+  --accent-gold: #fbbf24;
   
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
   
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --shadow-neon: 0 0 20px rgba(59, 130, 246, 0.15);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(255, 255, 255, 0.12);
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --glow-primary: 0 0 20px rgba(59, 130, 246, 0.15);
 }
 
-/* 🌌 Animated Background */
+/* 🌌 Background: Aurora Effect */
 body {
   font-family: 'Vazir', sans-serif !important;
-  background-color: var(--bg-deep) !important;
-  color: var(--text-main) !important;
+  background-color: var(--bg-core) !important;
+  color: var(--text-primary) !important;
   margin: 0;
   min-height: 100vh;
   overflow-x: hidden;
-  position: relative;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%), 
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+  background-attachment: fixed;
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.08) 0%, transparent 20%),
-              radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 20%),
-              radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 20%);
-  z-index: -1;
-  animation: bgRotate 20s linear infinite;
-  pointer-events: none;
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes bgRotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 🧊 Advanced Glassmorphism Cards */
+/* 🧊 Refined Cards */
 div[class*="bg-gray-"], 
 div[class*="bg-slate-"], 
 div[class*="bg-zinc-"],
@@ -84,177 +80,175 @@ div[class*="bg-neutral-"],
 div[class*="bg-white"],
 .card, 
 [class*="card"] {
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6)) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid var(--border-glass) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important; /* Highlight top border */
-  border-radius: 24px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease !important;
+  background-color: var(--bg-card) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Remove default backgrounds from containers to let glass shine */
+/* Card Hover Effect: Subtle Lift & Glow */
+div[class*="card"]:hover {
+  border-color: var(--border-active) !important;
+  background-color: var(--bg-card-hover) !important;
+  box-shadow: var(--shadow-lg) !important;
+  transform: translateY(-2px);
+}
+
 #root > div[class*="bg-"] {
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
 }
 
-/* 🖱️ Micro-interactions for Cards */
-div[class*="card"]:active {
-  transform: scale(0.98);
-}
-
-/* ✨ Neon Buttons */
+/* ✨ Professional Buttons */
 button, 
 [role="button"], 
 input[type="submit"], 
 .btn {
-  background: transparent !important;
-  position: relative !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  border-radius: 16px !important;
+  background: #2563eb !important; /* Solid, reliable blue */
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%) !important;
   color: white !important;
-  font-weight: 700 !important;
-  padding: 14px 24px !important;
-  transition: all 0.3s ease !important;
-  z-index: 1;
-}
-
-/* Button Background Gradient Layer */
-button::before,
-[role="button"]::before,
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
-  z-index: -1;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
-}
-
-button:hover::before,
-[role="button"]:hover::before {
-  opacity: 1;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important; /* Top highlight */
+  border-radius: 10px !important;
+  padding: 12px 20px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.3px;
 }
 
 button:hover,
 [role="button"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-  border-color: rgba(255,255,255,0.3) !important;
-  letter-spacing: 0.5px;
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transform: translateY(-1px);
 }
 
 button:active,
 [role="button"]:active {
-  transform: scale(0.96);
+  transform: translateY(0);
+  filter: brightness(0.95);
 }
 
-/* Ghost Buttons */
+/* Secondary Buttons */
 button.secondary, .btn-secondary {
-  background: rgba(255, 255, 255, 0.05) !important;
-}
-button.secondary::before {
-  display: none;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
 }
 button.secondary:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 0 15px rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--border-active) !important;
 }
 
-/* 📝 Inputs: Floating Look */
+/* 📝 Inputs: Minimal & Clean */
 input[type="text"], 
 input[type="number"], 
 input[type="password"], 
 select, 
 textarea {
-  background: rgba(10, 10, 15, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 16px !important;
-  color: white !important;
-  padding: 14px 18px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  background: rgba(13, 17, 23, 0.6) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 10px !important;
+  color: var(--text-primary) !important;
+  padding: 12px 16px !important;
+  font-size: 0.95rem !important;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
 }
 
 input:focus, select:focus, textarea:focus {
-  background: rgba(10, 10, 15, 0.8) !important;
-  border-color: var(--accent-cyan) !important;
-  box-shadow: 0 0 0 1px var(--accent-cyan), 0 0 15px rgba(6, 182, 212, 0.2) !important;
-  transform: translateY(-1px);
+  background: rgba(13, 17, 23, 0.9) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  outline: none !important;
 }
 
-/* 🚀 Navigation Bar: Floating Dock Style */
+/* 🚀 Navigation: Glass Bar */
 .fixed.bottom-0, 
 [class*="fixed"][class*="bottom-0"] {
-  background: rgba(15, 23, 42, 0.8) !important;
-  backdrop-filter: blur(25px) !important;
-  -webkit-backdrop-filter: blur(25px) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 24px 24px 0 0 !important; /* Rounded top corners */
-  margin: 0 10px !important; /* Floating effect */
-  bottom: 10px !important; /* Lifted up */
-  width: calc(100% - 20px) !important;
-  box-shadow: 0 -10px 40px rgba(0,0,0,0.5) !important;
+  background: rgba(11, 14, 20, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Active Nav Items with Glow */
+/* Active Nav Item */
 [class*="text-primary"], .text-primary {
-  color: var(--accent-cyan) !important;
-  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5));
+  color: var(--primary) !important;
 }
 
-/* 🌀 Loaders & Progress */
-[role="progressbar"], .progress-bar {
-  background: rgba(255,255,255,0.05) !important;
-  border-radius: 100px !important;
-  overflow: hidden;
+/* 📱 Typography & Hierarchy */
+h1, h2, h3, h4 {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5em;
 }
 
-[role="progressbar"] > div, .progress-bar > div {
-  background: linear-gradient(90deg, var(--accent-cyan), var(--secondary-glow)) !important;
-  box-shadow: 0 0 15px var(--accent-cyan) !important;
-  position: relative;
+p, span, div {
+  color: inherit;
 }
 
-/* Shimmer Effect on Progress Bar */
-[role="progressbar"] > div::after, .progress-bar > div::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transform: translateX(-100%);
-  animation: shimmer 2s infinite;
+.text-muted, [class*="text-gray-"], [class*="text-slate-"] {
+  color: var(--text-secondary) !important;
 }
 
-@keyframes shimmer {
-  100% { transform: translateX(100%); }
+/* Status Badges (if any) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.badge-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
-/* 📱 Typography Polish */
-h1, h2, h3 {
-  background: linear-gradient(to right, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800 !important;
-  letter-spacing: -0.02em;
-}
-
-/* Scrollbar hidden but functional for cleaner look */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
+  background: var(--border-active);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Animations */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#root > div {
+  animation: fadeInScale 0.4s cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* Separators */
+hr, .border-b, .border-t {
+  border-color: var(--border-subtle) !important;
 }
 
 /* Selection */
 ::selection {
-  background: var(--accent-cyan);
-  color: #000;
+  background: rgba(59, 130, 246, 0.2);
+  color: white;
 }
