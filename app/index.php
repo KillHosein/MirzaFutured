@@ -59,27 +59,7 @@
         scroll-behavior: smooth;
       }
 
-      body {
-        font-family: 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-        background-color: var(--tg-theme-bg-color);
-        color: var(--tg-theme-text-color);
-        transition: background-color 0.3s ease, color 0.3s ease;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        overflow-x: hidden;
-        
-        /* Safe Area Support for Notch Devices */
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-
-        /* Modern Typography */
-        letter-spacing: -0.015em;
-        line-height: 1.6;
-      }
-
-      /* Subtle Background Pattern/Gradient */
+      /* Animated Mesh Gradient Background */
       body::before {
         content: "";
         position: fixed;
@@ -88,10 +68,37 @@
         width: 100%;
         height: 100%;
         background: 
-          radial-gradient(circle at 15% 15%, color-mix(in srgb, var(--tg-theme-button-color), transparent 96%) 0%, transparent 40%),
-          radial-gradient(circle at 85% 85%, color-mix(in srgb, var(--tg-theme-button-color), transparent 96%) 0%, transparent 40%);
+          radial-gradient(at 0% 0%, color-mix(in srgb, var(--tg-theme-button-color), transparent 90%) 0px, transparent 50%),
+          radial-gradient(at 100% 0%, color-mix(in srgb, var(--tg-theme-button-color), transparent 95%) 0px, transparent 50%),
+          radial-gradient(at 100% 100%, color-mix(in srgb, var(--tg-theme-secondary-bg-color), transparent 90%) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, color-mix(in srgb, var(--tg-theme-button-color), transparent 95%) 0px, transparent 50%);
+        background-size: 200% 200%;
+        animation: meshGradient 15s ease infinite;
         pointer-events: none;
         z-index: -1;
+      }
+      @keyframes meshGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Modern Typography & Persian Features */
+      body {
+        font-family: 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        background-color: var(--tg-theme-bg-color);
+        color: var(--tg-theme-text-color);
+        transition: background-color 0.3s ease, color 0.3s ease;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        letter-spacing: -0.02em;
+        line-height: 1.7;
+        font-feature-settings: "ss01", "ss02"; /* Stylistic sets for Persian if available */
       }
 
       /* Smooth Scrolling & Custom Scrollbar */
@@ -173,11 +180,21 @@
         transform: translateY(-1px);
       }
 
+      /* Entrance Animation */
+      #root > * {
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       /* Premium Double-Ring Spinner */
       .spinner {
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         position: relative;
+        margin-bottom: 24px;
       }
       .spinner::before, .spinner::after {
         content: "";
@@ -187,7 +204,7 @@
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        border: 3px solid transparent;
+        border: 3.5px solid transparent;
         border-top-color: var(--tg-theme-button-color);
       }
       .spinner::before {
@@ -195,7 +212,26 @@
         animation: spin 1s infinite;
       }
       .spinner::after {
-        border: 3px solid color-mix(in srgb, var(--tg-theme-button-color), transparent 85%);
+        border: 3.5px solid color-mix(in srgb, var(--tg-theme-button-color), transparent 85%);
+      }
+
+      /* Branded Loader Text */
+      .loader-text {
+        font-family: 'Vazir', sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--tg-theme-text-color);
+        background: linear-gradient(90deg, 
+          var(--tg-theme-text-color) 0%, 
+          var(--tg-theme-button-color) 50%, 
+          var(--tg-theme-text-color) 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shimmer 3s linear infinite;
+      }
+      @keyframes shimmer {
+        to { background-position: 200% center; }
       }
 
       @keyframes spin {
@@ -214,9 +250,10 @@
   </head>
   <body>
     <!-- Initial Loading Screen -->
-    <div id="app-loader" class="app-loader" style="z-index: 2147483647 !important;">
+    <div id="app-loader" class="app-loader" style="z-index: 2147483647 !important; flex-direction: column;">
       <div class="spinner"></div>
-      <div style="position: absolute; bottom: 20px; font-size: 10px; opacity: 0.5;">v2.0 Loaded</div>
+      <div class="loader-text">Mirza Web App</div>
+      <div style="position: absolute; bottom: 30px; font-size: 11px; opacity: 0.4; letter-spacing: 1px;">POWERED BY MIRZA</div>
     </div>
 
     <div id="root"></div>
