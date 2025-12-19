@@ -3326,3 +3326,108 @@
   WebView.postEvent('web_app_request_content_safe_area');
 
 })();
+
+/**
+ * -------------------------------------------------------------------------
+ *  PREMIUM FINTECH UI EXTENSIONS v2.0
+ * -------------------------------------------------------------------------
+ *  Enhances the standard Telegram WebApp SDK with professional UI behaviors,
+ *  automatic haptic feedback, immersive mode, and deep theme integration.
+ */
+(function() {
+  if (!window.Telegram || !window.Telegram.WebApp) return;
+
+  var WebApp = window.Telegram.WebApp;
+
+  WebApp.ui = {
+    /**
+     * Initializes the Premium Fintech experience
+     */
+    initPremium: function() {
+      try {
+        // 1. Theme Synchronization (Deep Navy Enterprise)
+        // Matches the #0B0E14 background from custom.css
+        var themeColor = '#0B0E14';
+        WebApp.setHeaderColor(themeColor);
+        WebApp.setBackgroundColor(themeColor);
+        
+        if (WebApp.isVersionAtLeast('7.10')) {
+          WebApp.setBottomBarColor(themeColor);
+        }
+
+        // 2. Immersive Mode & Safety
+        WebApp.expand();
+        WebApp.enableClosingConfirmation(); // Prevent accidental exit
+        
+        if (WebApp.isVersionAtLeast('7.7')) {
+            WebApp.disableVerticalSwipes(); // Prevent swipe-to-close for native app feel
+        }
+
+        // 3. Smart Haptic Feedback Engine 2.0
+        // Automatically adds tactile feedback to all interactive elements
+        var hapticHandler = function(e) {
+          // Find closest interactive element
+          var target = e.target.closest('button, a, [role="button"], .btn, input, select, textarea, .card');
+          if (!target || target.dataset.noHaptics) return;
+
+          // Determine feedback style based on element type
+          if (target.classList.contains('btn-primary') || target.type === 'submit') {
+             WebApp.HapticFeedback.impactOccurred('medium'); // Stronger for primary actions
+          } else if (target.classList.contains('btn-danger') || target.classList.contains('text-red-500')) {
+             WebApp.HapticFeedback.notificationOccurred('warning'); // Warning for destructive
+          } else if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+             WebApp.HapticFeedback.selectionChanged(); // Subtle for inputs
+          } else if (target.classList.contains('card')) {
+             WebApp.HapticFeedback.impactOccurred('light'); // Very subtle for cards
+          } else {
+             WebApp.HapticFeedback.impactOccurred('light'); // Default
+          }
+        };
+
+        // Attach listeners (touchstart for instant response, click for fallback)
+        document.addEventListener('touchstart', function(e) {
+            // Only trigger for buttons/interactive on touch start to feel responsive
+            if(e.target.closest('button, .btn, a')) {
+                hapticHandler(e);
+            }
+        }, {passive: true});
+
+        document.addEventListener('click', function(e) {
+            // Avoid double triggering if touchstart already fired (simple check)
+            // Ideally we'd debounce, but for now just handle non-buttons or desktop clicks
+            if(!e.target.closest('button, .btn, a')) {
+                hapticHandler(e);
+            }
+        });
+
+        // 4. Viewport Stabilization
+        // Prevents the "jumpy" scrolling effect on iOS
+        WebApp.onEvent('viewportChanged', function() {
+          if (!WebApp.isExpanded) WebApp.expand();
+          document.documentElement.style.setProperty('--tg-viewport-height', WebApp.viewportHeight + 'px');
+        });
+
+        // 5. Main Button Professional Setup Helper
+        WebApp.ui.setMainButton = function(text, callback, isVisible) {
+            if (isVisible === undefined) isVisible = true;
+            WebApp.MainButton.setText(text.toUpperCase());
+            WebApp.MainButton.onClick(callback);
+            WebApp.MainButton.setParams({
+                color: '#3b82f6', // Matches CSS --primary
+                text_color: '#ffffff'
+            });
+            if (isVisible) WebApp.MainButton.show();
+            else WebApp.MainButton.hide();
+        };
+
+        console.log('[Telegram.WebApp] Premium Fintech UI v2.0 Initialized');
+      } catch (e) {
+        console.warn('[Telegram.WebApp] Premium Init Error:', e);
+      }
+    }
+  };
+
+  // Auto-initialize when the script loads
+  WebApp.ui.initPremium();
+  WebApp.ready();
+})();
