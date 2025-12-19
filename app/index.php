@@ -48,7 +48,7 @@
     <main id="main-app" class="opacity-0 transition-opacity duration-500 p-4 pb-24">
         
         <!-- Header -->
-        <header class="flex items-center justify-between mb-8 pt-2 sticky top-0 z-40 bg-[#0B0E14]/80 backdrop-blur-md py-2 -mx-4 px-4 border-b border-white/5">
+        <header class="flex items-center justify-between mb-8 pt-4 pb-3 sticky top-0 z-50 bg-[#0B0E14]/60 backdrop-blur-xl -mx-4 -mt-4 px-4 border-b border-white/10 shadow-sm transition-all duration-300">
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <img id="user-avatar" src="assets/avatar-placeholder.png" onerror="this.src='https://via.placeholder.com/150'" class="w-10 h-10 rounded-full border-2 border-primary/50 shadow-lg object-cover" alt="Profile">
