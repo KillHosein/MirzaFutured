@@ -135,7 +135,7 @@ try {
     switch ($action) {
         case 'dashboard':
             // Active Services
-            $stmtService = $pdo->prepare("SELECT COUNT(*) as count, SUM(price) as total_spent FROM service_other WHERE id_user = :id AND status = 'paid'");
+            $stmtService = $pdo->prepare("SELECT COUNT(*) as count, SUM(price_product) as total_spent FROM invoice WHERE id_user = :id AND (status = 'active' OR status = 'end_of_time' OR status = 'end_of_volume' OR status = 'sendedwarn' OR status = 'send_on_hold')");
             $stmtService->execute([':id' => $userId]);
             $serviceStats = $stmtService->fetch(PDO::FETCH_ASSOC);
             
@@ -233,24 +233,96 @@ try {
             
             // Check Balance
             if ($user['Balance'] >= $price) {
-                // Deduct Balance
+                // 1. Determine Panel
+                $panelName = $product['Location'];
+                $panel = null;
+                if ($panelName == '/all') {
+                    $stmtPanel = $pdo->query("SELECT * FROM marzban_panel WHERE status = 'active' LIMIT 1");
+                    $panel = $stmtPanel->fetch(PDO::FETCH_ASSOC);
+                } else {
+                    $stmtPanel = $pdo->prepare("SELECT * FROM marzban_panel WHERE name_panel = :name");
+                    $stmtPanel->execute([':name' => $panelName]);
+                    $panel = $stmtPanel->fetch(PDO::FETCH_ASSOC);
+                }
+
+                if (!$panel) {
+                    $response['ok'] = false;
+                    $response['error'] = 'Server configuration error (Panel not found)';
+                    break;
+                }
+
+                // 2. Generate Username
+                $randomString = bin2hex(random_bytes(2));
+                $defaultText = $user['username'] ?: 'user' . $userId;
+                $username_ac = generateUsername(
+                    $userId,
+                    $panel['MethodUsername'],
+                    $user['username'] ?? $defaultText,
+                    $randomString,
+                    $defaultText,
+                    $user['namecustom'],
+                    'none'
+                );
+                $username_ac = strtolower($username_ac);
+
+                // 3. Deduct Balance
                 $newBalance = $user['Balance'] - $price;
                 $stmtUpd = $pdo->prepare("UPDATE user SET Balance = :bal WHERE id = :id");
                 $stmtUpd->execute([':bal' => $newBalance, ':id' => $userId]);
 
-                // Create Order (service_other) - Simplified logic
-                // NOTE: In a real app, this should call the bot's order creation function to handle delivery.
-                // For now, we'll create a record to simulate "Working Button"
-                $stmtIns = $pdo->prepare("INSERT INTO service_other (id_user, id_product, price, status, date) VALUES (:uid, :pid, :price, 'paid', :date)");
-                $stmtIns->execute([
-                    ':uid' => $userId,
-                    ':pid' => $productId,
-                    ':price' => $price,
-                    ':date' => time()
-                ]);
+                // 4. Create Service
+                $ManagePanel = new ManagePanel();
+                $days = intval($product['Service_time']);
+                $expireTimestamp = ($days == 0) ? 0 : strtotime("+$days days");
 
-                $response['message'] = 'خرید با موفقیت انجام شد';
-                $response['new_balance'] = number_format($newBalance);
+                $datac = [
+                    'expire' => $expireTimestamp,
+                    'data_limit' => $product['Volume_constraint'] * pow(1024, 3),
+                    'from_id' => $userId,
+                    'username' => $user['username'] ?? $defaultText,
+                    'type' => 'buy_app'
+                ];
+
+                $result = $ManagePanel->createUser($panel['name_panel'], $product['code_product'], $username_ac, $datac);
+
+                if ($result['status'] == 'successful') {
+                    // 5. Insert Invoice
+                    $invId = bin2hex(random_bytes(4));
+                    $date = time();
+                    
+                    // Subscription URL/Note
+                    $subUrl = $result['subscription_url'] ?? '';
+                    $notif = json_encode(['volume' => false, 'time' => false]);
+                    
+                    $stmtInv = $pdo->prepare("INSERT INTO invoice (id_user, id_invoice, username, time_sell, Service_location, name_product, price_product, Volume, Service_time, Status, note, refral, notifctions, user_info, bottype) VALUES (:uid, :invid, :uname, :time, :loc, :pname, :price, :vol, :time_serv, 'active', :note, :ref, :notif, :uinfo, 'webapp')");
+                    
+                    $stmtInv->execute([
+                        ':uid' => $userId,
+                        ':invid' => $invId,
+                        ':uname' => $username_ac,
+                        ':time' => $date,
+                        ':loc' => $panel['name_panel'],
+                        ':pname' => $product['name_product'],
+                        ':price' => $price,
+                        ':vol' => $product['Volume_constraint'],
+                        ':time_serv' => $product['Service_time'],
+                        ':note' => 'App Purchase',
+                        ':ref' => $user['affiliates'],
+                        ':notif' => $notif,
+                        ':uinfo' => $subUrl
+                    ]);
+
+                    $response['message'] = 'خرید با موفقیت انجام شد';
+                    $response['new_balance'] = number_format($newBalance);
+                    $response['subscription_url'] = $subUrl; // Send back to app if needed
+                } else {
+                    // Refund
+                    $stmtRefund = $pdo->prepare("UPDATE user SET Balance = Balance + :price WHERE id = :id");
+                    $stmtRefund->execute([':price' => $price, ':id' => $userId]);
+                    
+                    $response['ok'] = false;
+                    $response['error'] = 'خطا در ایجاد سرویس: ' . ($result['msg'] ?? 'Unknown error');
+                }
             } else {
                 $response['ok'] = false;
                 $response['error'] = 'موجودی کافی نیست';

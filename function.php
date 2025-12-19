@@ -838,6 +838,7 @@ function DirectPayment($order_id, $image = 'images.jpg')
     $porsantreport = select("topicid", "idreport", "report", "porsantreport", "select")['idreport'];
     $setting = select("setting", "*");
     $Payment_report = select("Payment_report", "*", "id_order", $order_id, "select");
+    $isWebApp = (isset($Payment_report['bottype']) && $Payment_report['bottype'] === 'webapp');
     $format_price_cart = number_format($Payment_report['price']);
     $Balance_id = select("user", "*", "id", $Payment_report['id_user'], "select");
     $steppay = explode("|", $Payment_report['id_invoice']);
@@ -1081,7 +1082,7 @@ $textonebuy
             update("user", "score", $scorenew, "id", $Balance_id['id']);
         }
         update("invoice", "Status", "active", "username", $get_invoice['username']);
-        if ($Payment_report['Payment_Method'] == "cart to cart" or $Payment_report['Payment_Method'] == "arze digital offline") {
+        if (($Payment_report['Payment_Method'] == "cart to cart" or $Payment_report['Payment_Method'] == "arze digital offline") && !$isWebApp) {
             update("invoice", "Status", "active", "id_invoice", $get_invoice['id_invoice']);
             $textconfrom = "✅ پرداخت تایید شده
  🛍خرید سرویس 
@@ -1095,7 +1096,11 @@ $textonebuy
 ✍️ توضیحات : {$Payment_report['dec_not_confirmed']}
 
 ";
+            if (isset($from_id) && isset($message_id)) {
+                if (!$isWebApp) {
             Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+        }
+            }
         }
     } elseif ($steppay[0] == "getextenduser") {
         $balanceformatsell = number_format(select("user", "Balance", "id", $Balance_id['id'], "select")['Balance'], 0);
@@ -1237,7 +1242,7 @@ $textonebuy
             ]);
         }
         update("invoice", "Status", "active", "id_invoice", $nameloc['id_invoice']);
-        if ($Payment_report['Payment_Method'] == "cart to cart" or $Payment_report['Payment_Method'] == "arze digital offline") {
+        if (($Payment_report['Payment_Method'] == "cart to cart" or $Payment_report['Payment_Method'] == "arze digital offline") && !$isWebApp) {
 
             $textconfrom = "✅ پرداخت تایید شده
 🔋 تمدید سرویس
@@ -1252,7 +1257,9 @@ $textonebuy
 ✍️ توضیحات : {$Payment_report['dec_not_confirmed']}
 
 ";
-            Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            if (isset($from_id) && isset($message_id)) {
+                Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            }
         }
     } elseif ($steppay[0] == "getextravolumeuser") {
         $steppay = explode("%", $steppay[1]);
@@ -1282,16 +1289,16 @@ $textonebuy
 دلیل خطا : {$extra_volume['msg']}";
             sendmessage($nameloc['id_user'], "❌خطایی در خرید حجم اضافه سرویس رخ داده با پشتیبانی در ارتباط باشید", null, 'HTML');
             if (strlen($setting['Channel_Report']) > 0) {
-                telegram('sendmessage', [
-                    'chat_id' => $setting['Channel_Report'],
-                    'message_thread_id' => $errorreport,
-                    'text' => $textreports,
-                    'parse_mode' => "HTML"
-                ]);
-            }
-            return;
+            telegram('sendmessage', [
+                'chat_id' => $setting['Channel_Report'],
+                'message_thread_id' => $errorreport,
+                'text' => $textreports,
+                'parse_mode' => "HTML"
+            ]);
         }
-        $stmt = $pdo->prepare("INSERT IGNORE INTO service_other (id_user, username,value,type,time,price,output) VALUES (:id_user,:username,:value,:type,:time,:price,:output)");
+        return;
+    }
+    $stmt = $pdo->prepare("INSERT IGNORE INTO service_other (id_user, username,value,type,time,price,output) VALUES (:id_user,:username,:value,:type,:time,:price,:output)");
         $stmt->bindParam(':id_user', $Balance_id['id']);
         $stmt->bindParam(':username', $steppay[0]);
         $stmt->bindParam(':value', $data_for_database);
@@ -1321,7 +1328,7 @@ $textonebuy
 ▫️مبلغ افزایش حجم : $volumesformat تومان";
         sendmessage($Balance_id['id'], $textvolume, $keyboardextrafnished, 'HTML');
         $volumes = $volume;
-        if ($Payment_report['Payment_Method'] == "cart to cart") {
+        if ($Payment_report['Payment_Method'] == "cart to cart" && !$isWebApp) {
             $textconfrom = "✅ پرداخت تایید شده
 🔋 خرید حجم اضافه
 🛍 حجم خریداری شده  : $volumes گیگ
@@ -1332,7 +1339,9 @@ $textonebuy
 💎 موجودی قبل ازافزایش موجودی : {$Balance_id['Balance']}
 💸 مبلغ پرداختی: $format_price_cart تومان
 ";
-            Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            if (isset($from_id) && isset($message_id)) {
+                Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            }
         }
         update("invoice", "Status", "active", "id_invoice", $nameloc['id_invoice']);
         $text_report = "⭕️ یک کاربر حجم اضافه خریده است
@@ -1380,7 +1389,7 @@ $textonebuy
 نام پنل : {$marzban_list_get['name_panel']}
 نام کاربری سرویس : {$nameloc['username']}
 دلیل خطا : {$extra_time['msg']}";
-            sendmessage($from_id, "❌خطایی در خرید حجم اضافه سرویس رخ داده با پشتیبانی در ارتباط باشید", null, 'HTML');
+            sendmessage($Balance_id['id'], "❌خطایی در خرید حجم اضافه سرویس رخ داده با پشتیبانی در ارتباط باشید", null, 'HTML');
             if (strlen($setting['Channel_Report']) > 0) {
                 telegram('sendmessage', [
                     'chat_id' => $setting['Channel_Report'],
@@ -1420,7 +1429,7 @@ $textonebuy
 
 ▫️مبلغ افزایش زمان : $volumesformat تومان";
         sendmessage($Balance_id['id'], $textextratime, $keyboardextrafnished, 'HTML');
-        if ($Payment_report['Payment_Method'] == "cart to cart") {
+        if ($Payment_report['Payment_Method'] == "cart to cart" && !$isWebApp) {
             $volumes = $tmieextra;
             $textconfrom = "✅ پرداخت تایید شده
 🔋 خرید زمان اضافه
@@ -1432,7 +1441,9 @@ $textonebuy
 💎 موجودی قبل ازافزایش موجودی : {$Balance_id['Balance']}
 💸 مبلغ پرداختی: $format_price_cart تومان
 ";
-            Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            if (isset($from_id) && isset($message_id)) {
+                Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            }
         }
         update("invoice", "Status", "active", "id_invoice", $nameloc['id_invoice']);
         $text_report = "⭕️ یک کاربر زمان اضافه خریده است
@@ -1455,7 +1466,7 @@ $textonebuy
         update("Payment_report", "payment_Status", "paid", "id_order", $Payment_report['id_order']);
         $Payment_report['price'] = number_format($Payment_report['price'], 0);
         $format_price_cart = $Payment_report['price'];
-        if ($Payment_report['Payment_Method'] == "cart to cart" or $Payment_report['Payment_Method'] == "arze digital offline") {
+        if (($Payment_report['Payment_Method'] == "cart to cart" or $Payment_report['Payment_Method'] == "arze digital offline") && !$isWebApp) {
             $textconfrom = "⭕️ یک پرداخت جدید انجام شده است
         افزایش موجودی.
 👤 شناسه کاربر: <code>{$Balance_id['id']}</code>
@@ -1464,7 +1475,9 @@ $textonebuy
 💸 مبلغ پرداختی: $format_price_cart تومان
 💎 موجودی قبل ازافزایش موجودی : {$Balance_id['Balance']}
 ✍️ توضیحات : {$Payment_report['dec_not_confirmed']}";
-            Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            if (isset($from_id) && isset($message_id)) {
+                 Editmessagetext($from_id, $message_id, $textconfrom, $Confirm_pay);
+            }
         }
         sendmessage($Payment_report['id_user'], "💎 کاربر گرامی مبلغ {$Payment_report['price']} تومان به کیف پول شما واریز گردید با تشکراز پرداخت شما.
                 
