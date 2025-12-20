@@ -257,6 +257,11 @@ function setWalletConfig($key, $value) {
 function loadWalletConfigFromDatabase() {
     global $pdo;
     
+    // Check if PDO is available
+    if (!isset($pdo) || $pdo === null) {
+        return false;
+    }
+    
     try {
         $stmt = $pdo->query("SELECT config_key, config_value FROM wallet_config WHERE is_active = 1");
         $configs = $stmt->fetchAll(PDO::FETCH_ASSOC);
