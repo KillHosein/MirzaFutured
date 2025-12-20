@@ -74,13 +74,13 @@ if (!$tokencheck) {
     http_response_code(403);
     return;
 }
-$usercheck = select('user', "*", "id", $data['user_id'], "select");
+$usercheck = select('user', "*", "token", $tokencheck, "select");
 if (!$usercheck) {
     echo json_encode([
         'status' => false,
-        'msg' => "User Not Found",
+        'msg' => "Token invalid",
     ]);
-    http_response_code(404);
+    http_response_code(403);
     return;
 }
 if ($usercheck['User_Status'] == "block") {
@@ -91,17 +91,10 @@ if ($usercheck['User_Status'] == "block") {
     http_response_code(402);
     return;
 }
+$data['user_id'] = (int) $usercheck['id'];
 $errorreport = select("topicid", "idreport", "report", "errorreport", "select")['idreport'];
 $porsantreport = select("topicid", "idreport", "report", "porsantreport", "select")['idreport'];
 $buyreport = select("topicid", "idreport", "report", "buyreport", "select")['idreport'];
-if (!$usercheck || $usercheck['token'] != $tokencheck) {
-    echo json_encode([
-        'status' => false,
-        'msg' => "Token invalid",
-    ]);
-    http_response_code(403);
-    return;
-}
 $headersToLog = $headers;
 unset($headersToLog['Authorization'], $headersToLog['authorization']);
 try {
