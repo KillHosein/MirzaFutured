@@ -10,10 +10,19 @@ class CardToCardManager {
     public function __construct() {
         $this->walletDatabase = new WalletDatabase();
         
-        // Get admin notification settings from existing system
+        // Get admin notification settings
         global $connect;
-        $adminReport = mysqli_fetch_assoc(mysqli_query($connect, "SELECT idreport FROM topicid WHERE report = 'paymentreport'"));
-        $this->adminGroupId = $adminReport['idreport'] ?? '';
+        
+        // 1. Try to get from wallet config (new method)
+        $configAdminId = function_exists('getWalletConfig') ? getWalletConfig('notifications.admin_id') : '';
+        
+        if (!empty($configAdminId)) {
+            $this->adminGroupId = $configAdminId;
+        } else {
+            // 2. Fallback to existing system database (old method)
+            $adminReport = mysqli_fetch_assoc(mysqli_query($connect, "SELECT idreport FROM topicid WHERE report = 'paymentreport'"));
+            $this->adminGroupId = $adminReport['idreport'] ?? '';
+        }
         
         $topicReport = mysqli_fetch_assoc(mysqli_query($connect, "SELECT idreport FROM topicid WHERE report = 'otherservice'"));
         $this->adminTopicId = $topicReport['idreport'] ?? '';

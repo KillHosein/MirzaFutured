@@ -4,7 +4,7 @@
  * Configuration settings for the card-to-card wallet top-up system
  */
 
-return [
+$walletConfig = [
     /**
      * General Settings
      */
@@ -71,9 +71,6 @@ return [
         'admin_notification_enabled' => true,
         'user_notification_enabled' => true,
         'notification_channels' => ['telegram', 'email'],
-        
-        // Admin ID for Telegram notifications (Numeric User ID)
-        'admin_id' => '8481984748', // Put your numeric admin ID here (e.g., 123456789)
         
         // Admin notification settings
         'admin' => [
@@ -165,7 +162,7 @@ return [
         'enable_weekly_reports' => true,
         'enable_monthly_reports' => true,
         
-        'report_recipients' => [], // Admin IDs or email addresses
+        'report_recipients' => [8481984748], // Admin IDs or email addresses
         
         'report_include_statistics' => true,
         'report_include_charts' => true,
