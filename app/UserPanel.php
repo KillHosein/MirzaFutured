@@ -63,12 +63,13 @@ class UserPanel {
         $user = $this->getUserById($userId);
         $stats = $this->getUserStats($userId);
         
-        $balance = number_format($user['balance']);
+        $balance = number_format((float)($user['Balance'] ?? 0));
         $totalTransactions = number_format($stats['total_transactions']);
         $activeServices = $stats['active_services'];
         $totalSpent = number_format($stats['total_spent']);
         
-        $message = "👋 <b>سلام {$user['first_name']}!</b>\n\n";
+        $uname = $user['username'] ?: (string)$userId;
+        $message = "👋 <b>سلام {$uname}!</b>\n\n";
         $message .= "به پنل کاربری خود خوش آمدید.\n\n";
         $message .= "💰 موجودی: <code>{$balance}</code> ریال\n";
         $message .= "📊 تعداد تراکنش‌ها: {$totalTransactions}\n";
@@ -111,20 +112,20 @@ class UserPanel {
     private function showUserProfile($userId, $chatId, $action = null) {
         $user = $this->getUserById($userId);
         
-        $fullName = trim($user['first_name'] . ' ' . $user['last_name']);
-        $username = $user['username'] ? "@{$user['username']}" : 'ثبت نشده';
-        $phone = $user['phone_number'] ?: 'ثبت نشده';
+        $fullName = trim((string)($user['namecustom'] ?? ''));
+        $username = $user['username'] ? "@{$user['username']}" : (string)$userId;
+        $phone = $user['number'] ?: 'ثبت نشده';
         $email = $user['email'] ?: 'ثبت نشده';
         $nationalId = $user['national_id'] ?: 'ثبت نشده';
         $birthDate = $user['birth_date'] ?: 'ثبت نشده';
-        $balance = number_format($user['balance']);
-        $status = $this->getUserStatusText($user['status']);
-        $verificationLevel = $this->getVerificationLevelText($user['verification_level']);
-        $createdAt = jdate('Y/m/d', strtotime($user['created_at']));
-        $lastSeen = $user['last_seen'] ? jdate('Y/m/d H:i', strtotime($user['last_seen'])) : 'ثبت نشده';
+        $balance = number_format((float)($user['Balance'] ?? 0));
+        $status = $this->getUserStatusText(strtolower($user['User_Status'] ?? ''));
+        $verificationLevel = ($user['verify'] ?? '') ? '✅ پایه' : '❌ تأیید نشده';
+        $createdAt = isset($user['register']) ? (string)$user['register'] : 'ثبت نشده';
+        $lastSeen = isset($user['last_message_time']) ? (string)$user['last_message_time'] : 'ثبت نشده';
         
         $message = "👤 <b>پروفایل کاربری</b>\n\n";
-        $message .= "🆔 شناسه کاربر: <code>{$user['user_id']}</code>\n";
+        $message .= "🆔 شناسه کاربر: <code>{$userId}</code>\n";
         $message .= "👤 نام کامل: {$fullName}\n";
         $message .= "🔗 نام کاربری: {$username}\n";
         $message .= "📱 تلفن همراه: {$phone}\n";
@@ -135,7 +136,7 @@ class UserPanel {
         $message .= "📊 وضعیت: {$status}\n";
         $message .= "⭐ سطح تأیید: {$verificationLevel}\n";
         $message .= "📅 تاریخ عضویت: {$createdAt}\n";
-        $message .= "🕐 آخرین بازدید: {$lastSeen}\n\n";
+        $message .= "🕐 آخرین فعالیت: {$lastSeen}\n\n";
         
         $keyboard = [
             'inline_keyboard' => [
@@ -430,66 +431,83 @@ class UserPanel {
      * Helper methods
      */
     private function isUserRegistered($userId) {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE user_id = ? AND status = 'active'");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM user WHERE id = ? AND LOWER(User_Status) = 'active'");
         $stmt->execute([$userId]);
         return $stmt->fetchColumn() > 0;
     }
     
     private function getUserById($userId) {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("SELECT * FROM user WHERE id = ?");
         $stmt->execute([$userId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
     private function getUserStats($userId) {
-        $stmt = $this->pdo->prepare("
-            SELECT 
-                COUNT(*) as total_transactions,
-                SUM(CASE WHEN type = 'purchase' AND amount < 0 THEN ABS(amount) ELSE 0 END) as total_spent,
-                COUNT(CASE WHEN status = 'active' THEN 1 END) as active_services
-            FROM transactions t
-            LEFT JOIN user_services us ON t.user_id = us.user_id
-            WHERE t.user_id = ?
-        ");
+        $totalTransactions = 0;
+        $totalSpent = 0;
+        $activeServices = 0;
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM Payment_report WHERE id_user = ?");
         $stmt->execute([$userId]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $totalTransactions = (int)$stmt->fetchColumn();
+        $stmt = $this->pdo->prepare("SELECT SUM(CAST(price AS DECIMAL(15,2))) FROM Payment_report WHERE id_user = ? AND payment_Status = 'completed'");
+        $stmt->execute([$userId]);
+        $sumSpent = $stmt->fetchColumn();
+        $totalSpent = $sumSpent !== null ? (float)$sumSpent : 0.0;
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM invoice WHERE id_user = ?");
+        $stmt->execute([$userId]);
+        $activeServices = (int)$stmt->fetchColumn();
+        return [
+            'total_transactions' => $totalTransactions,
+            'total_spent' => $totalSpent,
+            'active_services' => $activeServices,
+        ];
     }
     
     private function getUserTransactions($userId, $filter = null, $limit = 10) {
-        $sql = "SELECT * FROM transactions WHERE user_id = ?";
+        $sql = "SELECT id, id_user, price, Payment_Method, payment_Status, id_invoice, time FROM Payment_report WHERE id_user = ?";
         $params = [$userId];
         
-        if ($filter === 'deposits') {
-            $sql .= " AND type = 'deposit'";
-        } elseif ($filter === 'withdrawals') {
-            $sql .= " AND type = 'withdrawal'";
-        } elseif ($filter === 'purchases') {
-            $sql .= " AND type = 'purchase'";
-        }
-        
-        $sql .= " ORDER BY created_at DESC LIMIT ?";
+        $sql .= " ORDER BY time DESC LIMIT ?";
         $params[] = $limit;
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $mapped = [];
+        foreach ($rows as $r) {
+            $mapped[] = [
+                'amount' => (float)$r['price'],
+                'created_at' => $r['time'],
+                'status' => $r['payment_Status'],
+                'type' => $r['Payment_Method'],
+                'transaction_id' => $r['id_invoice'] ?: (string)$r['id'],
+            ];
+        }
+        return $mapped;
     }
     
     private function getUserServices($userId, $filter = null) {
-        $sql = "SELECT * FROM user_services WHERE user_id = ?";
+        $sql = "SELECT id_invoice, name_product, Service_time, Volume, Service_location, Status, time_sell FROM invoice WHERE id_user = ?";
         $params = [$userId];
         
-        if ($filter === 'active') {
-            $sql .= " AND status = 'active'";
-        } elseif ($filter === 'expired') {
-            $sql .= " AND status = 'expired'";
-        }
-        
-        $sql .= " ORDER BY expires_at ASC";
+        $sql .= " ORDER BY time_sell ASC";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $mapped = [];
+        foreach ($rows as $r) {
+            $mapped[] = [
+                'service_name' => $r['name_product'],
+                'status' => $r['Status'] ?? '',
+                'expires_at' => $r['Service_time'],
+                'order_id' => $r['id_invoice'],
+                'service_configuration' => $r['Service_location'],
+                'service_description' => null,
+                'bandwidth_limit' => $r['Volume'],
+            ];
+        }
+        return $mapped;
     }
     
     private function getUserActiveServices($userId) {
@@ -497,25 +515,11 @@ class UserPanel {
     }
     
     private function getUserNotifications($userId, $filter = null, $limit = 20) {
-        $sql = "SELECT * FROM notifications WHERE user_id = ? AND is_deleted = 0";
-        $params = [$userId];
-        
-        if ($filter === 'unread') {
-            $sql .= " AND is_read = 0";
-        }
-        
-        $sql .= " ORDER BY created_at DESC LIMIT ?";
-        $params[] = $limit;
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [];
     }
     
     private function getUnreadNotificationCount($userId) {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0 AND is_deleted = 0");
-        $stmt->execute([$userId]);
-        return $stmt->fetchColumn();
+        return 0;
     }
     
     private function getUserStatusText($status) {

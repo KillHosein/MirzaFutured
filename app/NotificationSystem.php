@@ -58,14 +58,14 @@ class NotificationSystem {
      * Create notification in database
      */
     private function createNotification($userId, $type, $title, $message, $data = []) {
+        if (!$this->tableExists('notifications')) {
+            return null;
+        }
         $sql = "INSERT INTO notifications (user_id, title, message, type, related_type, related_id, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())";
         $stmt = $this->pdo->prepare($sql);
-        
         $relatedType = $data['related_type'] ?? null;
         $relatedId = $data['related_id'] ?? null;
-        
         $stmt->execute([$userId, $title, $message, $type, $relatedType, $relatedId]);
-        
         return $this->pdo->lastInsertId();
     }
     
@@ -222,6 +222,9 @@ class NotificationSystem {
      * Update notification status
      */
     private function updateNotificationStatus($notificationId, $status) {
+        if (!$this->tableExists('notifications')) {
+            return true;
+        }
         $sql = "UPDATE notifications SET ";
         $params = [];
         $updates = [];
@@ -242,6 +245,9 @@ class NotificationSystem {
      * Mark notification as read
      */
     public function markAsRead($notificationId, $userId) {
+        if (!$this->tableExists('notifications')) {
+            return true;
+        }
         $sql = "UPDATE notifications SET is_read = 1, read_at = NOW() WHERE id = ? AND user_id = ?";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([$notificationId, $userId]);
@@ -251,6 +257,9 @@ class NotificationSystem {
      * Mark all notifications as read
      */
     public function markAllAsRead($userId) {
+        if (!$this->tableExists('notifications')) {
+            return true;
+        }
         $sql = "UPDATE notifications SET is_read = 1, read_at = NOW() WHERE user_id = ? AND is_read = 0";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([$userId]);
@@ -260,6 +269,9 @@ class NotificationSystem {
      * Get unread notification count
      */
     public function getUnreadCount($userId) {
+        if (!$this->tableExists('notifications')) {
+            return 0;
+        }
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0 AND is_deleted = 0");
         $stmt->execute([$userId]);
         return $stmt->fetchColumn();
@@ -269,6 +281,9 @@ class NotificationSystem {
      * Get user notifications
      */
     public function getUserNotifications($userId, $limit = 20, $offset = 0) {
+        if (!$this->tableExists('notifications')) {
+            return [];
+        }
         $sql = "SELECT * FROM notifications WHERE user_id = ? AND is_deleted = 0 ORDER BY created_at DESC LIMIT ? OFFSET ?";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$userId, $limit, $offset]);
@@ -279,6 +294,9 @@ class NotificationSystem {
      * Delete notification
      */
     public function deleteNotification($notificationId, $userId) {
+        if (!$this->tableExists('notifications')) {
+            return true;
+        }
         $sql = "UPDATE notifications SET is_deleted = 1 WHERE id = ? AND user_id = ?";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([$notificationId, $userId]);
@@ -288,6 +306,9 @@ class NotificationSystem {
      * Clear all notifications for user
      */
     public function clearAllNotifications($userId) {
+        if (!$this->tableExists('notifications')) {
+            return true;
+        }
         $sql = "UPDATE notifications SET is_deleted = 1 WHERE user_id = ?";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([$userId]);
@@ -297,6 +318,9 @@ class NotificationSystem {
      * Scheduled notification methods
      */
     public function scheduleNotification($userId, $type, $title, $message, $scheduledTime, $data = []) {
+        if (!$this->tableExists('notifications')) {
+            return null;
+        }
         $sql = "INSERT INTO notifications (user_id, title, message, type, related_type, related_id, scheduled_for, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
         $stmt = $this->pdo->prepare($sql);
         
@@ -313,6 +337,9 @@ class NotificationSystem {
      */
     public function processScheduledNotifications() {
         try {
+            if (!$this->tableExists('notifications')) {
+                return 0;
+            }
             $now = date('Y-m-d H:i:s');
             
             $sql = "SELECT * FROM notifications WHERE scheduled_for <= ? AND sent_at IS NULL AND is_deleted = 0";
@@ -354,6 +381,12 @@ class NotificationSystem {
         }
         
         return $results;
+    }
+
+    private function tableExists($name) {
+        $stmt = $this->pdo->prepare("SELECT 1 FROM information_schema.tables WHERE table_name = ?");
+        $stmt->execute([$name]);
+        return (bool)$stmt->fetchColumn();
     }
     
     /**
