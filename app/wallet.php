@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../jdf.php';
 require_once __DIR__ . '/wallet/database.php';
 require_once __DIR__ . '/wallet/bot_interface.php';
 
@@ -206,8 +207,8 @@ $recentTransactions = $walletDatabase->getUserWalletTransactions($userId, 5, 0);
                                 <div class="transaction-item">
                                     <div class="transaction-info">
                                         <div class="transaction-type">
-                                            <?php echo $this->getTransactionTypeIcon($transaction['transaction_type']); ?>
-                                            <?php echo $this->getTransactionTypeLabel($transaction['transaction_type']); ?>
+                                            <?php echo getTransactionTypeIcon($transaction['transaction_type']); ?>
+                                            <?php echo getTransactionTypeLabel($transaction['transaction_type']); ?>
                                         </div>
                                         <div class="transaction-description">
                                             <?php echo htmlspecialchars($transaction['description'] ?: 'بدون توضیح'); ?>
@@ -268,7 +269,8 @@ $recentTransactions = $walletDatabase->getUserWalletTransactions($userId, 5, 0);
         // Handle Telegram Web App back button
         if (window.Telegram?.WebApp?.BackButton) {
             window.Telegram.WebApp.BackButton.onClick(function() {
-                window.Telegram.WebApp.close();
+                // Go back to the main dashboard
+                window.location.href = 'index.php';
             });
             window.Telegram.WebApp.BackButton.show();
         }
