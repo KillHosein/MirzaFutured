@@ -61,28 +61,8 @@ if (!is_array($data)) {
 }
 
 $data = sanitize_recursive($data);
-$authHeader = $headers['Authorization'] ?? ($headers['authorization'] ?? '');
-$tokencheck = null;
-if (is_string($authHeader) && preg_match('/Bearer\s+(.+)/i', $authHeader, $m)) {
-    $tokencheck = trim($m[1]);
-}
-if (!$tokencheck) {
-    echo json_encode([
-        'status' => false,
-        'msg' => "Token invalid",
-    ]);
-    http_response_code(403);
-    return;
-}
-$usercheck = select('user', "*", "token", $tokencheck, "select");
-if (!$usercheck) {
-    echo json_encode([
-        'status' => false,
-        'msg' => "Token invalid",
-    ]);
-    http_response_code(403);
-    return;
-}
+$tokencheck = explode('Bearer ', $headers['Authorization'])[1];
+$usercheck = select('user', "*", "id", $data['user_id'], "select");
 if ($usercheck['User_Status'] == "block") {
     echo json_encode([
         'status' => false,
@@ -91,23 +71,16 @@ if ($usercheck['User_Status'] == "block") {
     http_response_code(402);
     return;
 }
-$data['user_id'] = (int) $usercheck['id'];
 $errorreport = select("topicid", "idreport", "report", "errorreport", "select")['idreport'];
 $porsantreport = select("topicid", "idreport", "report", "porsantreport", "select")['idreport'];
 $buyreport = select("topicid", "idreport", "report", "buyreport", "select")['idreport'];
-$headersToLog = $headers;
-unset($headersToLog['Authorization'], $headersToLog['authorization']);
-try {
-    $stmt = $pdo->prepare("INSERT IGNORE INTO logs_api (header, data, time, ip, actions) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([
-        json_encode($headersToLog),
-        json_encode($data),
-        date('Y/m/d H:i:s'),
-        $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-        $data['actions'] ?? 'unknown'
+if (!$usercheck || $usercheck['token'] != $tokencheck) {
+    echo json_encode([
+        'status' => false,
+        'msg' => "Token invalid",
     ]);
-} catch (Exception $e) {
-    error_log("API logging error: " . $e->getMessage());
+    http_response_code(403);
+    return;
 }
 switch ($data['actions']) {
     case 'invoices':
@@ -768,6 +741,7 @@ switch ($data['actions']) {
         if (intval($user_info['pricediscount']) != 0) {
             $result = ($product['price_product'] * $user_info['pricediscount']) / 100;
             $product['price_product'] = $product['price_product'] - $result;
+            sendmessage($from_id, sprintf($textbotlang['users']['Discount']['discountapplied'], $user['pricediscount']), null, 'HTML');
         }
         if ($user_info['Balance'] < $product['price_product']) {
             http_response_code(500);
@@ -845,6 +819,7 @@ switch ($data['actions']) {
                 $config .= "\n" . $link;
             }
         }
+        error_log(json_encode($datatextbotget));
         $datatextbot['textafterpay'] = $panel['type'] == "Manualsale" ? $datatextbot['textmanual'] : $datatextbot['textafterpay'];
         $datatextbot['textafterpay'] = $panel['type'] == "WGDashboard" ? $datatextbot['text_wgdashboard'] :  $datatextbot['textafterpay'];
         $datatextbot['textafterpay'] = $panel['type'] == "ibsng" || $panel['type'] == "mikrotik" ? $datatextbot['textafterpayibsng'] : $datatextbot['textafterpay'];
@@ -994,274 +969,6 @@ $textonebuy
                 "expire" => $datetimestep
             )
         ));
-        break;
-    case 'profile_get':
-        if ($method !== "GET") {
-            echo json_encode([
-                'status' => false,
-                'msg' => "Method invalid; must be GET",
-            ]);
-            return;
-        }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
-        if (!$user_info) {
-            http_response_code(404);
-            echo json_encode([
-                'status' => false,
-                'msg' => "User Not  Found",
-                'obj' => []
-            ]);
-            return;
-        }
-        echo json_encode([
-            'status' => true,
-            'msg' => "Successful",
-            'obj' => [
-                'id' => (int) $user_info['id'],
-                'username' => $user_info['username'],
-                'phone' => $user_info['number'],
-                'cardpayment' => $user_info['cardpayment'],
-                'namecustom' => $user_info['namecustom'],
-                'codeInvitation' => $user_info['codeInvitation']
-            ]
-        ]);
-        break;
-    case 'profile_update':
-        if ($method !== "POST") {
-            echo json_encode([
-                'status' => false,
-                'msg' => "Method invalid; must be POST",
-            ]);
-            return;
-        }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
-        if (!$user_info) {
-            http_response_code(404);
-            echo json_encode([
-                'status' => false,
-                'msg' => "User Not  Found",
-                'obj' => []
-            ]);
-            return;
-        }
-        $updated = false;
-        if (isset($data['phone']) && is_string($data['phone']) && $data['phone'] !== '') {
-            update("user", "number", $data['phone'], "id", $user_info['id']);
-            $updated = true;
-        }
-        if (isset($data['cardpayment']) && is_string($data['cardpayment'])) {
-            update("user", "cardpayment", $data['cardpayment'], "id", $user_info['id']);
-            $updated = true;
-        }
-        if (isset($data['namecustom']) && is_string($data['namecustom'])) {
-            update("user", "namecustom", $data['namecustom'], "id", $user_info['id']);
-            $updated = true;
-        }
-        echo json_encode([
-            'status' => true,
-            'msg' => $updated ? "Successful" : "No changes",
-            'obj' => []
-        ]);
-        break;
-    case 'payments':
-        if ($method !== "GET") {
-            echo json_encode([
-                'status' => false,
-                'msg' => "Method invalid; must be GET",
-            ]);
-            return;
-        }
-        $limit = $data['limit'];
-        if ($limit > 20) $limit = 20;
-        $page = $data['page'];
-        $offset = ($page - 1) * $limit;
-        $user_info = select("user", "*", "token", $tokencheck, "select");
-        if (!$user_info) {
-            http_response_code(404);
-            echo json_encode([
-                'status' => false,
-                'msg' => "User Not  Found",
-                'obj' => []
-            ]);
-            return;
-        }
-        $countStmt = $pdo->prepare("SELECT COUNT(*) as total FROM Payment_report WHERE id_user = :id_user");
-        $countStmt->bindValue(':id_user', $user_info['id']);
-        $countStmt->execute();
-        $totalItems = (int) $countStmt->fetchColumn();
-        $totalPages = (int) ceil($totalItems / $limit);
-        $stmt = $pdo->prepare("SELECT id_order,time,price,payment_Status,Payment_Method,dec_not_confirmed FROM Payment_report WHERE id_user = :id_user ORDER BY time DESC LIMIT :limit OFFSET :offset");
-        $stmt->bindValue(':id_user', $user_info['id']);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode([
-            'status' => true,
-            'msg' => "Successful",
-            'obj' => $items,
-            'meta' => [
-                'currentPage' => $page,
-                'totalPages' => $totalPages,
-                'totalItems' => $totalItems,
-                'limit' => $limit
-            ]
-        ]);
-        break;
-    case 'topup_create':
-        if ($method !== "POST") {
-            echo json_encode([
-                'status' => false,
-                'msg' => "Method invalid; must be POST",
-            ]);
-            return;
-        }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
-        if (!$user_info) {
-            http_response_code(404);
-            echo json_encode([
-                'status' => false,
-                'msg' => "User Not  Found",
-                'obj' => []
-            ]);
-            return;
-        }
-        $amount = isset($data['amount']) ? (int) $data['amount'] : 0;
-        if ($amount <= 0) {
-            http_response_code(400);
-            echo json_encode([
-                'status' => false,
-                'msg' => "amount invalid",
-                'obj' => []
-            ]);
-            return;
-        }
-        $cardQuery = $pdo->query("SELECT * FROM card_number ORDER BY RAND() LIMIT 1");
-        $card_info = $cardQuery ? $cardQuery->fetch(PDO::FETCH_ASSOC) : null;
-        if (!$card_info || empty($card_info['cardnumber']) || empty($card_info['namecard'])) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => false,
-                'msg' => "کارت بانکی فعال یافت نشد",
-                'obj' => []
-            ]);
-            return;
-        }
-        $dateacc = date('Y/m/d H:i:s');
-        $orderId = bin2hex(random_bytes(5));
-        $stmt = $connect->prepare("INSERT INTO Payment_report (id_user,id_order,time,price,payment_Status,Payment_Method,id_invoice) VALUES (?,?,?,?,?,?,?)");
-        $payment_Status = "Unpaid";
-        $Payment_Method = "cart to cart";
-        $invoice = "miniapp_topup|none";
-        $stmt->bind_param("sssssss", $user_info['id'], $orderId, $dateacc, $amount, $payment_Status, $Payment_Method, $invoice);
-        $stmt->execute();
-        $stmt->close();
-        echo json_encode([
-            'status' => true,
-            'msg' => "Successful",
-            'obj' => [
-                'order_id' => $orderId,
-                'amount' => $amount,
-                'card_number' => $card_info['cardnumber'],
-                'card_name' => $card_info['namecard'],
-                'expires_at' => strtotime("+1 hour")
-            ]
-        ]);
-        break;
-    case 'topup_mark_paid':
-        if ($method !== "POST") {
-            echo json_encode([
-                'status' => false,
-                'msg' => "Method invalid; must be POST",
-            ]);
-            return;
-        }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
-        if (!$user_info) {
-            http_response_code(404);
-            echo json_encode([
-                'status' => false,
-                'msg' => "User Not  Found",
-                'obj' => []
-            ]);
-            return;
-        }
-        $orderId = isset($data['order_id']) ? $data['order_id'] : null;
-        if (!is_string($orderId) || $orderId === '') {
-            http_response_code(400);
-            echo json_encode([
-                'status' => false,
-                'msg' => "order_id invalid",
-                'obj' => []
-            ]);
-            return;
-        }
-        $payment = select("Payment_report", "*", "id_order", $orderId, "select");
-        if (!$payment || $payment['id_user'] != $user_info['id']) {
-            http_response_code(404);
-            echo json_encode([
-                'status' => false,
-                'msg' => "payment not found",
-                'obj' => []
-            ]);
-            return;
-        }
-        $desc = isset($data['description']) && is_string($data['description']) ? $data['description'] : '';
-        $desc = mb_substr($desc, 0, 500);
-        $now = date('Y/m/d H:i:s');
-        update("Payment_report", "payment_Status", "waiting", "id_order", $orderId);
-        update("Payment_report", "at_updated", $now, "id_order", $orderId);
-        update("Payment_report", "dec_not_confirmed", $desc, "id_order", $orderId);
-        $paymentreports = select("topicid", "idreport", "report", "paymentreport", "select")['idreport'];
-        $text_reportpayment = "💵 پرداخت جدید (مینی‌اپ)\n\n👤 @{$user_info['username']}\n🆔 {$user_info['id']}\n🛒 کد پیگیری: {$orderId}\n💸 مبلغ: {$payment['price']}\n💳 روش: cart to cart\n✍️ توضیحات: {$desc}";
-        if (strlen($setting['Channel_Report']) > 0) {
-            telegram('sendmessage',[
-                'chat_id' => $setting['Channel_Report'],
-                'message_thread_id' => $paymentreports,
-                'text' => $text_reportpayment,
-                'parse_mode' => "HTML"
-            ]);
-        }
-        sendmessage($user_info['id'], "✅ رسید شما ثبت شد.\nکد پیگیری: {$orderId}\nپس از بررسی، نتیجه اعلام می‌شود.", null, 'HTML');
-        echo json_encode([
-            'status' => true,
-            'msg' => "Successful",
-            'obj' => []
-        ]);
-        break;
-    case 'admin_dashboard':
-        if ($method !== "GET") {
-            echo json_encode([
-                'status' => false,
-                'msg' => "Method invalid; must be GET",
-            ]);
-            return;
-        }
-        $user_info = select("user", "*", "token", $tokencheck, "select");
-        $admin_ids = select("admin", "id_admin", null, null, "FETCH_COLUMN");
-        if (!$user_info || !is_array($admin_ids) || !in_array((string) $user_info['id'], array_map('strval', $admin_ids), true)) {
-            http_response_code(403);
-            echo json_encode([
-                'status' => false,
-                'msg' => "forbidden",
-                'obj' => []
-            ]);
-            return;
-        }
-        $totalUsers = (int) $pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
-        $activeServices = (int) $pdo->query("SELECT COUNT(*) FROM invoice WHERE (status = 'active' OR status = 'end_of_time' OR status = 'end_of_volume' OR status = 'sendedwarn' OR Status = 'send_on_hold')")->fetchColumn();
-        $paidPayments = (int) $pdo->query("SELECT COUNT(*) FROM Payment_report WHERE payment_Status = 'paid'")->fetchColumn();
-        $waitingPayments = (int) $pdo->query("SELECT COUNT(*) FROM Payment_report WHERE payment_Status = 'waiting'")->fetchColumn();
-        echo json_encode([
-            'status' => true,
-            'msg' => "Successful",
-            'obj' => [
-                'total_users' => $totalUsers,
-                'active_services' => $activeServices,
-                'paid_payments' => $paidPayments,
-                'waiting_payments' => $waitingPayments
-            ]
-        ]);
         break;
     default:
         echo json_encode([

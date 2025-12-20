@@ -67,21 +67,6 @@ To ensure a successful installation, please provide the following information co
 
 ---
 
-## Telegram Mini App (Web App)
-This repository includes a Telegram Mini App under `app/` that uses **Telegram Web Apps** and connects to the backend via `api/verify.php` and `api/miniapp.php`.
-
-### BotFather setup
-1. Create/configure a Web App in BotFather (Web App section).
-2. Set the Web App URL to:
-   - `https://YOUR_DOMAIN/app/`
-
-### How authentication works
-- The client reads `initData` from `Telegram.WebApp.initData`.
-- The server validates it in `api/verify.php` using the bot token (`$APIKEY` in `config.php`) and issues a per-user `token`.
-- The Mini App calls `api/miniapp.php` with `Authorization: Bearer <token>`.
-
----
-
 ### 💖 Support the Developers
 This project is the result of the hard work of multiple developers. Please consider supporting them.
 
