@@ -49,6 +49,10 @@ function sanitizeRecursive($data) {
 function logApiRequest($headers, $data, $action) {
     global $pdo;
     
+    // Debug logging to file
+    $logMsg = date('Y-m-d H:i:s') . " | Action: " . ($action ?? 'none') . " | IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . "\n";
+    file_put_contents(__DIR__ . '/debug_api.log', $logMsg, FILE_APPEND);
+    
     try {
         $stmt = $pdo->prepare(
             "INSERT IGNORE INTO logs_api (header, data, time, ip, actions) VALUES (?, ?, ?, ?, ?)"

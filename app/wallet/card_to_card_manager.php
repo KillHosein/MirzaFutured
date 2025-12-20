@@ -78,11 +78,11 @@ class CardToCardManager {
                 'message' => 'تراکنش کارت به کارت با موفقیت ثبت شد. پس از بررسی و تایید توسط ادمین، مبلغ به کیف پول شما افزوده خواهد شد.'
             ];
             
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log("Card-to-card transaction processing error: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'خطا در پردازش تراکنش. لطفاً دوباره تلاش کنید.'
+                'message' => 'خطا در پردازش تراکنش: ' . $e->getMessage()
             ];
         }
     }

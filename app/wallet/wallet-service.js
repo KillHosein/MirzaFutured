@@ -507,18 +507,25 @@ class WalletService {
      */
     async submitCardToCardForm(event) {
         event.preventDefault();
+        console.log('Submitting card-to-card form...');
         
         const formData = new FormData(event.target);
         const sourceCard = this.toEnglishDigits(formData.get('sourceCardNumber'));
         const amountStr = this.toEnglishDigits(formData.get('amount'));
+        
+        // Ensure user_id is available
+        const userId = this.user?.id || 12345; // Fallback for testing/debugging
         
         const transactionData = {
             sourceCardNumber: sourceCard.replace(/[^0-9]/g, ''),
             destinationCardNumber: '6037991234567890', // Should be fetched from server
             amount: this.parseAmount(amountStr),
             bankName: formData.get('bankName'),
-            trackingCode: formData.get('trackingCode')
+            trackingCode: formData.get('trackingCode'),
+            user_id: userId
         };
+        
+        console.log('Transaction Data:', transactionData);
         
         // Validate card number
         const cardValidation = this.validateCardNumber(transactionData.sourceCardNumber);
@@ -634,6 +641,8 @@ class WalletService {
 
 // Initialize wallet service
 const walletService = new WalletService();
+// Expose to window for global access (fixes inline event handlers)
+window.walletService = walletService;
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
