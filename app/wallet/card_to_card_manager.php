@@ -116,25 +116,25 @@ class CardToCardManager {
             ];
         }
         
-        // Validate amount
-        $amount = $this->parseAmount($data['amount']);
-        if ($amount <= 0) {
+        // Validate amount (Input is in Toman)
+        $amountToman = $this->parseAmount($data['amount']);
+        if ($amountToman <= 0) {
             return [
                 'success' => false,
                 'message' => 'مبلغ تراکنش باید بیشتر از صفر باشد'
             ];
         }
         
-        // Check minimum amount (e.g., 10,000 Toman)
-        if ($amount < 100000) { // 100,000 Rial = 10,000 Toman
+        // Check minimum amount (10,000 Toman)
+        if ($amountToman < 10000) { 
             return [
                 'success' => false,
                 'message' => 'حداقل مبلغ تراکنش ۱۰٬۰۰۰ تومان است'
             ];
         }
         
-        // Check maximum amount (e.g., 50,000,000 Toman)
-        if ($amount > 500000000) { // 500,000,000 Rial = 50,000,000 Toman
+        // Check maximum amount (50,000,000 Toman)
+        if ($amountToman > 50000000) { 
             return [
                 'success' => false,
                 'message' => 'حداکثر مبلغ تراکنش ۵۰٬۰۰۰٬۰۰۰ تومان است'
