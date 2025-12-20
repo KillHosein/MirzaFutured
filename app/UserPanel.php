@@ -89,7 +89,7 @@ class UserPanel {
                 ],
                 [
                     ['text' => '⚙️ تنظیمات', 'callback_data' => 'user_settings'],
-                    ['text'� '🔔 اعلان‌ها', 'callback_data' => 'user_notifications']
+                    ['text' => '🔔 اعلان‌ها', 'callback_data' => 'user_notifications']
                 ],
                 [
                     ['text' => '🆘 پشتیبانی', 'callback_data' => 'user_support'],
@@ -243,7 +243,7 @@ class UserPanel {
             $message = "🛍️ <b>سرویس‌های من</b>\n\n";
             
             foreach ($services as $service) {
-                $expiryDate = jdate('Y/m/d', strtotime($service['expires_at']));
+                $expiryDate = $this->safeFormatExpiry($service['expires_at'], $service['order_id']);
                 $status = $this->getServiceStatusText($service['status']);
                 $daysLeft = $this->calculateDaysLeft($service['expires_at']);
                 
@@ -251,19 +251,12 @@ class UserPanel {
                 $message .= "📅 انقضا: {$expiryDate}\n";
                 $message .= "📊 وضعیت: {$status}\n";
                 $message .= "⏰ {$daysLeft} روز تا انقضا\n";
-                
-                if ($service['bandwidth_limit']) {
-                    $bandwidth = $this->formatBandwidth($service['bandwidth_limit']);
-                    $usedBandwidth = $this->formatBandwidth($service['bandwidth_used']);
-                    $message .= "📊 حجم: {$usedBandwidth} / {$bandwidth}\n";
+                if (!empty($service['bandwidth_limit'])) {
+                    $bandwidth = is_numeric($service['bandwidth_limit']) ? ($service['bandwidth_limit'] . ' GB') : $service['bandwidth_limit'];
+                    $message .= "📊 حجم مجاز: {$bandwidth}\n";
                 }
-                
-                if ($service['device_limit']) {
-                    $message .= "📱 دستگاه‌ها: {$service['device_count']}/{$service['device_limit']}\n";
-                }
-                
-                if ($service['server_location']) {
-                    $message .= "🌍 سرور: {$service['server_location']}\n";
+                if (!empty($service['service_configuration'])) {
+                    $message .= "🌍 لوکیشن/پنل: {$service['service_configuration']}\n";
                 }
                 
                 $message .= "━━━━━━━━━━━━━━━\n\n";
@@ -294,20 +287,33 @@ class UserPanel {
         ]);
     }
     
+    private function safeFormatExpiry($serviceTime, $orderId) {
+        if (empty($serviceTime)) {
+            return 'نامشخص';
+        }
+        $ts = is_numeric($serviceTime) ? (int)$serviceTime : strtotime($serviceTime);
+        if ($ts === false) {
+            return $serviceTime;
+        }
+        return jdate('Y/m/d', $ts);
+    }
+    
     /**
      * Show user settings
      */
     private function showUserSettings($userId, $chatId, $action = null) {
-        $user = $this->getUserById($userId);
+        $setting = select("setting","*",null,null,"select");
+        $langEn = isset($setting['languageen']) ? (strtolower($setting['languageen']) === '1' ? 'فعال' : 'غیرفعال') : 'غیرفعال';
+        $langRu = isset($setting['languageru']) ? (strtolower($setting['languageru']) === '1' ? 'فعال' : 'غیرفعال') : 'غیرفعال';
+        $showCard = isset($setting['showcard']) ? ($setting['showcard'] === '1' ? 'نمایش' : 'عدم نمایش') : 'نمایش';
+        $inlineBtn = isset($setting['inlinebtnmain']) ? $setting['inlinebtnmain'] : 'offinline';
         
-        $message = "⚙️ <b>تنظیمات حساب کاربری</b>\n\n";
-        $message .= "زبان: فارسی\n";
-        $message .= "منطقه زمانی: {$user['timezone']}\n";
-        $message .= "نوتیفیکیشن تلگرام: " . ($user['notification_telegram'] ? '✅ فعال' : '❌ غیرفعال') . "\n";
-        $message .= "نوتیفیکیشن ایمیل: " . ($user['notification_email'] ? '✅ فعال' : '❌ غیرفعال') . "\n";
-        $message .= "نوتیفیکیشن SMS: " . ($user['notification_sms'] ? '✅ فعال' : '❌ غیرفعال') . "\n";
-        $message .= "ورود دوعاملی: " . ($user['two_factor_enabled'] ? '✅ فعال' : '❌ غیرفعال') . "\n\n";
-        $message .= "لطفاً تنظیمات مورد نظر را انتخاب کنید:";
+        $message = "⚙️ <b>تنظیمات عمومی</b>\n\n";
+        $message .= "زبان انگلیسی: {$langEn}\n";
+        $message .= "زبان روسی: {$langRu}\n";
+        $message .= "نمایش کارت بانکی: {$showCard}\n";
+        $message .= "دکمه‌های اصلی: {$inlineBtn}\n\n";
+        $message .= "برای تغییر تنظیمات به پنل ادمین مراجعه کنید.";
         
         $keyboard = [
             'inline_keyboard' => [
@@ -403,27 +409,27 @@ class UserPanel {
             'inline_keyboard' => [
                 [
                     ['text' => '❓ سوالات متداول', 'callback_data' => 'faq'],
-                    ['text' =& '💬 ارسال تیکت', 'callback_data' => 'create_ticket']
+                    ['text' => '💬 ارسال تیکت', 'callback_data' => 'create_ticket']
                 ],
                 [
-                    ['text' =& '📋 تیکت‌های من', 'callback_data' => 'my_tickets'],
-                    ['text' =& '📞 تماس با ما', 'callback_data' => 'contact_us']
+                    ['text' => '📋 تیکت‌های من', 'callback_data' => 'my_tickets'],
+                    ['text' => '📞 تماس با ما', 'callback_data' => 'contact_us']
                 ],
                 [
-                    ['text' =& '📖 راهنما', 'callback_data' =& 'user_guide'],
-                    ['text' =& '📊 وضعیت سیستم', 'callback_data' =& 'system_status']
+                    ['text' => '📖 راهنما', 'callback_data' => 'user_guide'],
+                    ['text' => '📊 وضعیت سیستم', 'callback_data' => 'system_status']
                 ],
                 [
-                    ['text' =& '🔙 بازگشت', 'callback_data' =& 'user_dashboard']
+                    ['text' => '🔙 بازگشت', 'callback_data' => 'user_dashboard']
                 ]
             ]
         ];
         
         return $this->telegram->sendMessage([
-            'chat_id' =& $chatId,
-            'text' =& $message,
-            'reply_markup' =& json_encode($keyboard),
-            'parse_mode' =& 'HTML'
+            'chat_id' => $chatId,
+            'text' => $message,
+            'reply_markup' => json_encode($keyboard),
+            'parse_mode' => 'HTML'
         ]);
     }
     

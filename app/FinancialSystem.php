@@ -764,49 +764,43 @@ class FinancialSystem {
      * Helper methods
      */
     private function isUserRegistered($userId) {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM users WHERE user_id = ? AND status = 'active'");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM user WHERE id = ? AND LOWER(User_Status) = 'active'");
         $stmt->execute([$userId]);
         return $stmt->fetchColumn() > 0;
     }
     
     private function getUserById($userId) {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("SELECT * FROM user WHERE id = ?");
         $stmt->execute([$userId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
     private function getUserBalance($userId) {
-        $stmt = $this->pdo->prepare("SELECT balance FROM users WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("SELECT Balance FROM user WHERE id = ?");
         $stmt->execute([$userId]);
         return $stmt->fetchColumn() ?: 0;
     }
     
     private function updateUserBalance($userId, $amount) {
-        $stmt = $this->pdo->prepare("UPDATE users SET balance = balance + ? WHERE user_id = ?");
+        $stmt = $this->pdo->prepare("UPDATE user SET Balance = Balance + ? WHERE id = ?");
         return $stmt->execute([$amount, $userId]);
     }
     
     private function createTransaction($data) {
-        $sql = "INSERT INTO transactions (user_id, transaction_id, type, amount, payment_method, status, balance_before, balance_after, source_card_number, destination_card_number, card_holder_name, bank_name, related_transaction_id, created_at, completed_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO Payment_report (id_user, id_order, time, price, dec_not_confirmed, Payment_Method, payment_Status, bottype, id_invoice) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             $data['user_id'],
             $data['transaction_id'],
-            $data['type'],
+            date('Y-m-d H:i:s'),
             $data['amount'],
+            $data['admin_notes'] ?? null,
             $data['payment_method'],
             $data['status'],
-            $data['balance_before'],
-            $data['balance_after'],
-            $data['source_card_number'] ?? null,
-            $data['destination_card_number'] ?? null,
-            $data['card_holder_name'] ?? null,
-            $data['bank_name'] ?? null,
-            $data['related_transaction_id'] ?? null,
-            $data['created_at'],
-            $data['completed_at'] ?? null
+            $data['bottype'] ?? null,
+            $data['id_invoice'] ?? $data['transaction_id'],
         ]);
         
         return ['id' => $this->pdo->lastInsertId(), 'transaction_id' => $data['transaction_id']];
@@ -851,14 +845,16 @@ class FinancialSystem {
     }
     
     private function getActiveBankCards() {
-        // Get active bank cards from system settings or database
-        return [
-            [
-                'bank_name' => 'بانک ملی ایران',
-                'card_number' => '6037991234567890',
-                'account_holder' => 'شرکت تلگرام وب'
-            ]
-        ];
+        $cards = select("card_number","*",null,null,"fetchAll");
+        $result = [];
+        foreach ($cards as $c) {
+            $result[] = [
+                'bank_name' => '',
+                'card_number' => $c['cardnumber'] ?? '',
+                'account_holder' => $c['namecard'] ?? '',
+            ];
+        }
+        return $result;
     }
     
     private function getDestinationCard() {
@@ -867,8 +863,7 @@ class FinancialSystem {
     }
     
     private function storeTransactionReceipt($transactionId, $fileId) {
-        // Store receipt file information
-        $stmt = $this->pdo->prepare("UPDATE transactions SET payment_reference = ? WHERE id = ?");
+        $stmt = $this->pdo->prepare("UPDATE Payment_report SET dec_not_confirmed = ? WHERE id = ?");
         return $stmt->execute([$fileId, $transactionId]);
     }
     
@@ -937,7 +932,7 @@ class FinancialSystem {
     
     private function sendTransferSuccessMessage($userId, $chatId, $recipient, $amount) {
         $formattedAmount = number_format($amount);
-        $recipientName = $recipient['first_name'] . ' ' . $recipient['last_name'];
+        $recipientName = ($recipient['namecustom'] ?? '') !== '' ? $recipient['namecustom'] : ($recipient['username'] ?? $recipient['id'] ?? '');
         
         $message = "✅ <b>انتقال موفق</b>\n\n";
         $message .= "💰 مبلغ <code>{$formattedAmount}</code> ریال\n";
@@ -965,11 +960,11 @@ class FinancialSystem {
         if (strpos($identifier, '@') === 0) {
             // Search by username
             $username = substr($identifier, 1);
-            $stmt = $this->pdo->prepare("SELECT * FROM users WHERE username = ? AND status = 'active'");
+            $stmt = $this->pdo->prepare("SELECT * FROM user WHERE username = ? AND LOWER(User_Status) = 'active'");
             $stmt->execute([$username]);
         } else {
             // Search by user_id
-            $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = ? AND status = 'active'");
+            $stmt = $this->pdo->prepare("SELECT * FROM user WHERE id = ? AND LOWER(User_Status) = 'active'");
             $stmt->execute([$identifier]);
         }
         
@@ -979,22 +974,22 @@ class FinancialSystem {
     private function getUserTransactions($userId, $page = 1, $limit = 10) {
         $offset = ($page - 1) * $limit;
         
-        $stmt = $this->pdo->prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        $stmt = $this->pdo->prepare("SELECT * FROM Payment_report WHERE id_user = ? ORDER BY time DESC LIMIT ? OFFSET ?");
         $stmt->execute([$userId, $limit, $offset]);
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
     private function getTransactionById($transactionId) {
-        $stmt = $this->pdo->prepare("SELECT * FROM transactions WHERE id = ?");
+        $stmt = $this->pdo->prepare("SELECT * FROM Payment_report WHERE id = ?");
         $stmt->execute([$transactionId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
     private function updateTransactionStatus($transactionId, $status, $adminId = null, $reason = null) {
-        $sql = "UPDATE transactions SET status = ?, verified_by_admin = ?, admin_notes = ?, completed_at = ? WHERE id = ?";
+        $sql = "UPDATE Payment_report SET payment_Status = ?, at_updated = ? WHERE id = ?";
         $stmt = $this->pdo->prepare($sql);
-        return $stmt->execute([$status, $adminId ? 1 : 0, $reason, date('Y-m-d H:i:s'), $transactionId]);
+        return $stmt->execute([$status, date('Y-m-d H:i:s'), $transactionId]);
     }
     
     private function updateTransactionBalance($transactionId, $balance) {
@@ -1030,16 +1025,18 @@ class FinancialSystem {
     }
     
     private function getSystemSetting($key, $default = null) {
-        $stmt = $this->pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = ?");
-        $stmt->execute([$key]);
-        $value = $stmt->fetchColumn();
-        
-        return $value !== false ? $value : $default;
+        $setting = select("setting","*",null,null,"select");
+        if (!is_array($setting)) {
+            return $default;
+        }
+        if (array_key_exists($key, $setting)) {
+            return $setting[$key];
+        }
+        return $default;
     }
     
     private function logAdminAction($adminId, $action, $resourceType, $resourceId) {
-        $stmt = $this->pdo->prepare("INSERT INTO admin_logs (admin_id, action, resource_type, resource_id, created_at) VALUES (?, ?, ?, ?, ?)");
-        return $stmt->execute([$adminId, $action, $resourceType, $resourceId, date('Y-m-d H:i:s')]);
+        return true;
     }
     
     /**
