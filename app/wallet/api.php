@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/wallet/database.php';
-require_once __DIR__ . '/wallet/card_to_card_manager.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/card_to_card_manager.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 date_default_timezone_set('Asia/Tehran');

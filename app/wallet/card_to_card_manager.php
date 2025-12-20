@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/database.php';
-require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../../botapi.php';
 
 class CardToCardManager {
     private $walletDatabase;

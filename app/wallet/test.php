@@ -4,10 +4,10 @@
  * Comprehensive testing for card-to-card wallet functionality
  */
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/card_to_card_manager.php';
-require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../../botapi.php';
 
 class WalletTestSuite {
     private $walletDatabase;
