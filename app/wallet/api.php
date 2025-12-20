@@ -93,10 +93,6 @@ switch ($action) {
         }
         
         // Validate required fields
-        if (empty($data['user_id']) || empty($data['source_card_number']) || empty($data['amount'])) {
-            sendJsonResponse(false, "فیلدهای اجباری: user_id, source_card_number, amount");
-        }
-        
         $requiredFields = ['user_id', 'source_card_number', 'destination_card_number', 'amount'];
         foreach ($requiredFields as $field) {
             if (empty($data[$field])) {
