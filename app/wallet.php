@@ -312,22 +312,4 @@ function getTransactionTypeLabel($type) {
     ];
     return $labels[$type] ?? 'تراکنش';
 }
-
-function jdate($format, $timestamp = null) {
-    // Simple Persian date function - you may want to use a proper library
-    if ($timestamp === null) {
-        $timestamp = time();
-    }
-    
-    // This is a simplified version - you should use a proper Persian calendar library
-    $date = date($format, $timestamp);
-    
-    // Replace English numbers with Persian numbers
-    $persianNumbers = [
-        '0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
-        '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹'
-    ];
-    
-    return strtr($date, $persianNumbers);
-}
 ?>

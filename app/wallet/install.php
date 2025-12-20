@@ -203,7 +203,7 @@ $directories = [
     'temp'
 ];
 
-foreach ($directory as $dir) {
+foreach ($directories as $dir) {
     $fullPath = __DIR__ . '/' . $dir;
     if (!is_dir($fullPath)) {
         if (mkdir($fullPath, 0755, true)) {
