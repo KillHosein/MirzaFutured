@@ -72,6 +72,9 @@ return [
         'user_notification_enabled' => true,
         'notification_channels' => ['telegram', 'email'],
         
+        // Admin ID for Telegram notifications (Numeric User ID)
+        'admin_id' => '8481984748', // Put your numeric admin ID here (e.g., 123456789)
+        
         // Admin notification settings
         'admin' => [
             'notify_on_new_transaction' => true,
@@ -174,7 +177,7 @@ return [
      */
     'integrations' => [
         'telegram_bot_enabled' => true,
-        'telegram_bot_username' => '@mirza_vpn_bot', // Should be configured
+        'telegram_bot_username' => '@dgspksafbot', // Should be configured
         
         'payment_gateways' => [
             'zarinpal' => false,
