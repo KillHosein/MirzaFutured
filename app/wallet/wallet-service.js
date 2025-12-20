@@ -509,10 +509,13 @@ class WalletService {
         event.preventDefault();
         
         const formData = new FormData(event.target);
+        const sourceCard = this.toEnglishDigits(formData.get('sourceCardNumber'));
+        const amountStr = this.toEnglishDigits(formData.get('amount'));
+        
         const transactionData = {
-            sourceCardNumber: formData.get('sourceCardNumber').replace(/[^0-9]/g, ''),
+            sourceCardNumber: sourceCard.replace(/[^0-9]/g, ''),
             destinationCardNumber: '6037991234567890', // Should be fetched from server
-            amount: this.parseAmount(formData.get('amount')),
+            amount: this.parseAmount(amountStr),
             bankName: formData.get('bankName'),
             trackingCode: formData.get('trackingCode')
         };
@@ -521,6 +524,7 @@ class WalletService {
         const cardValidation = this.validateCardNumber(transactionData.sourceCardNumber);
         if (!cardValidation.valid) {
             document.getElementById('card-error').textContent = cardValidation.message;
+            document.getElementById('card-error').style.color = 'red';
             return;
         }
         
