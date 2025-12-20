@@ -1,8 +1,5 @@
 <?php
-/**
- * Wallet System Installation Script
- * Creates necessary database tables and initial configuration
- */
+
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/database.php';
