@@ -1,16 +1,13 @@
 <?php
-ini_set('error_log', 'error_log');
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../function.php';
-
-// Prevent overlapping execution
-$lockFile = __DIR__ . '/statusday.lock';
-$fp = fopen($lockFile, 'c+');
-if (!flock($fp, LOCK_EX | LOCK_NB)) {
-    die("Another instance is already running.");
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('statusday');
+$lockFp = cronAcquireLock('statusday');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
 }
+require_once __DIR__ . '/../botapi.php';
 
 $setting = select("setting","*",null,null,"select");
 

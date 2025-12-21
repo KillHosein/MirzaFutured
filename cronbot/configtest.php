@@ -1,15 +1,23 @@
 <?php
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('configtest');
+$lockFp = cronAcquireLock('configtest');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
+}
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
 $ManagePanel = new ManagePanel();
 $datatextbotget = select("textbot", "*",null ,null ,"fetchAll");
 $datatxtbot = array();
 $setting = select("setting","*",null,null);
 $status_cron = json_decode($setting['cron_status'],true);
-if(!$status_cron['test'])return;
+if(!$status_cron['test']){
+    cronFinish('skipped', 'disabled');
+    return;
+}
 foreach ($datatextbotget as $row) {
     $datatxtbot[] = array(
         'id_text' => $row['id_text'],

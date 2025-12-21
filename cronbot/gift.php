@@ -1,11 +1,15 @@
 <?php
 
-ini_set('error_log', 'error_log');
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('gift');
+$lockFp = cronAcquireLock('gift');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
+}
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
 $ManagePanel = new ManagePanel();
 
 
@@ -33,21 +37,23 @@ foreach ($datatxtbot as $item) {
         $datatextbot[$item['id_text']] = $item['text'];
     }
 }
-if(!is_file('gift'))return;
-if(!is_file('username.json'))return;
+$giftFile = __DIR__ . '/gift';
+$usernamesFile = __DIR__ . '/username.json';
+if (!is_file($giftFile)) return;
+if (!is_file($usernamesFile)) return;
 
 
-$userid = json_decode(file_get_contents('username.json'));
-if(is_file('gift')){
-$info = json_decode(file_get_contents('gift'),true);
+$userid = json_decode(file_get_contents($usernamesFile));
+if (is_file($giftFile)) {
+    $info = json_decode(file_get_contents($giftFile), true);
 }
 $count = 0;
 if(count($userid) == 0){
     if(isset($info['id_admin'])){
     deletemessage($info['id_admin'], $info['id_message']);
     sendmessage($info['id_admin'], "📌 عملیات برای تمامی سرویس های درخواستی انجام شد.", null, 'HTML');
-    unlink('gift');
-    unlink('username.json');
+    unlink($giftFile);
+    unlink($usernamesFile);
     }
     return;
     
@@ -73,7 +79,7 @@ foreach ($userid as $iduser){
             $extra_volume['msg'] = json_encode($extra_volume['msg']);
             $textreports = "خطای اضافه شدن هدیه حجم
 نام پنل : {$marzban_list_get['name_panel']}
-نام کاربری سرویس : {$nameloc['username']}
+نام کاربری سرویس : {$invoce['username']}
 دلیل خطا : {$extra_volume['msg']}";
             if (strlen($setting['Channel_Report']) > 0) {
                 telegram('sendmessage',[
@@ -96,8 +102,8 @@ $stmt = $pdo->prepare("INSERT IGNORE INTO service_other (id_user, username, valu
     $value = $data_for_database;
     $dateacc = date('Y/m/d H:i:s');
     $type = "gift_volume";
-    $stmt->execute([
-    ':id_user' => $iduser->username,
+$stmt->execute([
+    ':id_user' => $invoce['id_user'],
     ':username' => $invoce['username'],
     ':value' => $value,
     ':type' => $type,
@@ -125,7 +131,7 @@ foreach ($userid as $iduser){
             $extra_time['msg'] = json_encode($extra_time['msg']);
             $textreports = "خطای اضافه شدن هدیه حجم
 نام پنل : {$marzban_list_get['name_panel']}
-نام کاربری سرویس : {$nameloc['username']}
+نام کاربری سرویس : {$invoce['username']}
 دلیل خطا : {$extra_time['msg']}";
             if (strlen($setting['Channel_Report']) > 0) {
                 telegram('sendmessage',[
@@ -160,4 +166,4 @@ $stmt = $pdo->prepare("INSERT IGNORE INTO service_other (id_user, username, valu
 }
 }
 }
-file_put_contents('username.json',json_encode($userid,true));
+file_put_contents($usernamesFile, json_encode($userid, true));

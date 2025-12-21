@@ -1,9 +1,13 @@
 <?php
-ini_set('error_log', 'error_log');
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('uptime_panel');
+$lockFp = cronAcquireLock('uptime_panel');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
+}
+require_once __DIR__ . '/../botapi.php';
 
 
 
@@ -11,7 +15,10 @@ $admin_ids = select("admin", "id_admin",null,null,"FETCH_COLUMN");
 $marzbanlist = select("marzban_panel", "*",null ,null ,"fetchAll");
 $setting = select("setting", "*");
 $status_cron = json_decode($setting['cron_status'],true);
-if(!$status_cron['uptime_panel'])return;
+if(!$status_cron['uptime_panel']){
+    cronFinish('skipped', 'disabled');
+    return;
+}
 $inbounds = [];
 foreach($marzbanlist as $location){
     $parsed_url = parse_url($location['url_panel']);

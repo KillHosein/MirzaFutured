@@ -10,6 +10,12 @@ if (PHP_SAPI === 'cli' && isset($argv)) {
 }
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../function.php';
+cronInit('backupbot');
+$lockFp = cronAcquireLock('backupbot');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    exit;
+}
 require_once __DIR__ . '/../botapi.php';
 
 $logFile = __DIR__ . DIRECTORY_SEPARATOR . 'backupbot.log';

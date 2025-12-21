@@ -1,17 +1,14 @@
 <?php
-ini_set('error_log', 'error_log');
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
-
-// Prevent overlapping execution
-$lockFile = __DIR__ . '/activeconfig.lock';
-$fp = fopen($lockFile, 'c+');
-if (!flock($fp, LOCK_EX | LOCK_NB)) {
-    die("Another instance is already running.");
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('activeconfig');
+$lockFp = cronAcquireLock('activeconfig');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
 }
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
 
 $ManagePanel = new ManagePanel();
 

@@ -1,11 +1,16 @@
 <?php
-ini_set('error_log', 'error_log');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
-require_once '../jdf.php';
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('plisio');
+$lockFp = cronAcquireLock('plisio');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
+}
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
+require_once __DIR__ . '/../jdf.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 $ManagePanel = new ManagePanel();
 $setting = select("setting", "*");
 $paymentreports = select("topicid","idreport","report","paymentreport","select")['idreport'];
@@ -39,19 +44,23 @@ $url .= '&search='.$tx_id;
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
-return json_decode($response,true);
 curl_close($ch);
+if (!is_string($response) || $response === '') {
+    return null;
+}
+return json_decode($response,true);
 
 }
 $list_service = mysqli_query($connect, "SELECT * FROM Payment_report WHERE payment_Status = 'Unpaid' AND Payment_Method = 'plisio'");
 while ($row = mysqli_fetch_assoc($list_service)) {
     $Payment_report = mysqli_fetch_assoc(mysqli_query($connect, "SELECT * FROM Payment_report WHERE id_order = '{$row['id_order']}' LIMIT 1"));
-    $textbotlang = languagechange('../text.json');
+    $textbotlang = languagechange(__DIR__ . '/../text.json');
     if ($Payment_report['payment_Status'] == "paid")continue;
     if(!isset($Payment_report['dec_not_confirmed']) or $Payment_report['dec_not_confirmed'] == null)continue;
     if($Payment_report['dec_not_confirmed'] == null)continue;
     $StatusPayment = statusplisio($Payment_report['id_order']);
-    if($StatusPayment['data']['operations'][0]['status'] == null || $StatusPayment['data']['operations'][0]['status'] == "cancelled"){
+    $operationStatus = is_array($StatusPayment) ? ($StatusPayment['data']['operations'][0]['status'] ?? null) : null;
+    if($operationStatus === null || $operationStatus === "cancelled"){
     $textexpire = "❌ تراکنش زیر بدلیل عدم پرداخت منقضی شد، لطفا وجهی بابت این تراکنش پرداخت نکنید
 
 🛒 کد سفارش: {$Payment_report['id_order']}
@@ -59,7 +68,7 @@ while ($row = mysqli_fetch_assoc($list_service)) {
     sendmessage($Payment_report['id_user'], $textexpire, null, 'html');
     update("Payment_report","payment_Status","expire","id_order",$Payment_report['id_order']);
 }
-    if (isset($StatusPayment['data']['operations'][0]['status']) && $StatusPayment['data']['operations'][0]['status'] == "completed") {
+    if ($operationStatus === "completed") {
         DirectPayment($Payment_report['id_order'],"../images.jpg");
         $pricecashback = select("PaySetting", "ValuePay", "NamePay", "chashbackplisio","select")['ValuePay'];
     $Balance_id = mysqli_fetch_assoc(mysqli_query($connect, "SELECT * FROM user WHERE id = '{$Payment_report['id_user']}' LIMIT 1"));
@@ -71,13 +80,14 @@ while ($row = mysqli_fetch_assoc($list_service)) {
         $text_report = "🎁 کاربر عزیز مبلغ $result تومان به عنوان هدیه واریز به حساب شما واریز گردید.";
         sendmessage($Balance_id['id'], $text_report, null, 'HTML');
     }
+    $invoiceUrl = is_array($StatusPayment) ? (string) ($StatusPayment['invoice_url'] ?? '') : '';
+    $invoiceTotal = is_array($StatusPayment) ? (string) ($StatusPayment['invoice_total_sum'] ?? '') : '';
     $text_reportpayment = "💵 پرداخت جدید
 - 👤 نام کاربری کاربر : @{$Balance_id['username']}
 - ‏🆔آیدی عددی کاربر : {$Balance_id['id']}
 - 💸 مبلغ تراکنش {$Payment_report['price']}
-- 🔗 <a href = \"{$StatusPayment['tx_url'][0]}\">لینک پرداخت </a>
-- 🔗 <a href = \"{$StatusPayment['invoice_url']}\">لینک پرداخت plisio </a>
-- 📥 مبلغ واریز شده ترون. : {$StatusPayment['invoice_total_sum']}
+- 🔗 <a href = \"{$invoiceUrl}\">لینک پرداخت plisio </a>
+- 📥 مبلغ واریز شده : {$invoiceTotal}
 - 💳 روش پرداخت :  plisio";
          if (strlen($setting['Channel_Report']) > 0) {
         telegram('sendmessage',[

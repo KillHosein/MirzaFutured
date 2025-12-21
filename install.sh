@@ -183,17 +183,30 @@ EOF
 USE \`$DB_NAME\`;
 UPDATE admin SET id_admin = '$ADMIN_TELEGRAM_ID';
 MYSQL_SCRIPT
+    CRON_LOG_DIR="${MIRZA_CRON_LOG_DIR:-/var/log/mirza_pro/cron}"
+    mkdir -p "$CRON_LOG_DIR" >/dev/null 2>&1
+    mkdir -p /var/www/mirza_pro/cronbot/logs >/dev/null 2>&1
+    chown -R www-data:www-data "$CRON_LOG_DIR" /var/www/mirza_pro/cronbot/logs >/dev/null 2>&1
+    PHP_BIN="${MIRZA_PHP_BIN:-$(command -v php 2>/dev/null)}"
+    if [ -z "$PHP_BIN" ]; then PHP_BIN="/usr/bin/php"; fi
     (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/cronbot/") | crontab -
-    CRON_JOBS="* * * * * php /var/www/mirza_pro/cronbot/NoticationsService.php >/dev/null 2>&1
-*/15 * * * * /usr/bin/php /var/www/mirza_pro/cronbot/backupbot.php --force >> /var/log/backupbot-cron.log 2>&1
-*/5 * * * * php /var/www/mirza_pro/cronbot/uptime_panel.php >/dev/null 2>&1
-*/5 * * * * php /var/www/mirza_pro/cronbot/uptime_node.php >/dev/null 2>&1
-*/10 * * * * php /var/www/mirza_pro/cronbot/expireagent.php >/dev/null 2>&1
-*/10 * * * * php /var/www/mirza_pro/cronbot/payment_expire.php >/dev/null 2>&1
-0 * * * * php /var/www/mirza_pro/cronbot/statusday.php >/dev/null 2>&1
-0 3 * * * php /var/www/mirza_pro/cronbot/backupbot.php >/dev/null 2>&1
-*/15 * * * * php /var/www/mirza_pro/cronbot/iranpay1.php >/dev/null 2>&1
-*/15 * * * * php /var/www/mirza_pro/cronbot/plisio.php >/dev/null 2>&1"
+    CRON_JOBS="*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/statusday.php >> $CRON_LOG_DIR/statusday.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/NoticationsService.php >> $CRON_LOG_DIR/notifications.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/croncard.php >> $CRON_LOG_DIR/croncard.log 2>&1
+*/5 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/payment_expire.php >> $CRON_LOG_DIR/payment_expire.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/sendmessage.php >> $CRON_LOG_DIR/sendmessage.log 2>&1
+*/3 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/plisio.php >> $CRON_LOG_DIR/plisio.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/iranpay1.php >> $CRON_LOG_DIR/iranpay1.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/activeconfig.php >> $CRON_LOG_DIR/activeconfig.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/disableconfig.php >> $CRON_LOG_DIR/disableconfig.log 2>&1
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/backupbot.php >> $CRON_LOG_DIR/backupbot.log 2>&1
+*/2 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/gift.php >> $CRON_LOG_DIR/gift.log 2>&1
+*/30 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/expireagent.php >> $CRON_LOG_DIR/expireagent.log 2>&1
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/on_hold.php >> $CRON_LOG_DIR/on_hold.log 2>&1
+*/2 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/configtest.php >> $CRON_LOG_DIR/configtest.log 2>&1
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/uptime_node.php >> $CRON_LOG_DIR/uptime_node.log 2>&1
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/uptime_panel.php >> $CRON_LOG_DIR/uptime_panel.log 2>&1
+0 0 * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/lottery.php >> $CRON_LOG_DIR/lottery.log 2>&1"
     (crontab -l 2>/dev/null; echo "$CRON_JOBS") | crontab -
 
     save_config "$DOMAIN" "$BOT_TOKEN" "$ADMIN_TELEGRAM_ID" "$BACKUP_CHAT_ID" "$DB_PASSWORD" "$DB_NAME" "$DB_USER"

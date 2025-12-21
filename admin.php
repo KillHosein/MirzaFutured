@@ -53,7 +53,7 @@ $miniAppInstructionText = <<<HTML
 <b>🇮🇷 بررسی وضعیت پرداخت ایران‌پی — هر 1 دقیقه</b>
 <code>curl {$domainhostsEscaped}/cronbot/iranpay1.php</code>
 
-<b>🗄 تهیه نسخه‌ی پشتیبان (Backup) — هر 5 ساعت</b>
+<b>🗄 تهیه نسخه‌ی پشتیبان (Backup) — هر 1 دقیقه</b>
 <code>curl {$domainhostsEscaped}/cronbot/backupbot.php</code>
 
 <b>🎁 ارسال هدایا (Gift System) — هر 2 دقیقه</b>
@@ -77,7 +77,7 @@ $miniAppInstructionText = <<<HTML
 <b>💳 انجام تراکنش‌های کارت‌به‌کارت — هر 1 دقیقه</b>
 <code>curl {$domainhostsEscaped}/cronbot/croncard.php</code>
 
-<b>💳 انجام قرعه کشی شبانه — هر 1 دقیقه</b>
+<b>💳 انجام قرعه کشی شبانه — روزانه ساعت 00:00</b>
 <code>curl {$domainhostsEscaped}/cronbot/lottery.php</code>
 HTML;
 
@@ -89,7 +89,9 @@ if (in_array($text, $textadmin) || $datain == "admin") {
         return;
     }
     $version_mini_app = file_get_contents('app/version');
-    activecron();
+    if (isShellExecAvailable() && getCrontabBinary() !== null) {
+        activecron();
+    }
     $text_admin = sprintf($text_panel_admin_login_template, $version, $version_mini_app);
     sendmessage($from_id, $text_admin, $keyboardadmin, 'HTML');
     $miniAppInstructionHidden = isset($user['hide_mini_app_instruction']) ? (string) $user['hide_mini_app_instruction'] : '0';

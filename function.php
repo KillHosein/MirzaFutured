@@ -101,6 +101,292 @@ function runShellCommand($command)
     return shell_exec($command);
 }
 
+function cronGetLogDir()
+{
+    static $resolvedDir;
+
+    if ($resolvedDir !== null) {
+        return $resolvedDir;
+    }
+
+    $envDir = getenv('MIRZA_CRON_LOG_DIR');
+    if ($envDir === false || trim((string) $envDir) === '') {
+        $envDir = getenv('CRON_LOG_DIR');
+    }
+    if ($envDir !== false) {
+        $envDir = trim((string) $envDir);
+        if ($envDir !== '') {
+            $envDir = rtrim($envDir, DIRECTORY_SEPARATOR);
+            if (@is_dir($envDir) || @mkdir($envDir, 0775, true)) {
+                if (@is_writable($envDir)) {
+                    $resolvedDir = $envDir;
+                    return $resolvedDir;
+                }
+            }
+        }
+    }
+
+    $projectDir = __DIR__ . DIRECTORY_SEPARATOR . 'cronbot' . DIRECTORY_SEPARATOR . 'logs';
+    if (@is_dir($projectDir) || @mkdir($projectDir, 0775, true)) {
+        if (@is_writable($projectDir)) {
+            $resolvedDir = $projectDir;
+            return $resolvedDir;
+        }
+    }
+
+    $tempDir = rtrim((string) sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'mirza_pro_cron_logs';
+    if (@is_dir($tempDir) || @mkdir($tempDir, 0775, true)) {
+        $resolvedDir = $tempDir;
+        return $resolvedDir;
+    }
+
+    $resolvedDir = (string) sys_get_temp_dir();
+    return $resolvedDir;
+}
+
+function getPhpBinary()
+{
+    static $resolvedPath;
+
+    if ($resolvedPath !== null) {
+        return $resolvedPath ?: null;
+    }
+
+    $envBin = getenv('MIRZA_PHP_BIN');
+    if ($envBin !== false) {
+        $envBin = trim((string) $envBin);
+        if ($envBin !== '' && @is_file($envBin) && @is_executable($envBin)) {
+            $resolvedPath = $envBin;
+            return $resolvedPath;
+        }
+    }
+
+    if (defined('PHP_BINARY')) {
+        $phpBinary = (string) PHP_BINARY;
+        if ($phpBinary !== '' && @is_file($phpBinary) && @is_executable($phpBinary)) {
+            $resolvedPath = $phpBinary;
+            return $resolvedPath;
+        }
+    }
+
+    $candidateDirectories = [
+        '/usr/local/bin',
+        '/usr/bin',
+        '/bin',
+        '/opt/cpanel/ea-php82/root/usr/bin',
+        '/opt/cpanel/ea-php81/root/usr/bin',
+    ];
+
+    $environmentPath = getenv('PATH');
+    if ($environmentPath !== false && $environmentPath !== '') {
+        foreach (explode(PATH_SEPARATOR, $environmentPath) as $pathDirectory) {
+            $pathDirectory = trim((string) $pathDirectory);
+            if ($pathDirectory !== '' && !in_array($pathDirectory, $candidateDirectories, true)) {
+                $candidateDirectories[] = $pathDirectory;
+            }
+        }
+    }
+
+    $candidateNames = ['php', 'php8.2', 'php82', 'php8.1', 'php81'];
+    foreach ($candidateDirectories as $directory) {
+        foreach ($candidateNames as $name) {
+            $executablePath = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
+            if (@is_file($executablePath) && @is_executable($executablePath)) {
+                $resolvedPath = $executablePath;
+                return $resolvedPath;
+            }
+        }
+    }
+
+    if (isShellExecAvailable()) {
+        foreach ($candidateNames as $name) {
+            $whichOutput = @shell_exec('command -v ' . escapeshellarg($name) . ' 2>/dev/null');
+            if (is_string($whichOutput)) {
+                $whichOutput = trim($whichOutput);
+                if ($whichOutput !== '' && @is_executable($whichOutput)) {
+                    $resolvedPath = $whichOutput;
+                    return $resolvedPath;
+                }
+            }
+        }
+    }
+
+    $resolvedPath = '';
+    return null;
+}
+
+function cronEnsureRunsTable()
+{
+    global $pdo;
+    static $ensured = false;
+
+    if ($ensured) {
+        return true;
+    }
+
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        return false;
+    }
+
+    try {
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS cron_runs (" .
+            "id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY," .
+            "job_name VARCHAR(190) NOT NULL," .
+            "started_at DATETIME NOT NULL," .
+            "ended_at DATETIME NULL," .
+            "status VARCHAR(32) NOT NULL," .
+            "duration_ms INT UNSIGNED NULL," .
+            "message TEXT NULL," .
+            "host VARCHAR(255) NULL," .
+            "pid INT NULL," .
+            "INDEX idx_job_started (job_name, started_at)," .
+            "INDEX idx_status_started (status, started_at)" .
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+        $ensured = true;
+        return true;
+    } catch (Throwable $e) {
+        error_log('Failed to ensure cron_runs table: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function cronRunStart($jobName)
+{
+    global $pdo;
+
+    if (!cronEnsureRunsTable()) {
+        return null;
+    }
+
+    try {
+        $stmt = $pdo->prepare(
+            "INSERT INTO cron_runs (job_name, started_at, status, host, pid) " .
+            "VALUES (:job_name, :started_at, :status, :host, :pid)"
+        );
+        $stmt->execute([
+            ':job_name' => (string) $jobName,
+            ':started_at' => date('Y-m-d H:i:s'),
+            ':status' => 'running',
+            ':host' => function_exists('gethostname') ? (string) gethostname() : null,
+            ':pid' => function_exists('getmypid') ? (int) getmypid() : null,
+        ]);
+        $id = $pdo->lastInsertId();
+        return $id !== false ? (int) $id : null;
+    } catch (Throwable $e) {
+        error_log('Failed to create cron run record: ' . $e->getMessage());
+        return null;
+    }
+}
+
+function cronRunFinish($runId, $status, $durationMs = null, $message = null)
+{
+    global $pdo;
+
+    if (!isset($pdo) || !($pdo instanceof PDO)) {
+        return false;
+    }
+
+    if ($runId === null) {
+        return false;
+    }
+
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE cron_runs SET ended_at = :ended_at, status = :status, duration_ms = :duration_ms, message = :message " .
+            "WHERE id = :id"
+        );
+        $stmt->execute([
+            ':ended_at' => date('Y-m-d H:i:s'),
+            ':status' => (string) $status,
+            ':duration_ms' => $durationMs !== null ? (int) $durationMs : null,
+            ':message' => $message !== null ? (string) $message : null,
+            ':id' => (int) $runId,
+        ]);
+        return true;
+    } catch (Throwable $e) {
+        error_log('Failed to update cron run record: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function cronAcquireLock($jobName)
+{
+    $safeJobName = preg_replace('/[^a-zA-Z0-9_.-]+/', '_', (string) $jobName);
+    $lockPath = cronGetLogDir() . DIRECTORY_SEPARATOR . $safeJobName . '.lock';
+    $fp = @fopen($lockPath, 'c+');
+    if ($fp === false) {
+        return null;
+    }
+    if (!@flock($fp, LOCK_EX | LOCK_NB)) {
+        @fclose($fp);
+        return null;
+    }
+    return $fp;
+}
+
+function cronFinish($status, $message = null)
+{
+    if (!isset($GLOBALS['__cron_ctx']) || !is_array($GLOBALS['__cron_ctx'])) {
+        return;
+    }
+
+    if (!empty($GLOBALS['__cron_ctx']['finished'])) {
+        return;
+    }
+
+    $GLOBALS['__cron_ctx']['finished'] = true;
+    $durationMs = null;
+    if (isset($GLOBALS['__cron_ctx']['start']) && is_numeric($GLOBALS['__cron_ctx']['start'])) {
+        $durationMs = (int) round((microtime(true) - (float) $GLOBALS['__cron_ctx']['start']) * 1000);
+    }
+
+    $runId = $GLOBALS['__cron_ctx']['run_id'] ?? null;
+    cronRunFinish($runId, $status, $durationMs, $message);
+}
+
+function cronInit($jobName)
+{
+    date_default_timezone_set('Asia/Tehran');
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+    error_reporting(E_ALL);
+
+    $safeJobName = preg_replace('/[^a-zA-Z0-9_.-]+/', '_', (string) $jobName);
+    $errorLogFile = cronGetLogDir() . DIRECTORY_SEPARATOR . $safeJobName . '.error.log';
+    ini_set('error_log', $errorLogFile);
+
+    $runId = cronRunStart($jobName);
+    $GLOBALS['__cron_ctx'] = [
+        'job' => (string) $jobName,
+        'run_id' => $runId,
+        'start' => microtime(true),
+        'finished' => false,
+        'error_log' => $errorLogFile,
+    ];
+
+    set_exception_handler(static function ($e) use ($jobName) {
+        $message = $e instanceof Throwable ? ($e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()) : 'Unknown exception';
+        error_log('[' . $jobName . '] Uncaught exception: ' . $message);
+        cronFinish('failed', $message);
+        exit(1);
+    });
+
+    register_shutdown_function(static function () use ($jobName) {
+        $lastError = error_get_last();
+        if ($lastError && in_array($lastError['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+            $message = ($lastError['message'] ?? 'fatal') . ' at ' . ($lastError['file'] ?? '') . ':' . ($lastError['line'] ?? '');
+            error_log('[' . $jobName . '] Fatal error: ' . $message);
+            cronFinish('failed', $message);
+            return;
+        }
+        cronFinish('success');
+    });
+
+    return $runId;
+}
+
 function deleteDirectory($directory)
 {
     if (!file_exists($directory)) {
@@ -1717,24 +2003,44 @@ function activecron()
 {
     global $domainhosts;
 
-    $cronCommands = [
-        "*/15 * * * * curl https://$domainhosts/cronbot/statusday.php",
-        "*/1 * * * * curl https://$domainhosts/cronbot/croncard.php",
-        "*/1 * * * * curl https://$domainhosts/cronbot/NoticationsService.php",
-        "*/5 * * * * curl https://$domainhosts/cronbot/payment_expire.php",
-        "*/1 * * * * curl https://$domainhosts/cronbot/sendmessage.php",
-        "*/3 * * * * curl https://$domainhosts/cronbot/plisio.php",
-        "*/1 * * * * curl https://$domainhosts/cronbot/activeconfig.php",
-        "*/1 * * * * curl https://$domainhosts/cronbot/disableconfig.php",
-        "*/1 * * * * curl https://$domainhosts/cronbot/iranpay1.php",
-        "0 */5 * * * curl https://$domainhosts/cronbot/backupbot.php",
-        "*/2 * * * * curl https://$domainhosts/cronbot/gift.php",
-        "*/30 * * * * curl https://$domainhosts/cronbot/expireagent.php",
-        "*/15 * * * * curl https://$domainhosts/cronbot/on_hold.php",
-        "*/2 * * * * curl https://$domainhosts/cronbot/configtest.php",
-        "*/15 * * * * curl https://$domainhosts/cronbot/uptime_node.php",
-        "*/15 * * * * curl https://$domainhosts/cronbot/uptime_panel.php",
+    $phpBin = getPhpBinary();
+    $baseDir = __DIR__;
+    $tmpDir = getenv('MIRZA_CRON_OUT_DIR');
+    if ($tmpDir === false || trim((string) $tmpDir) === '') {
+        $tmpDir = '/tmp';
+    }
+    $tmpDir = rtrim(trim((string) $tmpDir), '/');
+
+    $jobs = [
+        ['name' => 'statusday', 'schedule' => '*/15 * * * *', 'file' => $baseDir . '/cronbot/statusday.php'],
+        ['name' => 'NoticationsService', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/NoticationsService.php'],
+        ['name' => 'croncard', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/croncard.php'],
+        ['name' => 'payment_expire', 'schedule' => '*/5 * * * *', 'file' => $baseDir . '/cronbot/payment_expire.php'],
+        ['name' => 'sendmessage', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/sendmessage.php'],
+        ['name' => 'plisio', 'schedule' => '*/3 * * * *', 'file' => $baseDir . '/cronbot/plisio.php'],
+        ['name' => 'iranpay1', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/iranpay1.php'],
+        ['name' => 'activeconfig', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/activeconfig.php'],
+        ['name' => 'disableconfig', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/disableconfig.php'],
+        ['name' => 'backupbot', 'schedule' => '* * * * *', 'file' => $baseDir . '/cronbot/backupbot.php'],
+        ['name' => 'gift', 'schedule' => '*/2 * * * *', 'file' => $baseDir . '/cronbot/gift.php'],
+        ['name' => 'expireagent', 'schedule' => '*/30 * * * *', 'file' => $baseDir . '/cronbot/expireagent.php'],
+        ['name' => 'on_hold', 'schedule' => '*/15 * * * *', 'file' => $baseDir . '/cronbot/on_hold.php'],
+        ['name' => 'configtest', 'schedule' => '*/2 * * * *', 'file' => $baseDir . '/cronbot/configtest.php'],
+        ['name' => 'uptime_node', 'schedule' => '*/15 * * * *', 'file' => $baseDir . '/cronbot/uptime_node.php'],
+        ['name' => 'uptime_panel', 'schedule' => '*/15 * * * *', 'file' => $baseDir . '/cronbot/uptime_panel.php'],
+        ['name' => 'lottery', 'schedule' => '0 0 * * *', 'file' => $baseDir . '/cronbot/lottery.php'],
     ];
+
+    $cronCommands = [];
+    foreach ($jobs as $job) {
+        $name = preg_replace('/[^a-zA-Z0-9_.-]+/', '_', (string) $job['name']);
+        $outFile = $tmpDir . '/mirza_pro_cron_' . $name . '.log';
+        if (is_string($phpBin) && $phpBin !== '' && @is_executable($phpBin) && @is_file($job['file'])) {
+            $cronCommands[] = $job['schedule'] . ' ' . $phpBin . ' ' . $job['file'] . ' >> ' . $outFile . ' 2>&1';
+        } else {
+            $cronCommands[] = $job['schedule'] . ' curl -fsS https://' . $domainhosts . '/cronbot/' . basename($job['file']) . ' >> ' . $outFile . ' 2>&1';
+        }
+    }
 
     addCronIfNotExists($cronCommands);
 }

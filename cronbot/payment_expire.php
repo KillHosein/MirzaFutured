@@ -1,18 +1,15 @@
 <?php
-ini_set('error_log', 'error_log');
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
-require '../vendor/autoload.php';
-
-// Prevent overlapping execution
-$lockFile = __DIR__ . '/payment_expire.lock';
-$fp = fopen($lockFile, 'c+');
-if (!flock($fp, LOCK_EX | LOCK_NB)) {
-    die("Another instance is already running.");
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('payment_expire');
+$lockFp = cronAcquireLock('payment_expire');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
 }
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $ManagePanel = new ManagePanel();
 $setting = select("setting", "*");
@@ -60,7 +57,7 @@ $stmt = $pdo->prepare("SELECT * FROM Payment_report WHERE time < '$month_date_ti
 $stmt->execute();
 
 while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $status_var = [
+    $statusMap = [
         'cart to cart' =>  $datatextbot['carttocart'],
         'aqayepardakht' => $datatextbot['aqayepardakht'],
         'zarinpal' => $datatextbot['zarinpal'],
@@ -76,7 +73,8 @@ while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
         'Star Telegram' => $datatextbot['text_star_telegram'],
         'nowpayment' => $datatextbot['textsnowpayment']
         
-    ][$result['Payment_Method']];
+    ];
+    $status_var = $statusMap[$result['Payment_Method']] ?? (string) ($result['Payment_Method'] ?? '');
     $textexpire = "⭕️ کاربر گرامی ، فاکتور زیر به دلیل عدم پرداخت در مدت زمان مشخص شده منقضی شد .
 ❗️لطفاً به هیچ عنوان وجهی بابت این فاکتور  پرداخت نکنید و مجدداً فاکتور ایجاد نمایید ‌‌.
 

@@ -1,26 +1,34 @@
 <?php
-ini_set('error_log', 'error_log');
-date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../Marzban.php';
-require_once '../botapi.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../function.php';
+cronInit('uptime_node');
+$lockFp = cronAcquireLock('uptime_node');
+if ($lockFp === null) {
+    cronFinish('skipped', 'already running');
+    return;
+}
+require_once __DIR__ . '/../Marzban.php';
+require_once __DIR__ . '/../botapi.php';
 
 
 
 $errorreport = select("topicid","idreport","report","errorreport","select")['idreport'];
 $setting = select("setting", "*");
 $status_cron = json_decode($setting['cron_status'],true);
-if(!$status_cron['uptime_node'])return;
+if(!$status_cron['uptime_node']){
+    cronFinish('skipped', 'disabled');
+    return;
+}
 $marzbanlist = select("marzban_panel", "*","type" ,"marzban" ,"fetchAll");
 $inbounds = [];
 foreach($marzbanlist as $location){
-$Getdnodes = Get_Nodes($location['name_panel']);
-if(!empty($nodes['error']))continue;
-if(!empty($nodes['status'])  && $nodes['status'] != 200 )continue;
-$Getdnodes = json_decode($Getdnodes['body'],true);
-if(count($Getdnodes) == 0)return;
-foreach($Getdnodes as $data){
+    $nodesResponse = Get_Nodes($location['name_panel']);
+    if (!is_array($nodesResponse)) continue;
+    if (!empty($nodesResponse['error'])) continue;
+    if (!empty($nodesResponse['status']) && (int) $nodesResponse['status'] !== 200) continue;
+    $nodesBody = isset($nodesResponse['body']) ? json_decode($nodesResponse['body'], true) : null;
+    if (!is_array($nodesBody) || count($nodesBody) === 0) continue;
+    foreach($nodesBody as $data){
     if(!in_array($data['status'],["connected","disabled"])){
             $textnode = "🚨 ادمین عزیز نود با اسم {$data['name']} متصل نیست.
 وضعیت نود : {$data['status']}
