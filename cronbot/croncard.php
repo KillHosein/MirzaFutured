@@ -1,13 +1,13 @@
 <?php
 ini_set('error_log', 'error_log');
 date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
-require_once '../keyboard.php';
-require '../vendor/autoload.php';
-require_once '../jdf.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
+require_once __DIR__ . '/../function.php';
+require_once __DIR__ . '/../keyboard.php';
+require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../jdf.php';
 
 // Prevent overlapping execution
 $lockFile = __DIR__ . '/croncard.lock';
@@ -56,7 +56,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $list_Exceptions = is_string($list_Exceptions) ? json_decode($list_Exceptions,true) : [];
     $Balance_id = select("user","*","id",$Payment_report['id_user'],"select");
     if(in_array($Balance_id['id'],$list_Exceptions))continue;
-    $textbotlang =languagechange('../text.json');
+    $textbotlang =languagechange(__DIR__ . '/../text.json');
     if ($Payment_report['payment_Status'] == "paid") {
         continue;
     }

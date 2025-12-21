@@ -1,9 +1,16 @@
 <?php
 ini_set('error_log', 'error_log');
 date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../function.php';
+
+$lockFile = __DIR__ . '/uptime_panel.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo "Another instance is already running.";
+    return;
+}
 
 
 

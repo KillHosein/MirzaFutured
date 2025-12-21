@@ -1,10 +1,17 @@
 <?php
 ini_set('error_log', 'error_log');
 date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../Marzban.php';
-require_once '../botapi.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../Marzban.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../function.php';
+
+$lockFile = __DIR__ . '/uptime_node.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo "Another instance is already running.";
+    return;
+}
 
 
 
@@ -15,12 +22,12 @@ if(!$status_cron['uptime_node'])return;
 $marzbanlist = select("marzban_panel", "*","type" ,"marzban" ,"fetchAll");
 $inbounds = [];
 foreach($marzbanlist as $location){
-$Getdnodes = Get_Nodes($location['name_panel']);
+$nodes = Get_Nodes($location['name_panel']);
 if(!empty($nodes['error']))continue;
 if(!empty($nodes['status'])  && $nodes['status'] != 200 )continue;
-$Getdnodes = json_decode($Getdnodes['body'],true);
-if(count($Getdnodes) == 0)return;
-foreach($Getdnodes as $data){
+$nodesBody = json_decode($nodes['body'],true);
+if(!is_array($nodesBody) || count($nodesBody) == 0)continue;
+foreach($nodesBody as $data){
     if(!in_array($data['status'],["connected","disabled"])){
             $textnode = "🚨 ادمین عزیز نود با اسم {$data['name']} متصل نیست.
 وضعیت نود : {$data['status']}

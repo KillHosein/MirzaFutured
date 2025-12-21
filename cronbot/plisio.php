@@ -1,11 +1,18 @@
 <?php
 ini_set('error_log', 'error_log');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../function.php';
-require_once '../jdf.php';
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
+require_once __DIR__ . '/../function.php';
+require_once __DIR__ . '/../jdf.php';
+require __DIR__ . '/../vendor/autoload.php';
+
+$lockFile = __DIR__ . '/plisio.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo "Another instance is already running.";
+    return;
+}
 $ManagePanel = new ManagePanel();
 $setting = select("setting", "*");
 $paymentreports = select("topicid","idreport","report","paymentreport","select")['idreport'];
@@ -46,7 +53,7 @@ curl_close($ch);
 $list_service = mysqli_query($connect, "SELECT * FROM Payment_report WHERE payment_Status = 'Unpaid' AND Payment_Method = 'plisio'");
 while ($row = mysqli_fetch_assoc($list_service)) {
     $Payment_report = mysqli_fetch_assoc(mysqli_query($connect, "SELECT * FROM Payment_report WHERE id_order = '{$row['id_order']}' LIMIT 1"));
-    $textbotlang = languagechange('../text.json');
+    $textbotlang = languagechange(__DIR__ . '/../text.json');
     if ($Payment_report['payment_Status'] == "paid")continue;
     if(!isset($Payment_report['dec_not_confirmed']) or $Payment_report['dec_not_confirmed'] == null)continue;
     if($Payment_report['dec_not_confirmed'] == null)continue;

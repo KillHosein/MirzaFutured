@@ -1,11 +1,18 @@
 <?php
 ini_set('error_log', 'error_log');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../panels.php';
-require_once '../jdf.php';
-require_once '../function.php';
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../panels.php';
+require_once __DIR__ . '/../jdf.php';
+require_once __DIR__ . '/../function.php';
+require __DIR__ . '/../vendor/autoload.php';
+
+$lockFile = __DIR__ . '/iranpay1.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo "Another instance is already running.";
+    return;
+}
 $ManagePanel = new ManagePanel();
 $setting = mysqli_fetch_assoc(mysqli_query($connect, "SELECT * FROM setting"));
 $paymentreports = select("topicid","idreport","report","paymentreport","select")['idreport'];
@@ -28,10 +35,10 @@ foreach ($datatxtbot as $item) {
         $datatextbot[$item['id_text']] = $item['text'];
     }
 }
-$textbotlang = languagechange('../text.json');
+$textbotlang = languagechange(__DIR__ . '/../text.json');
 $list_service = mysqli_query($connect, "SELECT * FROM Payment_report WHERE payment_Status = 'Unpaid' AND Payment_Method = 'Currency Rial 3' ORDER BY RAND() LIMIT 10");
 while ($Payment_report = mysqli_fetch_assoc($list_service)) {
-    if ($Payment_report['payment_Status'] == "paid")return;
+    if ($Payment_report['payment_Status'] == "paid")continue;
     $StatusPayment = verifpay($Payment_report['dec_not_confirmed']);
     if(!is_string($StatusPayment))continue;
     $StatusPayment = json_decode($StatusPayment,true);

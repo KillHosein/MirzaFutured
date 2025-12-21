@@ -1,11 +1,18 @@
 <?php
 ini_set('error_log', 'error_log');
 date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../function.php';
-require '../vendor/autoload.php';
-require_once '../jdf.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../function.php';
+require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../jdf.php';
+
+$lockFile = __DIR__ . '/lottery.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo "Another instance is already running.";
+    return;
+}
 $setting = select("setting", "*");
 $midnight_time = date("H:i");
 if(intval($setting['scorestatus']) == 1){
@@ -30,7 +37,7 @@ $stmt->execute();
 
 ";
         while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $textbotlang = json_decode(file_get_contents('../text.json'),true)[$result['language']];
+            $textbotlang = json_decode(file_get_contents(__DIR__ . '/../text.json'),true)[$result['language']];
             $balance_last = intval($result['Balance']) + intval($Lottery_prize[$count]);
             update("user","Balance",$balance_last,"id",$result['id']);
             $balance_last = number_format($Lottery_prize[$count]);

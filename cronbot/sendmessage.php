@@ -1,8 +1,15 @@
 <?php
 date_default_timezone_set('Asia/Tehran');
-require_once '../config.php';
-require_once '../botapi.php';
-require_once '../function.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../botapi.php';
+require_once __DIR__ . '/../function.php';
+
+$lockFile = __DIR__ . '/sendmessage.lock';
+$fp = fopen($lockFile, 'c+');
+if (!flock($fp, LOCK_EX | LOCK_NB)) {
+    echo "Another instance is already running.";
+    return;
+}
 $datatextbotget = select("textbot", "*",null ,null ,"fetchAll");
 $datatxtbot = array();
 foreach ($datatextbotget as $row) {
@@ -24,21 +31,21 @@ foreach ($datatxtbot as $item) {
         $datatextbot[$item['id_text']] = $item['text'];
     }
 }
-if(!is_file('info'))return;
-if(!is_file('users.json'))return;
+if(!is_file(__DIR__ . '/info'))return;
+if(!is_file(__DIR__ . '/users.json'))return;
 
 
-$userid = json_decode(file_get_contents('users.json'));
-if(is_file('info')){
-$info = json_decode(file_get_contents('info'),true);
+$userid = json_decode(file_get_contents(__DIR__ . '/users.json'));
+if(is_file(__DIR__ . '/info')){
+$info = json_decode(file_get_contents(__DIR__ . '/info'),true);
 }
 $count = 0;
 if(count($userid) == 0){
     if(isset($info['id_admin'])){
     deletemessage($info['id_admin'], $info['id_message']);
     sendmessage($info['id_admin'], "📌 عملیات برای تمامی کاربران درخواستی انجام شد.", null, 'HTML');
-    unlink('info');
-    unlink('users.json');
+    unlink(__DIR__ . '/info');
+    unlink(__DIR__ . '/users.json');
     }
     return;
     
@@ -141,4 +148,4 @@ for ($i = 0; $i < 20; $i++) {
     }
 }
 
-file_put_contents('users.json',json_encode($userid,true));
+file_put_contents(__DIR__ . '/users.json',json_encode($userid,true));
