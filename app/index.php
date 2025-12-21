@@ -108,7 +108,32 @@ class MirzaWebApp {
             }
         } elseif (isset($_SESSION['user_id'])) {
             $this->currentUser = $this->userManager->getUserById($_SESSION['user_id']);
+        } elseif (isset($_SESSION['guest_user'])) {
+            // Allow guest access without Telegram
+            $this->currentUser = $_SESSION['guest_user'];
+        } elseif (isset($_GET['guest']) || !isset($_GET['initData'])) {
+            // Create guest user for non-Telegram access
+            $this->createGuestUser();
         }
+    }
+    
+    /**
+     * Create guest user for non-Telegram access
+     */
+    private function createGuestUser() {
+        $guestUser = [
+            'id' => 'guest_' . uniqid(),
+            'first_name' => 'کاربر مهمان',
+            'last_name' => '',
+            'username' => 'guest',
+            'telegram_id' => 'guest',
+            'language_code' => 'fa',
+            'is_guest' => true,
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+        
+        $_SESSION['guest_user'] = $guestUser;
+        $this->currentUser = $guestUser;
     }
     
     /**
@@ -182,6 +207,14 @@ class MirzaWebApp {
             return;
         }
         
+        // For guest users, show limited profile
+        if (isset($this->currentUser['is_guest']) && $this->currentUser['is_guest']) {
+            $this->render('profile_guest', [
+                'user' => $this->currentUser
+            ]);
+            return;
+        }
+        
         $stats = $this->userManager->getUserStats($this->currentUser['id']);
         
         $this->render('profile', [
@@ -196,6 +229,20 @@ class MirzaWebApp {
     private function handleSettings() {
         if (!$this->isAuthenticated()) {
             $this->redirect('index.php');
+            return;
+        }
+        
+        // For guest users, show limited settings
+        if (isset($this->currentUser['is_guest']) && $this->currentUser['is_guest']) {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $this->addError('کاربران مهمان نمی‌توانند تنظیمات را تغییر دهند');
+                $this->redirect('index.php?action=settings');
+                return;
+            }
+            
+            $this->render('settings_guest', [
+                'user' => $this->currentUser
+            ]);
             return;
         }
         

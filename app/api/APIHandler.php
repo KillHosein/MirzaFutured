@@ -55,14 +55,34 @@ class APIHandler {
      * Handle user endpoints
      */
     private function handleUser($method, $data) {
-        if (!isset($_SESSION['user_id'])) {
+        // Check for both regular users and guest users
+        if (!isset($_SESSION['user_id']) && !isset($_SESSION['guest_user'])) {
             return $this->errorResponse('Unauthorized', 401);
         }
         
-        $userId = $_SESSION['user_id'];
-        
         switch ($method) {
             case 'GET':
+                // Handle guest user
+                if (isset($_SESSION['guest_user'])) {
+                    $guestUser = $_SESSION['guest_user'];
+                    return $this->successResponse([
+                        'user' => [
+                            'id' => $guestUser['id'],
+                            'telegram_id' => $guestUser['telegram_id'],
+                            'first_name' => $guestUser['first_name'],
+                            'last_name' => $guestUser['last_name'],
+                            'username' => $guestUser['username'],
+                            'language_code' => $guestUser['language_code'],
+                            'created_at' => $guestUser['created_at'],
+                            'last_seen' => date('Y-m-d H:i:s'),
+                            'is_active' => true,
+                            'is_guest' => true
+                        ]
+                    ]);
+                }
+                
+                // Handle regular user
+                $userId = $_SESSION['user_id'];
                 $user = $this->userManager->getUserById($userId);
                 if (!$user) {
                     return $this->errorResponse('User not found', 404);
@@ -77,12 +97,19 @@ class APIHandler {
                         'username' => $user['username'],
                         'language_code' => $user['language_code'],
                         'created_at' => $user['created_at'],
-                        'last_seen' => $user['last_seen']
+                        'last_seen' => $user['last_seen'],
+                        'is_active' => $user['is_active'],
+                        'is_guest' => false
                     ]
                 ]);
                 
             case 'PUT':
-                // Update user data
+                // Update user data (regular users only)
+                if (!isset($_SESSION['user_id'])) {
+                    return $this->errorResponse('Unauthorized', 401);
+                }
+                $userId = $_SESSION['user_id'];
+                
                 $allowedFields = ['first_name', 'last_name', 'language_code'];
                 $updateData = [];
                 
@@ -105,7 +132,12 @@ class APIHandler {
                 }
                 
             case 'DELETE':
-                // Delete user account
+                // Delete user account (regular users only)
+                if (!isset($_SESSION['user_id'])) {
+                    return $this->errorResponse('Unauthorized', 401);
+                }
+                $userId = $_SESSION['user_id'];
+                
                 $this->userManager->deleteUser($userId);
                 session_destroy();
                 return $this->successResponse(['message' => 'Account deleted successfully']);
@@ -155,7 +187,7 @@ class APIHandler {
      * Handle stats endpoint
      */
     private function handleStats($method, $data) {
-        if (!isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['user_id']) && !isset($_SESSION['guest_user'])) {
             return $this->errorResponse('Unauthorized', 401);
         }
         
@@ -163,6 +195,21 @@ class APIHandler {
             return $this->errorResponse('Method not allowed', 405);
         }
         
+        // Handle guest user stats
+        if (isset($_SESSION['guest_user'])) {
+            $guestStats = [
+                'total_sessions' => 1,
+                'first_seen' => $_SESSION['guest_user']['created_at'],
+                'last_seen' => date('Y-m-d H:i:s'),
+                'days_active' => 1,
+                'platform' => 'webapp',
+                'is_guest' => true
+            ];
+            
+            return $this->successResponse(['stats' => $guestStats]);
+        }
+        
+        // Handle regular user stats
         $userId = $_SESSION['user_id'];
         $stats = $this->userManager->getUserStats($userId);
         

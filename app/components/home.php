@@ -41,14 +41,29 @@
                         </div>
                     <?php else: ?>
                         <div class="text-center">
-                            <i class="bi bi-telegram fs-1 text-primary mb-3"></i>
-                            <h2 class="card-title">خوش آمدید</h2>
+                            <i class="bi bi-person-circle fs-1 text-primary mb-3"></i>
+                            <h2 class="card-title">خوش آمدید، کاربر مهمان!</h2>
                             <p class="card-text text-muted">
-                                برای استفاده از امکانات اپلیکیشن، لطفاً از طریق تلگرم وارد شوید.
+                                شما در حالت مهمان در حال استفاده از اپلیکیشن هستید.
                             </p>
-                            <div class="alert alert-info">
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <i class="bi bi-unlock fs-1 text-warning mb-2"></i>
+                                            <h5>دسترسی محدود</h5>
+                                            <p class="small text-muted">برای دسترسی کامل، از طریق تلگرم وارد شوید</p>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="loginWithTelegram()">
+                                                <i class="bi bi-telegram"></i>
+                                                ورود با تلگرم
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mt-3">
                                 <i class="bi bi-info-circle"></i>
-                                این اپلیکیشن باید از طریق تلگرم باز شود.
+                                این اپلیکیشن بدون محدودیت قابل استفاده است، اما برخی ویژگی‌ها نیاز به ورود دارند.
                             </div>
                         </div>
                     <?php endif; ?>
@@ -93,6 +108,44 @@
                     </div>
                 </div>
             </div>
+            <?php else: ?>
+            <!-- Guest Actions -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-unlock"></i>
+                        امکانات مهمان
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="showGuestInfo()">
+                                <i class="bi bi-person-lines-fill"></i>
+                                اطلاعات مهمان
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="showGuestStats()">
+                                <i class="bi bi-graph-up"></i>
+                                آمار عمومی
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-secondary w-100" onclick="shareApp()">
+                                <i class="bi bi-share"></i>
+                                اشتراک‌گذاری
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-secondary w-100" onclick="contactSupport()">
+                                <i class="bi bi-headset"></i>
+                                پشتیبانی
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <?php endif; ?>
         </div>
     </div>
@@ -113,6 +166,38 @@ function showUserInfo() {
         .catch(error => {
             console.error('Error fetching user info:', error);
         });
+}
+
+function showGuestInfo() {
+    showAlert(`
+        اطلاعات مهمان:
+        نوع کاربر: مهمان
+        سطح دسترسی: محدود
+        برای دسترسی کامل می‌توانید از طریق تلگرم وارد شوید
+    `);
+}
+
+function showGuestStats() {
+    showAlert(`
+        آمار عمومی:
+        تعداد کاربران: در حال محاسبه...
+        تعداد بازدیدها: در حال محاسبه...
+        وضعیت سیستم: فعال
+    `);
+}
+
+function loginWithTelegram() {
+    if (window.Telegram && window.Telegram.WebApp) {
+        // If already in Telegram WebApp, try to authenticate
+        if (window.Telegram.WebApp.initData) {
+            window.location.href = 'index.php?initData=' + encodeURIComponent(window.Telegram.WebApp.initData);
+        } else {
+            showAlert('لطفاً این اپلیکیشن را از طریق تلگرم باز کنید.');
+        }
+    } else {
+        // Show instructions for opening in Telegram
+        showAlert('برای ورود با تلگرم، این اپلیکیشن را در تلگرم باز کنید.');
+    }
 }
 
 function showStats() {
