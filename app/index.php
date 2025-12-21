@@ -82,58 +82,58 @@ class MirzaWebApp {
     }
     
     /**
-     * Authenticate user from Telegram Web App data
+     * Authenticate user - simplified version using telegram_id from database only
      */
     private function authenticateUser() {
-        if (isset($_GET['initData'])) {
-            $initData = $_GET['initData'];
+        // Check if telegram_id is provided in URL (for users who started the bot)
+        if (isset($_GET['telegram_id'])) {
+            $telegramId = $_GET['telegram_id'];
+            $user = $this->userManager->getUserByTelegramId($telegramId);
             
-            if ($this->telegram->validateInitData($initData)) {
-                $userData = $this->telegram->getUserData($initData);
+            if ($user) {
+                $this->currentUser = $user;
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['telegram_id'] = $telegramId;
                 
-                if ($userData) {
-                    $userId = $this->userManager->createOrUpdateUser($userData);
-                    $this->currentUser = $this->userManager->getUserById($userId);
-                    
-                    // Log session
-                    $this->userManager->logSession($userId, [
-                        'action' => 'login',
-                        'platform' => 'webapp'
-                    ]);
-                    
-                    // Store user in session
-                    $_SESSION['user_id'] = $userId;
-                    $_SESSION['telegram_user'] = $userData;
-                }
+                // Log session
+                $this->userManager->logSession($user['id'], [
+                    'action' => 'login',
+                    'platform' => 'webapp'
+                ]);
+                
+                return;
             }
-        } elseif (isset($_SESSION['user_id'])) {
-            $this->currentUser = $this->userManager->getUserById($_SESSION['user_id']);
-        } elseif (isset($_SESSION['guest_user'])) {
-            // Allow guest access without Telegram
-            $this->currentUser = $_SESSION['guest_user'];
-        } elseif (isset($_GET['guest']) || !isset($_GET['initData'])) {
-            // Create guest user for non-Telegram access
-            $this->createGuestUser();
         }
+        
+        // Check if user is already logged in
+        if (isset($_SESSION['user_id'])) {
+            $this->currentUser = $this->userManager->getUserById($_SESSION['user_id']);
+            return;
+        }
+        
+        // Check if telegram_id is in session
+        if (isset($_SESSION['telegram_id'])) {
+            $user = $this->userManager->getUserByTelegramId($_SESSION['telegram_id']);
+            if ($user) {
+                $this->currentUser = $user;
+                $_SESSION['user_id'] = $user['id'];
+                return;
+            }
+        }
+        
+        // If no valid user found, show simple access denied
+        // Users must access with ?telegram_id=123456789
+        $this->currentUser = null;
     }
     
     /**
-     * Create guest user for non-Telegram access
+     * Show authentication required message
      */
-    private function createGuestUser() {
-        $guestUser = [
-            'id' => 'guest_' . uniqid(),
-            'first_name' => 'کاربر مهمان',
-            'last_name' => '',
-            'username' => 'guest',
-            'telegram_id' => 'guest',
-            'language_code' => 'fa',
-            'is_guest' => true,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        
-        $_SESSION['guest_user'] = $guestUser;
-        $this->currentUser = $guestUser;
+    private function showAuthRequired() {
+        $this->render('auth_required', [
+            'message' => 'لطفاً با استفاده از شناسه تلگرام خود وارد شوید'
+        ]);
+        exit;
     }
     
     /**
@@ -155,6 +155,12 @@ class MirzaWebApp {
      */
     public function handleRequest() {
         try {
+            // Check if user is authenticated, if not show auth required
+            if (!$this->isAuthenticated()) {
+                $this->showAuthRequired();
+                return;
+            }
+            
             // Handle different actions
             $action = $_GET['action'] ?? 'home';
             
@@ -202,19 +208,6 @@ class MirzaWebApp {
      * Handle profile page
      */
     private function handleProfile() {
-        if (!$this->isAuthenticated()) {
-            $this->redirect('index.php');
-            return;
-        }
-        
-        // For guest users, show limited profile
-        if (isset($this->currentUser['is_guest']) && $this->currentUser['is_guest']) {
-            $this->render('profile_guest', [
-                'user' => $this->currentUser
-            ]);
-            return;
-        }
-        
         $stats = $this->userManager->getUserStats($this->currentUser['id']);
         
         $this->render('profile', [
@@ -227,25 +220,6 @@ class MirzaWebApp {
      * Handle settings page
      */
     private function handleSettings() {
-        if (!$this->isAuthenticated()) {
-            $this->redirect('index.php');
-            return;
-        }
-        
-        // For guest users, show limited settings
-        if (isset($this->currentUser['is_guest']) && $this->currentUser['is_guest']) {
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $this->addError('کاربران مهمان نمی‌توانند تنظیمات را تغییر دهند');
-                $this->redirect('index.php?action=settings');
-                return;
-            }
-            
-            $this->render('settings_guest', [
-                'user' => $this->currentUser
-            ]);
-            return;
-        }
-        
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->handleSettingsUpdate();
             return;
