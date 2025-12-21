@@ -1999,6 +1999,79 @@ function addCronIfNotExists($cronCommand)
     return true;
 }
 
+function replaceCronBlock($blockName, array $blockLines)
+{
+    $blockName = trim((string) $blockName);
+    if ($blockName === '') {
+        return false;
+    }
+
+    $blockLines = array_values(array_filter(array_map('rtrim', $blockLines), static function ($line) {
+        return trim((string) $line) !== '';
+    }));
+
+    if (!isShellExecAvailable()) {
+        return false;
+    }
+
+    $crontabBinary = getCrontabBinary();
+    if ($crontabBinary === null) {
+        return false;
+    }
+
+    $beginMarker = '# ' . $blockName . '_BEGIN';
+    $endMarker = '# ' . $blockName . '_END';
+
+    $existingCronJobs = runShellCommand(sprintf('%s -l 2>/dev/null', escapeshellarg($crontabBinary)));
+    $existingCronJobs = (string) $existingCronJobs;
+    $existingLines = preg_split('/\r?\n/', $existingCronJobs);
+    if (!is_array($existingLines)) {
+        $existingLines = [];
+    }
+
+    $resultLines = [];
+    $inside = false;
+    foreach ($existingLines as $line) {
+        $line = rtrim((string) $line);
+        if ($line === '') {
+            continue;
+        }
+        if ($line === $beginMarker) {
+            $inside = true;
+            continue;
+        }
+        if ($line === $endMarker) {
+            $inside = false;
+            continue;
+        }
+        if ($inside) {
+            continue;
+        }
+        $resultLines[] = $line;
+    }
+
+    $resultLines[] = $beginMarker;
+    foreach ($blockLines as $line) {
+        $resultLines[] = (string) $line;
+    }
+    $resultLines[] = $endMarker;
+
+    $cronContent = implode(PHP_EOL, $resultLines) . PHP_EOL;
+    $temporaryFile = tempnam(sys_get_temp_dir(), 'cron');
+    if ($temporaryFile === false) {
+        return false;
+    }
+
+    if (file_put_contents($temporaryFile, $cronContent) === false) {
+        unlink($temporaryFile);
+        return false;
+    }
+
+    runShellCommand(sprintf('%s %s', escapeshellarg($crontabBinary), escapeshellarg($temporaryFile)));
+    unlink($temporaryFile);
+    return true;
+}
+
 function activecron()
 {
     global $domainhosts;
@@ -2010,6 +2083,28 @@ function activecron()
         $tmpDir = '/tmp';
     }
     $tmpDir = rtrim(trim((string) $tmpDir), '/');
+
+    if (isShellExecAvailable()) {
+        $crontabBinary = getCrontabBinary();
+        if ($crontabBinary !== null) {
+            $existingCronJobs = runShellCommand(sprintf('%s -l 2>/dev/null', escapeshellarg($crontabBinary)));
+            $existingCronJobs = (string) $existingCronJobs;
+            if (strpos($existingCronJobs, '/var/www/mirza_pro/cronbot/') !== false || strpos($existingCronJobs, '# MIRZA_PRO_CRON_BEGIN') !== false) {
+                return;
+            }
+        }
+    }
+
+    $baseUrl = trim((string) $domainhosts);
+    if ($baseUrl !== '') {
+        if (!preg_match('#^https?://#i', $baseUrl)) {
+            $baseUrl = 'https://' . $baseUrl;
+        }
+        $baseUrl = rtrim($baseUrl, '/');
+    }
+
+    $logDir = $tmpDir . '/mirza_pro_cron_logs';
+    @mkdir($logDir, 0775, true);
 
     $jobs = [
         ['name' => 'statusday', 'schedule' => '*/15 * * * *', 'file' => $baseDir . '/cronbot/statusday.php'],
@@ -2035,14 +2130,16 @@ function activecron()
     foreach ($jobs as $job) {
         $name = preg_replace('/[^a-zA-Z0-9_.-]+/', '_', (string) $job['name']);
         $outFile = $tmpDir . '/mirza_pro_cron_' . $name . '.log';
+        $cronCommands[] = '# ' . $name . ' | ' . (string) $job['schedule'];
         if (is_string($phpBin) && $phpBin !== '' && @is_executable($phpBin) && @is_file($job['file'])) {
-            $cronCommands[] = $job['schedule'] . ' ' . $phpBin . ' ' . $job['file'] . ' >> ' . $outFile . ' 2>&1';
-        } else {
-            $cronCommands[] = $job['schedule'] . ' curl -fsS https://' . $domainhosts . '/cronbot/' . basename($job['file']) . ' >> ' . $outFile . ' 2>&1';
+            $cronCommands[] = $job['schedule'] . ' MIRZA_CRON_LOG_DIR=' . escapeshellarg($logDir) . ' ' . escapeshellarg($phpBin) . ' -d max_execution_time=55 ' . escapeshellarg((string) $job['file']) . ' >> ' . escapeshellarg($outFile) . ' 2>&1';
+        } elseif ($baseUrl !== '') {
+            $url = $baseUrl . '/cronbot/' . basename((string) $job['file']);
+            $cronCommands[] = $job['schedule'] . ' curl -fsS --max-time 60 --retry 2 --retry-delay 2 ' . escapeshellarg($url) . ' >> ' . escapeshellarg($outFile) . ' 2>&1';
         }
     }
 
-    addCronIfNotExists($cronCommands);
+    replaceCronBlock('MIRZA_PRO_APP_CRON', $cronCommands);
 }
 
 function inlineFixer($str, int $count_button = 1)

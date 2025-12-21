@@ -189,32 +189,67 @@ MYSQL_SCRIPT
     chown -R www-data:www-data "$CRON_LOG_DIR" /var/www/mirza_pro/cronbot/logs >/dev/null 2>&1
     PHP_BIN="${MIRZA_PHP_BIN:-$(command -v php 2>/dev/null)}"
     if [ -z "$PHP_BIN" ]; then PHP_BIN="/usr/bin/php"; fi
-    (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/cronbot/" | grep -v "backup_db" | grep -v "backup_files") | crontab -
-    CRON_JOBS="*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/statusday.php >> $CRON_LOG_DIR/statusday.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/NoticationsService.php >> $CRON_LOG_DIR/notifications.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/croncard.php >> $CRON_LOG_DIR/croncard.log 2>&1
-*/5 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/payment_expire.php >> $CRON_LOG_DIR/payment_expire.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/sendmessage.php >> $CRON_LOG_DIR/sendmessage.log 2>&1
-*/3 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/plisio.php >> $CRON_LOG_DIR/plisio.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/iranpay1.php >> $CRON_LOG_DIR/iranpay1.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/activeconfig.php >> $CRON_LOG_DIR/activeconfig.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/disableconfig.php >> $CRON_LOG_DIR/disableconfig.log 2>&1
-* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/backupbot.php >> $CRON_LOG_DIR/backupbot.log 2>&1
-*/2 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/gift.php >> $CRON_LOG_DIR/gift.log 2>&1
-*/30 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/expireagent.php >> $CRON_LOG_DIR/expireagent.log 2>&1
-*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/on_hold.php >> $CRON_LOG_DIR/on_hold.log 2>&1
-*/2 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/configtest.php >> $CRON_LOG_DIR/configtest.log 2>&1
-*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/uptime_node.php >> $CRON_LOG_DIR/uptime_node.log 2>&1
-*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/uptime_panel.php >> $CRON_LOG_DIR/uptime_panel.log 2>&1
-0 0 * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/lottery.php >> $CRON_LOG_DIR/lottery.log 2>&1"
+    JOB_PREFIX=""
+    if command -v nice >/dev/null 2>&1; then JOB_PREFIX="nice -n 10"; fi
+    if command -v ionice >/dev/null 2>&1; then JOB_PREFIX="${JOB_PREFIX} ionice -c2 -n7"; fi
+    JOB_PREFIX=$(echo "$JOB_PREFIX" | xargs)
+
+    (crontab -l 2>/dev/null \
+        | sed '/^# MIRZA_PRO_CRON_BEGIN$/,/^# MIRZA_PRO_CRON_END$/d' \
+        | sed '/^# MIRZA_PRO_BACKUP_BEGIN$/,/^# MIRZA_PRO_BACKUP_END$/d' \
+        | grep -v "/var/www/mirza_pro/cronbot/" \
+        | grep -v "backup_db" \
+        | grep -v "backup_files") | crontab -
+
+    CRON_JOBS="# MIRZA_PRO_CRON_BEGIN
+# statusday | */15 * * * * | cronbot/statusday.php
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/statusday.php >> $CRON_LOG_DIR/statusday.log 2>&1
+# NoticationsService | * * * * * | cronbot/NoticationsService.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/NoticationsService.php >> $CRON_LOG_DIR/notifications.log 2>&1
+# croncard | * * * * * | cronbot/croncard.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/croncard.php >> $CRON_LOG_DIR/croncard.log 2>&1
+# payment_expire | */5 * * * * | cronbot/payment_expire.php
+*/5 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/payment_expire.php >> $CRON_LOG_DIR/payment_expire.log 2>&1
+# sendmessage | * * * * * | cronbot/sendmessage.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/sendmessage.php >> $CRON_LOG_DIR/sendmessage.log 2>&1
+# plisio | */3 * * * * | cronbot/plisio.php
+*/3 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/plisio.php >> $CRON_LOG_DIR/plisio.log 2>&1
+# iranpay1 | * * * * * | cronbot/iranpay1.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/iranpay1.php >> $CRON_LOG_DIR/iranpay1.log 2>&1
+# activeconfig | * * * * * | cronbot/activeconfig.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/activeconfig.php >> $CRON_LOG_DIR/activeconfig.log 2>&1
+# disableconfig | * * * * * | cronbot/disableconfig.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/disableconfig.php >> $CRON_LOG_DIR/disableconfig.log 2>&1
+# backupbot | * * * * * | cronbot/backupbot.php
+* * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/backupbot.php >> $CRON_LOG_DIR/backupbot.log 2>&1
+# gift | */2 * * * * | cronbot/gift.php
+*/2 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/gift.php >> $CRON_LOG_DIR/gift.log 2>&1
+# expireagent | */30 * * * * | cronbot/expireagent.php
+*/30 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/expireagent.php >> $CRON_LOG_DIR/expireagent.log 2>&1
+# on_hold | */15 * * * * | cronbot/on_hold.php
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/on_hold.php >> $CRON_LOG_DIR/on_hold.log 2>&1
+# configtest | */2 * * * * | cronbot/configtest.php
+*/2 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/configtest.php >> $CRON_LOG_DIR/configtest.log 2>&1
+# uptime_node | */15 * * * * | cronbot/uptime_node.php
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/uptime_node.php >> $CRON_LOG_DIR/uptime_node.log 2>&1
+# uptime_panel | */15 * * * * | cronbot/uptime_panel.php
+*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/uptime_panel.php >> $CRON_LOG_DIR/uptime_panel.log 2>&1
+# lottery | 0 0 * * * | cronbot/lottery.php
+0 0 * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $JOB_PREFIX $PHP_BIN /var/www/mirza_pro/cronbot/lottery.php >> $CRON_LOG_DIR/lottery.log 2>&1
+# MIRZA_PRO_CRON_END"
     BACKUP_DIR_DEFAULT="${MIRZA_BACKUP_DIR:-/var/backups/mirza_pro}"
     BACKUP_LOG_DIR_DEFAULT="${MIRZA_BACKUP_LOG_DIR:-/var/log/mirza_pro/backup}"
     mkdir -p "$BACKUP_DIR_DEFAULT/db" "$BACKUP_DIR_DEFAULT/files" "$BACKUP_LOG_DIR_DEFAULT" >/dev/null 2>&1
+    chown -R root:root "$BACKUP_DIR_DEFAULT" "$BACKUP_LOG_DIR_DEFAULT" >/dev/null 2>&1
     chmod 750 "$BACKUP_DIR_DEFAULT" "$BACKUP_LOG_DIR_DEFAULT" >/dev/null 2>&1
     chmod 750 "$BACKUP_DIR_DEFAULT/db" "$BACKUP_DIR_DEFAULT/files" >/dev/null 2>&1
 
-    BACKUP_CRON_JOBS="5 */6 * * * MIRZA_BACKUP_DIR=$BACKUP_DIR_DEFAULT MIRZA_BACKUP_LOG_DIR=$BACKUP_LOG_DIR_DEFAULT $SCRIPT_PATH backup_db >> $BACKUP_LOG_DIR_DEFAULT/backup_db.log 2>&1
-35 */6 * * * MIRZA_BACKUP_DIR=$BACKUP_DIR_DEFAULT MIRZA_BACKUP_LOG_DIR=$BACKUP_LOG_DIR_DEFAULT $SCRIPT_PATH backup_files >> $BACKUP_LOG_DIR_DEFAULT/backup_files.log 2>&1"
+    BACKUP_CRON_JOBS="# MIRZA_PRO_BACKUP_BEGIN
+# backup_db | 5 */6 * * * | install.sh backup_db
+5 */6 * * * MIRZA_BACKUP_DIR=$BACKUP_DIR_DEFAULT MIRZA_BACKUP_LOG_DIR=$BACKUP_LOG_DIR_DEFAULT $JOB_PREFIX $SCRIPT_PATH backup_db >> $BACKUP_LOG_DIR_DEFAULT/backup_db.log 2>&1
+# backup_files | 35 */6 * * * | install.sh backup_files
+35 */6 * * * MIRZA_BACKUP_DIR=$BACKUP_DIR_DEFAULT MIRZA_BACKUP_LOG_DIR=$BACKUP_LOG_DIR_DEFAULT $JOB_PREFIX $SCRIPT_PATH backup_files >> $BACKUP_LOG_DIR_DEFAULT/backup_files.log 2>&1
+# MIRZA_PRO_BACKUP_END"
 
     (crontab -l 2>/dev/null; echo "$CRON_JOBS"; echo "$BACKUP_CRON_JOBS") | crontab -
 
@@ -273,7 +308,13 @@ uninstall_bot() {
     if [[ "$CONFIRM" != "yes" ]]; then echo "Cancelled."; return; fi
 
     echo -e "${YELLOW}Uninstalling... (This will remove all traces)${NC}"
-    (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/\|backup_now\|backup_db\|backup_files") | crontab -
+    (crontab -l 2>/dev/null \
+        | sed '/^# MIRZA_PRO_CRON_BEGIN$/,/^# MIRZA_PRO_CRON_END$/d' \
+        | sed '/^# MIRZA_PRO_BACKUP_BEGIN$/,/^# MIRZA_PRO_BACKUP_END$/d' \
+        | grep -v "/var/www/mirza_pro/" \
+        | grep -v "backup_now" \
+        | grep -v "backup_db" \
+        | grep -v "backup_files") | crontab -
     
     systemctl stop apache2 >/dev/null 2>&1
     
@@ -627,37 +668,73 @@ configure_backup_schedule() {
     local resolved_backup_dir="${MIRZA_BACKUP_DIR:-$default_backup_dir}"
     local resolved_backup_log_dir="${MIRZA_BACKUP_LOG_DIR:-$default_backup_log_dir}"
     mkdir -p "$resolved_backup_log_dir" >/dev/null 2>&1
-
-    (crontab -l 2>/dev/null | grep -v "$cron_job_name") | crontab -
-    local log_file="$resolved_backup_log_dir/${cron_job_name}.log"
-    CRON_COMMAND="MIRZA_BACKUP_DIR=$resolved_backup_dir MIRZA_BACKUP_LOG_DIR=$resolved_backup_log_dir $SCRIPT_PATH $cron_job_name >> $log_file 2>&1"
-    CRON_SCHEDULE=""
-    MSG=""
+    local schedule_new=""
+    local msg=""
 
     case $cron_choice in
-        1) CRON_SCHEDULE="*/2 * * * *"; MSG="Every 2 minutes" ;;
-        2) CRON_SCHEDULE="0 * * * *"; MSG="Hourly" ;;
+        1) schedule_new="*/2 * * * *"; msg="Every 2 minutes" ;;
+        2) schedule_new="0 * * * *"; msg="Hourly" ;;
         3)
             if [ "$backup_type" = "db" ]; then
-                CRON_SCHEDULE="5 */6 * * *"
+                schedule_new="5 */6 * * *"
             else
-                CRON_SCHEDULE="35 */6 * * *"
+                schedule_new="35 */6 * * *"
             fi
-            MSG="Every 6 hours"
+            msg="Every 6 hours"
             ;;
-        4) CRON_SCHEDULE="0 3 * * *"; MSG="Daily" ;;
-        5) CRON_SCHEDULE="0 3 * * 0"; MSG="Weekly" ;;
+        4) schedule_new="0 3 * * *"; msg="Daily" ;;
+        5) schedule_new="0 3 * * 0"; msg="Weekly" ;;
         6) 
             read -p "Enter interval in minutes: " INTERVAL
             if [[ ! $INTERVAL =~ ^[0-9]+$ ]] || [[ $INTERVAL -eq 0 ]]; then echo -e "${RED}Invalid.${NC}"; return; fi
-            CRON_SCHEDULE="*/$INTERVAL * * * *"; MSG="Every $INTERVAL minutes"
+            schedule_new="*/$INTERVAL * * * *"; msg="Every $INTERVAL minutes"
             ;;
-        7) echo -e "${YELLOW}Automatic ${backup_type^^} backups disabled.${NC}"; return ;;
+        7) schedule_new=""; msg="Disabled" ;;
         *) echo -e "${RED}Invalid option.${NC}"; return ;;
     esac
 
-    (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_COMMAND") | crontab -
-    echo -e "${GREEN}Automatic ${backup_type^^} backup schedule set: $MSG${NC}"
+    local schedule_db=""
+    local schedule_files=""
+    schedule_db=$(crontab -l 2>/dev/null | awk -v script="$SCRIPT_PATH backup_db" 'index($0, script)>0 && $1 !~ /^#/ {print $1" "$2" "$3" "$4" "$5; exit}')
+    schedule_files=$(crontab -l 2>/dev/null | awk -v script="$SCRIPT_PATH backup_files" 'index($0, script)>0 && $1 !~ /^#/ {print $1" "$2" "$3" "$4" "$5; exit}')
+
+    if [ -z "$schedule_db" ]; then schedule_db="5 */6 * * *"; fi
+    if [ -z "$schedule_files" ]; then schedule_files="35 */6 * * *"; fi
+
+    if [ "$backup_type" = "db" ]; then
+        schedule_db="$schedule_new"
+    else
+        schedule_files="$schedule_new"
+    fi
+
+    JOB_PREFIX=""
+    if command -v nice >/dev/null 2>&1; then JOB_PREFIX="nice -n 10"; fi
+    if command -v ionice >/dev/null 2>&1; then JOB_PREFIX="${JOB_PREFIX} ionice -c2 -n7"; fi
+    JOB_PREFIX=$(echo "$JOB_PREFIX" | xargs)
+
+    local cron_block=""
+    if [ -n "$schedule_db" ] || [ -n "$schedule_files" ]; then
+        cron_block="# MIRZA_PRO_BACKUP_BEGIN"
+        if [ -n "$schedule_db" ]; then
+            cron_block="${cron_block}
+# backup_db | ${schedule_db} | install.sh backup_db
+${schedule_db} MIRZA_BACKUP_DIR=${resolved_backup_dir} MIRZA_BACKUP_LOG_DIR=${resolved_backup_log_dir} ${JOB_PREFIX} ${SCRIPT_PATH} backup_db >> ${resolved_backup_log_dir}/backup_db.log 2>&1"
+        fi
+        if [ -n "$schedule_files" ]; then
+            cron_block="${cron_block}
+# backup_files | ${schedule_files} | install.sh backup_files
+${schedule_files} MIRZA_BACKUP_DIR=${resolved_backup_dir} MIRZA_BACKUP_LOG_DIR=${resolved_backup_log_dir} ${JOB_PREFIX} ${SCRIPT_PATH} backup_files >> ${resolved_backup_log_dir}/backup_files.log 2>&1"
+        fi
+        cron_block="${cron_block}
+# MIRZA_PRO_BACKUP_END"
+    fi
+
+    (crontab -l 2>/dev/null \
+        | sed '/^# MIRZA_PRO_BACKUP_BEGIN$/,/^# MIRZA_PRO_BACKUP_END$/d' \
+        | grep -v "backup_db" \
+        | grep -v "backup_files"; echo "$cron_block") | crontab -
+
+    echo -e "${GREEN}Automatic ${backup_type^^} backup schedule set: $msg${NC}"
 }
 
 backup_menu() {

@@ -58,6 +58,10 @@
 - در صورت شکست اجرا، یک پیام خطا به تلگرام (Chat ID بکاپ) ارسال می‌شود.
 - برای جلوگیری از اجرای همزمان، هر بکاپ فایل lock دارد: `/var/log/mirza_pro/backup/<job>.lock`
 - زمان‌های اجرای موفق/ناموفق در `/var/log/mirza_pro/backup/backup_history.log` ثبت می‌شود.
+- مسیرها قابل override هستند:
+  - `MIRZA_BACKUP_DIR` (پیش‌فرض: `/var/backups/mirza_pro`)
+  - `MIRZA_BACKUP_LOG_DIR` (پیش‌فرض: `/var/log/mirza_pro/backup`)
+- نگه‌داری فایل‌ها (Retention): بکاپ دیتابیس تا ۱۰ فایل آخر و بکاپ فایل‌ها تا ۲ فایل آخر نگه داشته می‌شود.
 
 ## وابستگی‌ها و پیش‌نیازهای مهم
 
@@ -113,3 +117,39 @@
 
 - برای جلوگیری از اجرای همزمان، هر کرون قفل فایل (lock) دارد و در صورت همزمانی، با وضعیت `skipped` ثبت می‌شود.
 - در صورت خطای fatal یا exception، وضعیت `failed` در `cron_runs` ثبت می‌شود و جزئیات در `message` و فایل `.error.log` می‌آید.
+
+## پشتیبانی از محیط‌های مختلف
+
+### هاست اشتراکی (cPanel / DirectAdmin)
+
+- پیشنهاد اجرای کرون‌ها از طریق پنل هاست با `curl` است (به‌خصوص وقتی مسیر `php` یا اجرای CLI محدود باشد).
+- برای جلوگیری از گیر کردن کرون و مصرف منابع، `curl` را با timeout اجرا کنید:
+  - `curl -fsS --max-time 60 https://<domain>/cronbot/statusday.php >/dev/null 2>&1`
+- اگر محدودیت منابع دارید، اولویت‌بندی کنید:
+  - ضروری: `NoticationsService`, `sendmessage`, `payment_expire`, `activeconfig`, `disableconfig`
+  - کم‌اهمیت‌تر (در منابع محدود با فاصله بیشتر): `uptime_node`, `uptime_panel`, `configtest`, `gift`, `backupbot`
+- اگر هاست اجازه اجرای هر دقیقه را نمی‌دهد، به جای `* * * * *` از `*/2 * * * *` یا `*/5 * * * *` استفاده کنید.
+
+### سرور اختصاصی اوبونتو (VPS / Dedicated)
+
+- پیشنهاد اجرای کرون‌ها با `php` است و در نصب خودکار، خروجی هر جاب در `/var/log/mirza_pro/cron/` ثبت می‌شود.
+- در `install.sh` برای کاهش فشار روی CPU/IO، اگر `nice` و `ionice` موجود باشد با اولویت پایین اجرا می‌شود.
+- مسیرهای مهم و سطح دسترسی پیشنهادی:
+  - پروژه: `/var/www/mirza_pro` با مالکیت `www-data:www-data`
+  - لاگ کرون‌ها: `/var/log/mirza_pro/cron` قابل‌نوشتن برای `www-data` (برای `.error.log` های PHP)
+  - بکاپ‌های اینستالر: `/var/backups/mirza_pro` و `/var/log/mirza_pro/backup` با مالکیت `root:root` و سطح دسترسی `750`
+
+## راهنمای عیب‌یابی
+
+- کرون اجرا نمی‌شود:
+  - `systemctl status cron` و `journalctl -u cron -n 100`
+  - `crontab -l` (مطمئن شوید خطوط زیر `root` ثبت شده‌اند اگر نصب را با روت انجام داده‌اید)
+- خطای دسترسی نوشتن لاگ:
+  - برای VPS: `ls -ld /var/log/mirza_pro/cron /var/www/mirza_pro/cronbot/logs`
+  - مالکیت/سطح دسترسی را بررسی کنید.
+- خطاهای PHP در کرون‌ها:
+  - فایل‌های `cronbot/logs/<job>.error.log` یا مسیر جایگزین `cronGetLogDir()` را بررسی کنید.
+  - وضعیت اجرای اخیر را از `php cronbot/cron_status.php` ببینید.
+- خطاهای `curl` در هاست اشتراکی:
+  - از `-fsS --max-time 60` استفاده کنید و خروجی را موقتاً بدون `>/dev/null` ببینید.
+  - اگر SSL مشکل دارد، اول HTTPS دامنه را رفع کنید.
