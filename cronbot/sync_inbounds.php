@@ -22,15 +22,17 @@ require_once __DIR__ . '/../s_ui.php';
 $lockFile = __DIR__ . '/sync_inbounds.lock';
 $fp = fopen($lockFile, 'c+');
 if (!flock($fp, LOCK_EX | LOCK_NB)) {
-    die("خطا: یک عملیات همگام‌سازی دیگر در حال اجرا است.");
+    echo "خطا: یک عملیات همگام‌سازی دیگر در حال اجرا است.";
+    return;
 }
 
-$is_cli = (php_sapi_name() === 'cli');
+$is_cli = (php_sapi_name() === 'cli' || defined('CRON_RUNNING'));
 
 if (!$is_cli) {
     session_start();
     if (!isset($_SESSION["user"])) {
-        die("دسترسی غیرمجاز");
+        echo "دسترسی غیرمجاز";
+        return;
     }
     
     // فعال‌سازی خروجی لحظه‌ای برای مرورگر

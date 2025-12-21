@@ -9,7 +9,8 @@ require_once '../function.php';
 $lockFile = __DIR__ . '/statusday.lock';
 $fp = fopen($lockFile, 'c+');
 if (!flock($fp, LOCK_EX | LOCK_NB)) {
-    die("Another instance is already running.");
+    echo "Another instance is already running.";
+    return;
 }
 
 $setting = select("setting","*",null,null,"select");

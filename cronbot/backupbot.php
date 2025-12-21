@@ -38,7 +38,7 @@ if (function_exists('disk_free_space')) {
         if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
         telegram('sendmessage', $payload);
         log_msg("insufficient disk space: " . intval($free) . " bytes");
-        exit;
+        return;
     }
 }
 try{
