@@ -13,6 +13,7 @@
 - دیتابیس: جدول `cron_runs` (به صورت خودکار در اولین اجرا ساخته می‌شود)
 - لاگ خطاهای PHP هر کرون: `cronbot/logs/<job>.error.log` (اگر قابل‌نوشتن نباشد، در `sys_get_temp_dir()` ساخته می‌شود)
 - لاگ خروجی/خطای کرون در سیستم (برای نصب VPS): `/var/log/mirza_pro/cron/<job>.log`
+- لاگ و تاریخچه بکاپ‌های اسکریپت اینستالر (VPS): `/var/log/mirza_pro/backup/<job>.log` و `/var/log/mirza_pro/backup/backup_history.log`
 
 برای مشاهده وضعیت آخرین اجراها:
 
@@ -42,6 +43,21 @@
 | `uptime_node` | `*/15 * * * *` | `cronbot/uptime_node.php` | آلارم نودهای غیرمتصل (در صورت فعال بودن) |
 | `uptime_panel` | `*/15 * * * *` | `cronbot/uptime_panel.php` | آلارم پنل‌های غیرقابل اتصال (در صورت فعال بودن) |
 | `lottery` | `0 0 * * *` | `cronbot/lottery.php` | قرعه‌کشی شبانه (در صورت فعال بودن) |
+
+## کرون‌جاب‌های بکاپ (اسکریپت اینستالر روی VPS)
+
+این دو کرون‌جاب داخل `install.sh` تعریف شده‌اند و در هنگام نصب روی VPS به صورت پیش‌فرض در `crontab` ثبت می‌شوند:
+
+| نام | زمان‌بندی | دستور | خروجی لاگ | مسیر ذخیره فایل |
+|---|---:|---|---|---|
+| `backup_db` | `5 */6 * * *` | `/path/to/install.sh backup_db` | `/var/log/mirza_pro/backup/backup_db.log` | `/var/backups/mirza_pro/db/` |
+| `backup_files` | `35 */6 * * *` | `/path/to/install.sh backup_files` | `/var/log/mirza_pro/backup/backup_files.log` | `/var/backups/mirza_pro/files/` |
+
+نکات مهم:
+
+- در صورت شکست اجرا، یک پیام خطا به تلگرام (Chat ID بکاپ) ارسال می‌شود.
+- برای جلوگیری از اجرای همزمان، هر بکاپ فایل lock دارد: `/var/log/mirza_pro/backup/<job>.lock`
+- زمان‌های اجرای موفق/ناموفق در `/var/log/mirza_pro/backup/backup_history.log` ثبت می‌شود.
 
 ## وابستگی‌ها و پیش‌نیازهای مهم
 
@@ -79,6 +95,10 @@
   - `cronbot/logs/<job>.error.log`
 - لاگ خروجی کرون سیستم (VPS):
   - `/var/log/mirza_pro/cron/<job>.log`
+- لاگ اجرای بکاپ‌های اینستالر (VPS):
+  - `/var/log/mirza_pro/backup/backup_db.log`
+  - `/var/log/mirza_pro/backup/backup_files.log`
+  - `/var/log/mirza_pro/backup/backup_history.log`
 
 ### 3) تست زمان‌بندی واقعی
 
@@ -93,4 +113,3 @@
 
 - برای جلوگیری از اجرای همزمان، هر کرون قفل فایل (lock) دارد و در صورت همزمانی، با وضعیت `skipped` ثبت می‌شود.
 - در صورت خطای fatal یا exception، وضعیت `failed` در `cron_runs` ثبت می‌شود و جزئیات در `message` و فایل `.error.log` می‌آید.
-

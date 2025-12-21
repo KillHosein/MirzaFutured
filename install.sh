@@ -189,7 +189,7 @@ MYSQL_SCRIPT
     chown -R www-data:www-data "$CRON_LOG_DIR" /var/www/mirza_pro/cronbot/logs >/dev/null 2>&1
     PHP_BIN="${MIRZA_PHP_BIN:-$(command -v php 2>/dev/null)}"
     if [ -z "$PHP_BIN" ]; then PHP_BIN="/usr/bin/php"; fi
-    (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/cronbot/") | crontab -
+    (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/cronbot/" | grep -v "backup_db" | grep -v "backup_files") | crontab -
     CRON_JOBS="*/15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/statusday.php >> $CRON_LOG_DIR/statusday.log 2>&1
 * * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/NoticationsService.php >> $CRON_LOG_DIR/notifications.log 2>&1
 * * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/croncard.php >> $CRON_LOG_DIR/croncard.log 2>&1
@@ -207,7 +207,16 @@ MYSQL_SCRIPT
 */15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/uptime_node.php >> $CRON_LOG_DIR/uptime_node.log 2>&1
 */15 * * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/uptime_panel.php >> $CRON_LOG_DIR/uptime_panel.log 2>&1
 0 0 * * * MIRZA_CRON_LOG_DIR=$CRON_LOG_DIR $PHP_BIN /var/www/mirza_pro/cronbot/lottery.php >> $CRON_LOG_DIR/lottery.log 2>&1"
-    (crontab -l 2>/dev/null; echo "$CRON_JOBS") | crontab -
+    BACKUP_DIR_DEFAULT="${MIRZA_BACKUP_DIR:-/var/backups/mirza_pro}"
+    BACKUP_LOG_DIR_DEFAULT="${MIRZA_BACKUP_LOG_DIR:-/var/log/mirza_pro/backup}"
+    mkdir -p "$BACKUP_DIR_DEFAULT/db" "$BACKUP_DIR_DEFAULT/files" "$BACKUP_LOG_DIR_DEFAULT" >/dev/null 2>&1
+    chmod 750 "$BACKUP_DIR_DEFAULT" "$BACKUP_LOG_DIR_DEFAULT" >/dev/null 2>&1
+    chmod 750 "$BACKUP_DIR_DEFAULT/db" "$BACKUP_DIR_DEFAULT/files" >/dev/null 2>&1
+
+    BACKUP_CRON_JOBS="5 */6 * * * MIRZA_BACKUP_DIR=$BACKUP_DIR_DEFAULT MIRZA_BACKUP_LOG_DIR=$BACKUP_LOG_DIR_DEFAULT $SCRIPT_PATH backup_db >> $BACKUP_LOG_DIR_DEFAULT/backup_db.log 2>&1
+35 */6 * * * MIRZA_BACKUP_DIR=$BACKUP_DIR_DEFAULT MIRZA_BACKUP_LOG_DIR=$BACKUP_LOG_DIR_DEFAULT $SCRIPT_PATH backup_files >> $BACKUP_LOG_DIR_DEFAULT/backup_files.log 2>&1"
+
+    (crontab -l 2>/dev/null; echo "$CRON_JOBS"; echo "$BACKUP_CRON_JOBS") | crontab -
 
     save_config "$DOMAIN" "$BOT_TOKEN" "$ADMIN_TELEGRAM_ID" "$BACKUP_CHAT_ID" "$DB_PASSWORD" "$DB_NAME" "$DB_USER"
     echo -e "\n${GREEN}Installation Complete! You can now use the bot.${NC}"
@@ -264,7 +273,7 @@ uninstall_bot() {
     if [[ "$CONFIRM" != "yes" ]]; then echo "Cancelled."; return; fi
 
     echo -e "${YELLOW}Uninstalling... (This will remove all traces)${NC}"
-    (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/\|backup_now") | crontab -
+    (crontab -l 2>/dev/null | grep -v "/var/www/mirza_pro/\|backup_now\|backup_db\|backup_files") | crontab -
     
     systemctl stop apache2 >/dev/null 2>&1
     
@@ -293,26 +302,170 @@ MYSQL_SCRIPT
 # BACKUP FUNCTIONS
 ############################################################
 
-run_db_backup() {
-    echo -e "${YELLOW}Starting Database Backup...${NC}"
-    if ! load_config; then return; fi
+backup_now_ts() {
+    date +'%Y-%m-%d %H:%M:%S %Z'
+}
 
-    DB_BACKUP_FILE="/tmp/${DB_NAME}_$(date +%Y%m%d_%H%M%S).sql"
-    
-    echo "1. Dumping database..."
-    mysqldump --no-tablespaces -u "$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" > "$DB_BACKUP_FILE"
-    
-    if [ $? -ne 0 ] || [ ! -s "$DB_BACKUP_FILE" ]; then 
-        echo -e "${RED}FATAL: Failed to create a valid database dump.${NC}"
-        echo -e "${YELLOW}Please check the error message above. Common causes are incorrect DB credentials or permissions.${NC}"
-        rm -f "$DB_BACKUP_FILE"
-        return
+backup_base_dir() {
+    local dir="${MIRZA_BACKUP_DIR:-/var/backups/mirza_pro}"
+    echo "${dir%/}"
+}
+
+backup_log_dir() {
+    local dir="${MIRZA_BACKUP_LOG_DIR:-/var/log/mirza_pro/backup}"
+    echo "${dir%/}"
+}
+
+backup_ensure_dirs() {
+    local baseDir
+    baseDir="$(backup_base_dir)"
+    local logDir
+    logDir="$(backup_log_dir)"
+
+    mkdir -p "$baseDir/db" "$baseDir/files" "$logDir" >/dev/null 2>&1
+    chmod 750 "$baseDir" "$logDir" >/dev/null 2>&1
+    chmod 750 "$baseDir/db" "$baseDir/files" >/dev/null 2>&1
+}
+
+backup_log() {
+    local jobName="$1"
+    shift
+    local logDir
+    logDir="$(backup_log_dir)"
+    backup_ensure_dirs
+    echo "[$(backup_now_ts)] [$jobName] $*" | tee -a "$logDir/${jobName}.log"
+}
+
+backup_record_history() {
+    local jobName="$1"
+    local status="$2"
+    local durationSec="$3"
+    local artifactPath="$4"
+    local extra="$5"
+    local logDir
+    logDir="$(backup_log_dir)"
+    backup_ensure_dirs
+    echo "[$(backup_now_ts)] job=$jobName status=$status duration_sec=$durationSec artifact=$artifactPath ${extra:-}" >> "$logDir/backup_history.log"
+}
+
+backup_send_message() {
+    local message="$1"
+    if ! load_config; then
+        return 1
     fi
-    echo -e "${GREEN}Database dump created successfully.${NC}"
+    local apiUrl="https://api.telegram.org/bot${BOT_TOKEN}/sendMessage"
+    local resp
+    resp=$(curl -fsS -X POST "$apiUrl" -F "chat_id=${BACKUP_CHAT_ID}" --form-string "text=${message}" -F "parse_mode=HTML" --max-time 20 2>/dev/null) || return 1
+    echo "$resp" | grep -q '"ok":true'
+}
 
-    echo -e "\n2. Sending to Telegram..."
-    API_URL="https://api.telegram.org/bot${BOT_TOKEN}/sendDocument"
-    CAPTION=$(cat <<EOF
+backup_notify_failure() {
+    local jobName="$1"
+    local step="$2"
+    local msg
+    printf -v msg "<b>Backup Failed</b>\n<b>Job:</b> <code>%s</code>\n<b>Domain:</b> <code>%s</code>\n<b>Step:</b> %s\n<b>Time:</b> <code>%s</code>" "$jobName" "$DOMAIN" "$step" "$(backup_now_ts)"
+    backup_send_message "$msg" >/dev/null 2>&1 || true
+}
+
+run_with_timeout() {
+    local timeoutSpec="$1"
+    shift
+    if command -v timeout >/dev/null 2>&1; then
+        timeout --preserve-status "$timeoutSpec" "$@"
+        return $?
+    fi
+    "$@"
+}
+
+backup_acquire_lock() {
+    local jobName="$1"
+    backup_ensure_dirs
+    local logDir
+    logDir="$(backup_log_dir)"
+    local lockFile="$logDir/${jobName}.lock"
+    if command -v flock >/dev/null 2>&1; then
+        exec 9>"$lockFile"
+        flock -n 9
+        return $?
+    fi
+    return 0
+}
+
+rotate_backups() {
+    local dir="$1"
+    local pattern="$2"
+    local keep="$3"
+    if [ ! -d "$dir" ]; then
+        return 0
+    fi
+    local files=()
+    mapfile -t files < <(ls -1t "$dir"/$pattern 2>/dev/null || true)
+    local count="${#files[@]}"
+    if [ "$count" -le "$keep" ]; then
+        return 0
+    fi
+    local i
+    for ((i=keep; i<count; i++)); do
+        rm -f "${files[$i]}" >/dev/null 2>&1 || true
+    done
+}
+
+run_db_backup() {
+    local jobName="backup_db"
+    local startTs
+    startTs=$(date +%s)
+    echo -e "${YELLOW}Starting Database Backup...${NC}"
+    if ! load_config; then return 1; fi
+
+    if ! backup_acquire_lock "$jobName"; then
+        backup_log "$jobName" "Skipped (already running)"
+        backup_record_history "$jobName" "skipped" "0" "-" "reason=already_running"
+        return 0
+    fi
+
+    backup_ensure_dirs
+    local baseDir
+    baseDir="$(backup_base_dir)"
+    local dbDir="$baseDir/db"
+    local dbBackupFile="$dbDir/${DB_NAME}_$(date +%Y%m%d_%H%M%S).sql"
+    local credsFile
+    credsFile="$(mktemp /tmp/mirza-mysql-XXXXXX.cnf)"
+    chmod 600 "$credsFile"
+    cat > "$credsFile" <<EOF
+[client]
+user=$DB_USER
+password=$DB_PASSWORD
+host=localhost
+EOF
+
+    backup_log "$jobName" "Dumping database to $dbBackupFile"
+    if ! run_with_timeout 20m mysqldump --defaults-extra-file="$credsFile" --no-tablespaces "$DB_NAME" > "$dbBackupFile" 2>>"$(backup_log_dir)/${jobName}.log"; then
+        rm -f "$credsFile" "$dbBackupFile" >/dev/null 2>&1
+        local endTs
+        endTs=$(date +%s)
+        local durationSec=$((endTs - startTs))
+        backup_log "$jobName" "Failed to create database dump"
+        backup_record_history "$jobName" "failed" "$durationSec" "-" "step=dump"
+        backup_notify_failure "$jobName" "dump"
+        return 1
+    fi
+    rm -f "$credsFile" >/dev/null 2>&1
+
+    if [ ! -s "$dbBackupFile" ]; then
+        rm -f "$dbBackupFile" >/dev/null 2>&1
+        local endTs
+        endTs=$(date +%s)
+        local durationSec=$((endTs - startTs))
+        backup_log "$jobName" "Dump file is empty"
+        backup_record_history "$jobName" "failed" "$durationSec" "-" "step=dump_empty"
+        backup_notify_failure "$jobName" "dump_empty"
+        return 1
+    fi
+
+    backup_log "$jobName" "Sending dump to Telegram"
+    local apiUrl="https://api.telegram.org/bot${BOT_TOKEN}/sendDocument"
+    local caption
+    caption=$(cat <<EOF
 
   
 <b>Mirza Pro Bot: Database Backup</b>
@@ -322,41 +475,77 @@ run_db_backup() {
 📅 <b>Timestamp:</b> <code>$(date +'%Y-%m-%d %H:%M:%S %Z')</code>
 EOF
 )
-    echo "DEBUG: Attempting to send to Chat ID -> [$BACKUP_CHAT_ID]"
-    RESPONSE=$(curl --verbose -F "chat_id=${BACKUP_CHAT_ID}" -F "document=@${DB_BACKUP_FILE}" -F "caption=${CAPTION}" -F "parse_mode=HTML" "$API_URL")
-    
-    echo -e "\n${YELLOW}--- Full cURL & Telegram API Response ---${NC}"
-    echo "$RESPONSE"
-    echo -e "${YELLOW}-----------------------------------------${NC}"
+    local resp
+    resp=$(curl -fsS -X POST "$apiUrl" \
+        -F "chat_id=${BACKUP_CHAT_ID}" \
+        -F "document=@${dbBackupFile}" \
+        --form-string "caption=${caption}" \
+        -F "parse_mode=HTML" --max-time 120 2>>"$(backup_log_dir)/${jobName}.log") || resp=""
 
-    if [[ $(echo "$RESPONSE" | grep -c '"ok":true') -gt 0 ]]; then
-        echo -e "${GREEN}DB backup sent successfully.${NC}"
-    else
-        echo -e "${RED}Failed to send DB backup. Please review the full response above.${NC}"
+    local endTs
+    endTs=$(date +%s)
+    local durationSec=$((endTs - startTs))
+    if echo "$resp" | grep -q '"ok":true'; then
+        local sizeBytes
+        sizeBytes=$(stat -c%s "$dbBackupFile" 2>/dev/null || echo "0")
+        backup_log "$jobName" "Sent successfully (size=$sizeBytes bytes, duration=${durationSec}s)"
+        backup_record_history "$jobName" "success" "$durationSec" "$dbBackupFile" "size_bytes=$sizeBytes"
+        rotate_backups "$dbDir" "${DB_NAME}_*.sql" 10
+        return 0
     fi
-    
-    echo "3. Cleaning up..."
-    rm -f "$DB_BACKUP_FILE"
+
+    backup_log "$jobName" "Failed to send to Telegram"
+    backup_record_history "$jobName" "failed" "$durationSec" "$dbBackupFile" "step=telegram_send"
+    backup_notify_failure "$jobName" "telegram_send"
+    return 1
 }
 
 run_files_backup() {
+    local jobName="backup_files"
+    local startTs
+    startTs=$(date +%s)
     echo -e "${YELLOW}Starting Source Files Backup...${NC}"
-    if ! load_config; then return; fi
+    if ! load_config; then return 1; fi
 
-    local BACKUP_DIR="/tmp"
-    local FILES_BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_$(date +%Y%m%d_%H%M%S).tar.gz"
+    if ! backup_acquire_lock "$jobName"; then
+        backup_log "$jobName" "Skipped (already running)"
+        backup_record_history "$jobName" "skipped" "0" "-" "reason=already_running"
+        return 0
+    fi
+
+    backup_ensure_dirs
+    local baseDir
+    baseDir="$(backup_base_dir)"
+    local filesDir="$baseDir/files"
+    local filesBackupFile="${filesDir}/${DB_NAME}_$(date +%Y%m%d_%H%M%S).tar.gz"
     local MAX_FILE_SIZE_BYTES=50000000
     local SPLIT_SIZE_BYTES=45000000
 
-    echo "1. Creating file archive in: ${FILES_BACKUP_FILE}"
-    tar -czf "$FILES_BACKUP_FILE" -C /var/www mirza_pro
-
-    if [ ! -f "$FILES_BACKUP_FILE" ] || [ ! -s "$FILES_BACKUP_FILE" ]; then
-        echo -e "${RED}FATAL: Failed to create archive.${NC}"
-        rm -f "$FILES_BACKUP_FILE"
-        return
+    backup_log "$jobName" "Creating archive: $filesBackupFile"
+    if ! run_with_timeout 60m tar -czf "$filesBackupFile" -C /var/www mirza_pro 2>>"$(backup_log_dir)/${jobName}.log"; then
+        rm -f "$filesBackupFile" >/dev/null 2>&1
+        local endTs
+        endTs=$(date +%s)
+        local durationSec=$((endTs - startTs))
+        backup_log "$jobName" "Failed to create archive"
+        backup_record_history "$jobName" "failed" "$durationSec" "-" "step=tar"
+        backup_notify_failure "$jobName" "tar"
+        return 1
     fi
-    echo -e "${GREEN}File archive created successfully.${NC}"
+
+    if [ ! -f "$filesBackupFile" ] || [ ! -s "$filesBackupFile" ]; then
+        rm -f "$filesBackupFile" >/dev/null 2>&1
+        local endTs
+        endTs=$(date +%s)
+        local durationSec=$((endTs - startTs))
+        backup_log "$jobName" "Archive is empty"
+        backup_record_history "$jobName" "failed" "$durationSec" "-" "step=tar_empty"
+        backup_notify_failure "$jobName" "tar_empty"
+        return 1
+    fi
+    local sizeBytes
+    sizeBytes=$(stat -c%s "$filesBackupFile" 2>/dev/null || echo "0")
+    backup_log "$jobName" "Archive created (size=$sizeBytes bytes)"
 
     local BASE_CAPTION=$(cat <<EOF
 <b>Mirza Pro Bot: Files Backup</b>
@@ -366,42 +555,56 @@ run_files_backup() {
 EOF
 )
 
-    local FILE_SIZE
-    FILE_SIZE=$(stat -c%s "$FILES_BACKUP_FILE")
-
-    echo -e "\n2. Sending to Telegram..."
-
     local API_URL="https://api.telegram.org/bot${BOT_TOKEN}/sendDocument"
+    local resp=""
+    backup_log "$jobName" "Sending archive to Telegram"
 
-    if [ "$FILE_SIZE" -le "$MAX_FILE_SIZE_BYTES" ]; then
-        RESPONSE=$(curl -s -X POST "$API_URL" \
+    if [ "$sizeBytes" -le "$MAX_FILE_SIZE_BYTES" ]; then
+        resp=$(curl -fsS -X POST "$API_URL" \
             -F chat_id="$BACKUP_CHAT_ID" \
-            -F document=@"$FILES_BACKUP_FILE" \
+            -F document=@"$filesBackupFile" \
             --form-string "caption=$BASE_CAPTION" \
-            -F parse_mode="HTML")
+            -F parse_mode="HTML" --max-time 180 2>>"$(backup_log_dir)/${jobName}.log") || resp=""
     else
-        echo -e "${YELLOW}File size $(echo "scale=2; $FILE_SIZE/1024/1024" | bc)MB > 50MB, splitting...${NC}"
-        split -b $SPLIT_SIZE_BYTES -d -a 3 "$FILES_BACKUP_FILE" "${FILES_BACKUP_FILE}.part_"
-        for PART in ${FILES_BACKUP_FILE}.part_*; do
+        backup_log "$jobName" "Size > 50MB, splitting"
+        split -b $SPLIT_SIZE_BYTES -d -a 3 "$filesBackupFile" "${filesBackupFile}.part_"
+        local allOk=1
+        for PART in ${filesBackupFile}.part_*; do
             local PART_NUM=$(basename "$PART" | awk -F'_part_' '{print $2}')
-            local CAPTION="$BASE_CAPTION\n<b>Part:</b> $PART_NUM"
-            RESPONSE=$(curl -s -X POST "$API_URL" \
+            local CAPTION="${BASE_CAPTION}"$'\n'"<b>Part:</b> $PART_NUM"
+            resp=$(curl -fsS -X POST "$API_URL" \
                 -F chat_id="$BACKUP_CHAT_ID" \
                 -F document=@"$PART" \
                 --form-string "caption=$CAPTION" \
-                -F parse_mode="HTML")
-            if echo "$RESPONSE" | grep -q '"ok":true'; then
-                echo -e "${GREEN}Part $PART_NUM sent successfully.${NC}"
+                -F parse_mode="HTML" --max-time 180 2>>"$(backup_log_dir)/${jobName}.log") || resp=""
+            if echo "$resp" | grep -q '"ok":true'; then
+                backup_log "$jobName" "Part $PART_NUM sent successfully"
             else
-                echo -e "${RED}Failed to send Part $PART_NUM. Check response below:${NC}"
-                echo "$RESPONSE"
+                allOk=0
+                backup_log "$jobName" "Failed to send part $PART_NUM"
             fi
         done
+        if [ "$allOk" -eq 1 ]; then
+            resp='{"ok":true}'
+        fi
     fi
 
-    rm -f "$FILES_BACKUP_FILE" ${FILES_BACKUP_FILE}.part_*
+    rm -f "${filesBackupFile}.part_"* >/dev/null 2>&1 || true
 
-    echo -e "${GREEN}Backup process completed.${NC}"
+    local endTs
+    endTs=$(date +%s)
+    local durationSec=$((endTs - startTs))
+    if echo "$resp" | grep -q '"ok":true'; then
+        backup_log "$jobName" "Sent successfully (duration=${durationSec}s)"
+        backup_record_history "$jobName" "success" "$durationSec" "$filesBackupFile" "size_bytes=$sizeBytes"
+        rotate_backups "$filesDir" "${DB_NAME}_*.tar.gz" 2
+        return 0
+    fi
+
+    backup_log "$jobName" "Failed to send to Telegram"
+    backup_record_history "$jobName" "failed" "$durationSec" "$filesBackupFile" "step=telegram_send"
+    backup_notify_failure "$jobName" "telegram_send"
+    return 1
 }
 
 configure_backup_schedule() {
@@ -419,15 +622,29 @@ configure_backup_schedule() {
     echo " 7. Disable for ${backup_type^^}"
     read -p "Enter your choice [1-7]: " cron_choice
 
+    local default_backup_dir="/var/backups/mirza_pro"
+    local default_backup_log_dir="/var/log/mirza_pro/backup"
+    local resolved_backup_dir="${MIRZA_BACKUP_DIR:-$default_backup_dir}"
+    local resolved_backup_log_dir="${MIRZA_BACKUP_LOG_DIR:-$default_backup_log_dir}"
+    mkdir -p "$resolved_backup_log_dir" >/dev/null 2>&1
+
     (crontab -l 2>/dev/null | grep -v "$cron_job_name") | crontab -
-    CRON_COMMAND="$SCRIPT_PATH $cron_job_name >/dev/null 2>&1"
+    local log_file="$resolved_backup_log_dir/${cron_job_name}.log"
+    CRON_COMMAND="MIRZA_BACKUP_DIR=$resolved_backup_dir MIRZA_BACKUP_LOG_DIR=$resolved_backup_log_dir $SCRIPT_PATH $cron_job_name >> $log_file 2>&1"
     CRON_SCHEDULE=""
     MSG=""
 
     case $cron_choice in
         1) CRON_SCHEDULE="*/2 * * * *"; MSG="Every 2 minutes" ;;
         2) CRON_SCHEDULE="0 * * * *"; MSG="Hourly" ;;
-        3) CRON_SCHEDULE="0 */6 * * *"; MSG="Every 6 hours" ;;
+        3)
+            if [ "$backup_type" = "db" ]; then
+                CRON_SCHEDULE="5 */6 * * *"
+            else
+                CRON_SCHEDULE="35 */6 * * *"
+            fi
+            MSG="Every 6 hours"
+            ;;
         4) CRON_SCHEDULE="0 3 * * *"; MSG="Daily" ;;
         5) CRON_SCHEDULE="0 3 * * 0"; MSG="Weekly" ;;
         6) 
@@ -513,11 +730,11 @@ fi
 case "$1" in
     backup_db)
         run_db_backup
-        exit 0
+        exit $?
         ;;
     backup_files)
         run_files_backup
-        exit 0
+        exit $?
         ;;
 esac
 
