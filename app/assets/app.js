@@ -69,13 +69,13 @@ async function verifyToken() {
   const initData = tg.initData;
   const initUser = tg.initDataUnsafe?.user;
   if (!initData || !initUser?.id) throw new Error("اطلاعات ورود تلگرام دریافت نشد.");
-  const json = await apiFetchJson(apiUrl("../api/verify.php"), {
+  const json = await apiFetchJson(apiUrl("../api/verify_miniapp.php"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(initData),
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    body: initData,
   });
-  if (!json?.token) throw new Error("احراز هویت ناموفق بود.");
-  state.token = json.token;
+  if (!json?.token) throw new Error(json?.msg || "احراز هویت ناموفق بود.");
+  state.token = String(json.token);
   state.userId = initUser.id;
   state.username = initUser.username || null;
 }
