@@ -19,13 +19,6 @@ function log_msg($msg){
     echo $line;
     @file_put_contents($logFile, $line, FILE_APPEND);
 }
-
-$lockFile = __DIR__ . '/backupbot.lock';
-$fp = fopen($lockFile, 'c+');
-if (!flock($fp, LOCK_EX | LOCK_NB)) {
-    log_msg("Another instance is already running.");
-    return;
-}
 $rbRow = select("topicid","idreport","report","general","select");
 $reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
 $destination = __DIR__;
@@ -45,7 +38,7 @@ if (function_exists('disk_free_space')) {
         if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
         telegram('sendmessage', $payload);
         log_msg("insufficient disk space: " . intval($free) . " bytes");
-        return;
+        exit;
     }
 }
 try{
@@ -386,3 +379,183 @@ if (PHP_SAPI === 'cli' && isset($argv) && in_array('--daemon', $argv, true)) {
 
 log_msg("run backup cycle force=" . (defined('FORCE_BACKUP')?1:0));
 run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, defined('FORCE_BACKUP'));
+
+// Global data folder backup (vpnbot/update/data)
+$globalDataDir = $sourcefir.'/vpnbot/update/data';
+if (is_dir($globalDataDir)){
+    $zipName = $destination . DIRECTORY_SEPARATOR . 'data_update.zip';
+    $zip = new ZipArchive();
+    if ($zip->open($zipName, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($globalDataDir, FilesystemIterator::SKIP_DOTS));
+        foreach ($rii as $file){
+            $path = $file->getPathname();
+            $local = substr($path, strlen($globalDataDir)+1);
+            $content = @file_get_contents($path);
+            if ($content !== false && !empty($domainhosts)){
+                $content = str_replace($domainhosts, '<redacted-domain>', $content);
+                $zip->addFromString($local, $content);
+            } else {
+                $zip->addFile($path, $local);
+            }
+        }
+        // include Default/update product configs if present
+        foreach (['vpnbot/Default/product.json','vpnbot/Default/product_name.json','vpnbot/update/text.json'] as $cfg){
+            $cfgPath = $sourcefir.'/'.$cfg;
+            if (is_file($cfgPath)){
+                $content = @file_get_contents($cfgPath);
+                if ($content !== false && !empty($domainhosts)) $content = str_replace($domainhosts, '<redacted-domain>', $content);
+                $zip->addFromString(basename($cfg), $content !== false ? $content : '');
+            }
+        }
+        $zip->close();
+        $payload = [
+            'chat_id' => $setting['Channel_Report'],
+            'document' => new CURLFile(realpath($zipName)),
+            'caption' => "📦 داده‌های عمومی ربات (update/data)",
+        ];
+        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        telegram('sendDocument',$payload);
+        unlink($zipName);
+    }
+}
+
+
+
+
+$backup_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d") . '.sql');
+$zip_file_name = $destination . DIRECTORY_SEPARATOR . ('backup_' . date("Y-m-d") . '.zip');
+// Optional encryption configuration
+$zipEnc = isset($setting['zip_encryption']) ? strtolower(trim($setting['zip_encryption'])) : 'none';
+$zipPass = isset($setting['zip_password']) ? trim($setting['zip_password']) : '';
+
+$command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces --single-transaction --quick --routines --events --triggers --default-character-set=utf8mb4 $dbname > $backup_file_name";
+$output = [];
+$return_var = 0;
+exec($command, $output, $return_var);
+if ($return_var !== 0) {
+    $tmpDir = 'db-json-backup-'.date('Y-m-d');
+    if (!is_dir($tmpDir)) mkdir($tmpDir);
+    try{
+        $tables = [];
+        $stmt = $pdo->query('SHOW TABLES');
+        while($row = $stmt->fetch(PDO::FETCH_NUM)){$tables[] = $row[0];}
+        foreach($tables as $t){
+            $dataStmt = $pdo->query('SELECT * FROM `'.$t.'`');
+            $rows = $dataStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (is_array($rows)){
+                foreach ($rows as &$row){
+                    foreach ($row as $col => &$val){
+                        if (preg_match('/^(domain|url_panel|panel_url|subscription_url)$/i', $col)){
+                            $val = '<redacted-domain>';
+                        } elseif (is_string($val) && !empty($domainhosts) && strpos($val, $domainhosts) !== false){
+                            $val = str_replace($domainhosts, '<redacted-domain>', $val);
+                        }
+                    }
+                    unset($val);
+                }
+                unset($row);
+            }
+            file_put_contents($tmpDir.'/'.$t.'.json', json_encode($rows, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES));
+        }
+        // Schema and views/routines fallback
+        $schemaSql = '';
+        foreach($tables as $t){
+            try{ $createRow = $pdo->query('SHOW CREATE TABLE `'.$t.'`')->fetch(PDO::FETCH_ASSOC); }catch(Throwable $e){ $createRow = null; }
+            if ($createRow){ $schemaSql .= $createRow['Create Table'] . ";\n\n"; }
+        }
+        // Views
+        try{
+            $views = $pdo->query("SHOW FULL TABLES WHERE Table_type = 'VIEW'")->fetchAll(PDO::FETCH_NUM);
+            foreach($views as $v){
+                $vn = $v[0];
+                $cr = $pdo->query('SHOW CREATE VIEW `'.$vn.'`')->fetch(PDO::FETCH_ASSOC);
+                if ($cr && isset($cr['Create View'])) $schemaSql .= $cr['Create View'] . ";\n\n";
+            }
+        }catch(Throwable $e){ }
+        // Routines
+        try{
+            $procs = $pdo->query("SHOW PROCEDURE STATUS WHERE Db = '$dbname'")->fetchAll(PDO::FETCH_ASSOC);
+            foreach($procs as $pr){
+                $nm = $pr['Name'];
+                $cr = $pdo->query('SHOW CREATE PROCEDURE `'.$nm.'`')->fetch(PDO::FETCH_ASSOC);
+                if ($cr && isset($cr['Create Procedure'])) $schemaSql .= $cr['Create Procedure'] . ";\n\n";
+            }
+            $funcs = $pdo->query("SHOW FUNCTION STATUS WHERE Db = '$dbname'")->fetchAll(PDO::FETCH_ASSOC);
+            foreach($funcs as $fn){
+                $nm = $fn['Name'];
+                $cr = $pdo->query('SHOW CREATE FUNCTION `'.$nm.'`')->fetch(PDO::FETCH_ASSOC);
+                if ($cr && isset($cr['Create Function'])) $schemaSql .= $cr['Create Function'] . ";\n\n";
+            }
+        }catch(Throwable $e){ }
+        if (!empty($domainhosts)) $schemaSql = str_replace($domainhosts, '<redacted-domain>', $schemaSql);
+        file_put_contents($tmpDir.'/schema.sql', $schemaSql);
+        $zip = new ZipArchive();
+        if ($zip->open($zip_file_name, ZipArchive::CREATE|ZipArchive::OVERWRITE) === TRUE){
+            $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS));
+            foreach($rii as $file){
+                $path = $file->getPathname();
+                $local = substr($path, strlen($tmpDir)+1);
+                $zip->addFile($path, $local);
+            }
+            if ($zipEnc === 'aes' && $zipPass !== '') {
+                // Encrypt first JSON entry as indicator
+                $first = reset($tables);
+                if ($first) $zip->setEncryptionName($first.'.json', ZipArchive::EM_AES_256, $zipPass);
+            } elseif ($zipEnc === 'pkware' && $zipPass !== '') {
+                $first = reset($tables);
+                if ($first) $zip->setEncryptionName($first.'.json', ZipArchive::EM_TRAD_PKWARE, $zipPass);
+            }
+            $zip->close();
+            $payload = [
+                'chat_id' => $setting['Channel_Report'],
+                'document' => new CURLFile(realpath($zip_file_name)),
+                'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
+            ];
+            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            $resp = telegram('sendDocument', $payload);
+            echo date('Y-m-d H:i:s') . " send db json backup -> " . json_encode($resp) . "\n";
+            unlink($zip_file_name);
+        }
+    } catch (Throwable $e){
+        $payload = [
+            'chat_id' => $setting['Channel_Report'],
+            'text' => "❌ خطا در بکاپ دیتابیس",
+        ];
+        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        telegram('sendmessage', $payload);
+    }
+    if (is_dir($tmpDir)){
+        $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+        foreach($rii as $file){ $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname()); }
+        rmdir($tmpDir);
+    }
+} else {
+    $zip = new ZipArchive();
+    if ($zip->open($zip_file_name, ZipArchive::CREATE|ZipArchive::OVERWRITE) === TRUE) {
+        $sqlContent = @file_get_contents($backup_file_name);
+        if ($sqlContent !== false && !empty($domainhosts)){
+            $sqlContent = str_replace($domainhosts, '<redacted-domain>', $sqlContent);
+            $zip->addFromString(basename($backup_file_name), $sqlContent);
+        } else {
+            $zip->addFile($backup_file_name, basename($backup_file_name));
+        }
+        if ($zipEnc === 'aes' && $zipPass !== '') {
+            $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_AES_256, $zipPass);
+        } elseif ($zipEnc === 'pkware' && $zipPass !== '') {
+            $zip->setEncryptionName(basename($backup_file_name), ZipArchive::EM_TRAD_PKWARE, $zipPass);
+        }
+        $zip->close();
+        if($autoTriggered || defined('FORCE_BACKUP')){
+            $payload = [
+                'chat_id' => $setting['Channel_Report'],
+                'document' => new CURLFile(realpath($zip_file_name)),
+                'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 خروجی دیتابیس (رمز: $zipPass)" : "📌 خروجی دیتابیس"),
+            ];
+            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+                $resp = telegram('sendDocument', $payload);
+                echo date('Y-m-d H:i:s') . " send db sql backup -> " . json_encode($resp) . "\n";
+            }
+        unlink($zip_file_name);
+        unlink($backup_file_name);
+    }
+}
