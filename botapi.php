@@ -21,8 +21,14 @@ function telegram($method, $datas = [], $token = null)
     }
 
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    $timeout = 10;
+    $connectTimeout = 5;
+    if ($method === 'sendDocument' || $method === 'sendVideo' || $method === 'sendPhoto' || $method === 'sendAudio') {
+        $timeout = 120;
+        $connectTimeout = 10;
+    }
+    curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $connectTimeout);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $datas);
 
     $rawResponse = curl_exec($ch);

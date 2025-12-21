@@ -29,6 +29,14 @@ $rbRow = select("topicid","idreport","report","general","select");
 $reportbackup = is_array($rbRow) && isset($rbRow['idreport']) ? $rbRow['idreport'] : null;
 $destination = __DIR__;
 $setting = select("setting", "*");
+$backupChatId = null;
+if (is_array($setting) && isset($setting['Channel_Report']) && is_numeric($setting['Channel_Report']) && (int)$setting['Channel_Report'] !== 0) {
+    $backupChatId = (int)$setting['Channel_Report'];
+}
+if (($backupChatId === null || $backupChatId === 0) && isset($adminnumber) && is_numeric($adminnumber) && (int)$adminnumber !== 0) {
+    $backupChatId = (int)$adminnumber;
+}
+$useThreadId = $backupChatId !== null && is_array($setting) && isset($setting['Channel_Report']) && is_numeric($setting['Channel_Report']) && (int)$setting['Channel_Report'] === (int)$backupChatId;
 $minFreeBytes = 30 * 1024 * 1024;
 if (!is_writable($destination)) {
     log_msg("destination not writable: $destination, switching to temp dir");
@@ -38,10 +46,10 @@ if (function_exists('disk_free_space')) {
     $free = @disk_free_space($destination);
     if ($free !== false && $free < $minFreeBytes) {
         $payload = [
-            'chat_id' => $setting['Channel_Report'],
+            'chat_id' => $backupChatId,
             'text' => "❌ فضای ناکافی برای ایجاد فایل‌های بکاپ",
         ];
-        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
         telegram('sendmessage', $payload);
         log_msg("insufficient disk space: " . intval($free) . " bytes");
         exit;
@@ -51,17 +59,17 @@ try{
     $pdo->query('SELECT 1');
 }catch(Throwable $e){
     $payload = [
-        'chat_id' => $setting['Channel_Report'],
+        'chat_id' => $backupChatId,
         'text' => "❌ عدم دسترسی به دیتابیس برای بکاپ",
     ];
-    if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+    if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
     telegram('sendmessage', $payload);
     log_msg("database connectivity check failed");
 }
 $sourcefir = dirname(__DIR__);
 // Auto-backup gating per bot
 function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $forceArg = false){
-    global $domainhosts, $dbname, $usernamedb, $passworddb, $pdo;
+    global $domainhosts, $dbname, $usernamedb, $passworddb, $pdo, $backupChatId, $useThreadId;
     $botlist = select("botsaz","*",null,null,"fetchAll", ['cache' => false]);
     $autoTriggered = false;
     $anyEnabled = false;
@@ -145,20 +153,20 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
             }
             $zip->close();
             $payload = [
-                'chat_id' => $setting['Channel_Report'],
+                'chat_id' => $backupChatId,
                 'document' => new CURLFile(realpath($zipName)),
                 'caption' => "@{$bot['username']} | {$bot['id_user']}",
             ];
-            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
             $resp = telegram('sendDocument',$payload);
             log_msg("send bot data zip for @{$bot['username']} -> " . json_encode($resp));
             unlink($zipName);
             if (!is_array($resp) || empty($resp['ok'])) {
                 $payloadErr = [
-                    'chat_id' => $setting['Channel_Report'],
+                    'chat_id' => $backupChatId,
                     'text' => "❌ ارسال بکاپ داده‌های بات ناموفق بود",
                 ];
-                if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                if ($useThreadId && $reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
                 telegram('sendmessage', $payloadErr);
             }
         }
@@ -194,20 +202,20 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
             }
             $zip->close();
             $payload = [
-                'chat_id' => $setting['Channel_Report'],
+                'chat_id' => $backupChatId,
                 'document' => new CURLFile(realpath($zipName)),
                 'caption' => "📦 داده‌های عمومی ربات (update/data)",
             ];
-            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
             $resp = telegram('sendDocument',$payload);
             log_msg("send update data zip -> " . json_encode($resp));
             unlink($zipName);
             if (!is_array($resp) || empty($resp['ok'])) {
                 $payloadErr = [
-                    'chat_id' => $setting['Channel_Report'],
+                    'chat_id' => $backupChatId,
                     'text' => "❌ ارسال بکاپ داده‌های عمومی ناموفق بود",
                 ];
-                if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                if ($useThreadId && $reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
                 telegram('sendmessage', $payloadErr);
             }
         }
@@ -220,11 +228,18 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
     $zipPass = isset($setting['zip_password']) ? trim($setting['zip_password']) : '';
 
     $doDb = $anySelectDb || ($globalEnabled && $globalMinutes > 0);
-    $command = "mysqldump -h localhost -u $usernamedb -p'$passworddb' --no-tablespaces --single-transaction --quick --routines --events --triggers --default-character-set=utf8mb4 $dbname > $backup_file_name";
+    $tmpMyCnf = tempnam(sys_get_temp_dir(), 'mirza_mycnf_');
+    if ($tmpMyCnf !== false) {
+        @chmod($tmpMyCnf, 0600);
+        @file_put_contents($tmpMyCnf, "[client]\nuser=" . $usernamedb . "\npassword=" . $passworddb . "\nhost=localhost\n");
+    }
+    $defaultsArg = $tmpMyCnf !== false ? ('--defaults-extra-file=' . escapeshellarg($tmpMyCnf)) : '';
+    $command = "mysqldump $defaultsArg --no-tablespaces --single-transaction --quick --routines --events --triggers --default-character-set=utf8mb4 " . escapeshellarg($dbname) . " > " . escapeshellarg($backup_file_name);
     $output = [];
     $return_var = 0;
     $return_var = 1;
     if ($doDb) { exec($command, $output, $return_var); }
+    if ($tmpMyCnf !== false) { @unlink($tmpMyCnf); }
     if ($return_var !== 0) {
         if (!$doDb) { goto skip_db_section; }
         $tmpDir = 'db-json-backup-'.date('Y-m-d');
@@ -299,28 +314,28 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
                 }
             $zip->close();
             $payload = [
-                'chat_id' => $setting['Channel_Report'],
+                'chat_id' => $backupChatId,
                 'document' => new CURLFile(realpath($zip_file_name)),
                 'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
             ];
-            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
             $resp = telegram('sendDocument', $payload);
             if (!is_array($resp) || empty($resp['ok'])) {
                 $payloadErr = [
-                    'chat_id' => $setting['Channel_Report'],
+                    'chat_id' => $backupChatId,
                     'text' => "❌ ارسال بکاپ JSON دیتابیس ناموفق بود",
                 ];
-                if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                if ($useThreadId && $reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
                 telegram('sendmessage', $payloadErr);
             }
             unlink($zip_file_name);
         }
         } catch (Throwable $e){
             $payload = [
-                'chat_id' => $setting['Channel_Report'],
+                'chat_id' => $backupChatId,
                 'text' => "❌ خطا در بکاپ دیتابیس",
             ];
-            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
                 telegram('sendmessage', $payload);
         }
         if (is_dir($tmpDir)){
@@ -349,18 +364,18 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
             $globalDueAggregate = ($anyEnabled && $minEnabledMinutes !== null) ? (($nowBase - $globalLastSqlTs) >= ($minEnabledMinutes * 60)) : false;
             if($autoTriggered || $forceArg || defined('FORCE_BACKUP') || $globalDueAggregate){
                 $payload = [
-                    'chat_id' => $setting['Channel_Report'],
+                    'chat_id' => $backupChatId,
                     'document' => new CURLFile(realpath($zip_file_name)),
                     'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 خروجی دیتابیس (رمز: $zipPass)" : "📌 خروجی دیتابیس"),
                 ];
-                if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+                if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
                 $resp = telegram('sendDocument', $payload);
                 if (!is_array($resp) || empty($resp['ok'])) {
                     $payloadErr = [
-                        'chat_id' => $setting['Channel_Report'],
+                        'chat_id' => $backupChatId,
                         'text' => "❌ ارسال بکاپ SQL دیتابیس ناموفق بود",
                     ];
-                    if ($reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
+                    if ($useThreadId && $reportbackup) $payloadErr['message_thread_id'] = $reportbackup;
                     telegram('sendmessage', $payloadErr);
                 }
                 update('setting','backup_sql_last_ts', $nowBase);
@@ -415,11 +430,11 @@ if (is_dir($globalDataDir)){
         }
         $zip->close();
         $payload = [
-            'chat_id' => $setting['Channel_Report'],
+            'chat_id' => $backupChatId,
             'document' => new CURLFile(realpath($zipName)),
             'caption' => "📦 داده‌های عمومی ربات (update/data)",
         ];
-        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
         telegram('sendDocument',$payload);
         unlink($zipName);
     }
@@ -513,21 +528,21 @@ if ($return_var !== 0) {
             }
             $zip->close();
             $payload = [
-                'chat_id' => $setting['Channel_Report'],
+                'chat_id' => $backupChatId,
                 'document' => new CURLFile(realpath($zip_file_name)),
                 'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 بکاپ JSON دیتابیس (رمز: $zipPass)" : "📌 بکاپ JSON دیتابیس"),
             ];
-            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
             $resp = telegram('sendDocument', $payload);
             echo date('Y-m-d H:i:s') . " send db json backup -> " . json_encode($resp) . "\n";
             unlink($zip_file_name);
         }
     } catch (Throwable $e){
         $payload = [
-            'chat_id' => $setting['Channel_Report'],
+            'chat_id' => $backupChatId,
             'text' => "❌ خطا در بکاپ دیتابیس",
         ];
-        if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+        if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
         telegram('sendmessage', $payload);
     }
     if (is_dir($tmpDir)){
@@ -553,11 +568,11 @@ if ($return_var !== 0) {
         $zip->close();
         if($autoTriggered || defined('FORCE_BACKUP')){
             $payload = [
-                'chat_id' => $setting['Channel_Report'],
+                'chat_id' => $backupChatId,
                 'document' => new CURLFile(realpath($zip_file_name)),
                 'caption' => ($zipEnc !== 'none' && $zipPass !== '' ? "📌 خروجی دیتابیس (رمز: $zipPass)" : "📌 خروجی دیتابیس"),
             ];
-            if ($reportbackup) $payload['message_thread_id'] = $reportbackup;
+            if ($useThreadId && $reportbackup) $payload['message_thread_id'] = $reportbackup;
                 $resp = telegram('sendDocument', $payload);
                 echo date('Y-m-d H:i:s') . " send db sql backup -> " . json_encode($resp) . "\n";
             }

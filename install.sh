@@ -37,6 +37,9 @@ save_config() {
 load_config() {
     if [ -f "$CONFIG_FILE" ]; then
         source "$CONFIG_FILE"
+        if [ -z "$BACKUP_CHAT_ID" ] && [ -n "$ADMIN_TELEGRAM_ID" ]; then
+            BACKUP_CHAT_ID=$ADMIN_TELEGRAM_ID
+        fi
         return 0
     else
         echo -e "${RED}Error: Configuration file not found.${NC}"
