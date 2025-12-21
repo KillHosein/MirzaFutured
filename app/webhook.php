@@ -8,7 +8,7 @@
  */
 
 // Include main project config to get database connection
-require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__, 2) . '/config.php';
 
 // Now include web app files
 require_once __DIR__ . '/config/config.php';

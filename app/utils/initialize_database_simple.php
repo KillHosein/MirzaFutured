@@ -9,14 +9,14 @@
 
 // Include main project config to get database connection
 require_once dirname(__DIR__, 2) . '/config.php';
-require_once __DIR__ . '/config/config.php';
+require_once dirname(__DIR__) . '/config/config.php';
 
 try {
     // Use the existing PDO connection from main config
     global $pdo;
     
     if (!isset($pdo) || !$pdo instanceof PDO) {
-        throw new Exception("Database connection not found in main config");
+        throw new Exception("Database connection not found in main config. Make sure config.php has proper PDO connection.");
     }
     
     echo "Using existing database connection...\n\n";
