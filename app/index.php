@@ -32,7 +32,8 @@ class MirzaWebApp {
         $this->initializeNotificationManager();
         $this->initializeAdminManager();
         $this->initializeAPIHandler();
-        $this->authenticateUser();
+        // Handle session-based authentication
+        $this->handleSessionAuthentication();
     }
     
     /**
@@ -82,29 +83,9 @@ class MirzaWebApp {
     }
     
     /**
-     * Authenticate user - simplified version using telegram_id from database only
+     * Handle session-based authentication for existing logged-in users
      */
-    private function authenticateUser() {
-        // Check if telegram_id is provided in URL (for users who started the bot)
-        if (isset($_GET['telegram_id'])) {
-            $telegramId = $_GET['telegram_id'];
-            $user = $this->userManager->getUserByTelegramId($telegramId);
-            
-            if ($user) {
-                $this->currentUser = $user;
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['telegram_id'] = $telegramId;
-                
-                // Log session
-                $this->userManager->logSession($user['id'], [
-                    'action' => 'login',
-                    'platform' => 'webapp'
-                ]);
-                
-                return;
-            }
-        }
-        
+    private function handleSessionAuthentication() {
         // Check if user is already logged in
         if (isset($_SESSION['user_id'])) {
             $this->currentUser = $this->userManager->getUserById($_SESSION['user_id']);
@@ -121,8 +102,7 @@ class MirzaWebApp {
             }
         }
         
-        // If no valid user found, show simple access denied
-        // Users must access with ?telegram_id=123456789
+        // If no valid user found
         $this->currentUser = null;
     }
     
@@ -155,6 +135,32 @@ class MirzaWebApp {
      */
     public function handleRequest() {
         try {
+            // Handle telegram_id authentication if provided
+            if (isset($_GET['telegram_id']) && !$this->isAuthenticated()) {
+                $telegramId = $_GET['telegram_id'];
+                $user = $this->userManager->getUserByTelegramId($telegramId);
+                
+                if ($user) {
+                    $this->currentUser = $user;
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['telegram_id'] = $telegramId;
+                    
+                    // Log session
+                    $this->userManager->logSession($user['id'], [
+                        'action' => 'login',
+                        'platform' => 'webapp'
+                    ]);
+                    
+                    // Redirect to clean URL
+                    $redirectUrl = 'index.php';
+                    if (isset($_GET['action'])) {
+                        $redirectUrl .= '?action=' . $_GET['action'];
+                    }
+                    $this->redirect($redirectUrl);
+                    return;
+                }
+            }
+            
             // Check if user is authenticated, if not show auth required
             if (!$this->isAuthenticated()) {
                 $this->showAuthRequired();
