@@ -19,8 +19,9 @@ class Database {
                 $this->connection = $pdo;
             } else {
                 // Fallback to creating new connection if global $pdo doesn't exist
-                $dsn = "mysql:host=localhost;dbname=" . DB_NAME . ";charset=utf8mb4";
-                $this->connection = new PDO($dsn, DB_USER, DB_PASS, [
+                global $dbname, $usernamedb, $passworddb;
+                $dsn = "mysql:host=localhost;dbname=$dbname;charset=utf8mb4";
+                $this->connection = new PDO($dsn, $usernamedb, $passworddb, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false,
@@ -58,48 +59,6 @@ class Database {
         $stmt = $this->query($sql, $params);
         return $stmt->fetch();
     }
-    
-    public function fetchAll($sql, $params = []) {
-        $stmt = $this->query($sql, $params);
-        return $stmt->fetchAll();
-    }
-    
-    public function insert($table, $data) {
-        $columns = implode(', ', array_keys($data));
-        $placeholders = ':' . implode(', :', array_keys($data));
-        $sql = "INSERT INTO $table ($columns) VALUES ($placeholders)";
-        $this->query($sql, $data);
-        return $this->connection->lastInsertId();
-    }
-    
-    public function update($table, $data, $where, $whereParams) {
-        $set = [];
-        foreach ($data as $key => $value) {
-            $set[] = "$key = :$key";
-        }
-        $setClause = implode(', ', $set);
-        $sql = "UPDATE $table SET $setClause WHERE $where";
-        $params = array_merge($data, $whereParams);
-        return $this->query($sql, $params)->rowCount();
-    }
-    
-    public function delete($table, $where, $params) {
-        $sql = "DELETE FROM $table WHERE $where";
-        return $this->query($sql, $params)->rowCount();
-    }
-    
-    public function beginTransaction() {
-        return $this->connection->beginTransaction();
-    }
-    
-    public function commit() {
-        return $this->connection->commit();
-    }
-    
-    public function rollback() {
-        return $this->connection->rollback();
-    }
-}
     
     public function fetchAll($sql, $params = []) {
         $stmt = $this->query($sql, $params);
