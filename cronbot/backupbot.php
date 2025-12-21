@@ -103,6 +103,9 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
         $anySelectConfigs = $anySelectConfigs || $selConfigs;
         $isDue = $enabled && $minutes > 0 && ($now - $lastTs) >= ($minutes * 60);
         $force = $forceArg || defined('FORCE_BACKUP');
+        $timeDiff = $now - $lastTs;
+        $requiredDiff = $minutes * 60;
+        log_msg("backup check for @{$bot['username']} -> enabled=" . ($enabled?1:0) . ", minutes=" . $minutes . ", lastTs=" . $lastTs . ", now=" . $now . ", timeDiff=" . $timeDiff . ", requiredDiff=" . $requiredDiff . ", isDue=" . ($isDue?1:0) . ", force=" . ($force?1:0));
         if(!$force && !$isDue){
             log_msg("skip bot data backup for @{$bot['username']} due scheduling -> enabled=" . ($enabled?1:0) . ", minutes=" . $minutes . ", lastTs=" . $lastTs);
             continue;
@@ -362,6 +365,9 @@ function run_backup_cycle($destination, $sourcefir, $setting, $reportbackup, $fo
             $globalLastSqlTs = isset($setting['backup_sql_last_ts']) ? (int)$setting['backup_sql_last_ts'] : 0;
             $nowBase = time();
             $globalDueAggregate = ($anyEnabled && $minEnabledMinutes !== null) ? (($nowBase - $globalLastSqlTs) >= ($minEnabledMinutes * 60)) : false;
+            $sqlTimeDiff = $nowBase - $globalLastSqlTs;
+            $sqlRequiredDiff = $minEnabledMinutes * 60;
+            log_msg("sql backup check -> anyEnabled=" . ($anyEnabled?1:0) . ", minEnabledMinutes=" . (is_null($minEnabledMinutes)?-1:$minEnabledMinutes) . ", lastSqlTs=" . $globalLastSqlTs . ", now=" . $nowBase . ", sqlTimeDiff=" . $sqlTimeDiff . ", sqlRequiredDiff=" . $sqlRequiredDiff . ", globalDueAggregate=" . ($globalDueAggregate?1:0) . ", autoTriggered=" . ($autoTriggered?1:0) . ", forceArg=" . ($forceArg?1:0));
             if($autoTriggered || $forceArg || defined('FORCE_BACKUP') || $globalDueAggregate){
                 $payload = [
                     'chat_id' => $backupChatId,
