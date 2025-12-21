@@ -80,7 +80,7 @@ while ($row = mysqli_fetch_assoc($list_service)) {
     }
     $text_reportpayment = "💵 پرداخت جدید
 - 👤 نام کاربری کاربر : @{$Balance_id['username']}
-- ‏🆔آیدی عددی کاربر : {$Balance_id['id']}
+- 🆔آیدی عددی کاربر : {$Balance_id['id']}
 - 💸 مبلغ تراکنش {$Payment_report['price']}
 - 🔗 <a href = \"{$StatusPayment['tx_url'][0]}\">لینک پرداخت </a>
 - 🔗 <a href = \"{$StatusPayment['invoice_url']}\">لینک پرداخت plisio </a>
